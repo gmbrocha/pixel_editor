@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QRadioButton,
     QScrollArea,
+    QSlider,
     QSpinBox,
     QToolBar,
     QVBoxLayout,
@@ -86,6 +87,12 @@ class PixelEditorWindow(QMainWindow):
         self.color_preview = QLabel()
         self.color_preview.setFixedSize(40, 40)
         self.color_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.opacity_slider = QSlider(Qt.Orientation.Horizontal)
+        self.opacity_slider.setRange(0, 255)
+        self.opacity_slider.setValue(self.document.current_color[3])
+        self.opacity_spin = QSpinBox()
+        self.opacity_spin.setRange(0, 255)
+        self.opacity_spin.setValue(self.document.current_color[3])
 
         self.selection_summary = QLabel("No selection")
         self.palette_container = QWidget()
@@ -182,6 +189,11 @@ class PixelEditorWindow(QMainWindow):
         controls_layout.addLayout(mode_row)
         controls_layout.addWidget(QLabel("Current Color"))
         controls_layout.addWidget(self.color_preview)
+        opacity_row = QHBoxLayout()
+        opacity_row.addWidget(QLabel("Opacity"))
+        opacity_row.addWidget(self.opacity_slider)
+        opacity_row.addWidget(self.opacity_spin)
+        controls_layout.addLayout(opacity_row)
         controls_layout.addWidget(self.custom_color_button)
         controls_layout.addWidget(self.transparent_button)
         controls_layout.addSpacing(12)
@@ -226,6 +238,9 @@ class PixelEditorWindow(QMainWindow):
         self.zoom_spin.valueChanged.connect(self.canvas.set_zoom)
         self.paint_radio.toggled.connect(self._on_mode_changed)
         self.select_radio.toggled.connect(self._on_mode_changed)
+        self.opacity_slider.valueChanged.connect(self.opacity_spin.setValue)
+        self.opacity_spin.valueChanged.connect(self.opacity_slider.setValue)
+        self.opacity_slider.valueChanged.connect(self._on_opacity_changed)
         self.custom_color_button.clicked.connect(self.pick_color)
         self.transparent_button.clicked.connect(self.use_transparent_color)
         self.load_image_button.clicked.connect(self.open_image)
@@ -372,19 +387,21 @@ class PixelEditorWindow(QMainWindow):
 
     def pick_color(self) -> None:
         initial = QColor(*self.document.current_color)
-        color = QColorDialog.getColor(initial, self, "Pick Pixel Color")
-        if not color.isValid():
+        dialog = QColorDialog(initial, self)
+        dialog.setWindowTitle("Pick Pixel Color")
+        dialog.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel, True)
+        dialog.setOption(QColorDialog.ColorDialogOption.DontUseNativeDialog, True)
+        if dialog.exec() != QColorDialog.DialogCode.Accepted:
             return
-        self.document.current_color = (color.red(), color.green(), color.blue(), color.alpha())
-        self.document.use_transparent_color = False
+        color = dialog.selectedColor()
+        self._set_current_color((color.red(), color.green(), color.blue(), color.alpha()))
         self.document.palette = add_color_to_palette(self.document.palette, self.document.current_color)
         self._refresh_palette_buttons()
-        self._update_color_preview()
         self.statusBar().showMessage("Updated current paint color and saved it to the palette")
 
     def use_transparent_color(self) -> None:
-        self.document.use_transparent_color = True
-        self._update_color_preview()
+        red, green, blue, _alpha = self.document.current_color
+        self._set_current_color((red, green, blue, 0))
         self.statusBar().showMessage("Painting with transparent pixels")
 
     def _on_canvas_image_changed(self) -> None:
@@ -420,8 +437,15 @@ class PixelEditorWindow(QMainWindow):
     def _set_current_color(self, color: tuple[int, int, int, int]) -> None:
         self.document.current_color = color
         self.document.use_transparent_color = color[3] == 0
+        self.opacity_slider.setValue(color[3])
         self._update_color_preview()
         self.statusBar().showMessage("Selected palette color")
+
+    def _on_opacity_changed(self, alpha: int) -> None:
+        red, green, blue, _current_alpha = self.document.current_color
+        self.document.current_color = (red, green, blue, alpha)
+        self.document.use_transparent_color = alpha == 0
+        self._update_color_preview()
 
     def _update_color_preview(self) -> None:
         if self.document.use_transparent_color:
