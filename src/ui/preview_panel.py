@@ -20,10 +20,45 @@ from src.core.qt_image import pil_image_to_qpixmap
 
 
 class PreviewCanvas(QLabel):
+    color_picked = Signal(tuple)
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self._pil_image: Image.Image | None = None
+        self._eyedropper = False
         self.setMinimumSize(220, 220)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setMouseTracking(True)
+
+    def set_pil_image(self, image: Image.Image | None) -> None:
+        self._pil_image = image
+
+    def set_eyedropper(self, enabled: bool) -> None:
+        self._eyedropper = enabled
+        self.setCursor(Qt.CursorShape.CrossCursor if enabled else Qt.CursorShape.ArrowCursor)
+
+    def mousePressEvent(self, event) -> None:
+        from PySide6.QtCore import Qt as _Qt
+        if not self._eyedropper or self._pil_image is None or event.button() != _Qt.MouseButton.LeftButton:
+            super().mousePressEvent(event)
+            return
+        pm = self.pixmap()
+        if pm is None or pm.isNull():
+            return
+        label_w, label_h = self.width(), self.height()
+        pm_w, pm_h = pm.width(), pm.height()
+        ox = (label_w - pm_w) / 2
+        oy = (label_h - pm_h) / 2
+        mx = event.position().x() - ox
+        my = event.position().y() - oy
+        if mx < 0 or my < 0 or mx >= pm_w or my >= pm_h:
+            return
+        ix = int(mx / pm_w * self._pil_image.width)
+        iy = int(my / pm_h * self._pil_image.height)
+        ix = max(0, min(ix, self._pil_image.width - 1))
+        iy = max(0, min(iy, self._pil_image.height - 1))
+        rgba = self._pil_image.convert("RGBA").getpixel((ix, iy))
+        self.color_picked.emit(tuple(rgba))
 
     def paintEvent(self, event) -> None:
         painter = QPainter(self)
@@ -45,6 +80,7 @@ class PreviewCanvas(QLabel):
 class PreviewPanel(QWidget):
     settings_changed = Signal(object)
     save_requested = Signal()
+    color_picked = Signal(tuple)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -63,11 +99,6 @@ class PreviewPanel(QWidget):
 
         self.fit_combo = QComboBox()
         self.fit_combo.addItems(["Preserve", "Fit", "Actual"])
-        self.fit_combo.setToolTip(
-            "Preserve keeps the selected content inside the target tile.\n"
-            "Fit scales the extracted content to fill the target tile.\n"
-            "Actual keeps the source crop at its original pixel size with no resizing."
-        )
 
         self.resample_combo = QComboBox()
         self.resample_combo.addItems(["Nearest", "Bilinear", "Bicubic"])
@@ -75,30 +106,34 @@ class PreviewPanel(QWidget):
         self.save_button = QPushButton("Save Preview To Tray")
         self.save_button.clicked.connect(self.save_requested.emit)
 
-        controls = QGroupBox("Output")
-        controls_layout = QFormLayout(controls)
-        controls_layout.addRow("Width", self.width_spin)
-        controls_layout.addRow("Height", self.height_spin)
-        controls_layout.addRow("Fit Mode", self.fit_combo)
-        controls_layout.addRow("Sampling", self.resample_combo)
-
-        button_row = QHBoxLayout()
-        button_row.addWidget(self.save_button)
+        output_group = QGroupBox("Output")
+        output_layout = QVBoxLayout(output_group)
+        output_layout.addWidget(self.preview_canvas, 1)
+        output_layout.addWidget(self.size_label)
+        output_layout.addWidget(self.save_button)
+        form = QFormLayout()
+        form.addRow("Width", self.width_spin)
+        form.addRow("Height", self.height_spin)
+        form.addRow("Fit Mode", self.fit_combo)
+        form.addRow("Sampling", self.resample_combo)
+        output_layout.addLayout(form)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(self.preview_canvas, 1)
-        layout.addWidget(self.size_label)
-        layout.addWidget(controls)
-        layout.addLayout(button_row)
-        layout.addStretch(1)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(output_group, 1)
 
+        self.preview_canvas.color_picked.connect(self.color_picked.emit)
         self.width_spin.valueChanged.connect(self._emit_settings)
         self.height_spin.valueChanged.connect(self._emit_settings)
         self.fit_combo.currentIndexChanged.connect(self._emit_settings)
         self.resample_combo.currentIndexChanged.connect(self._emit_settings)
 
+    def set_eyedropper(self, enabled: bool) -> None:
+        self.preview_canvas.set_eyedropper(enabled)
+
     def set_preview_image(self, image: Image.Image | None) -> None:
         self._preview_image = image
+        self.preview_canvas.set_pil_image(image)
         if image is None:
             self.preview_canvas.clear()
             self.size_label.setText("Preview: no output")

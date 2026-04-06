@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtGui import QAction, QColor
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction, QColor, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QColorDialog,
     QFileDialog,
@@ -12,6 +13,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QSpinBox,
     QSplitter,
     QToolBar,
@@ -30,12 +32,17 @@ from src.core.palette import (
     palette_from_image,
     quantize_to_palette,
 )
+from src.core.persistent_palette import add_color_persistent, color_tooltip
 from src.core.pixel_document import PixelDocument, create_blank_pixel_map
 from src.ui.asset_tray import AssetTray
 from src.ui.palette_panel import PalettePanel
+from src.ui.persistent_palette_widget import PersistentPaletteWidget
+from src.ui.animation_editor_window import AnimationEditorWindow
 from src.ui.pixel_editor_window import PixelEditorWindow
 from src.ui.preview_panel import PreviewPanel
+from src.ui.reference_mapper_window import ReferenceMapperWindow
 from src.ui.source_canvas import SourceCanvas
+from src.ui.tile_layout_window import TileLayoutWindow
 
 
 class MainWindow(QMainWindow):
@@ -44,17 +51,27 @@ class MainWindow(QMainWindow):
         self.document = EditorDocument()
         self._asset_counter = 1
         self._pixel_windows: list[PixelEditorWindow] = []
-        self.setWindowTitle("Pixels Tile And Sprite Editor")
+        self._tool_windows: list[QMainWindow] = []
+        self.setWindowTitle("PixelForge")
         self.resize(1440, 920)
+
+        self._eyedropper_active = False
 
         self.source_canvas = SourceCanvas()
         self.preview_panel = PreviewPanel()
         self.palette_panel = PalettePanel()
         self.asset_tray = AssetTray()
+        self.persistent_palette = PersistentPaletteWidget()
 
         self._build_toolbar()
         self._build_layout()
         self._connect_signals()
+
+        self._eyedropper_shortcut = QShortcut(QKeySequence("I"), self)
+        self._eyedropper_shortcut.activated.connect(self._toggle_eyedropper)
+        self._escape_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
+        self._escape_shortcut.activated.connect(self._cancel_eyedropper)
+
         self.statusBar().showMessage("Import an image to begin")
 
     def _build_toolbar(self) -> None:
@@ -75,26 +92,51 @@ class MainWindow(QMainWindow):
         toolbar.addAction(delete_action)
 
         toolbar.addSeparator()
-        toolbar.addWidget(QLabel("Freehand: hold Shift and drag"))
+        self._eyedropper_action = QAction("Eyedropper (I)", self)
+        self._eyedropper_action.setCheckable(True)
+        self._eyedropper_action.triggered.connect(self._toggle_eyedropper)
+        toolbar.addAction(self._eyedropper_action)
+
+        toolbar.addSeparator()
+        anim_action = QAction("Animation Editor…", self)
+        anim_action.triggered.connect(self.open_animation_editor)
+        toolbar.addAction(anim_action)
+        ref_action = QAction("Reference Grid Mapper…", self)
+        ref_action.triggered.connect(self.open_reference_mapper)
+        toolbar.addAction(ref_action)
+        tile_layout_action = QAction("Tile Layout…", self)
+        tile_layout_action.triggered.connect(self.open_tile_layout)
+        toolbar.addAction(tile_layout_action)
 
     def _build_layout(self) -> None:
         central = QWidget()
         central_layout = QVBoxLayout(central)
+        central_layout.setContentsMargins(4, 4, 4, 4)
 
-        canvas_group = QGroupBox("Source Image")
-        canvas_layout = QVBoxLayout(canvas_group)
-        canvas_layout.addWidget(self.source_canvas)
+        self._canvas_group = QGroupBox("Source Image")
+        canvas_layout = QVBoxLayout(self._canvas_group)
+        canvas_layout.addWidget(self.source_canvas, 1)
 
-        helper_label = QLabel(
-            "Tips: left click adds polygon points, double click closes, drag handles to reshape, "
-            "drag inside a region to move it, Shift + drag draws a freehand selection, "
-            "mouse wheel zooms, middle mouse or Space + drag pans, and Ctrl + 0 resets the view."
-        )
-        helper_label.setWordWrap(True)
-        canvas_layout.addWidget(helper_label)
+        rect_tool_row = QHBoxLayout()
+        rect_tool_row.addWidget(QLabel("Drop rectangle:"))
+        self.rect_w_spin = QSpinBox()
+        self.rect_w_spin.setRange(1, 4096)
+        self.rect_w_spin.setValue(16)
+        self.rect_h_spin = QSpinBox()
+        self.rect_h_spin.setRange(1, 4096)
+        self.rect_h_spin.setValue(16)
+        rect_tool_row.addWidget(QLabel("W"))
+        rect_tool_row.addWidget(self.rect_w_spin)
+        rect_tool_row.addWidget(QLabel("H"))
+        rect_tool_row.addWidget(self.rect_h_spin)
+        self.drop_rect_button = QPushButton("Drop")
+        self.drop_rect_button.clicked.connect(self._drop_rect_selection)
+        rect_tool_row.addWidget(self.drop_rect_button)
+        rect_tool_row.addStretch(1)
+        canvas_layout.addLayout(rect_tool_row)
 
-        pixel_tools_group = QGroupBox("Pixel Map Tools")
-        pixel_tools_layout = QVBoxLayout(pixel_tools_group)
+        self._pixel_tools_group = QGroupBox("Pixel Map Tools")
+        pixel_tools_layout = QVBoxLayout(self._pixel_tools_group)
         blank_size_row = QHBoxLayout()
         self.blank_width_spin = QSpinBox()
         self.blank_width_spin.setRange(1, 1024)
@@ -108,37 +150,94 @@ class MainWindow(QMainWindow):
         blank_size_row.addWidget(self.blank_height_spin)
 
         self.open_blank_pixel_map_button = QPushButton("Open Blank Pixel Map")
-        self.open_preview_pixel_editor_button = QPushButton("Open Preview In Pixel Editor")
-        self.open_source_pixel_editor_button = QPushButton("Open Source In Pixel Editor")
+        self.open_preview_pixel_editor_button = QPushButton("Open Preview In PixelForge")
+        self.open_source_pixel_editor_button = QPushButton("Open Source In PixelForge")
+        for btn in (
+            self.open_blank_pixel_map_button,
+            self.open_preview_pixel_editor_button,
+            self.open_source_pixel_editor_button,
+        ):
+            btn.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
 
         pixel_tools_layout.addLayout(blank_size_row)
         pixel_tools_layout.addWidget(self.open_blank_pixel_map_button)
         pixel_tools_layout.addWidget(self.open_preview_pixel_editor_button)
         pixel_tools_layout.addWidget(self.open_source_pixel_editor_button)
-        canvas_layout.addWidget(pixel_tools_group)
 
-        right_column = QWidget()
-        right_layout = QVBoxLayout(right_column)
-        right_layout.addWidget(self.preview_panel, 3)
-        right_layout.addWidget(self.palette_panel, 2)
+        pixel_tools_row = QHBoxLayout()
+        pixel_tools_row.addWidget(self._pixel_tools_group, 0, Qt.AlignmentFlag.AlignLeft)
+        pixel_tools_row.addStretch(1)
+        canvas_layout.addLayout(pixel_tools_row)
 
-        top_splitter = QSplitter()
-        top_splitter.addWidget(canvas_group)
-        top_splitter.addWidget(right_column)
+        palette_merged = QGroupBox("Palette")
+        palette_merged.setMinimumHeight(40)
+        palette_merged_layout = QVBoxLayout(palette_merged)
+        palette_merged_layout.addWidget(self.palette_panel)
+        palette_merged_layout.addWidget(self.persistent_palette)
+
+        self.preview_panel.setMinimumHeight(40)
+
+        right_splitter = QSplitter(Qt.Orientation.Vertical)
+        right_splitter.setHandleWidth(6)
+        right_splitter.setChildrenCollapsible(False)
+        right_splitter.addWidget(self.preview_panel)
+        right_splitter.addWidget(palette_merged)
+        right_splitter.setStretchFactor(0, 3)
+        right_splitter.setStretchFactor(1, 2)
+        right_splitter.setSizes([420, 280])
+
+        self._canvas_group.setMinimumWidth(200)
+        self._canvas_group.setMinimumHeight(100)
+
+        top_splitter = QSplitter(Qt.Orientation.Horizontal)
+        top_splitter.setHandleWidth(6)
+        top_splitter.setChildrenCollapsible(False)
+        top_splitter.addWidget(self._canvas_group)
+        top_splitter.addWidget(right_splitter)
         top_splitter.setStretchFactor(0, 3)
         top_splitter.setStretchFactor(1, 2)
+        top_splitter.setSizes([860, 520])
 
-        asset_group = QGroupBox("Saved Tiles And Assets")
-        asset_layout = QVBoxLayout(asset_group)
+        self._asset_group = QGroupBox("Saved Tiles And Assets")
+        self._asset_group.setMinimumHeight(40)
+        asset_layout = QVBoxLayout(self._asset_group)
         asset_layout.addWidget(self.asset_tray)
 
-        central_layout.addWidget(top_splitter, 1)
-        central_layout.addWidget(asset_group)
+        main_splitter = QSplitter(Qt.Orientation.Vertical)
+        main_splitter.setHandleWidth(6)
+        main_splitter.setChildrenCollapsible(False)
+        main_splitter.addWidget(top_splitter)
+        main_splitter.addWidget(self._asset_group)
+        main_splitter.setStretchFactor(0, 5)
+        main_splitter.setStretchFactor(1, 1)
+        main_splitter.setSizes([720, 200])
+
+        central_layout.addWidget(main_splitter, 1)
         self.setCentralWidget(central)
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        self._apply_source_panel_widths()
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._apply_source_panel_widths()
+
+    def _apply_source_panel_widths(self) -> None:
+        w = self._canvas_group.width()
+        if w < 80:
+            return
+        self._pixel_tools_group.setMaximumWidth(max(100, int(w * 0.4)))
+        bw = max(72, int(w * 0.18))
+        self.open_blank_pixel_map_button.setMaximumWidth(bw)
+        self.open_preview_pixel_editor_button.setMaximumWidth(bw)
+        self.open_source_pixel_editor_button.setMaximumWidth(bw)
 
     def _connect_signals(self) -> None:
         self.source_canvas.selections_changed.connect(self._on_selections_changed)
         self.source_canvas.status_changed.connect(self.statusBar().showMessage)
+        self.source_canvas.color_picked.connect(self._on_eyedropper_color)
+        self.preview_panel.color_picked.connect(self._on_eyedropper_color)
         self.preview_panel.settings_changed.connect(self._on_preview_settings_changed)
         self.preview_panel.save_requested.connect(self.save_preview_to_tray)
         self.palette_panel.derive_from_preview_requested.connect(self.derive_palette_from_preview)
@@ -394,14 +493,84 @@ class MainWindow(QMainWindow):
         window.destroyed.connect(lambda *_args, target=window: self._remove_pixel_window(target))
         self._pixel_windows.append(window)
         window.show()
-        self.statusBar().showMessage(f"Opened pixel editor for {document.name}")
+        self.statusBar().showMessage(f"Opened PixelForge for {document.name}")
 
     def _remove_pixel_window(self, target: PixelEditorWindow) -> None:
         self._pixel_windows = [window for window in self._pixel_windows if window is not target]
 
+    def open_animation_editor(self) -> None:
+        window = AnimationEditorWindow(self, initial_palette=list(self.document.palette))
+        window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
+        self._tool_windows.append(window)
+        window.show()
+        self.statusBar().showMessage("Opened animation editor")
+
+    def open_reference_mapper(self) -> None:
+        window = ReferenceMapperWindow(self, initial_palette=list(self.document.palette))
+        window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
+        self._tool_windows.append(window)
+        window.show()
+        self.statusBar().showMessage("Opened reference grid mapper")
+
+    def open_tile_layout(self) -> None:
+        window = TileLayoutWindow(None, initial_palette=list(self.document.palette))
+        window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
+        self._tool_windows.append(window)
+        window.show()
+        self.statusBar().showMessage("Opened tile layout")
+
+    def _drop_rect_selection(self) -> None:
+        if self.document.source_image is None:
+            self.statusBar().showMessage("Load an image first")
+            return
+        w = self.rect_w_spin.value()
+        h = self.rect_h_spin.value()
+        self.source_canvas.drop_rect_selection(w, h)
+        self.statusBar().showMessage(f"Dropped {w}x{h} rectangle — drag to position, right-click to delete")
+
+    def _remove_tool_window(self, target: QMainWindow) -> None:
+        self._tool_windows = [window for window in self._tool_windows if window is not target]
+
+    def _toggle_eyedropper(self) -> None:
+        self._set_eyedropper(not self._eyedropper_active)
+
+    def _cancel_eyedropper(self) -> None:
+        if self._eyedropper_active:
+            self._set_eyedropper(False)
+
+    def _set_eyedropper(self, active: bool) -> None:
+        self._eyedropper_active = active
+        self._eyedropper_action.setChecked(active)
+        self.source_canvas.set_eyedropper(active)
+        self.preview_panel.set_eyedropper(active)
+        if active:
+            self.statusBar().showMessage("Eyedropper active — click a pixel to pick its color (Escape to cancel)")
+        else:
+            self.statusBar().showMessage("Eyedropper deactivated")
+
+    def _on_eyedropper_color(self, rgba: tuple) -> None:
+        color = (int(rgba[0]), int(rgba[1]), int(rgba[2]), int(rgba[3]))
+        is_new = self.persistent_palette.add_color(color)
+
+        self.document.palette = add_color_to_palette(
+            self.document.palette,
+            color,
+            max_colors=self.palette_panel.max_colors(),
+        )
+        self.palette_panel.set_palette(self.document.palette)
+
+        for win in self._pixel_windows:
+            win.add_external_color(color)
+
+        hex_str = color_tooltip(color)
+        if is_new:
+            self.statusBar().showMessage(f"Picked {hex_str}")
+        else:
+            self.statusBar().showMessage(f"Already in palette: {hex_str}")
+
     def _on_pixel_editor_asset_saved(self, name: str, image) -> None:
         self._add_asset(name, image.copy())
-        self.statusBar().showMessage(f"Saved pixel editor output as {name}")
+        self.statusBar().showMessage(f"Saved PixelForge output as {name}")
 
     def _add_asset(self, name: str, image, refresh: bool = True) -> None:
         self.document.assets.append(SavedAsset(name=name, image=image))

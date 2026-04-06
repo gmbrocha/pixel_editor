@@ -7,7 +7,7 @@ from src.ui.main_window import MainWindow
 
 def main() -> int:
     application = QApplication([])
-    application.setApplicationName("Pixels Tile Editor")
+    application.setApplicationName("PixelForge")
     window = MainWindow()
     window.show()
     return application.exec()

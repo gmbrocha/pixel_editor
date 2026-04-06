@@ -45,7 +45,10 @@ def extract_to_preview(
     source = image.convert("RGBA")
     mask = build_selection_mask(source.size, selections)
     masked = source.copy()
-    masked.putalpha(mask)
+    original_alpha = masked.getchannel("A")
+    from PIL import ImageChops
+    combined_alpha = ImageChops.multiply(original_alpha, mask)
+    masked.putalpha(combined_alpha)
 
     crop_box = mask.getbbox()
     if crop_box is None:

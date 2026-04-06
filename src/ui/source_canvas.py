@@ -15,6 +15,7 @@ from src.core.selection_models import (
 class SourceCanvas(QWidget):
     selections_changed = Signal(object)
     status_changed = Signal(str)
+    color_picked = Signal(tuple)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -32,15 +33,10 @@ class SourceCanvas(QWidget):
         self._is_panning = False
         self._pan_anchor = QPointF()
         self._space_pan_mode = False
+        self._eyedropper_mode = False
         self.setMinimumSize(480, 360)
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self.setToolTip(
-            "Left click to place polygon points. Double click or click near the first point to close.\n"
-            "Shift + drag to freehand a region.\n"
-            "Drag handles or whole selections to adjust them.\n"
-            "Mouse wheel zooms. Middle mouse or Space + drag pans."
-        )
 
     def sizeHint(self) -> QSize:
         return QSize(720, 540)
@@ -64,6 +60,13 @@ class SourceCanvas(QWidget):
     def set_tool_mode(self, mode: str) -> None:
         self._tool_mode = mode
 
+    def set_eyedropper(self, enabled: bool) -> None:
+        self._eyedropper_mode = enabled
+        if enabled:
+            self.setCursor(Qt.CursorShape.CrossCursor)
+        else:
+            self.unsetCursor()
+
     def clear_selections(self) -> None:
         self._selections = []
         self._active_selection_id = None
@@ -80,6 +83,33 @@ class SourceCanvas(QWidget):
         ]
         self._active_selection_id = None
         self.selections_changed.emit(self._selections)
+        self.update()
+
+    def delete_selection(self, selection_id: str) -> None:
+        self._selections = [s for s in self._selections if s.id != selection_id]
+        if self._active_selection_id == selection_id:
+            self._active_selection_id = None
+        self.selections_changed.emit(self._selections)
+        self.update()
+
+    def drop_rect_selection(self, width: int, height: int) -> None:
+        """Place a width x height rectangle selection at the center of the visible image."""
+        if self._image is None:
+            return
+        cx = self._image.width / 2.0
+        cy = self._image.height / 2.0
+        hw, hh = width / 2.0, height / 2.0
+        points = [
+            (cx - hw, cy - hh),
+            (cx + hw, cy - hh),
+            (cx + hw, cy + hh),
+            (cx - hw, cy + hh),
+        ]
+        selection = RegionSelection(kind="rect", points=points)
+        self._selections.append(selection)
+        self._active_selection_id = selection.id
+        self.selections_changed.emit(self._selections)
+        self.status_changed.emit(f"Dropped {width}x{height} rectangle")
         self.update()
 
     def paintEvent(self, _event) -> None:
@@ -105,6 +135,13 @@ class SourceCanvas(QWidget):
 
         image_point = self._widget_to_image(event.position())
         if image_point is None:
+            return
+
+        if self._eyedropper_mode and event.button() == Qt.MouseButton.LeftButton and self._image is not None:
+            px = int(max(0, min(image_point[0], self._image.width - 1)))
+            py = int(max(0, min(image_point[1], self._image.height - 1)))
+            rgba = self._image.convert("RGBA").getpixel((px, py))
+            self.color_picked.emit(tuple(rgba))
             return
 
         self.setFocus()
@@ -135,6 +172,11 @@ class SourceCanvas(QWidget):
             return
 
         if event.button() == Qt.MouseButton.RightButton:
+            hit = self._hit_test_selection(image_point)
+            if hit is not None:
+                self.delete_selection(hit.id)
+                self.status_changed.emit(f"Deleted selection")
+                return
             self._current_polygon.clear()
             self.status_changed.emit("Cancelled current polygon")
             self.update()
