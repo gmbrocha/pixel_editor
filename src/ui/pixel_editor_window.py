@@ -39,7 +39,10 @@ from src.core.pixel_document import (
     flip_image_horizontal,
     flip_image_vertical,
     lighten_image,
+    normalize_to_black_white,
     push_image_history,
+    replace_color,
+    replace_color_with_transparent,
     rotate_image_clockwise,
     rotate_image_counterclockwise,
     undo_image_history,
@@ -104,6 +107,19 @@ class PixelEditorWindow(QMainWindow):
         self.palette_layout.setContentsMargins(0, 0, 0, 0)
         self.palette_layout.setSpacing(2)
         self._palette_cols = 8
+        self._transparent_replace_target: tuple[int, int, int, int] | None = None
+        self._replace_with_color: tuple[int, int, int, int] = (255, 255, 255, 255)
+        self.transparent_replace_preview = QLabel("No replace target")
+        self.transparent_replace_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.transparent_replace_preview.setMinimumHeight(28)
+        self.replace_with_preview = QLabel()
+        self.replace_with_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.replace_with_preview.setMinimumHeight(28)
+        self.pick_replace_target_button = QPushButton("Pick Target Color")
+        self.transparent_replace_button = QPushButton("Replace Target -> Transparent")
+        self.replace_with_color_button = QPushButton("Replace Target -> Selected Color")
+        self.replace_with_button = QPushButton("Pick Replace With Color")
+        self.transparent_replace_clear_button = QPushButton("Clear")
 
         self.paint_radio = QRadioButton("Paint")
         self.select_radio = QRadioButton("Select")
@@ -140,6 +156,10 @@ class PixelEditorWindow(QMainWindow):
         self.darken_spin.setSuffix("%")
         self.darken_button = QPushButton("Darken Image")
         self.lighten_button = QPushButton("Lighten Image")
+        self.normalize_threshold_spin = QSpinBox()
+        self.normalize_threshold_spin.setRange(0, 255)
+        self.normalize_threshold_spin.setValue(48)
+        self.normalize_button = QPushButton("Normalize to B/W")
         self.undo_tone_button = QPushButton("Undo Tone")
         self.save_image_button = QPushButton("Save Image")
         self.save_asset_button = QPushButton("Save To Asset Tray")
@@ -204,6 +224,10 @@ class PixelEditorWindow(QMainWindow):
         lighten_action.triggered.connect(self.lighten_current_image)
         toolbar.addAction(lighten_action)
 
+        normalize_action = QAction("Normalize to B/W", self)
+        normalize_action.triggered.connect(self.normalize_current_image)
+        toolbar.addAction(normalize_action)
+
         undo_tone_action = QAction("Undo Tone", self)
         undo_tone_action.triggered.connect(self.undo_tone_adjustment)
         toolbar.addAction(undo_tone_action)
@@ -260,6 +284,18 @@ class PixelEditorWindow(QMainWindow):
         controls_layout.addWidget(self.add_palette_from_current_button)
         controls_layout.addWidget(self.export_palette_button)
         controls_layout.addSpacing(8)
+        controls_layout.addWidget(QLabel("Replace Target"))
+        controls_layout.addWidget(self.transparent_replace_preview)
+        controls_layout.addWidget(self.pick_replace_target_button)
+        controls_layout.addWidget(QLabel("Replace With"))
+        controls_layout.addWidget(self.replace_with_preview)
+        replace_row = QHBoxLayout()
+        replace_row.addWidget(self.transparent_replace_button)
+        replace_row.addWidget(self.replace_with_color_button)
+        replace_row.addWidget(self.replace_with_button)
+        replace_row.addWidget(self.transparent_replace_clear_button)
+        controls_layout.addLayout(replace_row)
+        controls_layout.addSpacing(8)
         controls_layout.addWidget(QLabel("Shade Ramp"))
         controls_layout.addWidget(self.shade_ramp_button)
         controls_layout.addWidget(self.shade_ramp_container)
@@ -275,6 +311,11 @@ class PixelEditorWindow(QMainWindow):
         controls_layout.addLayout(darken_row)
         controls_layout.addWidget(self.darken_button)
         controls_layout.addWidget(self.lighten_button)
+        normalize_row = QHBoxLayout()
+        normalize_row.addWidget(QLabel("Black cutoff"))
+        normalize_row.addWidget(self.normalize_threshold_spin)
+        controls_layout.addLayout(normalize_row)
+        controls_layout.addWidget(self.normalize_button)
         controls_layout.addWidget(self.undo_tone_button)
         controls_layout.addSpacing(12)
         controls_layout.addWidget(self.selection_summary)
@@ -346,12 +387,18 @@ class PixelEditorWindow(QMainWindow):
         self.palette_from_current_button.clicked.connect(self.palette_from_current_image)
         self.add_palette_from_current_button.clicked.connect(self.add_palette_from_current_image)
         self.export_palette_button.clicked.connect(self.export_palette)
+        self.pick_replace_target_button.clicked.connect(self._pick_replace_target_color)
+        self.transparent_replace_button.clicked.connect(self._replace_target_with_transparent)
+        self.replace_with_color_button.clicked.connect(self._replace_target_with_color)
+        self.replace_with_button.clicked.connect(self._pick_replace_with_color)
+        self.transparent_replace_clear_button.clicked.connect(self._clear_transparent_replace_target)
         self.flip_horizontal_button.clicked.connect(self.flip_horizontal)
         self.flip_vertical_button.clicked.connect(self.flip_vertical)
         self.rotate_clockwise_button.clicked.connect(self.rotate_clockwise)
         self.rotate_counterclockwise_button.clicked.connect(self.rotate_counterclockwise)
         self.darken_button.clicked.connect(self.darken_current_image)
         self.lighten_button.clicked.connect(self.lighten_current_image)
+        self.normalize_button.clicked.connect(self.normalize_current_image)
         self.undo_tone_button.clicked.connect(self.undo_tone_adjustment)
         self.save_image_button.clicked.connect(self.save_image)
         self.save_asset_button.clicked.connect(self.save_to_asset_tray)
@@ -362,6 +409,8 @@ class PixelEditorWindow(QMainWindow):
         self.canvas.image_changed.connect(self._on_canvas_image_changed)
         self.canvas.selection_changed.connect(self.selection_summary.setText)
         self.canvas.status_changed.connect(self.statusBar().showMessage)
+        self._update_transparent_replace_preview()
+        self._update_replace_with_preview()
 
     def open_image(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
@@ -507,12 +556,21 @@ class PixelEditorWindow(QMainWindow):
         self._reset_selection_after_transform()
         self.statusBar().showMessage(f"Lightened image by {percent}%")
 
+    def normalize_current_image(self) -> None:
+        threshold = self.normalize_threshold_spin.value()
+        push_image_history(self.document)
+        self.document.image = normalize_to_black_white(self.document.image, threshold)
+        self._reset_selection_after_transform()
+        self.statusBar().showMessage(
+            f"Normalized image to black/white with black cutoff {threshold}"
+        )
+
     def undo_tone_adjustment(self) -> None:
         if not undo_image_history(self.document):
-            self.statusBar().showMessage("No darken or lighten step to undo")
+            self.statusBar().showMessage("No darken, lighten, or normalize step to undo")
             return
         self._reset_selection_after_transform()
-        self.statusBar().showMessage("Undid last darken or lighten step")
+        self.statusBar().showMessage("Undid last darken, lighten, or normalize step")
 
     def save_to_asset_tray(self) -> None:
         self.asset_save_requested.emit(self.document.name, self.document.clone_image())
@@ -568,10 +626,19 @@ class PixelEditorWindow(QMainWindow):
 
         for i, color in enumerate(self.document.palette):
             button = ClickableColorButton(color)
-            button.clicked_color.connect(self._set_current_color)
+            button.clicked_color.connect(self._select_palette_color)
             row = i // self._palette_cols
             col = i % self._palette_cols
             self.palette_layout.addWidget(button, row, col)
+
+    def _select_palette_color(self, color: tuple[int, int, int, int]) -> None:
+        self._set_current_color(color)
+        if color[3] == 0:
+            self._clear_transparent_replace_target(show_message=False)
+            return
+        self._transparent_replace_target = color
+        self._update_transparent_replace_preview()
+        self.statusBar().showMessage("Selected palette color and armed transparent replace target")
 
     def _set_current_color(self, color: tuple[int, int, int, int]) -> None:
         self.document.current_color = color
@@ -690,6 +757,103 @@ class PixelEditorWindow(QMainWindow):
         self.transparent_display_button.setText("Transparent Color: Checker")
         self.transparent_display_button.setStyleSheet("")
         self.statusBar().showMessage("Transparent pixels shown as checkerboard")
+
+    def _replace_target_with_transparent(self) -> None:
+        if self._transparent_replace_target is None:
+            self.statusBar().showMessage("Choose a palette color to replace first")
+            return
+        replaced, count = replace_color_with_transparent(
+            self.document.image,
+            self._transparent_replace_target,
+        )
+        if count == 0:
+            self.statusBar().showMessage("No pixels matched the armed palette color")
+            return
+        push_image_history(self.document)
+        self.document.image = replaced
+        self.canvas.update()
+        self.statusBar().showMessage(f"Replaced {count} pixel{'s' if count != 1 else ''} with transparent")
+
+    def _pick_replace_with_color(self) -> None:
+        initial = QColor(*self._replace_with_color)
+        dialog = QColorDialog(initial, self)
+        dialog.setWindowTitle("Pick Replace With Color")
+        dialog.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel, True)
+        dialog.setOption(QColorDialog.ColorDialogOption.DontUseNativeDialog, True)
+        if dialog.exec() != QColorDialog.DialogCode.Accepted:
+            return
+        color = dialog.selectedColor()
+        self._replace_with_color = (color.red(), color.green(), color.blue(), color.alpha())
+        self._update_replace_with_preview()
+        r, g, b, a = self._replace_with_color
+        self.statusBar().showMessage(f"Selected replace-with color #{r:02X}{g:02X}{b:02X} / {a}")
+
+    def _pick_replace_target_color(self) -> None:
+        initial = QColor(*self._transparent_replace_target) if self._transparent_replace_target else QColor("#ff00ff")
+        dialog = QColorDialog(initial, self)
+        dialog.setWindowTitle("Pick Replace Target Color")
+        dialog.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel, True)
+        dialog.setOption(QColorDialog.ColorDialogOption.DontUseNativeDialog, True)
+        if dialog.exec() != QColorDialog.DialogCode.Accepted:
+            return
+        color = dialog.selectedColor()
+        self._transparent_replace_target = (color.red(), color.green(), color.blue(), color.alpha())
+        self._update_transparent_replace_preview()
+        r, g, b, a = self._transparent_replace_target
+        self.statusBar().showMessage(f"Selected replace target #{r:02X}{g:02X}{b:02X} / {a}")
+
+    def _replace_target_with_color(self) -> None:
+        if self._transparent_replace_target is None:
+            self.statusBar().showMessage("Choose a palette color to replace first")
+            return
+        replaced, count = replace_color(
+            self.document.image,
+            self._transparent_replace_target,
+            self._replace_with_color,
+        )
+        if count == 0:
+            self.statusBar().showMessage("No pixels matched the armed palette color")
+            return
+        push_image_history(self.document)
+        self.document.image = replaced
+        self.canvas.update()
+        r, g, b, a = self._replace_with_color
+        self.statusBar().showMessage(
+            f"Replaced {count} pixel{'s' if count != 1 else ''} with #{r:02X}{g:02X}{b:02X} / {a}"
+        )
+
+    def _clear_transparent_replace_target(self, show_message: bool = True) -> None:
+        self._transparent_replace_target = None
+        self._update_transparent_replace_preview()
+        if show_message:
+            self.statusBar().showMessage("Transparent replace target cleared")
+
+    def _update_transparent_replace_preview(self) -> None:
+        color = self._transparent_replace_target
+        self.transparent_replace_button.setEnabled(color is not None)
+        self.replace_with_color_button.setEnabled(color is not None)
+        if color is None:
+            self.transparent_replace_preview.setText("No replace target")
+            self.transparent_replace_preview.setStyleSheet("border: 1px solid #555; color: #bbb;")
+            return
+        red, green, blue, alpha = color
+        luma = 0.299 * red + 0.587 * green + 0.114 * blue
+        text_color = "#000" if luma > 128 else "#fff"
+        self.transparent_replace_preview.setText(f"Target: #{red:02X}{green:02X}{blue:02X} / {alpha}")
+        self.transparent_replace_preview.setStyleSheet(
+            f"background: rgba({red}, {green}, {blue}, {alpha});"
+            f"color: {text_color}; border: 1px solid #555;"
+        )
+
+    def _update_replace_with_preview(self) -> None:
+        red, green, blue, alpha = self._replace_with_color
+        luma = 0.299 * red + 0.587 * green + 0.114 * blue
+        text_color = "#000" if luma > 128 else "#fff"
+        self.replace_with_preview.setText(f"Replace With: #{red:02X}{green:02X}{blue:02X} / {alpha}")
+        self.replace_with_preview.setStyleSheet(
+            f"background: rgba({red}, {green}, {blue}, {alpha});"
+            f"color: {text_color}; border: 1px solid #555;"
+        )
 
     def _resize_canvas(self) -> None:
         new_w = self.resize_w_spin.value()

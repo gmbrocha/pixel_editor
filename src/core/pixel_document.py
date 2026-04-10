@@ -136,6 +136,47 @@ def lighten_image(image: Image.Image, percent: int) -> Image.Image:
     return lightened
 
 
+def normalize_to_black_white(image: Image.Image, black_threshold: int) -> Image.Image:
+    threshold = max(0, min(255, black_threshold))
+    source = image.convert("RGBA")
+    normalized = source.copy()
+
+    for y in range(source.height):
+        for x in range(source.width):
+            red, green, blue, alpha = source.getpixel((x, y))
+            if alpha == 0:
+                continue
+            luma = int(round(0.299 * red + 0.587 * green + 0.114 * blue))
+            normalized.putpixel(
+                (x, y),
+                (0, 0, 0, alpha) if luma <= threshold else (255, 255, 255, alpha),
+            )
+
+    return normalized
+
+
+def replace_color(image: Image.Image, color: Color, replacement: Color) -> tuple[Image.Image, int]:
+    if color[3] == 0:
+        return image.convert("RGBA").copy(), 0
+
+    source = image.convert("RGBA")
+    replaced = source.copy()
+    replacements = 0
+
+    for y in range(source.height):
+        for x in range(source.width):
+            if source.getpixel((x, y)) != color:
+                continue
+            replaced.putpixel((x, y), replacement)
+            replacements += 1
+
+    return replaced, replacements
+
+
+def replace_color_with_transparent(image: Image.Image, color: Color) -> tuple[Image.Image, int]:
+    return replace_color(image, color, (0, 0, 0, 0))
+
+
 def push_image_history(document: PixelDocument, max_entries: int = 20) -> None:
     document.image_history.append(document.image.copy())
     if len(document.image_history) > max_entries:

@@ -4,7 +4,10 @@ from src.core.pixel_document import (
     PixelDocument,
     darken_image,
     lighten_image,
+    normalize_to_black_white,
     push_image_history,
+    replace_color,
+    replace_color_with_transparent,
     undo_image_history,
 )
 
@@ -37,6 +40,64 @@ def test_lighten_image_increases_rgb_values_evenly_and_preserves_alpha():
 
     assert lightened.getpixel((0, 0)) == (139, 101, 64, 255)
     assert lightened.getpixel((1, 0)) == (71, 79, 86, 128)
+
+
+def test_normalize_to_black_white_maps_only_near_black_to_black() -> None:
+    image = Image.new("RGBA", (3, 1), (0, 0, 0, 0))
+    image.putpixel((0, 0), (20, 20, 20, 255))
+    image.putpixel((1, 0), (90, 90, 90, 255))
+    image.putpixel((2, 0), (200, 210, 220, 128))
+
+    normalized = normalize_to_black_white(image, 48)
+
+    assert normalized.getpixel((0, 0)) == (0, 0, 0, 255)
+    assert normalized.getpixel((1, 0)) == (255, 255, 255, 255)
+    assert normalized.getpixel((2, 0)) == (255, 255, 255, 128)
+
+
+def test_normalize_to_black_white_leaves_transparent_pixels_unchanged() -> None:
+    image = Image.new("RGBA", (1, 1), (10, 20, 30, 0))
+
+    normalized = normalize_to_black_white(image, 48)
+
+    assert normalized.getpixel((0, 0)) == (10, 20, 30, 0)
+
+
+def test_replace_color_with_transparent_only_replaces_exact_rgba_matches():
+    image = Image.new("RGBA", (3, 1), (0, 0, 0, 0))
+    image.putpixel((0, 0), (100, 50, 0, 255))
+    image.putpixel((1, 0), (100, 50, 0, 128))
+    image.putpixel((2, 0), (10, 20, 30, 255))
+
+    replaced, count = replace_color_with_transparent(image, (100, 50, 0, 255))
+
+    assert count == 1
+    assert replaced.getpixel((0, 0)) == (0, 0, 0, 0)
+    assert replaced.getpixel((1, 0)) == (100, 50, 0, 128)
+    assert replaced.getpixel((2, 0)) == (10, 20, 30, 255)
+
+
+def test_replace_color_with_transparent_ignores_transparent_target_color():
+    image = Image.new("RGBA", (1, 1), (0, 0, 0, 0))
+
+    replaced, count = replace_color_with_transparent(image, (0, 0, 0, 0))
+
+    assert count == 0
+    assert replaced.getpixel((0, 0)) == (0, 0, 0, 0)
+
+
+def test_replace_color_can_replace_exact_matches_with_white():
+    image = Image.new("RGBA", (3, 1), (0, 0, 0, 0))
+    image.putpixel((0, 0), (100, 50, 0, 255))
+    image.putpixel((1, 0), (100, 50, 0, 128))
+    image.putpixel((2, 0), (10, 20, 30, 255))
+
+    replaced, count = replace_color(image, (100, 50, 0, 255), (255, 255, 255, 255))
+
+    assert count == 1
+    assert replaced.getpixel((0, 0)) == (255, 255, 255, 255)
+    assert replaced.getpixel((1, 0)) == (100, 50, 0, 128)
+    assert replaced.getpixel((2, 0)) == (10, 20, 30, 255)
 
 
 def test_undo_image_history_restores_previous_image():

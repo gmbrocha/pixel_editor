@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -24,20 +25,14 @@ def add_color_to_palette(
 
 def palette_from_image(image: Image.Image, max_colors: int = 16) -> list[Color]:
     rgba = image.convert("RGBA")
-    quantized = rgba.convert("P", palette=Image.Palette.ADAPTIVE, colors=max_colors)
-    raw_palette = quantized.getpalette()
-    color_counts = quantized.getcolors(maxcolors=max_colors * 16) or []
-
-    colors: list[Color] = []
-    for _, index in sorted(color_counts, reverse=True):
-        offset = index * 3
-        rgb = tuple(raw_palette[offset : offset + 3])
-        alpha = 0 if index == 0 and not rgba.getbbox() else 255
-        color = (rgb[0], rgb[1], rgb[2], alpha)
-        if color not in colors:
-            colors.append(color)
-        if len(colors) >= max_colors:
-            break
+    color_counts = Counter(rgba.getdata())
+    colors = [
+        color
+        for color, _count in sorted(
+            color_counts.items(),
+            key=lambda item: (-item[1], item[0]),
+        )[:max_colors]
+    ]
 
     if not colors:
         colors.append((0, 0, 0, 0))
