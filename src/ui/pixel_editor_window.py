@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QAction, QColor
+from PySide6.QtCore import QMimeData, QPoint, Qt, Signal
+from PySide6.QtGui import QAction, QColor, QDrag, QMouseEvent, QPainter, QPixmap
 from PySide6.QtWidgets import (
+    QApplication,
     QButtonGroup,
     QColorDialog,
     QComboBox,
@@ -27,14 +28,21 @@ from PySide6.QtWidgets import (
 from src.core.image_io import load_image, save_image
 from src.core.palette import (
     add_color_to_palette,
+    export_palette_grid,
     export_palette_strip,
     load_palette_from_image,
     palette_from_image,
+    sort_palette,
 )
 from src.core.persistent_palette import merge_palettes
 from src.core.shade_ramp import shade_ramp
 from src.core.pixel_document import (
+    ColorShift,
     PixelDocument,
+    apply_color_shift,
+    apply_ramp_shifts,
+    calculate_color_shift,
+    calculate_ramp_shifts,
     darken_image,
     flip_image_horizontal,
     flip_image_vertical,
@@ -42,6 +50,7 @@ from src.core.pixel_document import (
     normalize_to_black_white,
     push_image_history,
     replace_color,
+    replace_colors,
     replace_color_with_transparent,
     rotate_image_clockwise,
     rotate_image_counterclockwise,
@@ -50,18 +59,85 @@ from src.core.pixel_document import (
 from src.ui.pixel_grid_canvas import PixelGridCanvas
 
 
+_COLOR_MIME_TYPE = "application/x-pixelforge-color"
+
+
+def _encode_color_payload(color: tuple[int, int, int, int]) -> bytes:
+    return ",".join(str(channel) for channel in color).encode("utf-8")
+
+
+def _decode_color_payload(mime) -> tuple[int, int, int, int] | None:
+    if not mime.hasFormat(_COLOR_MIME_TYPE):
+        return None
+    try:
+        payload = bytes(mime.data(_COLOR_MIME_TYPE)).decode("utf-8")
+        red, green, blue, alpha = (int(part) for part in payload.split(","))
+    except Exception:
+        return None
+    return (red, green, blue, alpha)
+
+
+def _color_drag_pixmap(size, color: tuple[int, int, int, int]) -> QPixmap:
+    pixmap = QPixmap(size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    if color[3] == 0:
+        painter.fillRect(0, 0, pixmap.width(), pixmap.height(), QColor("#444"))
+        painter.setPen(QColor("#ffffff"))
+        painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "T")
+    else:
+        painter.fillRect(pixmap.rect(), QColor(*color))
+    painter.setPen(QColor("#111111"))
+    painter.drawRect(pixmap.rect().adjusted(0, 0, -1, -1))
+    painter.end()
+    return pixmap
+
+
 class ClickableColorButton(QPushButton):
     clicked_color = Signal(tuple)
 
     def __init__(self, color: tuple[int, int, int, int], parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._color = color
+        self._drag_start_pos: QPoint | None = None
         self.setFixedSize(24, 24)
         self._apply_style()
         self.clicked.connect(self._emit_color)
+        self.setToolTip("Click to select or drag onto a replace color bar")
 
     def _emit_color(self) -> None:
         self.clicked_color.emit(self._color)
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._drag_start_pos = event.position().toPoint()
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if (
+            self._drag_start_pos is None
+            or not (event.buttons() & Qt.MouseButton.LeftButton)
+            or (event.position().toPoint() - self._drag_start_pos).manhattanLength()
+            < QApplication.startDragDistance()
+        ):
+            super().mouseMoveEvent(event)
+            return
+
+        drag = QDrag(self)
+        mime = QMimeData()
+        mime.setData(_COLOR_MIME_TYPE, _encode_color_payload(self._color))
+        drag.setMimeData(mime)
+        drag.setPixmap(self._drag_pixmap())
+        drag.exec(Qt.DropAction.CopyAction)
+        self._drag_start_pos = None
+        self.setDown(False)
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        self._drag_start_pos = None
+        super().mouseReleaseEvent(event)
+
+    def _drag_pixmap(self) -> QPixmap:
+        return _color_drag_pixmap(self.size(), self._color)
 
     def _apply_style(self) -> None:
         if self._color[3] == 0:
@@ -75,12 +151,259 @@ class ClickableColorButton(QPushButton):
             )
 
 
+class ColorDropLabel(QLabel):
+    color_dropped = Signal(tuple)
+
+    def __init__(self, text: str = "", parent: QWidget | None = None) -> None:
+        super().__init__(text, parent)
+        self._color: tuple[int, int, int, int] | None = None
+        self._drag_start_pos: QPoint | None = None
+        self.setAcceptDrops(True)
+
+    def set_color(self, color: tuple[int, int, int, int] | None) -> None:
+        self._color = color
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton and self._color is not None:
+            self._drag_start_pos = event.position().toPoint()
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if (
+            self._color is None
+            or self._drag_start_pos is None
+            or not (event.buttons() & Qt.MouseButton.LeftButton)
+            or (event.position().toPoint() - self._drag_start_pos).manhattanLength()
+            < QApplication.startDragDistance()
+        ):
+            super().mouseMoveEvent(event)
+            return
+
+        drag = QDrag(self)
+        mime = QMimeData()
+        mime.setData(_COLOR_MIME_TYPE, _encode_color_payload(self._color))
+        drag.setMimeData(mime)
+        drag.setPixmap(_color_drag_pixmap(self.size(), self._color))
+        drag.exec(Qt.DropAction.CopyAction)
+        self._drag_start_pos = None
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        self._drag_start_pos = None
+        super().mouseReleaseEvent(event)
+
+    def dragEnterEvent(self, event) -> None:
+        if _decode_color_payload(event.mimeData()) is not None:
+            event.acceptProposedAction()
+
+    def dragMoveEvent(self, event) -> None:
+        if _decode_color_payload(event.mimeData()) is not None:
+            event.acceptProposedAction()
+
+    def dropEvent(self, event) -> None:
+        color = _decode_color_payload(event.mimeData())
+        if color is None:
+            return
+        self.color_dropped.emit(color)
+        event.acceptProposedAction()
+
+
+class PaletteGridCell(QLabel):
+    color_dropped = Signal(int, object)
+    clear_requested = Signal(int)
+    clicked_color = Signal(object)
+
+    def __init__(self, index: int, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._index = index
+        self._color: tuple[int, int, int, int] | None = None
+        self._drag_start_pos: QPoint | None = None
+        self.setAcceptDrops(True)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setFixedSize(28, 28)
+        self.setToolTip("Drag colors in or out. Click to select. Right-click to clear.")
+        self._apply_style()
+
+    def set_index(self, index: int) -> None:
+        self._index = index
+
+    def color(self) -> tuple[int, int, int, int] | None:
+        return self._color
+
+    def set_color(self, color: tuple[int, int, int, int] | None) -> None:
+        self._color = color
+        self._apply_style()
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.RightButton:
+            self.clear_requested.emit(self._index)
+            return
+        if event.button() == Qt.MouseButton.LeftButton and self._color is not None:
+            self._drag_start_pos = event.position().toPoint()
+            self.clicked_color.emit(self._color)
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if (
+            self._color is None
+            or self._drag_start_pos is None
+            or not (event.buttons() & Qt.MouseButton.LeftButton)
+            or (event.position().toPoint() - self._drag_start_pos).manhattanLength()
+            < QApplication.startDragDistance()
+        ):
+            super().mouseMoveEvent(event)
+            return
+
+        drag = QDrag(self)
+        mime = QMimeData()
+        mime.setData(_COLOR_MIME_TYPE, _encode_color_payload(self._color))
+        drag.setMimeData(mime)
+        drag.setPixmap(self._drag_pixmap())
+        drag.exec(Qt.DropAction.CopyAction)
+        self._drag_start_pos = None
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        self._drag_start_pos = None
+        super().mouseReleaseEvent(event)
+
+    def dragEnterEvent(self, event) -> None:
+        if _decode_color_payload(event.mimeData()) is not None:
+            event.acceptProposedAction()
+
+    def dragMoveEvent(self, event) -> None:
+        if _decode_color_payload(event.mimeData()) is not None:
+            event.acceptProposedAction()
+
+    def dropEvent(self, event) -> None:
+        color = _decode_color_payload(event.mimeData())
+        if color is None:
+            return
+        self.color_dropped.emit(self._index, color)
+        event.acceptProposedAction()
+
+    def _apply_style(self) -> None:
+        if self._color is None:
+            self.setText("")
+            self.setStyleSheet("background: #232323; border: 1px dashed #666;")
+            return
+        if self._color[3] == 0:
+            self.setText("T")
+            self.setStyleSheet("background: #444; color: white; border: 1px solid #888;")
+            return
+        self.setText("")
+        self.setStyleSheet(
+            "background: rgba(%d, %d, %d, %d); border: 1px solid #111;"
+            % self._color
+        )
+
+    def _drag_pixmap(self) -> QPixmap:
+        return _color_drag_pixmap(self.size(), self._color or (0, 0, 0, 0))
+
+
+class PaletteGridWidget(QWidget):
+    cell_color_dropped = Signal(int, object)
+    cell_cleared = Signal(int)
+    cell_clicked = Signal(object)
+
+    def __init__(self, columns: int = 4, rows: int = 4, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._columns = max(1, columns)
+        self._rows = max(1, rows)
+        self._colors: list[tuple[int, int, int, int] | None] = [None] * (self._columns * self._rows)
+        self._layout = QGridLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(2)
+        self._rebuild_cells()
+
+    def dimensions(self) -> tuple[int, int]:
+        return self._columns, self._rows
+
+    def colors(self) -> list[tuple[int, int, int, int] | None]:
+        return list(self._colors)
+
+    def set_dimensions(self, columns: int, rows: int) -> None:
+        columns = max(1, columns)
+        rows = max(1, rows)
+        if (columns, rows) == (self._columns, self._rows):
+            return
+        resized: list[tuple[int, int, int, int] | None] = [None] * (columns * rows)
+        for index, color in enumerate(self._colors[: len(resized)]):
+            resized[index] = color
+        self._columns = columns
+        self._rows = rows
+        self._colors = resized
+        self._rebuild_cells()
+
+    def set_cell_color(self, index: int, color: tuple[int, int, int, int]) -> None:
+        if 0 <= index < len(self._colors):
+            self._colors[index] = color
+            cell = self._layout.itemAt(index).widget()
+            if isinstance(cell, PaletteGridCell):
+                cell.set_color(color)
+
+    def clear_cell(self, index: int) -> None:
+        if 0 <= index < len(self._colors):
+            self._colors[index] = None
+            cell = self._layout.itemAt(index).widget()
+            if isinstance(cell, PaletteGridCell):
+                cell.set_color(None)
+
+    def clear_all(self) -> None:
+        for index in range(len(self._colors)):
+            self.clear_cell(index)
+
+    def ordered_indices(self) -> list[int]:
+        return [
+            row * self._columns + col
+            for row in range(self._rows)
+            for col in range(self._columns)
+        ]
+
+    def ordered_colors(self, *, filled_only: bool = False) -> list[tuple[int, int, int, int] | None]:
+        colors = [self._colors[index] for index in self.ordered_indices()]
+        if filled_only:
+            return [color for color in colors if color is not None]
+        return colors
+
+    def append_colors(self, colors: list[tuple[int, int, int, int]]) -> int:
+        ordered_indices = self.ordered_indices()
+        start = len(self.ordered_colors(filled_only=True))
+        placed = 0
+        for color, index in zip(colors, ordered_indices[start:]):
+            self.set_cell_color(index, color)
+            placed += 1
+        return placed
+
+    def _rebuild_cells(self) -> None:
+        while self._layout.count():
+            item = self._layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+
+        for index, color in enumerate(self._colors):
+            cell = PaletteGridCell(index)
+            cell.set_color(color)
+            cell.color_dropped.connect(self.cell_color_dropped.emit)
+            cell.clear_requested.connect(self.cell_cleared.emit)
+            cell.clicked_color.connect(self.cell_clicked.emit)
+            row = index // self._columns
+            col = index % self._columns
+            self._layout.addWidget(cell, row, col)
+
+
 class PixelEditorWindow(QMainWindow):
     asset_save_requested = Signal(str, object)
 
-    def __init__(self, document: PixelDocument, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        document: PixelDocument,
+        parent: QWidget | None = None,
+        *,
+        headless: bool = False,
+    ) -> None:
         super().__init__(parent)
         self.document = document
+        self._headless = headless
         self.setWindowTitle(f"PixelForge - {document.name}")
         self.resize(1100, 820)
 
@@ -107,19 +430,40 @@ class PixelEditorWindow(QMainWindow):
         self.palette_layout.setContentsMargins(0, 0, 0, 0)
         self.palette_layout.setSpacing(2)
         self._palette_cols = 8
+        self.palette_grid_cols_spin = QSpinBox()
+        self.palette_grid_cols_spin.setRange(1, 16)
+        self.palette_grid_cols_spin.setValue(4)
+        self.palette_grid_rows_spin = QSpinBox()
+        self.palette_grid_rows_spin.setRange(1, 16)
+        self.palette_grid_rows_spin.setValue(4)
+        self.palette_grid_widget = PaletteGridWidget(4, 4)
+        self.add_palette_to_grid_button = QPushButton("Add Palette To Grid")
+        self.calculate_ramp_button = QPushButton("Calculate Ramp")
+        self.apply_ramp_replace_button = QPushButton("Ramp 1 -> Ramp 2")
+        self.export_palette_grid_button = QPushButton("Export Grid")
+        self.clear_palette_grid_button = QPushButton("Clear Grid")
         self._transparent_replace_target: tuple[int, int, int, int] | None = None
         self._replace_with_color: tuple[int, int, int, int] = (255, 255, 255, 255)
-        self.transparent_replace_preview = QLabel("No replace target")
+        self.transparent_replace_preview = ColorDropLabel("No replace target")
         self.transparent_replace_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.transparent_replace_preview.setMinimumHeight(28)
-        self.replace_with_preview = QLabel()
+        self.transparent_replace_preview.setToolTip("Drag a palette color here to set the replace target")
+        self.replace_with_preview = ColorDropLabel()
         self.replace_with_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.replace_with_preview.setMinimumHeight(28)
+        self.replace_with_preview.setToolTip("Drag a palette color here to set the replacement color")
         self.pick_replace_target_button = QPushButton("Pick Target Color")
         self.transparent_replace_button = QPushButton("Replace Target -> Transparent")
         self.replace_with_color_button = QPushButton("Replace Target -> Selected Color")
         self.replace_with_button = QPushButton("Pick Replace With Color")
+        self.add_replace_with_to_palette_button = QPushButton("Add To Palette")
         self.transparent_replace_clear_button = QPushButton("Clear")
+        self.calculate_change_button = QPushButton("Calculate Change")
+        self.change_target_button = QPushButton("Change Target")
+        self.color_shift_summary = QLabel("Delta: none")
+        self.color_shift_summary.setWordWrap(True)
+        self.color_shift_summary.setMinimumWidth(150)
+        self._stored_color_shift: ColorShift | None = None
 
         self.paint_radio = QRadioButton("Paint")
         self.select_radio = QRadioButton("Select")
@@ -146,6 +490,9 @@ class PixelEditorWindow(QMainWindow):
         self.palette_from_current_button = QPushButton("Palette From Current (replace)")
         self.add_palette_from_current_button = QPushButton("Add to Palette from Current")
         self.export_palette_button = QPushButton("Export Palette")
+        self.sort_palette_combo = QComboBox()
+        self.sort_palette_combo.addItems(["Brightness", "Hue"])
+        self.sort_palette_button = QPushButton("Sort Palette")
         self.flip_horizontal_button = QPushButton("Flip Horizontal")
         self.flip_vertical_button = QPushButton("Flip Vertical")
         self.rotate_clockwise_button = QPushButton("Rotate 90 CW")
@@ -277,24 +624,72 @@ class PixelEditorWindow(QMainWindow):
         controls_layout.addLayout(ref_row)
         controls_layout.addSpacing(12)
         controls_layout.addWidget(QLabel("Palette"))
-        controls_layout.addWidget(self.palette_container)
+        palette_row = QHBoxLayout()
+        palette_row.addWidget(self.palette_container, 1)
+        palette_grid_panel = QWidget()
+        palette_grid_panel_layout = QVBoxLayout(palette_grid_panel)
+        palette_grid_panel_layout.setContentsMargins(0, 0, 0, 0)
+        palette_grid_panel_layout.setSpacing(4)
+        palette_grid_panel_layout.addWidget(QLabel("Palette Grid"))
+        palette_grid_size_row = QHBoxLayout()
+        palette_grid_size_row.addWidget(QLabel("X"))
+        palette_grid_size_row.addWidget(self.palette_grid_cols_spin)
+        palette_grid_size_row.addWidget(QLabel("Y"))
+        palette_grid_size_row.addWidget(self.palette_grid_rows_spin)
+        palette_grid_panel_layout.addLayout(palette_grid_size_row)
+        palette_grid_panel_layout.addWidget(self.palette_grid_widget)
+        palette_grid_button_row = QHBoxLayout()
+        palette_grid_button_row.addWidget(self.add_palette_to_grid_button)
+        palette_grid_button_row.addWidget(self.calculate_ramp_button)
+        palette_grid_button_row.addWidget(self.apply_ramp_replace_button)
+        palette_grid_panel_layout.addLayout(palette_grid_button_row)
+        palette_grid_manage_row = QHBoxLayout()
+        palette_grid_manage_row.addWidget(self.export_palette_grid_button)
+        palette_grid_manage_row.addWidget(self.clear_palette_grid_button)
+        palette_grid_panel_layout.addLayout(palette_grid_manage_row)
+        palette_row.addWidget(palette_grid_panel)
+        controls_layout.addLayout(palette_row)
         controls_layout.addWidget(self.load_palette_button)
         controls_layout.addWidget(self.add_palette_from_file_button)
         controls_layout.addWidget(self.palette_from_current_button)
         controls_layout.addWidget(self.add_palette_from_current_button)
         controls_layout.addWidget(self.export_palette_button)
+        sort_palette_row = QHBoxLayout()
+        sort_palette_row.addWidget(self.sort_palette_combo)
+        sort_palette_row.addWidget(self.sort_palette_button)
+        controls_layout.addLayout(sort_palette_row)
         controls_layout.addSpacing(8)
-        controls_layout.addWidget(QLabel("Replace Target"))
-        controls_layout.addWidget(self.transparent_replace_preview)
-        controls_layout.addWidget(self.pick_replace_target_button)
-        controls_layout.addWidget(QLabel("Replace With"))
-        controls_layout.addWidget(self.replace_with_preview)
+        replace_section = QHBoxLayout()
+        replace_panel = QWidget()
+        replace_panel_layout = QVBoxLayout(replace_panel)
+        replace_panel_layout.setContentsMargins(0, 0, 0, 0)
+        replace_panel_layout.setSpacing(4)
+        replace_panel_layout.addWidget(QLabel("Replace Target"))
+        replace_panel_layout.addWidget(self.transparent_replace_preview)
+        replace_panel_layout.addWidget(self.pick_replace_target_button)
+        replace_panel_layout.addWidget(QLabel("Replace With"))
+        replace_panel_layout.addWidget(self.replace_with_preview)
         replace_row = QHBoxLayout()
         replace_row.addWidget(self.transparent_replace_button)
         replace_row.addWidget(self.replace_with_color_button)
         replace_row.addWidget(self.replace_with_button)
+        replace_row.addWidget(self.add_replace_with_to_palette_button)
         replace_row.addWidget(self.transparent_replace_clear_button)
-        controls_layout.addLayout(replace_row)
+        replace_panel_layout.addLayout(replace_row)
+        replace_section.addWidget(replace_panel, 1)
+
+        change_panel = QWidget()
+        change_panel_layout = QVBoxLayout(change_panel)
+        change_panel_layout.setContentsMargins(0, 0, 0, 0)
+        change_panel_layout.setSpacing(4)
+        change_panel_layout.addWidget(QLabel("Color Change"))
+        change_panel_layout.addWidget(self.color_shift_summary)
+        change_panel_layout.addWidget(self.calculate_change_button)
+        change_panel_layout.addWidget(self.change_target_button)
+        change_panel_layout.addStretch(1)
+        replace_section.addWidget(change_panel)
+
+        controls_layout.addLayout(replace_section)
         controls_layout.addSpacing(8)
         controls_layout.addWidget(QLabel("Shade Ramp"))
         controls_layout.addWidget(self.shade_ramp_button)
@@ -354,15 +749,30 @@ class PixelEditorWindow(QMainWindow):
         controls_panel = QWidget()
         controls_panel.setLayout(controls_layout)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(self.canvas)
+        if self._headless:
+            canvas_host = QLabel(
+                "Headless mode\n\n"
+                "Canvas rendering is disabled for this document.\n"
+                "Palette, ramp, replace, and save workflows remain available."
+            )
+            canvas_host.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            canvas_host.setMinimumSize(360, 360)
+            canvas_host.setStyleSheet("border: 1px solid #444; color: #bbb; padding: 24px;")
+        else:
+            scroll = QScrollArea()
+            scroll.setWidgetResizable(True)
+            scroll.setWidget(self.canvas)
+            canvas_host = scroll
 
-        central = QWidget()
-        layout = QHBoxLayout(central)
-        layout.addWidget(scroll, 1)
+        central_content = QWidget()
+        layout = QHBoxLayout(central_content)
+        layout.addWidget(canvas_host, 1)
         layout.addWidget(controls_panel)
-        self.setCentralWidget(central)
+
+        outer_scroll = QScrollArea()
+        outer_scroll.setWidgetResizable(True)
+        outer_scroll.setWidget(central_content)
+        self.setCentralWidget(outer_scroll)
 
     def _connect_signals(self) -> None:
         self.zoom_spin.valueChanged.connect(self.canvas.set_zoom)
@@ -387,11 +797,27 @@ class PixelEditorWindow(QMainWindow):
         self.palette_from_current_button.clicked.connect(self.palette_from_current_image)
         self.add_palette_from_current_button.clicked.connect(self.add_palette_from_current_image)
         self.export_palette_button.clicked.connect(self.export_palette)
+        self.sort_palette_button.clicked.connect(self.organize_palette)
+        self.palette_grid_cols_spin.valueChanged.connect(self._resize_palette_grid)
+        self.palette_grid_rows_spin.valueChanged.connect(self._resize_palette_grid)
+        self.add_palette_to_grid_button.clicked.connect(self._add_palette_to_grid)
+        self.calculate_ramp_button.clicked.connect(self._calculate_ramp_from_grid)
+        self.apply_ramp_replace_button.clicked.connect(self._apply_grid_ramp_replacement)
+        self.export_palette_grid_button.clicked.connect(self.export_palette_grid)
+        self.clear_palette_grid_button.clicked.connect(self._clear_palette_grid)
+        self.palette_grid_widget.cell_color_dropped.connect(self._on_palette_grid_color_dropped)
+        self.palette_grid_widget.cell_cleared.connect(self._on_palette_grid_cell_cleared)
+        self.palette_grid_widget.cell_clicked.connect(self._set_current_color)
         self.pick_replace_target_button.clicked.connect(self._pick_replace_target_color)
         self.transparent_replace_button.clicked.connect(self._replace_target_with_transparent)
         self.replace_with_color_button.clicked.connect(self._replace_target_with_color)
         self.replace_with_button.clicked.connect(self._pick_replace_with_color)
+        self.add_replace_with_to_palette_button.clicked.connect(self._add_replace_with_to_palette)
         self.transparent_replace_clear_button.clicked.connect(self._clear_transparent_replace_target)
+        self.calculate_change_button.clicked.connect(self._calculate_color_shift)
+        self.change_target_button.clicked.connect(self._apply_color_shift_to_target)
+        self.transparent_replace_preview.color_dropped.connect(self._drop_replace_target_color)
+        self.replace_with_preview.color_dropped.connect(self._drop_replace_with_color)
         self.flip_horizontal_button.clicked.connect(self.flip_horizontal)
         self.flip_vertical_button.clicked.connect(self.flip_vertical)
         self.rotate_clockwise_button.clicked.connect(self.rotate_clockwise)
@@ -411,6 +837,7 @@ class PixelEditorWindow(QMainWindow):
         self.canvas.status_changed.connect(self.statusBar().showMessage)
         self._update_transparent_replace_preview()
         self._update_replace_with_preview()
+        self._update_color_shift_summary()
 
     def open_image(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
@@ -516,6 +943,36 @@ class PixelEditorWindow(QMainWindow):
         export_palette_strip(self.document.palette, path)
         self.statusBar().showMessage(f"Exported palette to {Path(path).name}")
 
+    def organize_palette(self) -> None:
+        if not self.document.palette:
+            self.statusBar().showMessage("No palette to organize")
+            return
+        mode = "brightness" if self.sort_palette_combo.currentText() == "Brightness" else "hue"
+        self.document.palette = sort_palette(self.document.palette, mode)
+        self._refresh_palette_buttons()
+        self.statusBar().showMessage(f"Palette organized by {mode}")
+
+    def export_palette_grid(self) -> None:
+        columns, rows = self.palette_grid_widget.dimensions()
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export PixelForge Palette Grid",
+            f"{self.document.name}_palette_grid.png",
+            "PNG Image (*.png)",
+        )
+        if not path:
+            return
+        export_palette_grid(
+            self.palette_grid_widget.colors(),
+            columns,
+            rows,
+            path,
+        )
+        filled = sum(color is not None for color in self.palette_grid_widget.colors())
+        self.statusBar().showMessage(
+            f"Exported palette grid to {Path(path).name} ({filled}/{columns * rows} filled)"
+        )
+
     def flip_horizontal(self) -> None:
         self.document.image = flip_image_horizontal(self.document.image)
         self.document.selected_pixels.clear()
@@ -612,6 +1069,96 @@ class PixelEditorWindow(QMainWindow):
         self.document.selection_rect = None
         self.canvas.set_document(self.document)
         self.selection_summary.setText("No selection")
+
+    def _resize_palette_grid(self) -> None:
+        columns = self.palette_grid_cols_spin.value()
+        rows = self.palette_grid_rows_spin.value()
+        self.palette_grid_widget.set_dimensions(columns, rows)
+
+    def _on_palette_grid_color_dropped(
+        self,
+        index: int,
+        color: tuple[int, int, int, int],
+    ) -> None:
+        self.palette_grid_widget.set_cell_color(index, color)
+        slot = index + 1
+        self.statusBar().showMessage(f"Placed color into palette grid slot {slot}")
+
+    def _on_palette_grid_cell_cleared(self, index: int) -> None:
+        if self.palette_grid_widget.colors()[index] is None:
+            return
+        self.palette_grid_widget.clear_cell(index)
+        slot = index + 1
+        self.statusBar().showMessage(f"Cleared palette grid slot {slot}")
+
+    def _clear_palette_grid(self) -> None:
+        self.palette_grid_widget.clear_all()
+        self.statusBar().showMessage("Cleared palette grid")
+
+    def _add_palette_to_grid(self) -> None:
+        if not self.document.palette:
+            self.statusBar().showMessage("No palette to add to grid")
+            return
+        placed = self.palette_grid_widget.append_colors(self.document.palette)
+        if placed == 0:
+            self.statusBar().showMessage("Palette grid is full")
+            return
+        self.statusBar().showMessage(f"Added {placed} palette color{'s' if placed != 1 else ''} to grid")
+
+    def _calculate_ramp_from_grid(self) -> None:
+        source_ramp = self.palette_grid_widget.ordered_colors(filled_only=True)
+        if not source_ramp:
+            self.statusBar().showMessage("Add a ramp to the grid first")
+            return
+        if self._transparent_replace_target is None:
+            self.statusBar().showMessage("Choose a replace target color first")
+            return
+
+        if len(source_ramp) == 1:
+            projected_ramp = [self._transparent_replace_target]
+        else:
+            projected_ramp = apply_ramp_shifts(
+                self._transparent_replace_target,
+                calculate_ramp_shifts(source_ramp),
+            )
+
+        placed = self.palette_grid_widget.append_colors(projected_ramp)
+        if placed == 0:
+            self.statusBar().showMessage("Palette grid is full")
+            return
+        self.statusBar().showMessage(
+            f"Calculated ramp from target and appended {placed} color{'s' if placed != 1 else ''} to grid"
+        )
+
+    def _apply_grid_ramp_replacement(self) -> None:
+        ramp_colors = self.palette_grid_widget.ordered_colors(filled_only=True)
+        if len(ramp_colors) < 2 or len(ramp_colors) % 2 != 0:
+            self.statusBar().showMessage("Grid needs two equal-sized ramps")
+            return
+
+        midpoint = len(ramp_colors) // 2
+        first_ramp = ramp_colors[:midpoint]
+        second_ramp = ramp_colors[midpoint:]
+        replacements = {
+            source: target
+            for source, target in zip(first_ramp, second_ramp)
+            if source != target
+        }
+        if not replacements:
+            self.statusBar().showMessage("No ramp replacements to apply")
+            return
+
+        replaced, count = replace_colors(self.document.image, replacements)
+        if count == 0:
+            self.statusBar().showMessage("No pixels matched the first ramp colors")
+            return
+
+        push_image_history(self.document)
+        self.document.image = replaced
+        self.canvas.update()
+        self.statusBar().showMessage(
+            f"Replaced {count} pixel{'s' if count != 1 else ''} using ramp 1 -> ramp 2"
+        )
 
     def _refresh_palette_buttons(self) -> None:
         while self.palette_layout.count():
@@ -802,6 +1349,58 @@ class PixelEditorWindow(QMainWindow):
         r, g, b, a = self._transparent_replace_target
         self.statusBar().showMessage(f"Selected replace target #{r:02X}{g:02X}{b:02X} / {a}")
 
+    def _drop_replace_target_color(self, color: tuple[int, int, int, int]) -> None:
+        if color[3] == 0:
+            self._clear_transparent_replace_target(show_message=False)
+            self.statusBar().showMessage("Transparent palette color cannot be used as a replace target")
+            return
+        self._transparent_replace_target = color
+        self._update_transparent_replace_preview()
+        r, g, b, a = color
+        self.statusBar().showMessage(f"Dropped replace target #{r:02X}{g:02X}{b:02X} / {a}")
+
+    def _drop_replace_with_color(self, color: tuple[int, int, int, int]) -> None:
+        self._replace_with_color = color
+        self._update_replace_with_preview()
+        r, g, b, a = color
+        self.statusBar().showMessage(f"Dropped replace-with color #{r:02X}{g:02X}{b:02X} / {a}")
+
+    def _add_replace_with_to_palette(self) -> None:
+        self.document.palette = add_color_to_palette(self.document.palette, self._replace_with_color)
+        self._refresh_palette_buttons()
+        r, g, b, a = self._replace_with_color
+        self.statusBar().showMessage(
+            f"Added replace-with color #{r:02X}{g:02X}{b:02X} / {a} to palette"
+        )
+
+    def _calculate_color_shift(self) -> None:
+        if self._transparent_replace_target is None:
+            self.statusBar().showMessage("Choose a replace target color first")
+            return
+        self._stored_color_shift = calculate_color_shift(
+            self._transparent_replace_target,
+            self._replace_with_color,
+        )
+        self._update_color_shift_summary()
+        self.statusBar().showMessage("Stored HSVA color change from target to replace-with color")
+
+    def _apply_color_shift_to_target(self) -> None:
+        if self._stored_color_shift is None:
+            self.statusBar().showMessage("Calculate a color change first")
+            return
+        if self._transparent_replace_target is None:
+            self.statusBar().showMessage("Choose a replace target color first")
+            return
+        self._replace_with_color = apply_color_shift(
+            self._transparent_replace_target,
+            self._stored_color_shift,
+        )
+        self._update_replace_with_preview()
+        r, g, b, a = self._replace_with_color
+        self.statusBar().showMessage(
+            f"Applied stored change to target -> #{r:02X}{g:02X}{b:02X} / {a}"
+        )
+
     def _replace_target_with_color(self) -> None:
         if self._transparent_replace_target is None:
             self.statusBar().showMessage("Choose a palette color to replace first")
@@ -832,10 +1431,13 @@ class PixelEditorWindow(QMainWindow):
         color = self._transparent_replace_target
         self.transparent_replace_button.setEnabled(color is not None)
         self.replace_with_color_button.setEnabled(color is not None)
+        self._update_color_shift_summary()
         if color is None:
+            self.transparent_replace_preview.set_color(None)
             self.transparent_replace_preview.setText("No replace target")
             self.transparent_replace_preview.setStyleSheet("border: 1px solid #555; color: #bbb;")
             return
+        self.transparent_replace_preview.set_color(color)
         red, green, blue, alpha = color
         luma = 0.299 * red + 0.587 * green + 0.114 * blue
         text_color = "#000" if luma > 128 else "#fff"
@@ -846,6 +1448,7 @@ class PixelEditorWindow(QMainWindow):
         )
 
     def _update_replace_with_preview(self) -> None:
+        self.replace_with_preview.set_color(self._replace_with_color)
         red, green, blue, alpha = self._replace_with_color
         luma = 0.299 * red + 0.587 * green + 0.114 * blue
         text_color = "#000" if luma > 128 else "#fff"
@@ -854,6 +1457,25 @@ class PixelEditorWindow(QMainWindow):
             f"background: rgba({red}, {green}, {blue}, {alpha});"
             f"color: {text_color}; border: 1px solid #555;"
         )
+
+    def _update_color_shift_summary(self) -> None:
+        self.calculate_change_button.setEnabled(self._transparent_replace_target is not None)
+        self.change_target_button.setEnabled(
+            self._transparent_replace_target is not None and self._stored_color_shift is not None
+        )
+        if self._stored_color_shift is None:
+            self.color_shift_summary.setText("Delta: none")
+            self.color_shift_summary.setStyleSheet("border: 1px solid #555; color: #bbb; padding: 4px;")
+            return
+        shift = self._stored_color_shift
+        self.color_shift_summary.setText(
+            "Delta:\n"
+            f"H {shift.hue_degrees:+.1f} deg\n"
+            f"S {shift.saturation_delta * 100:+.1f}%\n"
+            f"V {shift.value_delta * 100:+.1f}%\n"
+            f"A {shift.alpha_delta:+d}"
+        )
+        self.color_shift_summary.setStyleSheet("border: 1px solid #555; padding: 4px;")
 
     def _resize_canvas(self) -> None:
         new_w = self.resize_w_spin.value()

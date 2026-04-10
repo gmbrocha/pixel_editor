@@ -29,11 +29,17 @@ from src.core.palette import (
     add_color_to_palette,
     export_palette_strip,
     load_palette_from_image,
+    load_palette_from_source,
     palette_from_image,
     quantize_to_palette,
+    sort_palette,
 )
 from src.core.persistent_palette import add_color_persistent, color_tooltip
-from src.core.pixel_document import PixelDocument, create_blank_pixel_map
+from src.core.pixel_document import (
+    PixelDocument,
+    create_blank_pixel_map,
+    replace_color_with_transparent,
+)
 from src.ui.asset_tray import AssetTray
 from src.ui.palette_panel import PalettePanel
 from src.ui.persistent_palette_widget import PersistentPaletteWidget
@@ -152,10 +158,14 @@ class MainWindow(QMainWindow):
         self.open_blank_pixel_map_button = QPushButton("Open Blank Pixel Map")
         self.open_preview_pixel_editor_button = QPushButton("Open Preview In PixelForge")
         self.open_source_pixel_editor_button = QPushButton("Open Source In PixelForge")
+        self.open_source_headless_button = QPushButton("Open Source Headless")
+        self.remove_white_background_button = QPushButton("Remove White Background")
         for btn in (
             self.open_blank_pixel_map_button,
             self.open_preview_pixel_editor_button,
             self.open_source_pixel_editor_button,
+            self.open_source_headless_button,
+            self.remove_white_background_button,
         ):
             btn.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
 
@@ -163,6 +173,8 @@ class MainWindow(QMainWindow):
         pixel_tools_layout.addWidget(self.open_blank_pixel_map_button)
         pixel_tools_layout.addWidget(self.open_preview_pixel_editor_button)
         pixel_tools_layout.addWidget(self.open_source_pixel_editor_button)
+        pixel_tools_layout.addWidget(self.open_source_headless_button)
+        pixel_tools_layout.addWidget(self.remove_white_background_button)
 
         pixel_tools_row = QHBoxLayout()
         pixel_tools_row.addWidget(self._pixel_tools_group, 0, Qt.AlignmentFlag.AlignLeft)
@@ -232,6 +244,7 @@ class MainWindow(QMainWindow):
         self.open_blank_pixel_map_button.setMaximumWidth(bw)
         self.open_preview_pixel_editor_button.setMaximumWidth(bw)
         self.open_source_pixel_editor_button.setMaximumWidth(bw)
+        self.open_source_headless_button.setMaximumWidth(bw)
 
     def _connect_signals(self) -> None:
         self.source_canvas.selections_changed.connect(self._on_selections_changed)
@@ -240,10 +253,13 @@ class MainWindow(QMainWindow):
         self.preview_panel.color_picked.connect(self._on_eyedropper_color)
         self.preview_panel.settings_changed.connect(self._on_preview_settings_changed)
         self.preview_panel.save_requested.connect(self.save_preview_to_tray)
+        self.preview_panel.load_reference_palette_requested.connect(self.load_reference_palette)
+        self.preview_panel.clear_reference_palette_requested.connect(self.clear_reference_palette)
         self.palette_panel.derive_from_preview_requested.connect(self.derive_palette_from_preview)
         self.palette_panel.load_palette_requested.connect(self.load_palette)
         self.palette_panel.export_palette_requested.connect(self.export_palette)
         self.palette_panel.custom_color_requested.connect(self.add_custom_palette_color)
+        self.palette_panel.sort_palette_requested.connect(self.organize_palette)
         self.palette_panel.apply_palette_to_preview_requested.connect(self.quantize_preview)
         self.palette_panel.apply_palette_to_source_requested.connect(self.apply_palette_to_source)
         self.asset_tray.import_requested.connect(self.import_asset)
@@ -254,6 +270,8 @@ class MainWindow(QMainWindow):
         self.open_blank_pixel_map_button.clicked.connect(self.open_blank_pixel_map)
         self.open_preview_pixel_editor_button.clicked.connect(self.open_preview_in_pixel_editor)
         self.open_source_pixel_editor_button.clicked.connect(self.open_source_in_pixel_editor)
+        self.open_source_headless_button.clicked.connect(self.open_source_headless_in_pixel_editor)
+        self.remove_white_background_button.clicked.connect(self.remove_white_background)
 
     def open_image(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
@@ -344,6 +362,30 @@ class MainWindow(QMainWindow):
         export_palette_strip(self.document.palette, path)
         self.statusBar().showMessage(f"Exported palette to {Path(path).name}")
 
+    def load_reference_palette(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Load Reference Palette",
+            "",
+            "Palette Sources (*.png *.bmp *.gif *.jpg *.jpeg *.webp *.txt *.hex *.pal)",
+        )
+        if not path:
+            return
+        try:
+            palette = load_palette_from_source(path, max_colors=256)
+        except Exception as exc:  # pragma: no cover - GUI feedback
+            QMessageBox.critical(self, "Reference palette load failed", str(exc))
+            return
+
+        self.preview_panel.set_reference_palette(palette, Path(path).name)
+        self.statusBar().showMessage(
+            f"Loaded reference palette from {Path(path).name} ({len(palette)} colors)"
+        )
+
+    def clear_reference_palette(self) -> None:
+        self.preview_panel.set_reference_palette([], None)
+        self.statusBar().showMessage("Cleared reference palette")
+
     def add_custom_palette_color(self) -> None:
         initial_color = QColor(255, 255, 255, 255)
         if self.document.palette:
@@ -360,6 +402,14 @@ class MainWindow(QMainWindow):
         )
         self.palette_panel.set_palette(self.document.palette)
         self.statusBar().showMessage("Added custom color to palette")
+
+    def organize_palette(self, mode: str) -> None:
+        if not self.document.palette:
+            self.statusBar().showMessage("No palette to organize")
+            return
+        self.document.palette = sort_palette(self.document.palette, mode)
+        self.palette_panel.set_palette(self.document.palette)
+        self.statusBar().showMessage(f"Palette organized by {mode}")
 
     def quantize_preview(self) -> None:
         if self.document.preview_image is None or not self.document.palette:
@@ -382,6 +432,27 @@ class MainWindow(QMainWindow):
         self.source_canvas.set_selections(self.document.selections)
         self._refresh_preview()
         self.statusBar().showMessage("Palette applied to source image")
+
+    def remove_white_background(self) -> None:
+        if self.document.source_image is None:
+            self.statusBar().showMessage("No source image loaded")
+            return
+
+        updated, replaced = replace_color_with_transparent(
+            self.document.source_image,
+            (255, 255, 255, 255),
+        )
+        if replaced == 0:
+            self.statusBar().showMessage("No pure white background pixels found")
+            return
+
+        self.document.source_image = updated
+        self.source_canvas.set_image(self.document.source_image)
+        self.source_canvas.set_selections(self.document.selections)
+        self._refresh_preview()
+        self.statusBar().showMessage(
+            f"Removed {replaced} pure white pixel{'s' if replaced != 1 else ''} from source image"
+        )
 
     def save_preview_to_tray(self) -> None:
         if self.document.preview_image is None:
@@ -476,6 +547,18 @@ class MainWindow(QMainWindow):
         )
         self._open_pixel_editor(document)
 
+    def open_source_headless_in_pixel_editor(self) -> None:
+        if self.document.source_image is None:
+            self.statusBar().showMessage("No source image loaded")
+            return
+        name = Path(self.document.source_path).stem if self.document.source_path else "source"
+        document = PixelDocument(
+            image=self.document.source_image.copy(),
+            name=name,
+            palette=list(self.document.palette),
+        )
+        self._open_pixel_editor(document, headless=True)
+
     def open_asset_in_pixel_editor(self, asset_id: str) -> None:
         asset = next((item for item in self.document.assets if item.id == asset_id), None)
         if asset is None:
@@ -487,13 +570,16 @@ class MainWindow(QMainWindow):
         )
         self._open_pixel_editor(document)
 
-    def _open_pixel_editor(self, document: PixelDocument) -> None:
-        window = PixelEditorWindow(document, self)
+    def _open_pixel_editor(self, document: PixelDocument, *, headless: bool = False) -> None:
+        window = PixelEditorWindow(document, self, headless=headless)
         window.asset_save_requested.connect(self._on_pixel_editor_asset_saved)
         window.destroyed.connect(lambda *_args, target=window: self._remove_pixel_window(target))
         self._pixel_windows.append(window)
         window.show()
-        self.statusBar().showMessage(f"Opened PixelForge for {document.name}")
+        if headless:
+            self.statusBar().showMessage(f"Opened PixelForge headless for {document.name}")
+        else:
+            self.statusBar().showMessage(f"Opened PixelForge for {document.name}")
 
     def _remove_pixel_window(self, target: PixelEditorWindow) -> None:
         self._pixel_windows = [window for window in self._pixel_windows if window is not target]

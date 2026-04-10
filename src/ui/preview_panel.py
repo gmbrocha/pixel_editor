@@ -3,12 +3,14 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QSlider,
     QSpinBox,
     QVBoxLayout,
     QWidget,
@@ -81,10 +83,14 @@ class PreviewPanel(QWidget):
     settings_changed = Signal(object)
     save_requested = Signal()
     color_picked = Signal(tuple)
+    load_reference_palette_requested = Signal()
+    clear_reference_palette_requested = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._preview_image: Image.Image | None = None
+        self._reference_palette: tuple[tuple[int, int, int, int], ...] = ()
+        self._reference_palette_name: str | None = None
 
         self.preview_canvas = PreviewCanvas()
         self.size_label = QLabel("Preview: no output")
@@ -103,7 +109,21 @@ class PreviewPanel(QWidget):
         self.resample_combo = QComboBox()
         self.resample_combo.addItems(["Nearest", "Bilinear", "Bicubic"])
 
-        self.save_button = QPushButton("Save Preview To Tray")
+        self.max_colors_slider = QSlider(Qt.Orientation.Horizontal)
+        self.max_colors_slider.setRange(0, 3)
+        self.max_colors_slider.setValue(2)
+        self.max_colors_value_label = QLabel(str(self.max_colors()))
+
+        self.dither_checkbox = QCheckBox("Dither output")
+        self.dither_checkbox.setChecked(False)
+
+        self.reference_palette_label = QLabel("Reference palette: none")
+        self.reference_palette_label.setWordWrap(True)
+
+        self.load_reference_palette_button = QPushButton("Load Reference Palette")
+        self.clear_reference_palette_button = QPushButton("Clear Reference")
+
+        self.save_button = QPushButton("Save Output To Tray")
         self.save_button.clicked.connect(self.save_requested.emit)
 
         output_group = QGroupBox("Output")
@@ -118,6 +138,22 @@ class PreviewPanel(QWidget):
         form.addRow("Sampling", self.resample_combo)
         output_layout.addLayout(form)
 
+        quant_group = QGroupBox("Palette Reduction")
+        quant_layout = QVBoxLayout(quant_group)
+        color_row = QHBoxLayout()
+        color_row.addWidget(QLabel("Max colors"))
+        color_row.addWidget(self.max_colors_slider, 1)
+        color_row.addWidget(self.max_colors_value_label)
+        quant_layout.addLayout(color_row)
+        quant_layout.addWidget(self.dither_checkbox)
+        quant_layout.addWidget(self.reference_palette_label)
+        ref_button_row = QHBoxLayout()
+        ref_button_row.addWidget(self.load_reference_palette_button)
+        ref_button_row.addWidget(self.clear_reference_palette_button)
+        quant_layout.addLayout(ref_button_row)
+        quant_layout.addWidget(QLabel("Applied automatically when sampling is Nearest"))
+        output_layout.addWidget(quant_group)
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(output_group, 1)
@@ -127,9 +163,29 @@ class PreviewPanel(QWidget):
         self.height_spin.valueChanged.connect(self._emit_settings)
         self.fit_combo.currentIndexChanged.connect(self._emit_settings)
         self.resample_combo.currentIndexChanged.connect(self._emit_settings)
+        self.max_colors_slider.valueChanged.connect(self._on_max_colors_changed)
+        self.dither_checkbox.toggled.connect(self._emit_settings)
+        self.load_reference_palette_button.clicked.connect(self.load_reference_palette_requested.emit)
+        self.clear_reference_palette_button.clicked.connect(self.clear_reference_palette_requested.emit)
 
     def set_eyedropper(self, enabled: bool) -> None:
         self.preview_canvas.set_eyedropper(enabled)
+
+    def set_reference_palette(
+        self,
+        palette: list[tuple[int, int, int, int]] | tuple[tuple[int, int, int, int], ...],
+        name: str | None = None,
+    ) -> None:
+        self._reference_palette = tuple(palette)
+        self._reference_palette_name = name
+        if self._reference_palette:
+            label = name or "custom"
+            self.reference_palette_label.setText(
+                f"Reference palette: {label} ({len(self._reference_palette)} colors)"
+            )
+        else:
+            self.reference_palette_label.setText("Reference palette: none")
+        self._emit_settings()
 
     def set_preview_image(self, image: Image.Image | None) -> None:
         self._preview_image = image
@@ -159,7 +215,17 @@ class PreviewPanel(QWidget):
             height=self.height_spin.value(),
             fit_mode=self.fit_combo.currentText(),
             resample_mode=self.resample_combo.currentText(),
+            max_colors=self.max_colors(),
+            dither=self.dither_checkbox.isChecked(),
+            reference_palette=self._reference_palette,
         )
 
     def _emit_settings(self) -> None:
         self.settings_changed.emit(self.settings())
+
+    def max_colors(self) -> int:
+        return [8, 16, 32, 64][self.max_colors_slider.value()]
+
+    def _on_max_colors_changed(self) -> None:
+        self.max_colors_value_label.setText(str(self.max_colors()))
+        self._emit_settings()

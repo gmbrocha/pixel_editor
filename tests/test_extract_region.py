@@ -65,3 +65,59 @@ def test_extract_actual_keeps_original_crop_size_without_resampling():
     assert preview.size == (4, 4)
     assert preview.getpixel((0, 0)) == (0, 0, 255, 255)
     assert preview.getpixel((3, 3)) == (0, 0, 255, 255)
+
+
+def test_extract_nearest_quantizes_output_palette():
+    image = Image.new("RGBA", (4, 1), (0, 0, 0, 0))
+    colors = [
+        (255, 0, 0, 255),
+        (240, 20, 20, 255),
+        (0, 0, 255, 255),
+        (20, 20, 240, 255),
+    ]
+    for index, color in enumerate(colors):
+        image.putpixel((index, 0), color)
+
+    selection = RegionSelection(
+        kind="polygon",
+        points=[(0, 0), (3, 0), (3, 0.9), (0, 0.9)],
+    )
+    preview = extract_to_preview(
+        image,
+        [selection],
+        ExtractSettings(
+            width=4,
+            height=1,
+            fit_mode="Fit",
+            resample_mode="Nearest",
+            max_colors=2,
+        ),
+    )
+    used = {preview.getpixel((x, 0)) for x in range(preview.width) if preview.getpixel((x, 0))[3] > 0}
+
+    assert len(used) == 2
+
+
+def test_extract_bilinear_skips_palette_quantization():
+    image = Image.new("RGBA", (2, 1), (0, 0, 0, 0))
+    image.putpixel((0, 0), (255, 0, 0, 255))
+    image.putpixel((1, 0), (0, 0, 255, 255))
+
+    selection = RegionSelection(
+        kind="polygon",
+        points=[(0, 0), (1, 0), (1, 0.9), (0, 0.9)],
+    )
+    preview = extract_to_preview(
+        image,
+        [selection],
+        ExtractSettings(
+            width=4,
+            height=1,
+            fit_mode="Fit",
+            resample_mode="Bilinear",
+            max_colors=2,
+        ),
+    )
+    used = {preview.getpixel((x, 0)) for x in range(preview.width) if preview.getpixel((x, 0))[3] > 0}
+
+    assert len(used) > 2

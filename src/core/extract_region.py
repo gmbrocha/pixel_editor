@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from PIL import Image, ImageDraw
 
+from src.core.palette import quantize_image
 from src.core.selection_models import RegionSelection
 
 
@@ -20,6 +21,9 @@ class ExtractSettings:
     height: int = 16
     fit_mode: str = "Preserve"
     resample_mode: str = "Nearest"
+    max_colors: int = 32
+    dither: bool = False
+    reference_palette: tuple[tuple[int, int, int, int], ...] = field(default_factory=tuple)
 
 
 def build_selection_mask(
@@ -56,17 +60,20 @@ def extract_to_preview(
 
     cropped = masked.crop(crop_box)
     if settings.fit_mode == "Actual":
-        return cropped
+        return _finalize_preview(cropped, settings)
 
     target_size = (settings.width, settings.height)
 
     if settings.fit_mode == "Fit":
-        return cropped.resize(target_size, RESAMPLE_MAP[settings.resample_mode])
+        return _finalize_preview(
+            cropped.resize(target_size, RESAMPLE_MAP[settings.resample_mode]),
+            settings,
+        )
 
     preview = Image.new("RGBA", target_size, (0, 0, 0, 0))
     if cropped.size == target_size:
         preview.alpha_composite(cropped)
-        return preview
+        return _finalize_preview(preview, settings)
 
     if cropped.width > settings.width or cropped.height > settings.height:
         scale = min(settings.width / cropped.width, settings.height / cropped.height)
@@ -77,4 +84,17 @@ def extract_to_preview(
         cropped = cropped.resize(new_size, RESAMPLE_MAP[settings.resample_mode])
 
     preview.alpha_composite(cropped, (0, 0))
-    return preview
+    return _finalize_preview(preview, settings)
+
+
+def _finalize_preview(image: Image.Image, settings: ExtractSettings) -> Image.Image:
+    if settings.resample_mode != "Nearest":
+        return image
+
+    return quantize_image(
+        image,
+        max_colors=settings.max_colors,
+        dither=settings.dither,
+        method=Image.Quantize.MEDIANCUT,
+        reference_palette=list(settings.reference_palette),
+    )

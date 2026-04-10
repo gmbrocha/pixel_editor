@@ -3,6 +3,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import (
+    QComboBox,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -46,6 +47,7 @@ class PalettePanel(QWidget):
     apply_palette_to_preview_requested = Signal()
     apply_palette_to_source_requested = Signal()
     custom_color_requested = Signal()
+    sort_palette_requested = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -54,6 +56,8 @@ class PalettePanel(QWidget):
         self.max_colors_spin = QSpinBox()
         self.max_colors_spin.setRange(2, 256)
         self.max_colors_spin.setValue(16)
+        self.sort_mode_combo = QComboBox()
+        self.sort_mode_combo.addItems(["Brightness", "Hue"])
 
         self.summary_label = QLabel("Palette colors: 0")
 
@@ -68,6 +72,9 @@ class PalettePanel(QWidget):
 
         custom_color_button = QPushButton("Add Custom Color")
         custom_color_button.clicked.connect(self.custom_color_requested.emit)
+
+        sort_button = QPushButton("Sort Palette")
+        sort_button.clicked.connect(self._emit_sort_requested)
 
         apply_preview_button = QPushButton("Quantize Preview")
         apply_preview_button.clicked.connect(self.apply_palette_to_preview_requested.emit)
@@ -86,6 +93,12 @@ class PalettePanel(QWidget):
         button_row.addWidget(export_button)
         button_row.addWidget(custom_color_button)
 
+        sort_row = QHBoxLayout()
+        sort_row.addWidget(QLabel("Sort"))
+        sort_row.addWidget(self.sort_mode_combo)
+        sort_row.addWidget(sort_button)
+        sort_row.addStretch(1)
+
         apply_row = QHBoxLayout()
         apply_row.addWidget(apply_preview_button)
         apply_row.addWidget(apply_source_button)
@@ -95,6 +108,7 @@ class PalettePanel(QWidget):
         layout.addWidget(self.swatches)
         layout.addWidget(self.summary_label)
         layout.addLayout(button_row)
+        layout.addLayout(sort_row)
         layout.addLayout(apply_row)
 
     def max_colors(self) -> int:
@@ -103,3 +117,7 @@ class PalettePanel(QWidget):
     def set_palette(self, palette: list[tuple[int, int, int, int]]) -> None:
         self.swatches.set_palette(palette)
         self.summary_label.setText(f"Palette colors: {len(palette)}")
+
+    def _emit_sort_requested(self) -> None:
+        mode = "brightness" if self.sort_mode_combo.currentText() == "Brightness" else "hue"
+        self.sort_palette_requested.emit(mode)
