@@ -5,7 +5,6 @@ from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
-    QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -120,8 +119,8 @@ class PreviewPanel(QWidget):
         self.reference_palette_label = QLabel("Reference palette: none")
         self.reference_palette_label.setWordWrap(True)
 
-        self.load_reference_palette_button = QPushButton("Load Reference Palette")
-        self.clear_reference_palette_button = QPushButton("Clear Reference")
+        self.load_reference_palette_button = QPushButton("Load Ref Palette")
+        self.clear_reference_palette_button = QPushButton("Clear Ref")
 
         self.save_button = QPushButton("Save Output To Tray")
         self.save_button.clicked.connect(self.save_requested.emit)
@@ -131,12 +130,14 @@ class PreviewPanel(QWidget):
         output_layout.addWidget(self.preview_canvas, 1)
         output_layout.addWidget(self.size_label)
         output_layout.addWidget(self.save_button)
-        form = QFormLayout()
-        form.addRow("Width", self.width_spin)
-        form.addRow("Height", self.height_spin)
-        form.addRow("Fit Mode", self.fit_combo)
-        form.addRow("Sampling", self.resample_combo)
-        output_layout.addLayout(form)
+        size_row = QHBoxLayout()
+        size_row.addWidget(QLabel("W"))
+        size_row.addWidget(self.width_spin)
+        size_row.addWidget(QLabel("H"))
+        size_row.addWidget(self.height_spin)
+        size_row.addWidget(self.fit_combo)
+        size_row.addWidget(self.resample_combo)
+        output_layout.addLayout(size_row)
 
         quant_group = QGroupBox("Palette Reduction")
         quant_layout = QVBoxLayout(quant_group)

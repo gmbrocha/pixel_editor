@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import numpy as np
+
 from PySide6.QtCore import QPoint, QRect, Qt, Signal, QSize
-from PySide6.QtGui import QColor, QMouseEvent, QPainter, QPen, QPixmap
-from PySide6.QtWidgets import QWidget
+from PySide6.QtGui import QColor, QImage, QMouseEvent, QPainter, QPen, QPixmap, QWheelEvent
+from PySide6.QtWidgets import QScrollArea, QWidget
 
 from src.core.pixel_document import PixelDocument, move_rect_contents, normalize_rect, rect_points
 
@@ -11,6 +13,7 @@ class PixelGridCanvas(QWidget):
     image_changed = Signal()
     selection_changed = Signal(str)
     status_changed = Signal(str)
+    zoom_changed = Signal(int)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -36,6 +39,9 @@ class PixelGridCanvas(QWidget):
         self._stamp_hover: tuple[int, int] | None = None
         self._reference_image: 'QPixmap | None' = None
         self._reference_opacity: float = 0.5
+        self._mid_drag: bool = False
+        self._mid_drag_origin: QPoint | None = None
+        self._parent_scroll: QScrollArea | None = None
         self.setMouseTracking(True)
         self.setMinimumSize(360, 360)
         self.setToolTip(
@@ -142,6 +148,31 @@ class PixelGridCanvas(QWidget):
         self._reference_image = None
         self.update()
 
+    def _pil_to_qpixmap(self, pil_img) -> QPixmap:
+        """Convert a PIL RGBA image to a QPixmap via numpy (fast bulk path)."""
+        arr = np.array(pil_img.convert("RGBA"))
+        h, w = arr.shape[:2]
+        # RGBA -> BGRA for QImage format
+        bgra = np.empty_like(arr)
+        bgra[:, :, 0] = arr[:, :, 2]
+        bgra[:, :, 1] = arr[:, :, 1]
+        bgra[:, :, 2] = arr[:, :, 0]
+        bgra[:, :, 3] = arr[:, :, 3]
+        qimg = QImage(bgra.data, w, h, w * 4, QImage.Format.Format_ARGB32)
+        return QPixmap.fromImage(qimg.copy())
+
+    def _build_checker_pixmap(self, w: int, h: int) -> QPixmap:
+        """Build a checkerboard pixmap at pixel resolution (1px per pixel)."""
+        arr = np.empty((h, w, 4), dtype=np.uint8)
+        for y in range(h):
+            for x in range(w):
+                if (x + y) % 2 == 0:
+                    arr[y, x] = [0x2d, 0x2d, 0x2d, 0xff]
+                else:
+                    arr[y, x] = [0x40, 0x40, 0x40, 0xff]
+        qimg = QImage(arr.data, w, h, w * 4, QImage.Format.Format_ARGB32)
+        return QPixmap.fromImage(qimg.copy())
+
     def paintEvent(self, _event) -> None:
         painter = QPainter(self)
         painter.fillRect(self.rect(), QColor("#202020"))
@@ -152,8 +183,9 @@ class PixelGridCanvas(QWidget):
 
         image = self._document.image
         z = self._zoom
-        canvas_w = image.width * z
-        canvas_h = image.height * z
+        img_w, img_h = image.width, image.height
+        canvas_w = img_w * z
+        canvas_h = img_h * z
 
         if self._reference_image is not None:
             painter.setOpacity(self._reference_opacity)
@@ -162,26 +194,41 @@ class PixelGridCanvas(QWidget):
             painter.setOpacity(1.0)
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
 
-        self._draw_onion_layer(painter, self._onion_prev, image.width, image.height, self._onion_opacity)
-        self._draw_onion_layer(painter, self._onion_next, image.width, image.height, self._onion_opacity * 0.6)
+        self._draw_onion_layer_fast(painter, self._onion_prev, img_w, img_h, self._onion_opacity)
+        self._draw_onion_layer_fast(painter, self._onion_next, img_w, img_h, self._onion_opacity * 0.6)
 
         has_ref = self._reference_image is not None
-        for y in range(image.height):
-            for x in range(image.width):
-                pixel = image.getpixel((x, y))
-                rect = self._pixel_rect(x, y)
-                if pixel[3] == 0:
-                    if not has_ref:
-                        self._draw_checker(painter, rect)
+
+        # Draw checkerboard for transparent pixels (only if no reference)
+        arr = np.array(image.convert("RGBA"))
+        if not has_ref:
+            transparent_mask = arr[:, :, 3] == 0
+            if transparent_mask.any():
+                if self._transparent_color is not None:
+                    checker = QPixmap(img_w, img_h)
+                    checker.fill(self._transparent_color)
                 else:
-                    painter.fillRect(rect, QColor(*pixel))
-                painter.setPen(QPen(QColor(40, 40, 40, 80 if has_ref else 255), 1))
-                painter.drawRect(rect)
+                    checker = self._build_checker_pixmap(img_w, img_h)
+                painter.drawPixmap(0, 0, canvas_w, canvas_h, checker)
+
+        # Draw the image as a single scaled pixmap
+        pixmap = self._pil_to_qpixmap(image)
+        painter.drawPixmap(0, 0, canvas_w, canvas_h, pixmap)
+
+        # Grid lines — skip at very low zoom for performance
+        if z >= 6:
+            grid_alpha = 80 if has_ref else 180
+            pen = QPen(QColor(40, 40, 40, grid_alpha), 1)
+            painter.setPen(pen)
+            for x in range(img_w + 1):
+                painter.drawLine(x * z, 0, x * z, canvas_h)
+            for y in range(img_h + 1):
+                painter.drawLine(0, y * z, canvas_w, y * z)
 
         self._draw_anchor_points(painter)
         self._draw_pivot_point(painter)
-        self._draw_frame_grid_overlay(painter, image.width, image.height)
-        self._draw_mirror_axis(painter, image.width, image.height)
+        self._draw_frame_grid_overlay(painter, img_w, img_h)
+        self._draw_mirror_axis(painter, img_w, img_h)
 
         self._draw_pixel_selection(painter)
         self._draw_rect_selection(painter)
@@ -189,6 +236,12 @@ class PixelGridCanvas(QWidget):
         self._draw_stamp_preview(painter)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.MiddleButton:
+            self._mid_drag = True
+            self._mid_drag_origin = event.globalPosition().toPoint()
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            return
+
         if self._document is None:
             return
 
@@ -244,6 +297,15 @@ class PixelGridCanvas(QWidget):
         self.update()
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if self._mid_drag and self._mid_drag_origin is not None:
+            scroll = self._scroll_area()
+            if scroll is not None:
+                delta = event.globalPosition().toPoint() - self._mid_drag_origin
+                scroll.horizontalScrollBar().setValue(scroll.horizontalScrollBar().value() - delta.x())
+                scroll.verticalScrollBar().setValue(scroll.verticalScrollBar().value() - delta.y())
+                self._mid_drag_origin = event.globalPosition().toPoint()
+            return
+
         if self._document is None:
             return
 
@@ -310,6 +372,34 @@ class PixelGridCanvas(QWidget):
             self._moving_selection = False
             self._move_origin = None
             self._last_paint_point = None
+        if event.button() == Qt.MouseButton.MiddleButton:
+            self._mid_drag = False
+            self._mid_drag_origin = None
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        delta = event.angleDelta().y()
+        if delta == 0:
+            return
+        step = max(1, self._zoom // 5)
+        new_zoom = self._zoom + step if delta > 0 else self._zoom - step
+        new_zoom = max(4, min(64, new_zoom))
+        if new_zoom != self._zoom:
+            self.set_zoom(new_zoom)
+            self.zoom_changed.emit(new_zoom)
+
+    def set_scroll_area(self, scroll: QScrollArea) -> None:
+        self._parent_scroll = scroll
+
+    def _scroll_area(self) -> QScrollArea | None:
+        if self._parent_scroll is not None:
+            return self._parent_scroll
+        p = self.parentWidget()
+        while p is not None:
+            if isinstance(p, QScrollArea):
+                return p
+            p = p.parentWidget()
+        return None
 
     def _paint_point(self, point: tuple[int, int]) -> None:
         if self._document is None:
@@ -385,7 +475,7 @@ class PixelGridCanvas(QWidget):
             painter.drawLine(0, y * z, img_w * z, y * z)
         painter.drawRect(0, 0, img_w * z, img_h * z)
 
-    def _draw_onion_layer(
+    def _draw_onion_layer_fast(
         self,
         painter: QPainter,
         layer: 'Image.Image | None',
@@ -396,13 +486,12 @@ class PixelGridCanvas(QWidget):
         if layer is None:
             return
         z = self._zoom
-        for y in range(min(layer.height, img_h)):
-            for x in range(min(layer.width, img_w)):
-                px = layer.getpixel((x, y))
-                if px[3] == 0:
-                    continue
-                c = QColor(px[0], px[1], px[2], int(px[3] * opacity))
-                painter.fillRect(x * z, y * z, z, z, c)
+        canvas_w = img_w * z
+        canvas_h = img_h * z
+        pixmap = self._pil_to_qpixmap(layer)
+        painter.setOpacity(opacity)
+        painter.drawPixmap(0, 0, canvas_w, canvas_h, pixmap)
+        painter.setOpacity(1.0)
 
     def _draw_anchor_points(self, painter: QPainter) -> None:
         z = self._zoom

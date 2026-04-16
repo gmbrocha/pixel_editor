@@ -49,6 +49,7 @@ from src.ui.preview_panel import PreviewPanel
 from src.ui.reference_mapper_window import ReferenceMapperWindow
 from src.ui.source_canvas import SourceCanvas
 from src.ui.tile_layout_window import TileLayoutWindow
+from src.ui.tileset_processor_window import TilesetProcessorWindow
 
 
 class MainWindow(QMainWindow):
@@ -113,6 +114,11 @@ class MainWindow(QMainWindow):
         tile_layout_action = QAction("Tile Layout…", self)
         tile_layout_action.triggered.connect(self.open_tile_layout)
         toolbar.addAction(tile_layout_action)
+
+        toolbar.addSeparator()
+        tileset_proc_action = QAction("Tileset Processor…", self)
+        tileset_proc_action.triggered.connect(self.open_tileset_processor)
+        toolbar.addAction(tileset_proc_action)
 
     def _build_layout(self) -> None:
         central = QWidget()
@@ -206,9 +212,9 @@ class MainWindow(QMainWindow):
         top_splitter.setChildrenCollapsible(False)
         top_splitter.addWidget(self._canvas_group)
         top_splitter.addWidget(right_splitter)
-        top_splitter.setStretchFactor(0, 3)
-        top_splitter.setStretchFactor(1, 2)
-        top_splitter.setSizes([860, 520])
+        top_splitter.setStretchFactor(0, 4)
+        top_splitter.setStretchFactor(1, 1)
+        top_splitter.setSizes([1060, 380])
 
         self._asset_group = QGroupBox("Saved Tiles And Assets")
         self._asset_group.setMinimumHeight(40)
@@ -604,6 +610,13 @@ class MainWindow(QMainWindow):
         self._tool_windows.append(window)
         window.show()
         self.statusBar().showMessage("Opened tile layout")
+
+    def open_tileset_processor(self) -> None:
+        window = TilesetProcessorWindow(self)
+        window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
+        self._tool_windows.append(window)
+        window.show()
+        self.statusBar().showMessage("Opened tileset processor")
 
     def _drop_rect_selection(self) -> None:
         if self.document.source_image is None:

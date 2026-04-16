@@ -3,10 +3,12 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFileDialog,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QMenu,
     QPushButton,
+    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
@@ -68,8 +70,9 @@ class PersistentPaletteWidget(QWidget):
         super().__init__(parent)
         self._palette: list[Color] = load_persistent_palette()
 
+        self._swatch_cols = 8
         self._swatch_container = QWidget()
-        self._swatch_layout = QHBoxLayout(self._swatch_container)
+        self._swatch_layout = QGridLayout(self._swatch_container)
         self._swatch_layout.setContentsMargins(0, 0, 0, 0)
         self._swatch_layout.setSpacing(2)
 
@@ -122,16 +125,16 @@ class PersistentPaletteWidget(QWidget):
                 w.deleteLater()
 
         if not self._palette:
-            self._swatch_layout.addWidget(QLabel("No colors saved"))
-            self._swatch_layout.addStretch(1)
+            self._swatch_layout.addWidget(QLabel("No colors saved"), 0, 0)
             return
 
-        for c in self._palette:
+        for i, c in enumerate(self._palette):
             sw = _PaletteSwatch(c)
             sw.color_selected.connect(self.color_selected.emit)
             sw.remove_requested.connect(self._remove_color)
-            self._swatch_layout.addWidget(sw)
-        self._swatch_layout.addStretch(1)
+            row = i // self._swatch_cols
+            col = i % self._swatch_cols
+            self._swatch_layout.addWidget(sw, row, col)
 
     def _remove_color(self, color: Color) -> None:
         if color in self._palette:

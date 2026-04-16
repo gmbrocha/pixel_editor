@@ -4,6 +4,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import (
     QComboBox,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -87,11 +88,12 @@ class PalettePanel(QWidget):
         top_row.addWidget(self.max_colors_spin)
         top_row.addStretch(1)
 
-        button_row = QHBoxLayout()
-        button_row.addWidget(derive_button)
-        button_row.addWidget(load_button)
-        button_row.addWidget(export_button)
-        button_row.addWidget(custom_color_button)
+        button_grid = QGridLayout()
+        button_grid.setContentsMargins(0, 0, 0, 0)
+        button_grid.addWidget(derive_button, 0, 0)
+        button_grid.addWidget(load_button, 0, 1)
+        button_grid.addWidget(export_button, 1, 0)
+        button_grid.addWidget(custom_color_button, 1, 1)
 
         sort_row = QHBoxLayout()
         sort_row.addWidget(QLabel("Sort"))
@@ -102,12 +104,13 @@ class PalettePanel(QWidget):
         apply_row = QHBoxLayout()
         apply_row.addWidget(apply_preview_button)
         apply_row.addWidget(apply_source_button)
+        apply_row.addStretch(1)
 
         layout = QVBoxLayout(self)
         layout.addLayout(top_row)
         layout.addWidget(self.swatches)
         layout.addWidget(self.summary_label)
-        layout.addLayout(button_row)
+        layout.addLayout(button_grid)
         layout.addLayout(sort_row)
         layout.addLayout(apply_row)
 
