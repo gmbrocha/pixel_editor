@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from PySide6.QtCore import QPoint, QRect, Qt, Signal, QSize
-from PySide6.QtGui import QColor, QImage, QMouseEvent, QPainter, QPen, QPixmap, QWheelEvent
+from PySide6.QtCore import QPoint, QRect, Qt, Signal, QSize, QTimer
+from PySide6.QtGui import QColor, QImage, QKeyEvent, QMouseEvent, QPainter, QPen, QPixmap, QWheelEvent
 from PySide6.QtWidgets import QScrollArea, QWidget
 
 from src.core.pixel_document import PixelDocument, move_rect_contents, normalize_rect, rect_points
@@ -19,6 +19,8 @@ class PixelGridCanvas(QWidget):
         super().__init__(parent)
         self._document: PixelDocument | None = None
         self._zoom = 20
+        self._view_margin = 600
+        self._last_image_size: tuple[int, int] | None = None
         self._mode = "paint"
         self._frame_grid: tuple[int, int] | None = None
         self._onion_prev: 'Image.Image | None' = None
@@ -43,26 +45,50 @@ class PixelGridCanvas(QWidget):
         self._mid_drag_origin: QPoint | None = None
         self._parent_scroll: QScrollArea | None = None
         self.setMouseTracking(True)
-        self.setMinimumSize(360, 360)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setToolTip(
             "Paint mode: click or drag to paint. Shift+drag fills a rectangle.\n"
             "Select mode: drag to create a rectangle, Ctrl+click toggles pixels.\n"
             "Stamp mode: click to place the copied stamp.\n"
-            "Alt+drag inside a selection moves it."
+            "Alt+drag inside a selection moves it.\n"
+            "Middle-mouse drag or arrow keys to pan the view."
         )
 
     def sizeHint(self) -> QSize:
+        margin = self._view_margin * 2
         if self._document is None:
-            return QSize(480, 480)
+            return QSize(480 + margin, 480 + margin)
         return QSize(
-            max(320, self._document.image.width * self._zoom + 1),
-            max(320, self._document.image.height * self._zoom + 1),
+            self._document.image.width * self._zoom + 1 + margin,
+            self._document.image.height * self._zoom + 1 + margin,
         )
 
+    def minimumSizeHint(self) -> QSize:
+        # QScrollArea uses minimumSizeHint (not sizeHint) to decide when scroll
+        # bars are needed. Returning the same size guarantees the scroll area
+        # always treats us as the full image+margin size, even with
+        # widgetResizable enabled.
+        return self.sizeHint()
+
+    def _apply_canvas_size(self) -> None:
+        """Force the widget to the size of its sizeHint, in case the scroll area
+        is in widgetResizable=False mode and won't size us automatically."""
+        target = self.sizeHint()
+        if self.size() != target:
+            self.resize(target)
+
     def set_document(self, document: PixelDocument) -> None:
+        size_changed = (
+            self._last_image_size is None
+            or self._last_image_size != (document.image.width, document.image.height)
+        )
         self._document = document
+        self._last_image_size = (document.image.width, document.image.height)
         self.updateGeometry()
+        self._apply_canvas_size()
         self.update()
+        if size_changed:
+            QTimer.singleShot(0, self.center_view_on_image)
 
     def set_mode(self, mode: str) -> None:
         self._mode = mode
@@ -72,9 +98,29 @@ class PixelGridCanvas(QWidget):
         self.update()
 
     def set_zoom(self, zoom: int) -> None:
+        if zoom == self._zoom:
+            return
+        scroll = self._scroll_area()
+        focus_image_xy: tuple[float, float] | None = None
+        if scroll is not None and self._document is not None:
+            viewport = scroll.viewport()
+            cx = scroll.horizontalScrollBar().value() + viewport.width() / 2.0
+            cy = scroll.verticalScrollBar().value() + viewport.height() / 2.0
+            focus_image_xy = (
+                (cx - self._view_margin) / self._zoom,
+                (cy - self._view_margin) / self._zoom,
+            )
+
         self._zoom = zoom
         self.updateGeometry()
+        self._apply_canvas_size()
         self.update()
+
+        if focus_image_xy is not None and scroll is not None:
+            ix, iy = focus_image_xy
+            target_x = int(self._view_margin + ix * self._zoom - viewport.width() / 2.0)
+            target_y = int(self._view_margin + iy * self._zoom - viewport.height() / 2.0)
+            QTimer.singleShot(0, lambda: self._set_scroll_position(target_x, target_y))
 
     def set_onion_skin(
         self,
@@ -175,7 +221,7 @@ class PixelGridCanvas(QWidget):
 
     def paintEvent(self, _event) -> None:
         painter = QPainter(self)
-        painter.fillRect(self.rect(), QColor("#202020"))
+        painter.fillRect(self.rect(), QColor("#1a1a1a"))
         if self._document is None:
             painter.setPen(QColor("#bdbdbd"))
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "No pixel document loaded")
@@ -186,6 +232,10 @@ class PixelGridCanvas(QWidget):
         img_w, img_h = image.width, image.height
         canvas_w = img_w * z
         canvas_h = img_h * z
+
+        m = self._view_margin
+        painter.fillRect(QRect(m - 8, m - 8, canvas_w + 16, canvas_h + 16), QColor("#202020"))
+        painter.translate(m, m)
 
         if self._reference_image is not None:
             painter.setOpacity(self._reference_opacity)
@@ -236,6 +286,7 @@ class PixelGridCanvas(QWidget):
         self._draw_stamp_preview(painter)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
+        self.setFocus(Qt.FocusReason.MouseFocusReason)
         if event.button() == Qt.MouseButton.MiddleButton:
             self._mid_drag = True
             self._mid_drag_origin = event.globalPosition().toPoint()
@@ -390,6 +441,8 @@ class PixelGridCanvas(QWidget):
 
     def set_scroll_area(self, scroll: QScrollArea) -> None:
         self._parent_scroll = scroll
+        self._apply_canvas_size()
+        QTimer.singleShot(0, self.center_view_on_image)
 
     def _scroll_area(self) -> QScrollArea | None:
         if self._parent_scroll is not None:
@@ -400,6 +453,63 @@ class PixelGridCanvas(QWidget):
                 return p
             p = p.parentWidget()
         return None
+
+    def _set_scroll_position(self, x: int, y: int) -> None:
+        scroll = self._scroll_area()
+        if scroll is None:
+            return
+        h_bar = scroll.horizontalScrollBar()
+        v_bar = scroll.verticalScrollBar()
+        h_bar.setValue(max(h_bar.minimum(), min(h_bar.maximum(), x)))
+        v_bar.setValue(max(v_bar.minimum(), min(v_bar.maximum(), y)))
+
+    def center_view_on_image(self) -> None:
+        """Scroll the parent scroll area so the image is centered in the viewport."""
+        scroll = self._scroll_area()
+        if scroll is None or self._document is None:
+            return
+        viewport = scroll.viewport()
+        img_w = self._document.image.width * self._zoom
+        img_h = self._document.image.height * self._zoom
+        target_x = int(self._view_margin + img_w / 2 - viewport.width() / 2)
+        target_y = int(self._view_margin + img_h / 2 - viewport.height() / 2)
+        self._set_scroll_position(target_x, target_y)
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        scroll = self._scroll_area()
+        if scroll is None:
+            super().keyPressEvent(event)
+            return
+
+        key = event.key()
+        h_bar = scroll.horizontalScrollBar()
+        v_bar = scroll.verticalScrollBar()
+        small_step = max(8, self._zoom * 2)
+        large_step = max(scroll.viewport().width(), scroll.viewport().height()) // 2
+
+        if event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
+            step = large_step
+        else:
+            step = small_step
+
+        if key == Qt.Key.Key_Left:
+            h_bar.setValue(h_bar.value() - step)
+        elif key == Qt.Key.Key_Right:
+            h_bar.setValue(h_bar.value() + step)
+        elif key == Qt.Key.Key_Up:
+            v_bar.setValue(v_bar.value() - step)
+        elif key == Qt.Key.Key_Down:
+            v_bar.setValue(v_bar.value() + step)
+        elif key == Qt.Key.Key_PageUp:
+            v_bar.setValue(v_bar.value() - scroll.viewport().height())
+        elif key == Qt.Key.Key_PageDown:
+            v_bar.setValue(v_bar.value() + scroll.viewport().height())
+        elif key == Qt.Key.Key_Home:
+            self.center_view_on_image()
+        else:
+            super().keyPressEvent(event)
+            return
+        event.accept()
 
     def _paint_point(self, point: tuple[int, int]) -> None:
         if self._document is None:
@@ -587,8 +697,8 @@ class PixelGridCanvas(QWidget):
     def _event_to_pixel(self, point: QPoint) -> tuple[int, int] | None:
         if self._document is None:
             return None
-        x = point.x() // self._zoom
-        y = point.y() // self._zoom
+        x = (point.x() - self._view_margin) // self._zoom
+        y = (point.y() - self._view_margin) // self._zoom
         if x < 0 or y < 0 or x >= self._document.image.width or y >= self._document.image.height:
             return None
         return x, y

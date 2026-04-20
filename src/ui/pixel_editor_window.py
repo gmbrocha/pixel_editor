@@ -46,6 +46,8 @@ from src.core.pixel_document import (
     calculate_color_shift,
     calculate_ramp_shifts,
     darken_image,
+    dilate_color,
+    erode_color,
     flip_image_horizontal,
     flip_image_vertical,
     lighten_image,
@@ -467,6 +469,25 @@ class PixelEditorWindow(QMainWindow):
         self.color_shift_summary.setMinimumWidth(150)
         self._stored_color_shift: ColorShift | None = None
 
+        self._morph_color: tuple[int, int, int, int] | None = None
+        self.morph_color_preview = ColorDropLabel("No source color")
+        self.morph_color_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.morph_color_preview.setMinimumHeight(28)
+        self.morph_color_preview.setToolTip(
+            "Drag a palette color here, or click Pick, to set the source color "
+            "that Dilate/Erode will operate on."
+        )
+        self.morph_pick_button = QPushButton("Pick")
+        self.morph_thickness_spin = QSpinBox()
+        self.morph_thickness_spin.setRange(1, 32)
+        self.morph_thickness_spin.setValue(1)
+        self.morph_thickness_spin.setSuffix(" px")
+        self.morph_thickness_spin.setToolTip("How many pixels to thicken or thin in every direction")
+        self.dilate_button = QPushButton("Dilate (+)")
+        self.dilate_button.setToolTip("Thicken: fill transparent pixels next to the source color")
+        self.erode_button = QPushButton("Erode (-)")
+        self.erode_button.setToolTip("Thin: clear source-color pixels touching transparent or other colors")
+
         self.paint_radio = QRadioButton("Paint")
         self.select_radio = QRadioButton("Select")
         self.stamp_radio = QRadioButton("Stamp")
@@ -715,6 +736,27 @@ class PixelEditorWindow(QMainWindow):
 
         controls_layout.addWidget(replace_group)
 
+        # Thickness (morphological dilate / erode of a chosen source color)
+        morph_group = QGroupBox("Thickness")
+        morph_group_layout = QVBoxLayout(morph_group)
+        morph_group_layout.setContentsMargins(4, 4, 4, 4)
+        morph_group_layout.setSpacing(4)
+
+        morph_color_row = QHBoxLayout()
+        morph_color_row.addWidget(QLabel("Source"))
+        morph_color_row.addWidget(self.morph_color_preview, 1)
+        morph_color_row.addWidget(self.morph_pick_button)
+        morph_group_layout.addLayout(morph_color_row)
+
+        morph_action_row = QHBoxLayout()
+        morph_action_row.addWidget(QLabel("Thickness"))
+        morph_action_row.addWidget(self.morph_thickness_spin)
+        morph_action_row.addWidget(self.dilate_button)
+        morph_action_row.addWidget(self.erode_button)
+        morph_group_layout.addLayout(morph_action_row)
+
+        controls_layout.addWidget(morph_group)
+
         # Shade ramp
         ramp_row = QHBoxLayout()
         ramp_row.addWidget(self.shade_ramp_button)
@@ -769,7 +811,11 @@ class PixelEditorWindow(QMainWindow):
             canvas_host.setStyleSheet("border: 1px solid #444; color: #bbb; padding: 24px;")
         else:
             scroll = QScrollArea()
-            scroll.setWidgetResizable(True)
+            # Keep widgetResizable off so the canvas's sizeHint (image + pan margin)
+            # is always honored. With widgetResizable=True, Qt would clamp the
+            # canvas to the viewport size and there would be no scrollable area.
+            scroll.setWidgetResizable(False)
+            scroll.setAlignment(Qt.AlignmentFlag.AlignCenter)
             scroll.setWidget(self.canvas)
             self.canvas.set_scroll_area(scroll)
             canvas_host = scroll
@@ -833,12 +879,17 @@ class PixelEditorWindow(QMainWindow):
         self.shade_add_all_button.clicked.connect(self._add_ramp_to_palette)
         self.resize_canvas_button.clicked.connect(self._resize_canvas)
         self.trim_transparent_button.clicked.connect(self._trim_transparent)
+        self.morph_pick_button.clicked.connect(self._pick_morph_color)
+        self.morph_color_preview.color_dropped.connect(self._drop_morph_color)
+        self.dilate_button.clicked.connect(self._dilate_morph_color)
+        self.erode_button.clicked.connect(self._erode_morph_color)
         self.canvas.image_changed.connect(self._on_canvas_image_changed)
         self.canvas.selection_changed.connect(self.selection_summary.setText)
         self.canvas.status_changed.connect(self.statusBar().showMessage)
         self._update_transparent_replace_preview()
         self._update_replace_with_preview()
         self._update_color_shift_summary()
+        self._update_morph_color_preview()
 
     def open_image(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
@@ -1457,6 +1508,83 @@ class PixelEditorWindow(QMainWindow):
         self.replace_with_preview.setStyleSheet(
             f"background: rgba({red}, {green}, {blue}, {alpha});"
             f"color: {text_color}; border: 1px solid #555;"
+        )
+
+    def _pick_morph_color(self) -> None:
+        initial = QColor(*self._morph_color) if self._morph_color else QColor(*self.document.current_color)
+        dialog = QColorDialog(initial, self)
+        dialog.setWindowTitle("Pick Source Color for Dilate/Erode")
+        dialog.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel, True)
+        dialog.setOption(QColorDialog.ColorDialogOption.DontUseNativeDialog, True)
+        if dialog.exec() != QColorDialog.DialogCode.Accepted:
+            return
+        color = dialog.selectedColor()
+        self._morph_color = (color.red(), color.green(), color.blue(), color.alpha())
+        self._update_morph_color_preview()
+        r, g, b, a = self._morph_color
+        self.statusBar().showMessage(f"Dilate/Erode source #{r:02X}{g:02X}{b:02X} / {a}")
+
+    def _drop_morph_color(self, color: tuple[int, int, int, int]) -> None:
+        if color[3] < 50:
+            self.statusBar().showMessage("Transparent palette color cannot be the dilate/erode source")
+            return
+        self._morph_color = color
+        self._update_morph_color_preview()
+        r, g, b, a = color
+        self.statusBar().showMessage(f"Dropped dilate/erode source #{r:02X}{g:02X}{b:02X} / {a}")
+
+    def _update_morph_color_preview(self) -> None:
+        color = self._morph_color
+        has_color = color is not None
+        self.dilate_button.setEnabled(has_color)
+        self.erode_button.setEnabled(has_color)
+        if not has_color:
+            self.morph_color_preview.set_color(None)
+            self.morph_color_preview.setText("No source color")
+            self.morph_color_preview.setStyleSheet("border: 1px solid #555; color: #bbb;")
+            return
+        self.morph_color_preview.set_color(color)
+        red, green, blue, alpha = color
+        luma = 0.299 * red + 0.587 * green + 0.114 * blue
+        text_color = "#000" if luma > 128 else "#fff"
+        self.morph_color_preview.setText(f"Source: #{red:02X}{green:02X}{blue:02X} / {alpha}")
+        self.morph_color_preview.setStyleSheet(
+            f"background: rgba({red}, {green}, {blue}, {alpha});"
+            f"color: {text_color}; border: 1px solid #555;"
+        )
+
+    def _dilate_morph_color(self) -> None:
+        if self._morph_color is None:
+            self.statusBar().showMessage("Pick a source color to dilate first")
+            return
+        thickness = self.morph_thickness_spin.value()
+        result, filled = dilate_color(self.document.image, self._morph_color, thickness)
+        if filled == 0:
+            self.statusBar().showMessage("Dilate: no transparent pixels were adjacent to the source color")
+            return
+        push_image_history(self.document)
+        self.document.image = result
+        self.canvas.update()
+        r, g, b, a = self._morph_color
+        self.statusBar().showMessage(
+            f"Dilated #{r:02X}{g:02X}{b:02X} by {thickness}px ({filled} pixel{'s' if filled != 1 else ''} filled)"
+        )
+
+    def _erode_morph_color(self) -> None:
+        if self._morph_color is None:
+            self.statusBar().showMessage("Pick a source color to erode first")
+            return
+        thickness = self.morph_thickness_spin.value()
+        result, cleared = erode_color(self.document.image, self._morph_color, thickness)
+        if cleared == 0:
+            self.statusBar().showMessage("Erode: no source pixels were adjacent to non-source neighbors")
+            return
+        push_image_history(self.document)
+        self.document.image = result
+        self.canvas.update()
+        r, g, b, a = self._morph_color
+        self.statusBar().showMessage(
+            f"Eroded #{r:02X}{g:02X}{b:02X} by {thickness}px ({cleared} pixel{'s' if cleared != 1 else ''} cleared)"
         )
 
     def _update_color_shift_summary(self) -> None:

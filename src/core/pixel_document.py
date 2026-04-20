@@ -3,6 +3,7 @@ from __future__ import annotations
 import colorsys
 from dataclasses import dataclass, field
 
+import numpy as np
 from PIL import Image
 
 
@@ -204,6 +205,119 @@ def replace_colors(image: Image.Image, replacements: dict[Color, Color]) -> tupl
             replacements_applied += 1
 
     return replaced, replacements_applied
+
+
+# Pixels with alpha below this value are treated as transparent for the purposes of
+# the morphological color operations below. Matches the spec in the design doc.
+_MORPH_ALPHA_THRESHOLD = 50
+
+
+def _dilate_bool_3x3(mask: np.ndarray, pad_value: bool) -> np.ndarray:
+    """Return the 8-connected (Chebyshev) dilation of a boolean mask.
+
+    Out-of-bounds neighbors are treated as `pad_value`. This lets dilation
+    use `False` (no source outside the canvas) while erosion uses `True`
+    (out-of-bounds counts as a non-source neighbor, so edge source pixels erode).
+    """
+    h, w = mask.shape
+    padded = np.full((h + 2, w + 2), pad_value, dtype=bool)
+    padded[1:-1, 1:-1] = mask
+    out = np.zeros_like(mask)
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            out |= padded[1 + dy : 1 + dy + h, 1 + dx : 1 + dx + w]
+    return out
+
+
+def dilate_color(
+    image: Image.Image,
+    color: Color,
+    thickness: int,
+    alpha_threshold: int = _MORPH_ALPHA_THRESHOLD,
+) -> tuple[Image.Image, int]:
+    """Thicken regions of `color` by `thickness` pixels in every direction.
+
+    For every transparent pixel (alpha < `alpha_threshold`) within `thickness`
+    pixels (Chebyshev distance, i.e. 8-neighbor) of any source-color pixel,
+    fill it with `color`. Pixels that are non-transparent and not the source
+    color are preserved.
+
+    The implementation runs `thickness` independent 1-pixel passes on a fresh
+    copy each iteration so growth never feeds itself within the same pass.
+
+    Returns the new image and the number of pixels that were filled.
+    """
+    base = image.convert("RGBA").copy()
+    if thickness <= 0:
+        return base, 0
+    r, g, b, a = color
+    if a < alpha_threshold:
+        return base, 0
+
+    arr = np.array(base)
+    target = np.array([r, g, b, a], dtype=np.uint8)
+    total_filled = 0
+
+    for _ in range(thickness):
+        src_mask = np.all(arr == target, axis=-1) & (arr[..., 3] >= alpha_threshold)
+        transparent_mask = arr[..., 3] < alpha_threshold
+        neighbor = _dilate_bool_3x3(src_mask, pad_value=False)
+        fill = neighbor & transparent_mask
+        filled_count = int(fill.sum())
+        if filled_count == 0:
+            break
+        new_arr = arr.copy()
+        new_arr[fill] = target
+        arr = new_arr
+        total_filled += filled_count
+
+    return Image.fromarray(arr, mode="RGBA"), total_filled
+
+
+def erode_color(
+    image: Image.Image,
+    color: Color,
+    thickness: int,
+    alpha_threshold: int = _MORPH_ALPHA_THRESHOLD,
+) -> tuple[Image.Image, int]:
+    """Thin regions of `color` by `thickness` pixels in every direction.
+
+    For every source-color pixel within `thickness` pixels (Chebyshev distance)
+    of any pixel that is transparent (alpha < `alpha_threshold`) or a different
+    color, set it to fully transparent. Out-of-canvas neighbors are treated as
+    "not source" so source pixels along the image border erode inward as well.
+
+    The implementation runs `thickness` independent 1-pixel passes on a fresh
+    copy each iteration so shrinkage never feeds itself within the same pass.
+
+    Returns the new image and the number of pixels that were cleared.
+    """
+    base = image.convert("RGBA").copy()
+    if thickness <= 0:
+        return base, 0
+    r, g, b, a = color
+    if a < alpha_threshold:
+        return base, 0
+
+    arr = np.array(base)
+    target = np.array([r, g, b, a], dtype=np.uint8)
+    transparent_pixel = np.array([0, 0, 0, 0], dtype=np.uint8)
+    total_cleared = 0
+
+    for _ in range(thickness):
+        src_mask = np.all(arr == target, axis=-1) & (arr[..., 3] >= alpha_threshold)
+        not_src_mask = ~src_mask
+        neighbor_not_src = _dilate_bool_3x3(not_src_mask, pad_value=True)
+        remove = src_mask & neighbor_not_src
+        cleared_count = int(remove.sum())
+        if cleared_count == 0:
+            break
+        new_arr = arr.copy()
+        new_arr[remove] = transparent_pixel
+        arr = new_arr
+        total_cleared += cleared_count
+
+    return Image.fromarray(arr, mode="RGBA"), total_cleared
 
 
 def calculate_color_shift(source: Color, target: Color) -> ColorShift:
