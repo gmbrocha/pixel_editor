@@ -57,6 +57,15 @@ class PalettePanel(QWidget):
         self.max_colors_spin = QSpinBox()
         self.max_colors_spin.setRange(2, 256)
         self.max_colors_spin.setValue(16)
+        self.sample_mode_combo = QComboBox()
+        self.sample_mode_combo.addItem("Spread", "spread")
+        self.sample_mode_combo.addItem("Most Frequent", "frequent")
+        self.sample_mode_combo.setCurrentIndex(0)
+        self.sample_mode_combo.setToolTip(
+            "How to pick colors when the source has more distinct colors than Max Colors:\n"
+            "  Spread - greedy farthest-point sampling, gives diverse colors across the gamut.\n"
+            "  Most Frequent - the N most common colors (good for sampling photos)."
+        )
         self.sort_mode_combo = QComboBox()
         self.sort_mode_combo.addItems(["Brightness", "Hue"])
 
@@ -86,6 +95,9 @@ class PalettePanel(QWidget):
         top_row = QHBoxLayout()
         top_row.addWidget(QLabel("Max Colors"))
         top_row.addWidget(self.max_colors_spin)
+        top_row.addSpacing(8)
+        top_row.addWidget(QLabel("Sampling"))
+        top_row.addWidget(self.sample_mode_combo)
         top_row.addStretch(1)
 
         button_grid = QGridLayout()
@@ -116,6 +128,10 @@ class PalettePanel(QWidget):
 
     def max_colors(self) -> int:
         return self.max_colors_spin.value()
+
+    def sample_mode(self) -> str:
+        data = self.sample_mode_combo.currentData()
+        return data if isinstance(data, str) else "spread"
 
     def set_palette(self, palette: list[tuple[int, int, int, int]]) -> None:
         self.swatches.set_palette(palette)

@@ -26,20 +26,117 @@ def add_color_to_palette(
     return updated
 
 
-def palette_from_image(image: Image.Image, max_colors: int = 16) -> list[Color]:
+def palette_from_image(
+    image: Image.Image,
+    max_colors: int = 16,
+    *,
+    selection: str = "frequent",
+) -> list[Color]:
+    """Extract up to `max_colors` colors from `image`.
+
+    `selection` controls which colors win when the image has more distinct
+    colors than `max_colors`:
+
+    - "frequent": the most common colors win (good for sampling photos).
+      Tie-break is the raw RGB tuple, which favors darker colors when every
+      color appears the same number of times -- so this mode is a poor fit
+      for images that are themselves uniform palette strips.
+    - "spread": greedy farthest-point sampling over the distinct opaque
+      colors. Picks N colors that cover the gamut as evenly as possible,
+      regardless of how often each color appears (good for loading a
+      palette image with one swatch per color).
+    """
     rgba = image.convert("RGBA")
     color_counts = Counter(rgba.getdata())
-    colors = [
-        color
-        for color, _count in sorted(
-            color_counts.items(),
-            key=lambda item: (-item[1], item[0]),
-        )[:max_colors]
-    ]
+    if not color_counts:
+        return [(0, 0, 0, 0)]
+
+    normalized = (selection or "frequent").strip().lower()
+    if normalized == "spread":
+        colors = _spread_sample_colors(color_counts, max_colors)
+    else:
+        colors = [
+            color
+            for color, _count in sorted(
+                color_counts.items(),
+                key=lambda item: (-item[1], item[0]),
+            )[:max_colors]
+        ]
 
     if not colors:
         colors.append((0, 0, 0, 0))
     return colors
+
+
+def _spread_sample_colors(
+    color_counts: "Counter[Color]",
+    max_colors: int,
+) -> list[Color]:
+    """Greedy farthest-point sampling over the distinct colors in `color_counts`.
+
+    Transparent pixels are excluded from the candidate pool but a single
+    fully-transparent entry is preserved if the source image had any.
+
+    The first seed is chosen as the most-saturated, mid-brightness color so
+    the result includes a chromatic anchor instead of starting from whichever
+    color happens to be most common; subsequent picks maximize the minimum
+    distance to the already-chosen set in RGB space.
+    """
+    if max_colors <= 0:
+        return []
+
+    has_transparent = any(c[3] == 0 for c in color_counts)
+    candidates = [c for c in color_counts if c[3] > 0]
+    if not candidates:
+        return [(0, 0, 0, 0)] if has_transparent else []
+
+    if len(candidates) <= max_colors:
+        # Sort deterministically so the result is stable across loads.
+        ordered = sorted(candidates, key=lambda c: (-color_counts[c], c))
+        if has_transparent and len(ordered) < max_colors:
+            ordered.append((0, 0, 0, 0))
+        return ordered[:max_colors]
+
+    def _rgb(c: Color) -> tuple[int, int, int]:
+        return c[0], c[1], c[2]
+
+    def _dist_sq(a: Color, b: Color) -> int:
+        ar, ag, ab = _rgb(a)
+        br, bg, bb = _rgb(b)
+        return (ar - br) ** 2 + (ag - bg) ** 2 + (ab - bb) ** 2
+
+    def _seed_score(c: Color) -> tuple[float, float, int]:
+        # Prefer high saturation, mid-brightness, then frequency as a tie-break.
+        h, s, v = _rgb_to_hsv(c)
+        mid_bias = -abs(v - 0.5)
+        return (s, mid_bias, color_counts[c])
+
+    seed = max(candidates, key=_seed_score)
+    chosen: list[Color] = [seed]
+    # Track each remaining color's current min-distance to the chosen set.
+    remaining = [c for c in candidates if c != seed]
+    min_dist = {c: _dist_sq(c, seed) for c in remaining}
+
+    while len(chosen) < max_colors and remaining:
+        # Pick the color whose nearest neighbor in `chosen` is farthest away.
+        # Tie-break by frequency, then by RGB for determinism.
+        next_color = max(
+            remaining,
+            key=lambda c: (min_dist[c], color_counts[c], c),
+        )
+        chosen.append(next_color)
+        remaining.remove(next_color)
+        del min_dist[next_color]
+        # Update min-distance for the rest with the newly added color.
+        for c in remaining:
+            d = _dist_sq(c, next_color)
+            if d < min_dist[c]:
+                min_dist[c] = d
+
+    if has_transparent and len(chosen) < max_colors:
+        chosen.append((0, 0, 0, 0))
+
+    return chosen
 
 
 def _dither_mode(enabled: bool) -> Image.Dither:
@@ -167,7 +264,12 @@ def load_palette_from_hex_list(text: str, max_colors: int = 256) -> list[Color]:
     return colors
 
 
-def load_palette_from_source(path_or_text: str | Path, max_colors: int = 256) -> list[Color]:
+def load_palette_from_source(
+    path_or_text: str | Path,
+    max_colors: int = 256,
+    *,
+    selection: str = "frequent",
+) -> list[Color]:
     path = Path(path_or_text)
     if path.exists():
         if path.suffix.lower() in {".txt", ".hex", ".pal"}:
@@ -175,13 +277,18 @@ def load_palette_from_source(path_or_text: str | Path, max_colors: int = 256) ->
                 path.read_text(encoding="utf-8"),
                 max_colors=max_colors,
             )
-        return load_palette_from_image(path, max_colors=max_colors)
+        return load_palette_from_image(path, max_colors=max_colors, selection=selection)
     return load_palette_from_hex_list(str(path_or_text), max_colors=max_colors)
 
 
-def load_palette_from_image(path: str | Path, max_colors: int = 16) -> list[Color]:
+def load_palette_from_image(
+    path: str | Path,
+    max_colors: int = 16,
+    *,
+    selection: str = "frequent",
+) -> list[Color]:
     image = Image.open(path).convert("RGBA")
-    return palette_from_image(image, max_colors=max_colors)
+    return palette_from_image(image, max_colors=max_colors, selection=selection)
 
 
 def export_palette_strip(

@@ -14,6 +14,7 @@ class PixelGridCanvas(QWidget):
     selection_changed = Signal(str)
     status_changed = Signal(str)
     zoom_changed = Signal(int)
+    flood_erase_requested = Signal(int, int)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -94,6 +95,10 @@ class PixelGridCanvas(QWidget):
         self._mode = mode
         if mode != "stamp":
             self._stamp_hover = None
+        if mode == "flood_erase":
+            self.setCursor(Qt.CursorShape.CrossCursor)
+        else:
+            self.unsetCursor()
         self.status_changed.emit(f"Pixel editor mode: {mode}")
         self.update()
 
@@ -227,7 +232,11 @@ class PixelGridCanvas(QWidget):
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "No pixel document loaded")
             return
 
-        image = self._document.image
+        # Render the flattened composite of all visible layers, but keep
+        # `image` referring to that same composite so the existing checker /
+        # pixmap pipeline below works without changes. Drawing tools still
+        # operate on `document.image` (the active layer) elsewhere.
+        image = self._document.composite_visible()
         z = self._zoom
         img_w, img_h = image.width, image.height
         canvas_w = img_w * z
@@ -309,6 +318,11 @@ class PixelGridCanvas(QWidget):
             self._moving_selection = True
             self._move_origin = point
             self.status_changed.emit("Moving selection rectangle")
+            return
+
+        if self._mode == "flood_erase":
+            if event.button() == Qt.MouseButton.LeftButton:
+                self.flood_erase_requested.emit(point[0], point[1])
             return
 
         if self._mode == "paint":

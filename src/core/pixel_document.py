@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import colorsys
+from collections import deque
 from dataclasses import dataclass, field
+from typing import Callable, Iterable
 
 import numpy as np
 from PIL import Image
@@ -12,19 +14,216 @@ Rect = tuple[int, int, int, int]
 Color = tuple[int, int, int, int]
 
 
-@dataclass(slots=True)
-class PixelDocument:
+@dataclass
+class Layer:
+    """A single image layer.
+
+    `image` is an RGBA `PIL.Image.Image` that must match the document's
+    canvas dimensions. `history` is the per-layer undo stack of prior images.
+    `visible` toggles whether the layer participates in compositing.
+    """
+
+    name: str
     image: Image.Image
-    name: str = "pixel_map"
-    palette: list[Color] = field(default_factory=list)
-    selected_pixels: set[Point] = field(default_factory=set)
-    selection_rect: Rect | None = None
-    current_color: Color = (0, 0, 0, 255)
-    use_transparent_color: bool = False
-    image_history: list[Image.Image] = field(default_factory=list)
+    visible: bool = True
+    history: list[Image.Image] = field(default_factory=list)
+
+
+def composite_layers(layers: Iterable[Layer]) -> Image.Image:
+    """Composite layers in stack order (bottom -> top) using normal alpha
+    compositing. Invisible layers are skipped. Returns a fresh RGBA image.
+    """
+    layer_list = [layer for layer in layers if layer.visible]
+    if not layer_list:
+        # Caller is responsible for ensuring at least one layer exists; if none
+        # are visible we still need *some* canvas to return.
+        any_layer = next(iter(layers), None)
+        if any_layer is None:
+            return Image.new("RGBA", (1, 1), (0, 0, 0, 0))
+        return Image.new("RGBA", any_layer.image.size, (0, 0, 0, 0))
+    base = Image.new("RGBA", layer_list[0].image.size, (0, 0, 0, 0))
+    for layer in layer_list:
+        base.alpha_composite(layer.image.convert("RGBA"))
+    return base
+
+
+class PixelDocument:
+    """A pixel document containing one or more stacked image layers.
+
+    `layers` is ordered bottom-first: `layers[0]` is the bottom of the stack
+    and `layers[-1]` renders on top during compositing. The Layer panel
+    presents the same list reversed so the visually-topmost layer is shown at
+    the top of the UI.
+
+    Backwards-compatible facade: the legacy `image` and `image_history`
+    attributes proxy to the currently active layer so all pre-existing call
+    sites that read or write `document.image` keep operating on whichever
+    layer the user has selected.
+    """
+
+    def __init__(
+        self,
+        image: Image.Image | None = None,
+        name: str = "pixel_map",
+        palette: list[Color] | None = None,
+        *,
+        layers: list[Layer] | None = None,
+        active_layer_index: int = 0,
+    ) -> None:
+        if layers is not None and image is not None:
+            raise ValueError("Pass either `image` or `layers`, not both")
+        if layers is None:
+            if image is None:
+                raise ValueError("PixelDocument requires `image` or `layers`")
+            layers = [Layer(name="Layer 1", image=image)]
+        if not layers:
+            raise ValueError("PixelDocument requires at least one layer")
+
+        self.layers: list[Layer] = list(layers)
+        self.active_layer_index: int = max(0, min(len(self.layers) - 1, active_layer_index))
+        self.name: str = name
+        self.palette: list[Color] = list(palette or [])
+        self.selected_pixels: set[Point] = set()
+        self.selection_rect: Rect | None = None
+        self.current_color: Color = (0, 0, 0, 255)
+        self.use_transparent_color: bool = False
+
+    # --- Active-layer facade -------------------------------------------------
+
+    @property
+    def active_layer(self) -> Layer:
+        return self.layers[self.active_layer_index]
+
+    @property
+    def image(self) -> Image.Image:
+        """Live reference to the active layer's image. Tools read/write this
+        and it stays the active layer."""
+        return self.active_layer.image
+
+    @image.setter
+    def image(self, value: Image.Image) -> None:
+        self.active_layer.image = value
+
+    @property
+    def image_history(self) -> list[Image.Image]:
+        return self.active_layer.history
+
+    @image_history.setter
+    def image_history(self, value: list[Image.Image]) -> None:
+        self.active_layer.history = value
+
+    # --- Geometry ------------------------------------------------------------
+
+    @property
+    def width(self) -> int:
+        return self.layers[0].image.width
+
+    @property
+    def height(self) -> int:
+        return self.layers[0].image.height
+
+    # --- Compositing / export -----------------------------------------------
+
+    def composite_visible(self) -> Image.Image:
+        """Flatten all visible layers (bottom -> top) into a single RGBA image."""
+        return composite_layers(self.layers)
 
     def clone_image(self) -> Image.Image:
+        """Return a copy of the active layer's image (does NOT flatten layers).
+
+        For an export-style flattened copy use `composite_visible()`.
+        """
         return self.image.copy()
+
+    # --- Layer management ---------------------------------------------------
+
+    def add_layer(self, name: str | None = None) -> int:
+        """Insert a new fully-transparent layer directly above the active
+        layer and make it active. Returns the new active index."""
+        size = (self.width, self.height)
+        blank = Image.new("RGBA", size, (0, 0, 0, 0))
+        layer = Layer(name=name or self._next_layer_name(), image=blank)
+        insert_at = self.active_layer_index + 1
+        self.layers.insert(insert_at, layer)
+        self.active_layer_index = insert_at
+        return self.active_layer_index
+
+    def _next_layer_name(self) -> str:
+        """Pick the smallest 'Layer N' name not already in use."""
+        existing = {layer.name for layer in self.layers}
+        n = len(self.layers) + 1
+        while f"Layer {n}" in existing:
+            n += 1
+        return f"Layer {n}"
+
+    def delete_layer(self, index: int) -> bool:
+        """Remove the layer at `index`. Refuses to delete the last remaining
+        layer. Returns True on success."""
+        if not (0 <= index < len(self.layers)) or len(self.layers) <= 1:
+            return False
+        del self.layers[index]
+        if self.active_layer_index >= len(self.layers):
+            self.active_layer_index = len(self.layers) - 1
+        elif self.active_layer_index > index:
+            self.active_layer_index -= 1
+        return True
+
+    def move_layer(self, index: int, delta: int) -> int | None:
+        """Move the layer at `index` by `delta` slots (positive = up the
+        stack, i.e. toward the top of the list). Returns the new index, or
+        None if no move happened."""
+        if delta == 0:
+            return index
+        new_index = index + delta
+        if not (0 <= index < len(self.layers)):
+            return None
+        if not (0 <= new_index < len(self.layers)):
+            return None
+        layer = self.layers.pop(index)
+        self.layers.insert(new_index, layer)
+        # Keep the active-layer pointer attached to whichever layer the user
+        # was editing.
+        if self.active_layer_index == index:
+            self.active_layer_index = new_index
+        elif index < self.active_layer_index <= new_index:
+            self.active_layer_index -= 1
+        elif new_index <= self.active_layer_index < index:
+            self.active_layer_index += 1
+        return new_index
+
+    def set_active_layer(self, index: int) -> bool:
+        if not (0 <= index < len(self.layers)):
+            return False
+        self.active_layer_index = index
+        return True
+
+    def rename_layer(self, index: int, new_name: str) -> bool:
+        new_name = new_name.strip()
+        if not new_name or not (0 <= index < len(self.layers)):
+            return False
+        self.layers[index].name = new_name
+        return True
+
+    def set_layer_visibility(self, index: int, visible: bool) -> bool:
+        if not (0 <= index < len(self.layers)):
+            return False
+        self.layers[index].visible = bool(visible)
+        return True
+
+    def apply_to_all_layers(self, transform: Callable[[Image.Image], Image.Image]) -> None:
+        """Apply `transform` (must be size-consistent across calls) to every
+        layer's image. Used by canvas-dim-changing operations like resize,
+        trim, flip, and rotate so all layers stay aligned in the same
+        coordinate system."""
+        new_layers: list[Image.Image] = [transform(layer.image) for layer in self.layers]
+        sizes = {img.size for img in new_layers}
+        if len(sizes) != 1:
+            raise ValueError(
+                f"apply_to_all_layers transform produced inconsistent sizes: {sizes}"
+            )
+        for layer, new_img in zip(self.layers, new_layers):
+            layer.image = new_img
+            layer.history.clear()
 
 
 @dataclass(slots=True)
@@ -318,6 +517,121 @@ def erode_color(
         total_cleared += cleared_count
 
     return Image.fromarray(arr, mode="RGBA"), total_cleared
+
+
+def _rgb_to_hsv_arrays(rgb: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Vectorized RGB->HSV. Input: (H, W, 3) uint8. Returns (h, s, v) float32
+    arrays with h in [0, 360), s and v in [0, 1]."""
+    r = rgb[..., 0].astype(np.float32) / 255.0
+    g = rgb[..., 1].astype(np.float32) / 255.0
+    b = rgb[..., 2].astype(np.float32) / 255.0
+    cmax = np.maximum(np.maximum(r, g), b)
+    cmin = np.minimum(np.minimum(r, g), b)
+    diff = cmax - cmin
+
+    h = np.zeros_like(cmax)
+    nonzero = diff > 1e-12
+    mask_r = (cmax == r) & nonzero
+    mask_g = (cmax == g) & nonzero & ~mask_r
+    mask_b = (cmax == b) & nonzero & ~mask_r & ~mask_g
+    h[mask_r] = ((g[mask_r] - b[mask_r]) / diff[mask_r]) % 6.0
+    h[mask_g] = (b[mask_g] - r[mask_g]) / diff[mask_g] + 2.0
+    h[mask_b] = (r[mask_b] - g[mask_b]) / diff[mask_b] + 4.0
+    h = (h * 60.0) % 360.0
+
+    s = np.where(cmax > 1e-12, diff / np.maximum(cmax, 1e-12), 0.0)
+    v = cmax
+    return h.astype(np.float32), s.astype(np.float32), v.astype(np.float32)
+
+
+def flood_erase_outside_color(
+    image: Image.Image,
+    seed: Point,
+    boundary_color: Color,
+    hue_tolerance_degrees: float = 20.0,
+    min_saturation: float = 0.25,
+    alpha_threshold: int = _MORPH_ALPHA_THRESHOLD,
+    eight_connected: bool = True,
+) -> tuple[Image.Image, int]:
+    """Flood-fill from `seed` through everything that is NOT the boundary color
+    and clear the visited pixels to transparent.
+
+    A pixel counts as "boundary" (a wall) if its hue is within
+    `hue_tolerance_degrees` of `boundary_color`'s hue, its saturation is at
+    least `min_saturation` (0..1), and it is opaque (alpha >= alpha_threshold).
+
+    Already-transparent pixels are passable but not "cleared again" (they were
+    already transparent). The boundary color itself is preserved, and anything
+    enclosed by the boundary (i.e. unreachable from the seed without crossing
+    the boundary) is also preserved.
+
+    Returns the new image and the number of pixels that were cleared
+    (set to fully transparent on this pass).
+    """
+    base = image.convert("RGBA").copy()
+    sx, sy = seed
+    h_img = base.height
+    w_img = base.width
+    if not (0 <= sx < w_img and 0 <= sy < h_img):
+        return base, 0
+
+    arr = np.array(base)
+
+    # HSV of the boundary color
+    br, bg, bb, ba = boundary_color
+    if ba < alpha_threshold:
+        return base, 0
+    boundary_h_arr, _, _ = _rgb_to_hsv_arrays(
+        np.array([[[br, bg, bb]]], dtype=np.uint8)
+    )
+    boundary_hue = float(boundary_h_arr[0, 0])
+
+    # HSV of every pixel
+    hue, sat, _ = _rgb_to_hsv_arrays(arr[..., :3])
+    hue_diff = np.abs(((hue - boundary_hue + 180.0) % 360.0) - 180.0)
+    boundary_mask = (
+        (hue_diff <= hue_tolerance_degrees)
+        & (sat >= min_saturation)
+        & (arr[..., 3] >= alpha_threshold)
+    )
+
+    # Cannot start the flood inside the wall.
+    if boundary_mask[sy, sx]:
+        return base, 0
+
+    visited = np.zeros((h_img, w_img), dtype=bool)
+    visited[sy, sx] = True
+    queue: deque[tuple[int, int]] = deque()
+    queue.append((sx, sy))
+
+    if eight_connected:
+        offsets = ((-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1))
+    else:
+        offsets = ((0, -1), (-1, 0), (1, 0), (0, 1))
+
+    # Local refs in tight loop for speed.
+    bm = boundary_mask
+    vs = visited
+    pop = queue.popleft
+    push = queue.append
+    while queue:
+        x, y = pop()
+        for dx, dy in offsets:
+            nx = x + dx
+            ny = y + dy
+            if 0 <= nx < w_img and 0 <= ny < h_img and not vs[ny, nx] and not bm[ny, nx]:
+                vs[ny, nx] = True
+                push((nx, ny))
+
+    # Only count pixels that actually had to be cleared (had non-zero alpha).
+    cleared_mask = visited & (arr[..., 3] > 0)
+    cleared_count = int(cleared_mask.sum())
+    if cleared_count == 0:
+        return base, 0
+
+    new_arr = arr.copy()
+    new_arr[visited] = (0, 0, 0, 0)
+    return Image.fromarray(new_arr, mode="RGBA"), cleared_count
 
 
 def calculate_color_shift(source: Color, target: Color) -> ColorShift:

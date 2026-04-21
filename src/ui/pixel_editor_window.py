@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtCore import QMimeData, QPoint, Qt, Signal
-from PySide6.QtGui import QAction, QColor, QDrag, QMouseEvent, QPainter, QPixmap
+from PySide6.QtGui import QAction, QColor, QDrag, QKeySequence, QMouseEvent, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -37,7 +37,13 @@ from src.core.palette import (
     sort_palette,
 )
 from src.core.persistent_palette import merge_palettes
-from src.core.shade_ramp import shade_ramp
+from src.ui.layer_panel import LayerPanel
+from src.core.shade_ramp import (
+    DIRECTIONAL_SHADING_DEFAULT_ANGLE_DEG,
+    apply_directional_shading,
+    apply_radial_shading,
+    shade_ramp,
+)
 from src.core.pixel_document import (
     ColorShift,
     PixelDocument,
@@ -50,6 +56,7 @@ from src.core.pixel_document import (
     erode_color,
     flip_image_horizontal,
     flip_image_vertical,
+    flood_erase_outside_color,
     lighten_image,
     normalize_to_black_white,
     push_image_history,
@@ -414,6 +421,9 @@ class PixelEditorWindow(QMainWindow):
         self.canvas = PixelGridCanvas()
         self.canvas.set_document(self.document)
 
+        self.layer_panel = LayerPanel()
+        self.layer_panel.set_document(self.document)
+
         self.zoom_spin = QSpinBox()
         self.zoom_spin.setRange(4, 64)
         self.zoom_spin.setValue(20)
@@ -491,7 +501,39 @@ class PixelEditorWindow(QMainWindow):
         self.paint_radio = QRadioButton("Paint")
         self.select_radio = QRadioButton("Select")
         self.stamp_radio = QRadioButton("Stamp")
+        self.flood_erase_radio = QRadioButton("Flood Erase")
+        self.flood_erase_radio.setToolTip(
+            "Click anywhere outside the boundary color to erase that connected\n"
+            "region to transparent. The boundary acts as a wall, so anything\n"
+            "inside the boundary is preserved."
+        )
         self.paint_radio.setChecked(True)
+
+        self._flood_boundary_color: tuple[int, int, int, int] | None = None
+        self.flood_boundary_preview = ColorDropLabel("No boundary color")
+        self.flood_boundary_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.flood_boundary_preview.setMinimumHeight(28)
+        self.flood_boundary_preview.setToolTip(
+            "Drag a palette color here, or click Pick, to set the boundary color\n"
+            "that walls off the flood fill (e.g. the gold ring of a logo)."
+        )
+        self.flood_boundary_pick_button = QPushButton("Pick")
+        self.flood_hue_tolerance_spin = QSpinBox()
+        self.flood_hue_tolerance_spin.setRange(0, 180)
+        self.flood_hue_tolerance_spin.setValue(20)
+        self.flood_hue_tolerance_spin.setSuffix(" deg")
+        self.flood_hue_tolerance_spin.setToolTip(
+            "How far a pixel's hue can be from the boundary hue and still count as boundary.\n"
+            "Higher = catches more shades along anti-aliased edges."
+        )
+        self.flood_min_saturation_spin = QSpinBox()
+        self.flood_min_saturation_spin.setRange(0, 100)
+        self.flood_min_saturation_spin.setValue(25)
+        self.flood_min_saturation_spin.setSuffix("% sat")
+        self.flood_min_saturation_spin.setToolTip(
+            "Minimum saturation for a pixel to count as boundary.\n"
+            "Keeps neutral grays/blacks in the background from being treated as the gold/yellow ring."
+        )
         self.copy_stamp_button = QPushButton("Copy Selection as Stamp")
 
         self.transparent_button = QPushButton("Use Transparent")
@@ -537,6 +579,37 @@ class PixelEditorWindow(QMainWindow):
         self.shade_ramp_layout.setSpacing(4)
         self.shade_add_all_button = QPushButton("+ Palette")
         self.shade_add_all_button.setEnabled(False)
+        self.shading_mode_combo = QComboBox()
+        self.shading_mode_combo.addItem("Radial", "radial")
+        self.shading_mode_combo.addItem("Directional", "directional")
+        self.shading_mode_combo.setToolTip(
+            "Radial: shade by distance to the nearest transparent pixel "
+            "(edges = shadow, centers = highlight).\n"
+            "Directional: shade by which side of the shape's centerline a "
+            "pixel sits on, relative to a configurable light angle."
+        )
+
+        self.shading_angle_spin = QSpinBox()
+        self.shading_angle_spin.setRange(0, 359)
+        self.shading_angle_spin.setSuffix(" deg")
+        self.shading_angle_spin.setValue(int(round(DIRECTIONAL_SHADING_DEFAULT_ANGLE_DEG)))
+        self.shading_angle_spin.setToolTip(
+            "Light angle for Directional shading.\n"
+            "0 = light from the right, 90 = from above, 135 = from the top-left "
+            "(default), 180 = from the left, 270 = from below.\n"
+            "Counter-clockwise positive."
+        )
+        self.shading_angle_label = QLabel("Angle:")
+
+        self.apply_shading_button = QPushButton("Apply Shading")
+        self.apply_shading_button.setEnabled(False)
+        self.apply_shading_button.setToolTip(
+            "Radial: recolor along the shade ramp by distance to the nearest "
+            "transparent pixel (edges -> shadow, centers -> highlight).\n"
+            "Directional: recolor along the shade ramp by offset from the "
+            "shape's medial axis projected onto the light direction.\n"
+            "Generate a Shade Ramp first to enable this."
+        )
         self._current_ramp: list[tuple[str, tuple[int, int, int, int]]] = []
 
         self._build_toolbar()
@@ -599,9 +672,16 @@ class PixelEditorWindow(QMainWindow):
         normalize_action.triggered.connect(self.normalize_current_image)
         toolbar.addAction(normalize_action)
 
-        undo_tone_action = QAction("Undo Tone", self)
-        undo_tone_action.triggered.connect(self.undo_tone_adjustment)
-        toolbar.addAction(undo_tone_action)
+        self.undo_action = QAction("Undo", self)
+        self.undo_action.setShortcut(QKeySequence.StandardKey.Undo)
+        self.undo_action.setShortcutContext(Qt.ShortcutContext.WindowShortcut)
+        self.undo_action.setToolTip(
+            "Undo the last reversible edit (darken, lighten, normalize, dilate, "
+            "erode, flood erase, or replace). Shortcut: Ctrl+Z"
+        )
+        self.undo_action.triggered.connect(self.undo_last_edit)
+        toolbar.addAction(self.undo_action)
+        self.addAction(self.undo_action)
 
         toolbar.addSeparator()
         self._mirror_action = QAction("Mirror", self)
@@ -618,16 +698,21 @@ class PixelEditorWindow(QMainWindow):
         mode_group.addButton(self.paint_radio)
         mode_group.addButton(self.select_radio)
         mode_group.addButton(self.stamp_radio)
+        mode_group.addButton(self.flood_erase_radio)
 
         # --- Right panel: painting tools, palette, replace ---
         controls_layout = QVBoxLayout()
         controls_layout.setSpacing(4)
+
+        # Layers panel sits at the top so it's always reachable.
+        controls_layout.addWidget(self.layer_panel)
 
         # Mode + color
         mode_row = QHBoxLayout()
         mode_row.addWidget(self.paint_radio)
         mode_row.addWidget(self.select_radio)
         mode_row.addWidget(self.stamp_radio)
+        mode_row.addWidget(self.flood_erase_radio)
         mode_row.addWidget(self.copy_stamp_button)
         mode_row.addStretch(1)
         controls_layout.addLayout(mode_row)
@@ -757,11 +842,49 @@ class PixelEditorWindow(QMainWindow):
 
         controls_layout.addWidget(morph_group)
 
+        # Flood Erase: clear the connected non-boundary region a click lands in.
+        flood_group = QGroupBox("Flood Erase")
+        flood_layout = QVBoxLayout(flood_group)
+        flood_layout.setContentsMargins(4, 4, 4, 4)
+        flood_layout.setSpacing(4)
+
+        flood_color_row = QHBoxLayout()
+        flood_color_row.addWidget(QLabel("Boundary"))
+        flood_color_row.addWidget(self.flood_boundary_preview, 1)
+        flood_color_row.addWidget(self.flood_boundary_pick_button)
+        flood_layout.addLayout(flood_color_row)
+
+        flood_tol_row = QHBoxLayout()
+        flood_tol_row.addWidget(QLabel("Hue \u00b1"))
+        flood_tol_row.addWidget(self.flood_hue_tolerance_spin)
+        flood_tol_row.addWidget(QLabel("Min"))
+        flood_tol_row.addWidget(self.flood_min_saturation_spin)
+        flood_layout.addLayout(flood_tol_row)
+
+        flood_hint = QLabel(
+            "Pick the boundary color (e.g. the gold ring), select <b>Flood Erase</b> "
+            "mode, then click outside the boundary to clear that connected region. "
+            "Anything inside the boundary is preserved."
+        )
+        flood_hint.setWordWrap(True)
+        flood_hint.setStyleSheet("color: #aaa; padding: 2px;")
+        flood_layout.addWidget(flood_hint)
+
+        controls_layout.addWidget(flood_group)
+
         # Shade ramp
         ramp_row = QHBoxLayout()
         ramp_row.addWidget(self.shade_ramp_button)
         ramp_row.addWidget(self.shade_add_all_button)
         controls_layout.addLayout(ramp_row)
+
+        shading_row = QHBoxLayout()
+        shading_row.addWidget(QLabel("Mode:"))
+        shading_row.addWidget(self.shading_mode_combo)
+        shading_row.addWidget(self.shading_angle_label)
+        shading_row.addWidget(self.shading_angle_spin)
+        shading_row.addWidget(self.apply_shading_button)
+        controls_layout.addLayout(shading_row)
         controls_layout.addWidget(self.shade_ramp_container)
 
         controls_layout.addWidget(self.selection_summary)
@@ -836,6 +959,7 @@ class PixelEditorWindow(QMainWindow):
         self.paint_radio.toggled.connect(self._on_mode_changed)
         self.select_radio.toggled.connect(self._on_mode_changed)
         self.stamp_radio.toggled.connect(self._on_mode_changed)
+        self.flood_erase_radio.toggled.connect(self._on_mode_changed)
         self.copy_stamp_button.clicked.connect(self._copy_as_stamp)
         self.ref_underlay_button.clicked.connect(self._import_reference_underlay)
         self.ref_clear_button.clicked.connect(self._clear_reference_underlay)
@@ -877,19 +1001,27 @@ class PixelEditorWindow(QMainWindow):
         self.save_asset_button.clicked.connect(self.save_to_asset_tray)
         self.shade_ramp_button.clicked.connect(self._generate_shade_ramp)
         self.shade_add_all_button.clicked.connect(self._add_ramp_to_palette)
+        self.apply_shading_button.clicked.connect(self._apply_shading_from_ramp)
+        self.shading_mode_combo.currentIndexChanged.connect(self._update_shading_mode_controls)
+        self._update_shading_mode_controls()
         self.resize_canvas_button.clicked.connect(self._resize_canvas)
         self.trim_transparent_button.clicked.connect(self._trim_transparent)
         self.morph_pick_button.clicked.connect(self._pick_morph_color)
         self.morph_color_preview.color_dropped.connect(self._drop_morph_color)
         self.dilate_button.clicked.connect(self._dilate_morph_color)
         self.erode_button.clicked.connect(self._erode_morph_color)
+        self.flood_boundary_pick_button.clicked.connect(self._pick_flood_boundary_color)
+        self.flood_boundary_preview.color_dropped.connect(self._drop_flood_boundary_color)
+        self.canvas.flood_erase_requested.connect(self._flood_erase_at)
         self.canvas.image_changed.connect(self._on_canvas_image_changed)
         self.canvas.selection_changed.connect(self.selection_summary.setText)
         self.canvas.status_changed.connect(self.statusBar().showMessage)
+        self.layer_panel.layers_changed.connect(self._on_layers_changed)
         self._update_transparent_replace_preview()
         self._update_replace_with_preview()
         self._update_color_shift_summary()
         self._update_morph_color_preview()
+        self._update_flood_boundary_preview()
 
     def open_image(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
@@ -907,12 +1039,17 @@ class PixelEditorWindow(QMainWindow):
             QMessageBox.critical(self, "Open failed", str(exc))
             return
 
-        self.document.image = image
+        # Opening a new image replaces the entire layer stack with a single
+        # fresh layer so the document's canvas dimensions match the loaded
+        # image and the user starts with a clean slate.
+        from src.core.pixel_document import Layer
+        self.document.layers = [Layer(name="Layer 1", image=image)]
+        self.document.active_layer_index = 0
         self.document.name = Path(path).stem
         self.document.selected_pixels.clear()
         self.document.selection_rect = None
-        self.document.image_history.clear()
         self.canvas.set_document(self.document)
+        self.layer_panel.refresh()
         self.setWindowTitle(f"PixelForge - {self.document.name}")
         self.statusBar().showMessage(f"Loaded {Path(path).name}")
 
@@ -942,8 +1079,14 @@ class PixelEditorWindow(QMainWindow):
         )
         if not path:
             return
-        save_image(self.document.image, path)
-        self.statusBar().showMessage(f"Saved {Path(path).name}")
+        # Flatten all visible layers in stack order so the saved PNG is a
+        # single merged image regardless of how many layers the document has.
+        save_image(self.document.composite_visible(), path)
+        layer_count = sum(1 for layer in self.document.layers if layer.visible)
+        self.statusBar().showMessage(
+            f"Saved {Path(path).name} (flattened {layer_count} visible "
+            f"layer{'s' if layer_count != 1 else ''})"
+        )
 
     def add_palette_from_file(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
@@ -1026,28 +1169,24 @@ class PixelEditorWindow(QMainWindow):
         )
 
     def flip_horizontal(self) -> None:
-        self.document.image = flip_image_horizontal(self.document.image)
-        self.document.selected_pixels.clear()
-        self.document.selection_rect = None
-        self.canvas.set_document(self.document)
-        self.selection_summary.setText("No selection")
+        # Canvas-orientation operation: apply uniformly to every layer so they
+        # all stay aligned in the same coordinate system.
+        self.document.apply_to_all_layers(flip_image_horizontal)
+        self._reset_selection_after_transform()
         self.statusBar().showMessage("Flipped image horizontally")
 
     def flip_vertical(self) -> None:
-        self.document.image = flip_image_vertical(self.document.image)
-        self.document.selected_pixels.clear()
-        self.document.selection_rect = None
-        self.canvas.set_document(self.document)
-        self.selection_summary.setText("No selection")
+        self.document.apply_to_all_layers(flip_image_vertical)
+        self._reset_selection_after_transform()
         self.statusBar().showMessage("Flipped image vertically")
 
     def rotate_clockwise(self) -> None:
-        self.document.image = rotate_image_clockwise(self.document.image)
+        self.document.apply_to_all_layers(rotate_image_clockwise)
         self._reset_selection_after_transform()
         self.statusBar().showMessage("Rotated image 90 degrees clockwise")
 
     def rotate_counterclockwise(self) -> None:
-        self.document.image = rotate_image_counterclockwise(self.document.image)
+        self.document.apply_to_all_layers(rotate_image_counterclockwise)
         self._reset_selection_after_transform()
         self.statusBar().showMessage("Rotated image 90 degrees counterclockwise")
 
@@ -1074,15 +1213,20 @@ class PixelEditorWindow(QMainWindow):
             f"Normalized image to black/white with black cutoff {threshold}"
         )
 
-    def undo_tone_adjustment(self) -> None:
+    def undo_last_edit(self) -> None:
         if not undo_image_history(self.document):
-            self.statusBar().showMessage("No darken, lighten, or normalize step to undo")
+            self.statusBar().showMessage("Nothing to undo")
             return
         self._reset_selection_after_transform()
-        self.statusBar().showMessage("Undid last darken, lighten, or normalize step")
+        self.statusBar().showMessage("Undid last edit")
+
+    # Backwards-compatible alias for the previous, tone-specific name.
+    undo_tone_adjustment = undo_last_edit
 
     def save_to_asset_tray(self) -> None:
-        self.asset_save_requested.emit(self.document.name, self.document.clone_image())
+        # Asset tray receives the flattened composite of all visible layers,
+        # mirroring the save-to-PNG flow.
+        self.asset_save_requested.emit(self.document.name, self.document.composite_visible())
         self.statusBar().showMessage("Sent pixel map to asset tray")
 
     def pick_color(self) -> None:
@@ -1107,11 +1251,22 @@ class PixelEditorWindow(QMainWindow):
     def _on_canvas_image_changed(self) -> None:
         self.canvas.update()
 
+    def _on_layers_changed(self) -> None:
+        """Active layer or layer stack changed in the panel: redraw the
+        composite and reflect the new active layer in dependent widgets."""
+        self.canvas.update()
+
     def _on_mode_changed(self) -> None:
         if self.paint_radio.isChecked():
             mode = "paint"
         elif self.stamp_radio.isChecked():
             mode = "stamp"
+        elif self.flood_erase_radio.isChecked():
+            mode = "flood_erase"
+            if self._flood_boundary_color is None:
+                self.statusBar().showMessage(
+                    "Flood Erase: pick a boundary color (gold/yellow ring) below first"
+                )
         else:
             mode = "select"
         self.canvas.set_mode(mode)
@@ -1289,6 +1444,7 @@ class PixelEditorWindow(QMainWindow):
             btn.clicked.connect(lambda _checked=False, c=rgba: self._set_current_color(c))
             self.shade_ramp_layout.addWidget(btn)
         self.shade_add_all_button.setEnabled(True)
+        self.apply_shading_button.setEnabled(True)
         self.statusBar().showMessage("Shade ramp generated from current color")
 
     def _add_ramp_to_palette(self) -> None:
@@ -1298,6 +1454,38 @@ class PixelEditorWindow(QMainWindow):
         self.document.palette = merge_palettes(self.document.palette, incoming)
         self._refresh_palette_buttons()
         self.statusBar().showMessage(f"Added {len(incoming)} ramp colors to palette")
+
+    def _update_shading_mode_controls(self) -> None:
+        """Show the angle spinbox only when Directional mode is selected."""
+        is_directional = self.shading_mode_combo.currentData() == "directional"
+        self.shading_angle_label.setVisible(is_directional)
+        self.shading_angle_spin.setVisible(is_directional)
+
+    def _apply_shading_from_ramp(self) -> None:
+        if not self._current_ramp:
+            self.statusBar().showMessage("Generate a Shade Ramp first")
+            return
+        ramp_colors = [rgba for _, rgba in self._current_ramp]
+        mode = self.shading_mode_combo.currentData()
+        if mode == "directional":
+            angle = float(self.shading_angle_spin.value())
+            result, recolored = apply_directional_shading(
+                self.document.image, ramp_colors, light_angle_degrees=angle
+            )
+            mode_label = f"Directional Shading ({int(angle)} deg)"
+        else:
+            result, recolored = apply_radial_shading(self.document.image, ramp_colors)
+            mode_label = "Radial Shading"
+        if recolored == 0:
+            self.statusBar().showMessage(f"{mode_label}: no filled pixels to recolor")
+            return
+        push_image_history(self.document)
+        self.document.image = result
+        self.canvas.update()
+        self.statusBar().showMessage(
+            f"{mode_label}: recolored {recolored} pixel{'s' if recolored != 1 else ''} "
+            f"along {len(ramp_colors)}-stop ramp"
+        )
 
     def _import_reference_underlay(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
@@ -1587,6 +1775,79 @@ class PixelEditorWindow(QMainWindow):
             f"Eroded #{r:02X}{g:02X}{b:02X} by {thickness}px ({cleared} pixel{'s' if cleared != 1 else ''} cleared)"
         )
 
+    def _pick_flood_boundary_color(self) -> None:
+        initial = (
+            QColor(*self._flood_boundary_color)
+            if self._flood_boundary_color
+            else QColor("#e8a317")
+        )
+        dialog = QColorDialog(initial, self)
+        dialog.setWindowTitle("Pick Flood-Erase Boundary Color")
+        dialog.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel, True)
+        dialog.setOption(QColorDialog.ColorDialogOption.DontUseNativeDialog, True)
+        if dialog.exec() != QColorDialog.DialogCode.Accepted:
+            return
+        color = dialog.selectedColor()
+        self._flood_boundary_color = (color.red(), color.green(), color.blue(), color.alpha())
+        self._update_flood_boundary_preview()
+        r, g, b, a = self._flood_boundary_color
+        self.statusBar().showMessage(f"Flood-erase boundary #{r:02X}{g:02X}{b:02X} / {a}")
+
+    def _drop_flood_boundary_color(self, color: tuple[int, int, int, int]) -> None:
+        if color[3] < 50:
+            self.statusBar().showMessage("Transparent palette color cannot be a flood-erase boundary")
+            return
+        self._flood_boundary_color = color
+        self._update_flood_boundary_preview()
+        r, g, b, a = color
+        self.statusBar().showMessage(f"Dropped flood-erase boundary #{r:02X}{g:02X}{b:02X} / {a}")
+
+    def _update_flood_boundary_preview(self) -> None:
+        color = self._flood_boundary_color
+        if color is None:
+            self.flood_boundary_preview.set_color(None)
+            self.flood_boundary_preview.setText("No boundary color")
+            self.flood_boundary_preview.setStyleSheet("border: 1px solid #555; color: #bbb;")
+            return
+        self.flood_boundary_preview.set_color(color)
+        red, green, blue, alpha = color
+        luma = 0.299 * red + 0.587 * green + 0.114 * blue
+        text_color = "#000" if luma > 128 else "#fff"
+        self.flood_boundary_preview.setText(
+            f"Boundary: #{red:02X}{green:02X}{blue:02X} / {alpha}"
+        )
+        self.flood_boundary_preview.setStyleSheet(
+            f"background: rgba({red}, {green}, {blue}, {alpha});"
+            f"color: {text_color}; border: 1px solid #555;"
+        )
+
+    def _flood_erase_at(self, x: int, y: int) -> None:
+        if self._flood_boundary_color is None:
+            self.statusBar().showMessage("Flood Erase: pick a boundary color first")
+            return
+        hue_tol = float(self.flood_hue_tolerance_spin.value())
+        min_sat = self.flood_min_saturation_spin.value() / 100.0
+        result, cleared = flood_erase_outside_color(
+            self.document.image,
+            (x, y),
+            self._flood_boundary_color,
+            hue_tolerance_degrees=hue_tol,
+            min_saturation=min_sat,
+            eight_connected=True,
+        )
+        if cleared == 0:
+            self.statusBar().showMessage(
+                f"Flood Erase: nothing to clear from ({x}, {y}) "
+                "(click landed inside the boundary, or the region was already transparent)"
+            )
+            return
+        push_image_history(self.document)
+        self.document.image = result
+        self.canvas.update()
+        self.statusBar().showMessage(
+            f"Flood Erase from ({x}, {y}): cleared {cleared} pixel{'s' if cleared != 1 else ''}"
+        )
+
     def _update_color_shift_summary(self) -> None:
         self.calculate_change_button.setEnabled(self._transparent_replace_target is not None)
         self.change_target_button.setEnabled(
@@ -1609,14 +1870,13 @@ class PixelEditorWindow(QMainWindow):
     def _resize_canvas(self) -> None:
         new_w = self.resize_w_spin.value()
         new_h = self.resize_h_spin.value()
-        old_img = self.document.image
-        if new_w == old_img.width and new_h == old_img.height:
+        old_w = self.document.width
+        old_h = self.document.height
+        if new_w == old_w and new_h == old_h:
             self.statusBar().showMessage("Canvas size unchanged")
             return
 
         from PIL import Image
-        new_img = Image.new("RGBA", (new_w, new_h), (0, 0, 0, 0))
-
         anchor = self.resize_anchor_combo.currentText() if self.resize_anchor_combo else "Top-Left"
         anchor_map = {
             "Top-Left": (0.0, 0.0),
@@ -1630,27 +1890,40 @@ class PixelEditorWindow(QMainWindow):
             "Bottom-Right": (1.0, 1.0),
         }
         ax, ay = anchor_map.get(anchor, (0.0, 0.0))
-        ox = int((new_w - old_img.width) * ax)
-        oy = int((new_h - old_img.height) * ay)
-        new_img.paste(old_img, (ox, oy))
+        ox = int((new_w - old_w) * ax)
+        oy = int((new_h - old_h) * ay)
 
-        self.document.image = new_img
+        def resize_one(img: Image.Image) -> Image.Image:
+            out = Image.new("RGBA", (new_w, new_h), (0, 0, 0, 0))
+            out.paste(img, (ox, oy))
+            return out
+
+        self.document.apply_to_all_layers(resize_one)
         self._reset_selection_after_transform()
-        self.statusBar().showMessage(f"Canvas resized to {new_w}x{new_h} (anchor: {anchor})")
+        self.statusBar().showMessage(
+            f"Canvas resized to {new_w}x{new_h} (anchor: {anchor}); "
+            f"applied to {len(self.document.layers)} layer"
+            f"{'s' if len(self.document.layers) != 1 else ''}"
+        )
 
     def _trim_transparent(self) -> None:
-        img = self.document.image
-        bbox = img.getbbox()
+        # Trim based on the bbox of the *composite* so all visible layers
+        # together drive the crop. Then crop every layer to the same bbox so
+        # they remain aligned.
+        composite = self.document.composite_visible()
+        bbox = composite.getbbox()
         if bbox is None:
             self.statusBar().showMessage("Canvas is fully transparent, nothing to trim")
             return
         left, top, right, bottom = bbox
-        if left == 0 and top == 0 and right == img.width and bottom == img.height:
+        if left == 0 and top == 0 and right == self.document.width and bottom == self.document.height:
             self.statusBar().showMessage("No transparent border to trim")
             return
-        trimmed = img.crop(bbox).copy()
-        self.document.image = trimmed
-        self.resize_w_spin.setValue(trimmed.width)
-        self.resize_h_spin.setValue(trimmed.height)
+        self.document.apply_to_all_layers(lambda img: img.crop(bbox).copy())
+        self.resize_w_spin.setValue(self.document.width)
+        self.resize_h_spin.setValue(self.document.height)
         self._reset_selection_after_transform()
-        self.statusBar().showMessage(f"Trimmed to {trimmed.width}x{trimmed.height}")
+        self.statusBar().showMessage(
+            f"Trimmed to {self.document.width}x{self.document.height} "
+            f"(applied to {len(self.document.layers)} layers)"
+        )

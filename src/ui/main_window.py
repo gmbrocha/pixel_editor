@@ -50,6 +50,8 @@ from src.ui.reference_mapper_window import ReferenceMapperWindow
 from src.ui.source_canvas import SourceCanvas
 from src.ui.tile_layout_window import TileLayoutWindow
 from src.ui.tileset_processor_window import TilesetProcessorWindow
+from src.ui.tileset_template_window import TilesetTemplateWindow
+from src.ui.texture_generator_window import TextureGeneratorWindow
 
 
 class MainWindow(QMainWindow):
@@ -119,6 +121,12 @@ class MainWindow(QMainWindow):
         tileset_proc_action = QAction("Tileset Processor…", self)
         tileset_proc_action.triggered.connect(self.open_tileset_processor)
         toolbar.addAction(tileset_proc_action)
+        tileset_template_action = QAction("Create Tileset Template…", self)
+        tileset_template_action.triggered.connect(self.open_tileset_template)
+        toolbar.addAction(tileset_template_action)
+        texture_gen_action = QAction("Texture Generator…", self)
+        texture_gen_action.triggered.connect(self.open_texture_generator)
+        toolbar.addAction(texture_gen_action)
 
     def _build_layout(self) -> None:
         central = QWidget()
@@ -345,14 +353,21 @@ class MainWindow(QMainWindow):
         )
         if not path:
             return
+        sample_mode = self.palette_panel.sample_mode()
         try:
-            palette = load_palette_from_image(path, max_colors=self.palette_panel.max_colors())
+            palette = load_palette_from_image(
+                path,
+                max_colors=self.palette_panel.max_colors(),
+                selection=sample_mode,
+            )
         except Exception as exc:  # pragma: no cover - GUI feedback
             QMessageBox.critical(self, "Palette load failed", str(exc))
             return
         self.document.palette = palette
         self.palette_panel.set_palette(palette)
-        self.statusBar().showMessage(f"Loaded palette from {Path(path).name}")
+        self.statusBar().showMessage(
+            f"Loaded palette from {Path(path).name} ({sample_mode} sampling, {len(palette)} colors)"
+        )
 
     def export_palette(self) -> None:
         if not self.document.palette:
@@ -617,6 +632,24 @@ class MainWindow(QMainWindow):
         self._tool_windows.append(window)
         window.show()
         self.statusBar().showMessage("Opened tileset processor")
+
+    def open_tileset_template(self) -> None:
+        # Independent, non-modal window. Keep a strong ref in
+        # `_tool_windows` so it isn't GC'd while open, and drop it on
+        # destroy so multiple instances are allowed.
+        window = TilesetTemplateWindow(self)
+        window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
+        self._tool_windows.append(window)
+        window.show()
+        self.statusBar().showMessage("Opened tileset template generator")
+
+    def open_texture_generator(self) -> None:
+        # Same lifecycle pattern as the other tool windows.
+        window = TextureGeneratorWindow(self)
+        window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
+        self._tool_windows.append(window)
+        window.show()
+        self.statusBar().showMessage("Opened texture generator")
 
     def _drop_rect_selection(self) -> None:
         if self.document.source_image is None:
