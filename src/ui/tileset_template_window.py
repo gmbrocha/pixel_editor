@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QColorDialog,
     QComboBox,
     QFileDialog,
+    QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -41,7 +42,11 @@ from src.core.qt_image import pil_image_to_qpixmap
 from src.core.tileset_template import (
     QUICK_PRESETS,
     SUPPORTED_TILE_SIZES,
+    TRANSITION_STYLE_HARD_BORDER,
+    TRANSITION_STYLE_NONE,
+    TRANSITION_STYLE_STONE_LIP,
     Color,
+    RegionCSpec,
     RegionSpec,
     default_filename,
     generate_tileset_sheet,
@@ -233,6 +238,306 @@ class _RegionControl(QGroupBox):
         self._on_change()
 
 
+class _RegionCControl(QGroupBox):
+    """Editor for the optional Region C (transition lip).
+
+    Collapsed/disabled by default - the only thing visible until the
+    user ticks the enable checkbox is that checkbox itself. When
+    enabled, the rest of the controls (name / fill mode / colour or
+    texture / style + per-style params) appear underneath.
+
+    The fill-mode block intentionally mirrors `_RegionControl` rather
+    than inheriting from it: the enable wrapper and per-style stacked
+    panel make a clean inheritance awkward, and the duplication is
+    bounded.
+    """
+
+    def __init__(self, on_change, parent: QWidget | None = None) -> None:
+        super().__init__("Region C — Transition (optional)", parent)
+        self._on_change = on_change
+        self._color: Color = (0xc8, 0xaa, 0x72, 0xff)
+        self._texture: Image.Image | None = None
+        self._texture_path: str | None = None
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 6, 8, 6)
+        layout.setSpacing(4)
+
+        self._enable = QCheckBox("Enable transition region (C)")
+        self._enable.setToolTip(
+            "When off, edge and corner tiles render exactly as today - "
+            "Region A and Region B meet directly at the silhouette."
+        )
+        self._enable.toggled.connect(self._on_enable_toggled)
+        layout.addWidget(self._enable)
+
+        self._content = QWidget()
+        content_layout = QVBoxLayout(self._content)
+        content_layout.setContentsMargins(0, 4, 0, 0)
+        content_layout.setSpacing(4)
+
+        # --- Name field
+        name_row = QHBoxLayout()
+        name_row.addWidget(QLabel("Name:"))
+        self._name_edit = QLineEdit("Transition")
+        self._name_edit.setPlaceholderText("e.g. Pool Lip, Mortar Edge, Shadow")
+        self._name_edit.textChanged.connect(self._notify)
+        name_row.addWidget(self._name_edit, 1)
+        content_layout.addLayout(name_row)
+
+        # --- Fill mode toggle (Color / Texture)
+        mode_row = QHBoxLayout()
+        mode_row.addWidget(QLabel("Fill:"))
+        self._mode_color = QRadioButton("Color")
+        self._mode_texture = QRadioButton("Texture")
+        self._mode_color.setChecked(True)
+        self._mode_group = QButtonGroup(self)
+        self._mode_group.setExclusive(True)
+        self._mode_group.addButton(self._mode_color)
+        self._mode_group.addButton(self._mode_texture)
+        self._mode_color.toggled.connect(self._on_mode_toggled)
+        mode_row.addWidget(self._mode_color)
+        mode_row.addWidget(self._mode_texture)
+        mode_row.addStretch(1)
+        content_layout.addLayout(mode_row)
+
+        # Color page / texture page
+        self._fill_stack = QStackedWidget()
+
+        color_page = QWidget()
+        color_layout = QHBoxLayout(color_page)
+        color_layout.setContentsMargins(0, 0, 0, 0)
+        color_layout.addWidget(QLabel("Color:"))
+        self._color_button = QPushButton()
+        self._color_button.setStyleSheet(_color_swatch_style(self._color))
+        self._color_button.setToolTip(self._color_hex())
+        self._color_button.clicked.connect(self._pick_color)
+        color_layout.addWidget(self._color_button)
+        self._color_hex_label = QLabel(self._color_hex())
+        color_layout.addWidget(self._color_hex_label)
+        color_layout.addStretch(1)
+        self._fill_stack.addWidget(color_page)
+
+        texture_page = QWidget()
+        tex_layout = QHBoxLayout(texture_page)
+        tex_layout.setContentsMargins(0, 0, 0, 0)
+        self._tex_import = QPushButton("Import…")
+        self._tex_import.clicked.connect(self._import_texture)
+        tex_layout.addWidget(self._tex_import)
+        self._tex_label = QLabel("(none)")
+        self._tex_label.setMinimumWidth(80)
+        tex_layout.addWidget(self._tex_label, 1)
+        self._tex_clear = QPushButton("Clear")
+        self._tex_clear.clicked.connect(self._clear_texture)
+        self._tex_clear.setEnabled(False)
+        tex_layout.addWidget(self._tex_clear)
+        self._fill_stack.addWidget(texture_page)
+        content_layout.addWidget(self._fill_stack)
+
+        # --- Transition style dropdown
+        style_row = QHBoxLayout()
+        style_row.addWidget(QLabel("Style:"))
+        self._style_combo = QComboBox()
+        self._style_combo.addItem("None (flat fill)", TRANSITION_STYLE_NONE)
+        self._style_combo.addItem("Hard Border", TRANSITION_STYLE_HARD_BORDER)
+        self._style_combo.addItem("Stone Lip", TRANSITION_STYLE_STONE_LIP)
+        self._style_combo.setCurrentIndex(2)  # Stone Lip default - the headline use case
+        self._style_combo.currentIndexChanged.connect(self._on_style_changed)
+        style_row.addWidget(self._style_combo, 1)
+        content_layout.addLayout(style_row)
+
+        # --- Style-specific parameter panels, swapped via a stacked widget
+        self._style_stack = QStackedWidget()
+
+        # None: single Depth (1-4)
+        none_page = QWidget()
+        none_layout = QFormLayout(none_page)
+        none_layout.setContentsMargins(0, 0, 0, 0)
+        self._none_depth = QSpinBox()
+        self._none_depth.setRange(1, 4)
+        self._none_depth.setValue(2)
+        self._none_depth.valueChanged.connect(self._notify)
+        none_layout.addRow("Depth (px):", self._none_depth)
+        self._style_stack.addWidget(none_page)
+
+        # Hard Border: single Depth (1-3)
+        hb_page = QWidget()
+        hb_layout = QFormLayout(hb_page)
+        hb_layout.setContentsMargins(0, 0, 0, 0)
+        self._hb_depth = QSpinBox()
+        self._hb_depth.setRange(1, 3)
+        self._hb_depth.setValue(1)
+        self._hb_depth.valueChanged.connect(self._notify)
+        hb_layout.addRow("Depth (px):", self._hb_depth)
+        self._style_stack.addWidget(hb_page)
+
+        # Stone Lip: min/max depth, wobble rate, follow pattern
+        sl_page = QWidget()
+        sl_layout = QFormLayout(sl_page)
+        sl_layout.setContentsMargins(0, 0, 0, 0)
+        self._sl_min = QSpinBox()
+        self._sl_min.setRange(1, 3)
+        self._sl_min.setValue(1)
+        self._sl_min.valueChanged.connect(self._on_sl_min_changed)
+        sl_layout.addRow("Min depth (px):", self._sl_min)
+        self._sl_max = QSpinBox()
+        self._sl_max.setRange(2, 6)
+        self._sl_max.setValue(3)
+        self._sl_max.valueChanged.connect(self._on_sl_max_changed)
+        sl_layout.addRow("Max depth (px):", self._sl_max)
+        self._sl_wobble = QSpinBox()
+        self._sl_wobble.setRange(1, 6)
+        self._sl_wobble.setValue(3)
+        self._sl_wobble.setToolTip(
+            "Low = slow undulation, high = rapid jagged changes"
+        )
+        self._sl_wobble.valueChanged.connect(self._notify)
+        sl_layout.addRow("Wobble rate:", self._sl_wobble)
+        self._sl_follow = QCheckBox("Follow pattern")
+        self._sl_follow.setChecked(True)
+        self._sl_follow.setToolTip(
+            "Bias depth toward block/mortar pattern of the loaded "
+            "Region A/B texture (best-effort - falls back to noise "
+            "when no texture parameters are available)."
+        )
+        self._sl_follow.toggled.connect(self._notify)
+        sl_layout.addRow("", self._sl_follow)
+        self._style_stack.addWidget(sl_page)
+
+        self._style_stack.setCurrentIndex(2)  # match the dropdown's default
+        content_layout.addWidget(self._style_stack)
+
+        layout.addWidget(self._content)
+        self._content.setVisible(False)
+
+    # -- Public API -----------------------------------------------------
+
+    def is_enabled(self) -> bool:
+        return self._enable.isChecked()
+
+    def name(self) -> str:
+        return self._name_edit.text().strip() or "Transition"
+
+    def to_spec(self, expected_tile_size: int) -> RegionCSpec:
+        """Build a RegionCSpec for the current UI state. Validates
+        the texture (if any) the same way `_RegionControl` does."""
+        texture: Image.Image | None = None
+        if self._mode_texture.isChecked() and self._texture is not None:
+            if self._texture.size != (expected_tile_size, expected_tile_size):
+                raise ValueError(
+                    f"Texture for region '{self.name()}' must be exactly "
+                    f"{expected_tile_size}x{expected_tile_size} pixels, "
+                    f"got {self._texture.width}x{self._texture.height}."
+                )
+            texture = self._texture
+
+        style = str(self._style_combo.currentData())
+        if style == TRANSITION_STYLE_NONE:
+            depth = self._none_depth.value()
+        elif style == TRANSITION_STYLE_HARD_BORDER:
+            depth = self._hb_depth.value()
+        else:
+            depth = 2  # unused for stone_lip but kept so the dataclass round-trips
+        # max is clamped >= min so a stale UI value can't invert the range
+        sl_min = self._sl_min.value()
+        sl_max = max(sl_min, self._sl_max.value())
+        return RegionCSpec(
+            name=self.name(),
+            color=self._color,
+            texture=texture,
+            style=style,
+            depth=depth,
+            min_depth=sl_min,
+            max_depth=sl_max,
+            wobble_rate=self._sl_wobble.value(),
+            follow_pattern=self._sl_follow.isChecked(),
+        )
+
+    # -- Internal -------------------------------------------------------
+
+    def _color_hex(self) -> str:
+        r, g, b, _ = self._color
+        return f"#{r:02x}{g:02x}{b:02x}"
+
+    def _on_enable_toggled(self, checked: bool) -> None:
+        self._content.setVisible(checked)
+        self._notify()
+
+    def _on_mode_toggled(self, _checked: bool) -> None:
+        self._fill_stack.setCurrentIndex(
+            0 if self._mode_color.isChecked() else 1
+        )
+        self._notify()
+
+    def _on_style_changed(self, _idx: int) -> None:
+        style = str(self._style_combo.currentData())
+        target = {
+            TRANSITION_STYLE_NONE: 0,
+            TRANSITION_STYLE_HARD_BORDER: 1,
+            TRANSITION_STYLE_STONE_LIP: 2,
+        }.get(style, 0)
+        self._style_stack.setCurrentIndex(target)
+        self._notify()
+
+    def _on_sl_min_changed(self, value: int) -> None:
+        # Keep max >= min in the UI so the user doesn't see an invalid range
+        if self._sl_max.value() < value + 1 and value < self._sl_max.maximum():
+            self._sl_max.blockSignals(True)
+            self._sl_max.setValue(min(self._sl_max.maximum(), value + 1))
+            self._sl_max.blockSignals(False)
+        self._notify()
+
+    def _on_sl_max_changed(self, value: int) -> None:
+        if value < self._sl_min.value():
+            self._sl_min.blockSignals(True)
+            self._sl_min.setValue(max(self._sl_min.minimum(), value))
+            self._sl_min.blockSignals(False)
+        self._notify()
+
+    def _pick_color(self) -> None:
+        r, g, b, a = self._color
+        chosen = QColorDialog.getColor(
+            QColor(r, g, b, a), self, "Pick Region C color"
+        )
+        if not chosen.isValid():
+            return
+        self._color = (chosen.red(), chosen.green(), chosen.blue(), 255)
+        self._color_button.setStyleSheet(_color_swatch_style(self._color))
+        self._color_button.setToolTip(self._color_hex())
+        self._color_hex_label.setText(self._color_hex())
+        self._notify()
+
+    def _import_texture(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Import Region C texture (PNG)",
+            "",
+            "PNG images (*.png);;All files (*)",
+        )
+        if not path:
+            return
+        try:
+            img = Image.open(path).convert("RGBA")
+        except Exception as exc:
+            QMessageBox.warning(self, "Import failed", f"Couldn't open image:\n{exc}")
+            return
+        self._texture = img
+        self._texture_path = path
+        self._tex_label.setText(f"{Path(path).name} ({img.width}x{img.height})")
+        self._tex_clear.setEnabled(True)
+        self._notify()
+
+    def _clear_texture(self) -> None:
+        self._texture = None
+        self._texture_path = None
+        self._tex_label.setText("(none)")
+        self._tex_clear.setEnabled(False)
+        self._notify()
+
+    def _notify(self) -> None:
+        self._on_change()
+
+
 class TilesetTemplateWindow(QMainWindow):
     """Standalone, non-modal window for generating tileset template sheets.
 
@@ -332,8 +637,10 @@ class TilesetTemplateWindow(QMainWindow):
             (0x7a, 0x5c, 0x3a, 0xff),
             on_change=self._schedule_regen,
         )
+        self._region_c = _RegionCControl(on_change=self._schedule_regen)
         layout.addWidget(self._region_a)
         layout.addWidget(self._region_b)
+        layout.addWidget(self._region_c)
 
         # --- Variation seed
         seed_group = QGroupBox("Variation seed")
@@ -443,6 +750,11 @@ class TilesetTemplateWindow(QMainWindow):
         try:
             spec_a = self._region_a.to_spec(ts)
             spec_b = self._region_b.to_spec(ts)
+            spec_c = (
+                self._region_c.to_spec(ts)
+                if self._region_c.is_enabled()
+                else None
+            )
         except ValueError as exc:
             self._preview_info.setText("⚠ Texture rejected — see status bar")
             self.statusBar().showMessage(str(exc), 8000)
@@ -456,6 +768,7 @@ class TilesetTemplateWindow(QMainWindow):
                 seed=int(self._seed_spin.value()),
                 transparent_background=self._transparent_toggle.isChecked(),
                 grid_overlay=self._grid_toggle.isChecked(),
+                region_c=spec_c,
             )
         except ValueError as exc:
             self._preview_info.setText("⚠ Generation failed — see status bar")

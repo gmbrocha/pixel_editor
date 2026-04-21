@@ -14,6 +14,7 @@ tiles of the same region remain visually continuous.
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass
 
 import numpy as np
@@ -133,6 +134,56 @@ class RegionSpec:
     @property
     def fill_mode(self) -> str:
         return "texture" if self.texture is not None else "color"
+
+
+# Transition style identifiers for Region C (kept lowercase to match the
+# UI dropdown's stored data values).
+TRANSITION_STYLE_NONE: str = "none"
+TRANSITION_STYLE_HARD_BORDER: str = "hard_border"
+TRANSITION_STYLE_STONE_LIP: str = "stone_lip"
+TRANSITION_STYLES: tuple[str, ...] = (
+    TRANSITION_STYLE_NONE,
+    TRANSITION_STYLE_HARD_BORDER,
+    TRANSITION_STYLE_STONE_LIP,
+)
+
+
+@dataclass
+class RegionCSpec:
+    """Optional transition region painted into edge / corner tiles only.
+
+    Region C overlays Region B at the silhouette boundary, eating inward
+    by `depth` (or a wobbled depth, for Stone Lip). It never overwrites
+    Region A. The `style` field selects the lip shaping algorithm; only
+    the parameters relevant to the chosen style are read at render time,
+    so the others can carry any default the UI sees fit to keep around.
+    """
+
+    name: str = "Transition"
+    color: Color = (0xc8, 0xaa, 0x72, 0xff)
+    texture: Image.Image | None = None
+    style: str = TRANSITION_STYLE_STONE_LIP
+
+    # None / Hard Border: single depth value (1-4 / 1-3 respectively).
+    depth: int = 2
+
+    # Stone Lip parameters.
+    min_depth: int = 1
+    max_depth: int = 3
+    wobble_rate: int = 3
+    follow_pattern: bool = True
+
+    @property
+    def fill_mode(self) -> str:
+        return "texture" if self.texture is not None else "color"
+
+    def effective_max_depth(self) -> int:
+        """Maximum number of pixels the lip can extend into Region B at any
+        point. Used to bound the BFS expansion so we don't scan further
+        than necessary."""
+        if self.style == TRANSITION_STYLE_STONE_LIP:
+            return max(1, self.max_depth)
+        return max(1, self.depth)
 
 
 # -- Mask building & variation ---------------------------------------------
@@ -404,18 +455,217 @@ def generate_tile_mask(role: list[str], tile_size: int, seed: int, tile_index: i
     return mask
 
 
+# -- Region C (transition) -------------------------------------------------
+
+
+# Roles whose tiles are pure wall, pure floor, or have no boundary at all
+# we want C to paint into. Region C is skipped on these tiles per spec.
+_REGION_C_EXCLUDED_ROLES: frozenset[tuple[str, ...]] = frozenset(
+    {
+        (),                # FULL_FLOOR
+        ("FULL",),         # FULL_WALL
+        ("ISOLATED",),     # ISOLATED_WALL
+    }
+)
+
+
+def _role_paints_region_c(role: list[str]) -> bool:
+    return tuple(role) not in _REGION_C_EXCLUDED_ROLES
+
+
+def _stable_per_tile_lip_seed(seed: int, tile_index: int) -> int:
+    """A separate seed mix from `_stable_per_tile_seed` so the lip wobble
+    stream is independent of the wall-mask wobble stream for the same
+    tile. Same property: deterministic, order-free across tiles."""
+    mixed = ((seed & 0xFFFFFFFF) * 1597334677) ^ (
+        (tile_index + 1) * 0xC2B2AE35
+    )
+    return mixed & 0xFFFFFFFF
+
+
+def _boundary_wall_pixels(wall_mask: np.ndarray) -> list[tuple[int, int]]:
+    """Wall pixels that have at least one 4-connected floor neighbour.
+    These are the seed pixels for the lip BFS - the line the user sees
+    as the silhouette boundary."""
+    h, w = wall_mask.shape
+    floor = ~wall_mask
+    pad = np.pad(floor, 1, constant_values=False)
+    has_floor_n = pad[0:h, 1:w + 1]
+    has_floor_s = pad[2:h + 2, 1:w + 1]
+    has_floor_w = pad[1:h + 1, 0:w]
+    has_floor_e = pad[1:h + 1, 2:w + 2]
+    boundary = wall_mask & (has_floor_n | has_floor_s | has_floor_w | has_floor_e)
+    return [(int(y), int(x)) for y, x in np.argwhere(boundary)]
+
+
+def _lip_depths_constant(
+    boundary_pixels: list[tuple[int, int]], depth: int,
+) -> dict[tuple[int, int], int]:
+    """Used by the None and Hard Border styles - every boundary pixel
+    gets the same depth."""
+    d = max(1, int(depth))
+    return {bp: d for bp in boundary_pixels}
+
+
+def _lip_depths_stone(
+    boundary_pixels: list[tuple[int, int]],
+    min_depth: int,
+    max_depth: int,
+    wobble_rate: int,
+    rng: np.random.Generator,
+) -> dict[tuple[int, int], int]:
+    """Stone Lip depth assignment: walk the boundary in (y, x) order and
+    drift the depth by ±1 with a probability tied to wobble_rate.
+
+    Walking in (y, x) order is a simplification of "along the boundary"
+    that works well for the axis-aligned edges that dominate this tile
+    set. True boundary tracing would matter for diagonal silhouettes,
+    which this generator doesn't produce.
+
+    Follow Pattern is implemented as plain noise per the spec's escape
+    hatch: the generator doesn't currently know what brick/block
+    parameters produced the loaded texture, so true mortar alignment is
+    deferred. Wobble is left at the user's chosen rate rather than
+    silently slowed.
+    """
+    if not boundary_pixels:
+        return {}
+    lo = max(1, int(min_depth))
+    hi = max(lo, int(max_depth))
+    rate = max(1, min(6, int(wobble_rate)))
+    prob_change = rate / 6.0
+    depth = (lo + hi) // 2
+    out: dict[tuple[int, int], int] = {}
+    for bp in sorted(boundary_pixels):
+        out[bp] = max(lo, min(hi, depth))
+        if rng.random() < prob_change:
+            delta = 1 if rng.random() < 0.5 else -1
+            depth = max(lo, min(hi, depth + delta))
+    return out
+
+
+def _compute_lip_geometry(
+    wall_mask: np.ndarray,
+    depth_at_boundary: dict[tuple[int, int], int],
+    max_depth: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """BFS from each boundary wall pixel into the floor side, tracking
+    which boundary pixel each floor pixel is closest to (and that
+    boundary pixel's lip depth). Ties on distance keep the *greater* of
+    the candidate source depths, which approximates the spec's
+    outer-corner rule ("use the greater of the two depths at the corner
+    point itself") without needing per-axis bookkeeping.
+
+    Inner corners use the *lesser* per spec; we accept the same
+    max-tie-break here as a known approximation - the spec calls inner
+    corners "the most complex case" and tolerates manual touch-up.
+
+    Returns three (h, w) bool arrays:
+      * region_c    : pixels Region C should paint over Region B
+      * outermost   : pixels at chamfer distance 1 from a wall (light
+                      highlight in stone lip / colour mode)
+      * innermost   : pixels at the deepest extent of the lip at their
+                      local point (dark shadow)
+    """
+    h, w = wall_mask.shape
+    dist = np.full((h, w), -1, dtype=np.int32)
+    src_depth = np.zeros((h, w), dtype=np.int32)
+    queue: deque[tuple[int, int]] = deque()
+    for (by, bx), d in depth_at_boundary.items():
+        if dist[by, bx] != -1:
+            continue
+        dist[by, bx] = 0
+        src_depth[by, bx] = d
+        queue.append((by, bx))
+
+    while queue:
+        y, x = queue.popleft()
+        d_here = int(dist[y, x])
+        if d_here >= max_depth:
+            continue
+        sd_here = int(src_depth[y, x])
+        new_dist = d_here + 1
+        for dy_, dx_ in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+            ny, nx = y + dy_, x + dx_
+            if not (0 <= ny < h and 0 <= nx < w):
+                continue
+            if wall_mask[ny, nx]:
+                continue
+            cur = int(dist[ny, nx])
+            if cur == -1:
+                dist[ny, nx] = new_dist
+                src_depth[ny, nx] = sd_here
+                queue.append((ny, nx))
+            elif cur == new_dist and sd_here > int(src_depth[ny, nx]):
+                src_depth[ny, nx] = sd_here
+
+    region_c = np.zeros_like(wall_mask)
+    outermost = np.zeros_like(wall_mask)
+    innermost = np.zeros_like(wall_mask)
+    for y in range(h):
+        for x in range(w):
+            if wall_mask[y, x]:
+                continue
+            d = int(dist[y, x])
+            if d <= 0:
+                continue
+            cap = int(src_depth[y, x])
+            if d <= cap:
+                region_c[y, x] = True
+                if d == 1:
+                    outermost[y, x] = True
+                if d == cap:
+                    innermost[y, x] = True
+    return region_c, outermost, innermost
+
+
+def _brighten(color: Color, factor: float) -> Color:
+    """Push each channel toward white by `factor` (0-1)."""
+    r, g, b, a = color
+    f = max(0.0, min(1.0, factor))
+    return (
+        min(255, int(round(r + (255 - r) * f))),
+        min(255, int(round(g + (255 - g) * f))),
+        min(255, int(round(b + (255 - b) * f))),
+        a,
+    )
+
+
+def _darken(color: Color, factor: float) -> Color:
+    """Scale each channel toward zero by `factor` (0-1)."""
+    r, g, b, a = color
+    f = max(0.0, min(1.0, factor))
+    return (
+        max(0, int(round(r * (1.0 - f)))),
+        max(0, int(round(g * (1.0 - f)))),
+        max(0, int(round(b * (1.0 - f)))),
+        a,
+    )
+
+
 # -- Sheet generation ------------------------------------------------------
 
 
-def _validate_textures(region_a: RegionSpec, region_b: RegionSpec, tile_size: int) -> None:
-    for region in (region_a, region_b):
-        if region.texture is None:
+def _validate_textures(
+    region_a: RegionSpec,
+    region_b: RegionSpec,
+    tile_size: int,
+    region_c: RegionCSpec | None = None,
+) -> None:
+    candidates: list[tuple[str, Image.Image | None]] = [
+        (region_a.name, region_a.texture),
+        (region_b.name, region_b.texture),
+    ]
+    if region_c is not None:
+        candidates.append((region_c.name, region_c.texture))
+    for name, tex in candidates:
+        if tex is None:
             continue
-        if region.texture.size != (tile_size, tile_size):
+        if tex.size != (tile_size, tile_size):
             raise ValueError(
-                f"Texture for region '{region.name}' must be exactly "
+                f"Texture for region '{name}' must be exactly "
                 f"{tile_size}x{tile_size}, got "
-                f"{region.texture.width}x{region.texture.height}"
+                f"{tex.width}x{tex.height}"
             )
 
 
@@ -432,6 +682,74 @@ def _region_block(region: RegionSpec, tile_size: int) -> np.ndarray:
     return np.full((tile_size, tile_size, 4), region.color, dtype=np.uint8)
 
 
+def _region_c_block(region_c: RegionCSpec, tile_size: int) -> np.ndarray:
+    """Same shape contract as `_region_block` but for the optional
+    Region C - kept separate because the dataclass type is different."""
+    if region_c.texture is not None:
+        return np.array(region_c.texture.convert("RGBA"), dtype=np.uint8)
+    return np.full((tile_size, tile_size, 4), region_c.color, dtype=np.uint8)
+
+
+def _apply_region_c(
+    tile_block: np.ndarray,
+    wall_mask: np.ndarray,
+    region_c: RegionCSpec,
+    region_c_block: np.ndarray,
+    seed: int,
+    tile_index: int,
+) -> None:
+    """Mutate `tile_block` in place with Region C's lip overlay. Caller
+    must have already filtered out non-applicable tile roles - this
+    function assumes the tile has a wall/floor boundary worth painting
+    into.
+
+    Paint order on overlap: Region C base fill first (overwrites Region
+    B at lip pixels), then for stone-lip the ~20% brighter highlight on
+    outermost pixels (colour-mode only), then the ~30% darker shadow on
+    innermost pixels (always - the shadow is what sells the depth drop).
+    """
+    boundary = _boundary_wall_pixels(wall_mask)
+    if not boundary:
+        return
+
+    if region_c.style == TRANSITION_STYLE_STONE_LIP:
+        rng = np.random.default_rng(_stable_per_tile_lip_seed(seed, tile_index))
+        depths = _lip_depths_stone(
+            boundary,
+            region_c.min_depth,
+            region_c.max_depth,
+            region_c.wobble_rate,
+            rng,
+        )
+    else:
+        depths = _lip_depths_constant(boundary, region_c.depth)
+
+    if not depths:
+        return
+
+    c_mask, outer_mask, inner_mask = _compute_lip_geometry(
+        wall_mask, depths, region_c.effective_max_depth(),
+    )
+    if not bool(c_mask.any()):
+        return
+
+    tile_block[c_mask] = region_c_block[c_mask]
+
+    if region_c.style != TRANSITION_STYLE_STONE_LIP:
+        return
+
+    if region_c.fill_mode == "color":
+        highlight = np.array(_brighten(region_c.color, 0.20), dtype=np.uint8)
+        active_outer = outer_mask & c_mask
+        if bool(active_outer.any()):
+            tile_block[active_outer] = highlight
+
+    shadow = np.array(_darken(region_c.color, 0.30), dtype=np.uint8)
+    active_inner = inner_mask & c_mask
+    if bool(active_inner.any()):
+        tile_block[active_inner] = shadow
+
+
 def generate_tileset_sheet(
     *,
     tile_size: int,
@@ -440,14 +758,21 @@ def generate_tileset_sheet(
     seed: int,
     transparent_background: bool = True,
     grid_overlay: bool = False,
+    region_c: RegionCSpec | None = None,
 ) -> Image.Image:
     """Render the full 8x6 sheet (47 tiles + 1 empty slot) as a flat RGBA
-    PIL image. See module docstring for the full pipeline."""
+    PIL image. See module docstring for the full pipeline.
+
+    `region_c` is optional. When supplied, it overlays Region B at the
+    silhouette boundary of every edge / corner / junction tile (full
+    wall, full floor, isolated wall, and the empty slot are skipped).
+    Region C never overwrites Region A pixels.
+    """
     if tile_size not in SUPPORTED_TILE_SIZES:
         raise ValueError(
             f"tile_size must be one of {SUPPORTED_TILE_SIZES}, got {tile_size}"
         )
-    _validate_textures(region_a, region_b, tile_size)
+    _validate_textures(region_a, region_b, tile_size, region_c)
 
     ts = tile_size
     sheet_w = SHEET_COLS * ts
@@ -457,6 +782,7 @@ def generate_tileset_sheet(
 
     block_a = _region_block(region_a, ts)
     block_b = _region_block(region_b, ts)
+    block_c = _region_c_block(region_c, ts) if region_c is not None else None
 
     for tile_index, role in enumerate(TILE_ROLES):
         col = tile_index % SHEET_COLS
@@ -466,6 +792,10 @@ def generate_tileset_sheet(
         # Vectorised per-tile fill: pick block_a where the wall mask is True,
         # block_b otherwise. Both blocks are (ts, ts, 4) uint8.
         tile_block = np.where(wall_mask[..., None], block_a, block_b)
+        if region_c is not None and block_c is not None and _role_paints_region_c(role):
+            _apply_region_c(
+                tile_block, wall_mask, region_c, block_c, seed, tile_index,
+            )
         sheet_arr[y0:y0 + ts, x0:x0 + ts] = tile_block
 
     sheet = Image.fromarray(sheet_arr, mode="RGBA")

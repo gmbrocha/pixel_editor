@@ -151,6 +151,53 @@ def unique_colors_from_image(source: str | Path | Image.Image) -> list[Color]:
     return [(int(r), int(g), int(b), int(a)) for r, g, b, a in raw]
 
 
+# -- Vegetation (shared by Brick and Blocks) -------------------------------
+
+
+# Style identifiers for the Vegetation pass. Lowercased to match the
+# UI's stored data values without an extra translation layer.
+VEGETATION_STYLE_MOSS: str = "moss"
+VEGETATION_STYLE_GRASS: str = "grass"
+VEGETATION_STYLE_BOTH: str = "both"
+VEGETATION_STYLES: tuple[str, ...] = (
+    VEGETATION_STYLE_MOSS,
+    VEGETATION_STYLE_GRASS,
+    VEGETATION_STYLE_BOTH,
+)
+
+
+@dataclass
+class VegetationParams:
+    """Optional vegetation pass for Brick and Blocks textures.
+
+    A 3-stop ramp is derived automatically from `color` at render time
+    (see `_vegetation_ramp`); the user never sees or tweaks the ramp.
+    `coverage` is the raw 0..1 placement probability per eligible pixel
+    for moss; the grass pass internally scales this by 0.6 so the
+    slider feels consistent across both styles.
+    """
+
+    style: str = VEGETATION_STYLE_BOTH
+    coverage: float = 0.30
+    color: Color = (0x4a, 0x7a, 0x3a, 0xff)
+
+    def clamped(self) -> "VegetationParams":
+        s = (self.style or "").lower()
+        if s not in VEGETATION_STYLES:
+            s = VEGETATION_STYLE_BOTH
+        r, g, b, a = self.color
+        return VegetationParams(
+            style=s,
+            coverage=max(0.0, min(1.0, float(self.coverage))),
+            color=(
+                max(0, min(255, int(r))),
+                max(0, min(255, int(g))),
+                max(0, min(255, int(b))),
+                max(0, min(255, int(a))),
+            ),
+        )
+
+
 # -- Brick texture ----------------------------------------------------------
 
 
@@ -164,6 +211,9 @@ class BrickParams:
     row_offset: float = 0.5     # 0.0..1.0, fraction of brick width
     color_variance: int = 2     # 0..4, how many ramp stops to wander
     bevel: bool = True          # 1px highlight/shadow on brick interior
+    # Final-pass moss/grass overlay. None = pass is skipped entirely
+    # (preserves pre-vegetation output byte-for-byte).
+    vegetation: VegetationParams | None = None
 
     def clamped(self, canvas_w: int, canvas_h: int) -> "BrickParams":
         """Return a copy with values clamped to legal ranges given the
@@ -176,6 +226,7 @@ class BrickParams:
             row_offset=max(0.0, min(self.row_offset, 1.0)),
             color_variance=max(0, min(self.color_variance, 4)),
             bevel=bool(self.bevel),
+            vegetation=self.vegetation.clamped() if self.vegetation else None,
         )
 
 
@@ -237,15 +288,53 @@ def _wrap_blit(
             pixels[sy:sy + lh, sx:sx + lw] = color
 
 
+def brick_tile_remainder(
+    canvas_w: int, canvas_h: int, brick_width: int, brick_height: int, mortar: int,
+) -> tuple[int, int]:
+    """Return the (x, y) leftover mortar band, in pixels, that the brick
+    lattice can't fill with another brick before the canvas edge. Both
+    zero = the texture tiles seamlessly. Non-zero on either axis = that
+    edge will carry a strip of pure mortar that won't continue into a
+    brick on wrap. Surfaced in the UI as a non-blocking hint."""
+    bw = max(1, int(brick_width))
+    bh = max(1, int(brick_height))
+    m = max(1, int(mortar))
+    col_stride = bw + m
+    row_stride = bh + m
+    if col_stride <= 0 or row_stride <= 0:
+        return (0, 0)
+    return (max(0, int(canvas_w)) % col_stride, max(0, int(canvas_h)) % row_stride)
+
+
+def _lattice_counts(width: int, height: int, params: BrickParams) -> tuple[int, int]:
+    """Return `(n_cols, n_rows)` - the number of canonical bricks the
+    lattice fits across `width` x `height`. Exposed alongside the
+    iterator so the UI can warn when the canvas / brick params don't
+    divide cleanly (the seam will then carry a leftover mortar band
+    that can't be made to tile)."""
+    p = params.clamped(width, height)
+    row_stride = p.brick_height + p.mortar
+    col_stride = p.brick_width + p.mortar
+    n_rows = max(1, height // row_stride)
+    n_cols = max(1, width // col_stride)
+    return n_cols, n_rows
+
+
 def _iter_brick_lattice(
     width: int, height: int, params: BrickParams,
 ) -> Iterator[tuple[int, int, int, int]]:
-    """Yield `(col_idx, row_idx, brick_x, brick_y)` for every brick that
-    touches the `width x height` canvas, including one row/column of
-    overshoot on each side so bricks crossing the canvas edge can be
-    rendered with `_wrap_blit` and continue seamlessly from the opposite
-    side. The brick width and height are constant across the lattice and
-    can be read from `params`.
+    """Yield `(col_idx, row_idx, brick_x, brick_y)` for every canonical
+    brick on the `width x height` canvas. `col_idx` and `row_idx` are
+    always in `[0, n_cols)` x `[0, n_rows)`; bricks shifted across the
+    canvas seam by `row_offset` are still painted in full because
+    `_wrap_blit` splits the rect at the canvas edge.
+
+    No "overshoot" rows or cols are emitted - earlier revisions iterated
+    one or two extra cells past each edge to chase seam-crossing bricks,
+    but those phantom bricks ended up overpainting both canonical brick
+    interiors (with a different per-brick hash) and, when the canvas
+    wasn't a multiple of the stride, mortar pixels themselves. The wrap
+    is fully handled by `_wrap_blit` instead.
 
     Both the brick generator and the blocks generator iterate the lattice
     in lockstep, so detail passes can correlate brick coordinates with
@@ -254,14 +343,11 @@ def _iter_brick_lattice(
     p = params.clamped(width, height)
     row_stride = p.brick_height + p.mortar
     col_stride = p.brick_width + p.mortar
-    first_row = -1
-    last_row = (height // row_stride) + 2
-    for row_idx in range(first_row, last_row):
+    n_cols, n_rows = _lattice_counts(width, height, p)
+    for row_idx in range(n_rows):
         row_y = row_idx * row_stride
         offset_px = int(round(row_idx * p.brick_width * p.row_offset)) % p.brick_width
-        first_col = -1
-        last_col = (width // col_stride) + 2
-        for col_idx in range(first_col, last_col):
+        for col_idx in range(n_cols):
             brick_x = col_idx * col_stride - offset_px
             yield col_idx, row_idx, brick_x, row_y
 
@@ -313,6 +399,9 @@ def generate_brick_texture(
             _wrap_blit(pixels, brick_x, brick_y, interior_w, 1, lightest)
             _wrap_blit(pixels, brick_x, brick_y, 1, interior_h, lightest)
 
+    if p.vegetation is not None:
+        _apply_vegetation(pixels, p, p.vegetation, seed)
+
     return Image.fromarray(pixels, mode="RGBA")
 
 
@@ -347,11 +436,14 @@ class BlocksParams(BrickParams):
             bevel=bool(self.bevel),
             surface_dings=bool(self.surface_dings),
             cracks=bool(self.cracks),
+            vegetation=self.vegetation.clamped() if self.vegetation else None,
         )
 
     def to_brick_params(self) -> BrickParams:
         """Strip the Blocks-only fields so the brick generator can run as
-        the base pass."""
+        the base pass. Vegetation is also stripped here - Blocks applies
+        it itself after dings + cracks so the order matches the spec
+        (vegetation is the final pass)."""
         return BrickParams(
             brick_width=self.brick_width,
             brick_height=self.brick_height,
@@ -359,6 +451,7 @@ class BlocksParams(BrickParams):
             row_offset=self.row_offset,
             color_variance=self.color_variance,
             bevel=self.bevel,
+            vegetation=None,
         )
 
 
@@ -431,6 +524,8 @@ def _apply_crack(
     bx: int, by: int, bw: int, bh: int,
     seed: int, col: int, row: int,
     darkest: np.ndarray,
+    *,
+    crack_record: set[tuple[int, int]] | None = None,
 ) -> None:
     """Detail pass B from the Blocks spec.
 
@@ -438,12 +533,24 @@ def _apply_crack(
     interior and walks inward via a biased random walk (80% primary, 20%
     perpendicular jitter). Length 2-6 px. After placement, 20% chance of a
     single Y-branch from a non-tip point.
+
+    `crack_record` (optional) collects every painted crack pixel as a
+    canvas-space (y, x) tuple. Used by the vegetation pass so moss can
+    grow on cracks without colour-matching against the mortar shade,
+    which would also flag legitimately darkest-coloured brick faces.
     """
     rng = _block_rng(seed, col, row, _SALT_CRACK)
     if rng.random() >= 0.25:
         return
     if bw < 3 or bh < 3:
         return  # nothing to fracture inside
+
+    h_, w_ = pixels.shape[:2]
+
+    def paint(x: int, y: int) -> None:
+        _wrap_set_pixel(pixels, x, y, darkest)
+        if crack_record is not None:
+            crack_record.add((y % h_, x % w_))
 
     edge = rng.choice(("top", "left"))
     if edge == "top":
@@ -457,7 +564,7 @@ def _apply_crack(
 
     length = rng.randint(2, 6)
     crack_pixels: list[tuple[int, int]] = [(ox, oy)]
-    _wrap_set_pixel(pixels, ox, oy, darkest)
+    paint(ox, oy)
     cx, cy = ox, oy
     for _ in range(length - 1):
         if rng.random() < 0.80:
@@ -478,7 +585,7 @@ def _apply_crack(
             break
         cx, cy = nx, ny
         crack_pixels.append((cx, cy))
-        _wrap_set_pixel(pixels, cx, cy, darkest)
+        paint(cx, cy)
 
     # Branch: 20% chance, max one per crack, originating from a non-tip point.
     if len(crack_pixels) >= 2 and rng.random() < 0.20:
@@ -503,7 +610,239 @@ def _apply_crack(
             if not (bx <= nx <= bx + bw - 1) or not (by <= ny <= by + bh - 1):
                 break
             cx, cy = nx, ny
-            _wrap_set_pixel(pixels, cx, cy, darkest)
+            paint(cx, cy)
+
+
+# -- Vegetation pass (final pass, applied after every other detail) -------
+
+
+# Per-pixel PRNG salts for the moss and grass streams. Keep these
+# distinct from the per-brick salts so vegetation rolls don't correlate
+# with ding / crack rolls at any given location.
+_SALT_VEG_MOSS = 0xA00BA000
+_SALT_VEG_GRASS = 0xA00BA001
+
+
+def _vegetation_ramp(base: Color) -> tuple[Color, Color, Color]:
+    """3-stop dark/mid/light ramp derived from `base` per the spec:
+      * dark  = base, S +15, B -35
+      * mid   = base
+      * light = base, S -25, B +25
+    HSB ops, clamped to legal ranges. Recomputed per render - cheap.
+    """
+    h, s, b, a = _rgb_to_hsb(base)
+    dark = _hsb_to_rgb(h, min(100.0, s + 15.0), max(0.0, b - 35.0), a)
+    mid = _hsb_to_rgb(h, s, b, a)
+    light = _hsb_to_rgb(h, max(0.0, s - 25.0), min(100.0, b + 25.0), a)
+    return dark, mid, light
+
+
+def _classify_brick_pixels(
+    width: int, height: int, params: BrickParams,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return (is_face, is_bevel, is_mortar) bool masks.
+
+    The iteration mirrors `generate_brick_texture`'s paint order
+    (face fill, then bevel overrides) so the classification matches the
+    pixel that actually got painted - crucial for the vegetation pass
+    to correctly identify mortar vs bevel vs face territory at the
+    seam-wrap boundaries where multiple virtual bricks overlap.
+    """
+    p = params.clamped(width, height)
+    is_face = np.zeros((height, width), dtype=bool)
+    is_bevel = np.zeros((height, width), dtype=bool)
+
+    bw_ = p.brick_width
+    bh_ = p.brick_height
+
+    for _col_idx, _row_idx, bx, by in _iter_brick_lattice(width, height, p):
+        for dy in range(bh_):
+            yy = (by + dy) % height
+            for dx in range(bw_):
+                xx = (bx + dx) % width
+                is_face[yy, xx] = True
+                is_bevel[yy, xx] = False
+        if p.bevel and bw_ >= 2 and bh_ >= 2:
+            yy = (by + bh_ - 1) % height
+            for dx in range(bw_):
+                xx = (bx + dx) % width
+                is_bevel[yy, xx] = True
+                is_face[yy, xx] = False
+            xx = (bx + bw_ - 1) % width
+            for dy in range(bh_):
+                yy = (by + dy) % height
+                is_bevel[yy, xx] = True
+                is_face[yy, xx] = False
+            yy = by % height
+            for dx in range(bw_):
+                xx = (bx + dx) % width
+                is_bevel[yy, xx] = True
+                is_face[yy, xx] = False
+            xx = bx % width
+            for dy in range(bh_):
+                yy = (by + dy) % height
+                is_bevel[yy, xx] = True
+                is_face[yy, xx] = False
+
+    is_mortar = ~(is_face | is_bevel)
+    return is_face, is_bevel, is_mortar
+
+
+def _pixel_rng(seed: int, x: int, y: int, salt: int) -> random.Random:
+    """Per-pixel deterministic PRNG keyed on (master seed, x, y, salt).
+
+    Used by the vegetation pass so each candidate pixel's placement
+    decision is order-independent (same result whether the pass scans
+    row-major or sweeps eligible pixels in any other order)."""
+    base = _brick_hash(seed, x, y) ^ (salt & 0xFFFFFFFF)
+    return random.Random(base)
+
+
+def _apply_vegetation(
+    pixels: np.ndarray,
+    brick_params: BrickParams,
+    veg: VegetationParams,
+    seed: int,
+    *,
+    crack_pixels: set[tuple[int, int]] | None = None,
+) -> None:
+    """Final pass: paint moss clusters and/or grass tufts in the mortar
+    seams. Mutates `pixels` in place. Safe to call on either Brick or
+    Blocks output - `crack_pixels` is None for Brick and a set of
+    canvas-space (y, x) crack pixels for Blocks (when cracks were
+    enabled)."""
+    p = veg.clamped()
+    if p.coverage <= 0.0:
+        return
+
+    h_, w_ = pixels.shape[:2]
+    is_face, is_bevel, is_mortar = _classify_brick_pixels(w_, h_, brick_params)
+
+    is_crack = np.zeros_like(is_face)
+    if crack_pixels:
+        for cy, cx in crack_pixels:
+            # Defensive modulo - the crack recorder already wraps but
+            # being explicit means callers can pass un-wrapped coords.
+            is_crack[cy % h_, cx % w_] = True
+
+    moss_eligible = is_mortar | is_crack
+
+    dark, mid, light = _vegetation_ramp(p.color)
+    dark_arr = np.array(dark, dtype=np.uint8)
+    mid_arr = np.array(mid, dtype=np.uint8)
+    light_arr = np.array(light, dtype=np.uint8)
+
+    do_moss = p.style in (VEGETATION_STYLE_MOSS, VEGETATION_STYLE_BOTH)
+    do_grass = p.style in (VEGETATION_STYLE_GRASS, VEGETATION_STYLE_BOTH)
+
+    # Moss clusters can't share pixels - one global "claimed" set
+    # tracks every cluster pixel placed so far.
+    claimed: set[tuple[int, int]] = set()
+
+    if do_moss:
+        # argwhere returns (y, x) in row-major order, which gives a
+        # deterministic iteration sequence across runs.
+        for yx in np.argwhere(moss_eligible):
+            y = int(yx[0])
+            x = int(yx[1])
+            if (y, x) in claimed:
+                continue
+            rng = _pixel_rng(seed, x, y, _SALT_VEG_MOSS)
+            if rng.random() >= p.coverage:
+                continue
+
+            cluster_size = rng.randint(1, 3)
+            cluster_pixels: list[tuple[int, int]] = [(y, x)]
+            if cluster_size > 1:
+                # Spec: only cardinal neighbours, only eligible ones,
+                # never face / bevel / out-of-bounds. Wrap-around for
+                # seamless tiling.
+                neighbours = [
+                    ((y - 1) % h_, x),
+                    ((y + 1) % h_, x),
+                    (y, (x - 1) % w_),
+                    (y, (x + 1) % w_),
+                ]
+                eligible_neighbours = [
+                    (ny, nx) for ny, nx in neighbours
+                    if moss_eligible[ny, nx] and (ny, nx) not in claimed
+                ]
+                rng.shuffle(eligible_neighbours)
+                for n_pos in eligible_neighbours:
+                    if len(cluster_pixels) >= cluster_size:
+                        break
+                    cluster_pixels.append(n_pos)
+
+            anchor_is_light = rng.random() < 0.25
+            for i, (cy, cx) in enumerate(cluster_pixels):
+                if i == 0:
+                    color = light_arr if anchor_is_light else mid_arr
+                else:
+                    color = dark_arr if rng.random() < 0.60 else mid_arr
+                pixels[cy, cx] = color
+                claimed.add((cy, cx))
+
+    if do_grass:
+        # Eligible grass anchor: mortar pixel where the pixel directly
+        # above is brick (face OR bevel) - i.e. tuft can push upward
+        # into the brick body.
+        is_brick_above = np.zeros_like(is_mortar)
+        is_brick_above[1:] = is_face[:-1] | is_bevel[:-1]
+        is_brick_above[0] = is_face[h_ - 1] | is_bevel[h_ - 1]
+        grass_eligible = is_mortar & is_brick_above
+
+        # Grass coverage is internally scaled so the slider feels
+        # consistent with moss despite grass naturally being sparser.
+        effective_p = p.coverage * 0.6
+
+        for y in range(h_):
+            blocked: set[int] = set()
+            for x in range(w_):
+                if not grass_eligible[y, x]:
+                    continue
+                if x in blocked:
+                    continue
+                rng = _pixel_rng(seed, x, y, _SALT_VEG_GRASS)
+                if rng.random() >= effective_p:
+                    continue
+
+                requested_h = rng.randint(2, 3)
+                lean = rng.choice([-1, 0, 1])
+
+                # Walk upward from base, stopping at the first bevel.
+                # final_h = 1 (base only) up to requested_h.
+                upward_count = 0
+                for step in range(1, requested_h):
+                    next_y = (y - step) % h_
+                    if is_bevel[next_y, x]:
+                        break
+                    upward_count += 1
+                final_h = 1 + upward_count
+                if final_h <= 0:
+                    continue
+
+                # Paint base (always in mortar).
+                pixels[y, x] = dark_arr
+                if final_h >= 2:
+                    tip_y = (y - (final_h - 1)) % h_
+                    tip_x = (x + lean) % w_
+                    # Drop lean if the offset pixel is mortar / bevel
+                    # (don't grow into a different mortar gap; don't
+                    # overwrite bevel either).
+                    if is_mortar[tip_y, tip_x] or is_bevel[tip_y, tip_x]:
+                        tip_x = x
+                    if final_h == 2:
+                        pixels[tip_y, tip_x] = light_arr
+                    else:  # final_h == 3
+                        mid_y = (y - 1) % h_
+                        pixels[mid_y, x] = mid_arr
+                        pixels[tip_y, tip_x] = light_arr
+
+                # Reserve X-2..X+2 on this mortar line so tufts don't
+                # clump. Wrap so a tuft near the canvas edge still
+                # blocks its symmetric neighbour after the seam.
+                for offset in range(-2, 3):
+                    blocked.add((x + offset) % w_)
 
 
 def generate_blocks_texture(
@@ -519,6 +858,7 @@ def generate_blocks_texture(
     Reuses `generate_brick_texture` for steps 1-4 (mortar, layout, fill,
     bevel) and walks the same lattice (via `_iter_brick_lattice`) for the
     detail passes so per-block PRNG keys line up with the brick fill.
+    Vegetation, when enabled, runs as the final pass after dings / cracks.
     """
     if width <= 0 or height <= 0:
         raise ValueError(f"canvas size must be positive, got {width}x{height}")
@@ -532,15 +872,21 @@ def generate_blocks_texture(
         params=p.to_brick_params(),
         seed=seed,
     )
-    # Skip the detail passes entirely if neither toggle is on - saves both
-    # the np.array round-trip and the lattice walk.
-    if not p.surface_dings and not p.cracks:
+    # Skip the detail passes entirely if neither toggle is on AND no
+    # vegetation - saves both the np.array round-trip and the lattice walk.
+    if not p.surface_dings and not p.cracks and p.vegetation is None:
         return base
 
     pixels = np.array(base)
     n = len(ramp_colors)
     darkest = np.array(ramp_colors[-1], dtype=np.uint8)
     second_darkest = np.array(ramp_colors[max(0, n - 2)], dtype=np.uint8)
+
+    # Capture crack pixels iff we'll need them for vegetation; skipping
+    # the recorder for plain Blocks keeps the detail pass allocation-free.
+    crack_record: set[tuple[int, int]] | None = (
+        set() if (p.cracks and p.vegetation is not None) else None
+    )
 
     bw = p.brick_width
     bh = p.brick_height
@@ -554,8 +900,441 @@ def generate_blocks_texture(
             _apply_crack(
                 pixels, brick_x, brick_y, bw, bh,
                 seed, col_idx, row_idx, darkest,
+                crack_record=crack_record,
             )
 
+    if p.vegetation is not None:
+        _apply_vegetation(
+            pixels, p.to_brick_params(), p.vegetation, seed,
+            crack_pixels=crack_record,
+        )
+
+    return Image.fromarray(pixels, mode="RGBA")
+
+
+# -- Boards texture ---------------------------------------------------------
+
+
+# Per-pass salts so the boards algorithm pulls each random stream from an
+# independent series even though they all share the master seed (mirrors
+# the _SALT_DING / _SALT_CRACK pattern above).
+_SALT_BOARDS_WOBBLE = 0xB0A4D000
+_SALT_BOARDS_COLOR = 0xB0A4D001
+_SALT_BOARDS_GRAIN = 0xB0A4D002
+_SALT_BOARDS_GRAIN_STUB = 0xB0A4D003
+_SALT_BOARDS_KNOT_POS = 0xB0A4D004
+_SALT_BOARDS_KNOT_HALO = 0xB0A4D005
+
+
+# When the canvas dimension perpendicular to plank length is below this,
+# knots may not render well. The UI surfaces a non-blocking warning rather
+# than disabling the toggle (per spec).
+BOARDS_KNOT_MIN_CANVAS: int = 24
+
+
+@dataclass
+class BoardsParams:
+    """Parameters for `generate_boards_texture`. Plank Width is the
+    *thickness* of each plank (perpendicular to plank length); Orientation
+    flips the algorithm's axis at the boundary so the same code path
+    handles both directions."""
+
+    plank_width: int = 6        # 3..canvas dim perpendicular to length
+    orientation: str = "horizontal"  # "horizontal" or "vertical"
+    gap: int = 1                # 1..2 px
+    color_variance: int = 2     # 0..4 ramp stops
+    edge_wobble: int = 2        # 0..4 px
+    grain_density: int = 3      # 1..6 lines per plank
+    grain_waviness: int = 2     # 0..4 px sine amplitude
+    bevel: bool = True
+    knots: bool = True
+    knots_per_sheet: int = 2    # 0..6
+
+    def clamped(self, canvas_w: int, canvas_h: int) -> "BoardsParams":
+        orient = (
+            "vertical"
+            if str(self.orientation).lower().startswith("v")
+            else "horizontal"
+        )
+        # Plank width is bounded by the canvas dimension perpendicular to
+        # the plank length axis.
+        width_axis = canvas_h if orient == "horizontal" else canvas_w
+        return BoardsParams(
+            plank_width=max(3, min(self.plank_width, max(3, int(width_axis)))),
+            orientation=orient,
+            gap=max(1, min(self.gap, 2)),
+            color_variance=max(0, min(self.color_variance, 4)),
+            edge_wobble=max(0, min(self.edge_wobble, 4)),
+            grain_density=max(1, min(self.grain_density, 6)),
+            grain_waviness=max(0, min(self.grain_waviness, 4)),
+            bevel=bool(self.bevel),
+            knots=bool(self.knots),
+            knots_per_sheet=max(0, min(self.knots_per_sheet, 6)),
+        )
+
+
+def _gap_color_from_darkest(darkest: Color) -> Color:
+    """Push the darkest ramp stop ~20% toward black (clamped). This is
+    the colour that fills the gap between planks and acts as the base for
+    knot halos."""
+    r, g, b, a = darkest
+    return (
+        max(0, int(round(r * 0.8))),
+        max(0, int(round(g * 0.8))),
+        max(0, int(round(b * 0.8))),
+        a,
+    )
+
+
+def _wobble_walk(
+    seed: int, boundary_idx: int, length: int, max_wobble: int,
+) -> np.ndarray:
+    """Per-pixel boundary offset for one plank gap, biased random walk
+    clamped to ±max_wobble. The tail is linearly blended back to
+    `offsets[0]` so the wobble tiles seamlessly across the wrap seam.
+    """
+    if length <= 0:
+        return np.zeros(0, dtype=np.int32)
+    if max_wobble <= 0:
+        return np.zeros(length, dtype=np.int32)
+    rng = _block_rng(seed, boundary_idx, 0, _SALT_BOARDS_WOBBLE)
+    offsets = np.zeros(length, dtype=np.int32)
+    cur = 0
+    for x in range(length):
+        r = rng.random()
+        if r < 0.20:
+            cur -= 1
+        elif r < 0.40:
+            cur += 1
+        cur = max(-max_wobble, min(max_wobble, cur))
+        offsets[x] = cur
+    blend = min(length // 4, max(1, max_wobble * 4 + 1))
+    if blend > 1 and length > blend:
+        end_val = int(offsets[length - blend])
+        target = int(offsets[0])
+        for i in range(blend):
+            t = i / max(1, blend - 1)
+            offsets[length - blend + i] = int(
+                round(end_val * (1 - t) + target * t)
+            )
+    return offsets
+
+
+def _ellipse_inside(dx: int, dy: int, rx: int, ry: int) -> bool:
+    """Integer-safe test for (dx, dy) inside an axis-aligned ellipse of
+    radii (rx, ry). Used for the knot halo / ring / core shells."""
+    if rx <= 0 or ry <= 0:
+        return False
+    return (dx * dx) * (ry * ry) + (dy * dy) * (rx * rx) <= (rx * rx) * (ry * ry)
+
+
+def _generate_boards_canonical(
+    *,
+    width: int,            # along plank length axis
+    height: int,           # perpendicular to plank length axis
+    ramp_colors: list[Color],
+    params: BoardsParams,
+    seed: int,
+) -> np.ndarray:
+    """Render boards in the canonical horizontal frame (planks running
+    left-right, plank width = vertical dimension). Vertical orientation
+    is implemented as a coordinate transform on the result rather than
+    duplicating algorithm logic."""
+    n = len(ramp_colors)
+    lightest = np.array(ramp_colors[0], dtype=np.uint8)
+    darkest = np.array(ramp_colors[-1], dtype=np.uint8)
+    second_darkest = np.array(ramp_colors[max(0, n - 2)], dtype=np.uint8)
+    centre_idx = (n - 1) // 2
+
+    W = max(1, params.plank_width)
+    G = max(1, params.gap)
+    S = W + G
+    n_planks = max(1, height // S)
+
+    # Step 1: gap pass - fill the canvas with the gap colour.
+    gap_rgb = _gap_color_from_darkest(
+        tuple(int(v) for v in ramp_colors[-1])  # type: ignore[arg-type]
+    )
+    gap_color = np.array(gap_rgb, dtype=np.uint8)
+    pixels = np.empty((height, width, 4), dtype=np.uint8)
+    pixels[..., :] = gap_color
+
+    # Step 2: per-boundary wobble offsets. `gap_offset[i]` is the per-x
+    # shift of the gap *below* plank i (which is also the top boundary of
+    # plank (i + 1) % n_planks). The whole gap moves as a unit.
+    gap_offset = np.zeros((n_planks, width), dtype=np.int32)
+    for i in range(n_planks):
+        gap_offset[i] = _wobble_walk(seed, i, width, params.edge_wobble)
+
+    # Step 3: derive per-plank top / bot from the wobble of bordering
+    # gaps, then fill. plank_top / plank_bot are the wobble-aware edge
+    # map every later pass references.
+    plank_top = np.zeros((n_planks, width), dtype=np.int32)
+    plank_bot = np.zeros((n_planks, width), dtype=np.int32)
+    plank_color_idx = np.zeros(n_planks, dtype=np.int32)
+
+    for i in range(n_planks):
+        prev_i = (i - 1) % n_planks
+        nominal_top = i * S
+        nominal_bot = i * S + W
+        top_arr = nominal_top + gap_offset[prev_i]
+        bot_arr = nominal_bot + gap_offset[i]
+        # Defensive thickness clamp - prevents 0-px planks if the wobble
+        # streams of adjacent boundaries happen to converge. With default
+        # ranges this is essentially impossible but cheap to guarantee.
+        thick = bot_arr - top_arr
+        bot_arr = np.where(thick < 1, top_arr + 1, bot_arr)
+        plank_top[i] = top_arr
+        plank_bot[i] = bot_arr
+
+        if params.color_variance == 0:
+            ramp_idx = centre_idx
+        else:
+            rng = _block_rng(seed, i, 0, _SALT_BOARDS_COLOR)
+            offset = rng.randint(-params.color_variance, params.color_variance)
+            ramp_idx = max(0, min(n - 1, centre_idx + offset))
+        plank_color_idx[i] = ramp_idx
+        plank_color = np.array(ramp_colors[ramp_idx], dtype=np.uint8)
+
+        for x in range(width):
+            t = int(plank_top[i, x])
+            b = int(plank_bot[i, x])
+            for y_off in range(b - t):
+                pixels[(t + y_off) % height, x] = plank_color
+
+    # Step 4: bevel - one row inside the wobbled edge map, top = light,
+    # bottom = dark. Skip planks that are too thin for both.
+    if params.bevel:
+        for i in range(n_planks):
+            for x in range(width):
+                t = int(plank_top[i, x])
+                b = int(plank_bot[i, x])
+                if b - t < 2:
+                    continue
+                pixels[t % height, x] = lightest
+                pixels[(b - 1) % height, x] = darkest
+
+    # Step 6 (positioning only): pick knot centres before the grain pass
+    # so grain can curve around them without a second pass (per spec
+    # implementation note).
+    knots: list[tuple[int, int, int, int, int]] = []  # (cx, cy, rx, ry, plank_idx)
+    if params.knots and params.knots_per_sheet > 0 and width >= 9 and height >= 9:
+        rng_kp = _block_rng(seed, 0, 0, _SALT_BOARDS_KNOT_POS)
+        max_attempts = max(50, params.knots_per_sheet * 100)
+        for _ in range(max_attempts):
+            if len(knots) >= params.knots_per_sheet:
+                break
+            cx = rng_kp.randint(4, width - 5)
+            cy = rng_kp.randint(4, height - 5)
+            r = rng_kp.randint(2, 4)
+            rx = max(1, rng_kp.randint(r - 1, r + 1))
+            ry = max(1, rng_kp.randint(r - 1, r + 1))
+            if any(
+                (cx - ox) ** 2 + (cy - oy) ** 2 < 36
+                for ox, oy, _, _, _ in knots
+            ):
+                continue
+            plank_idx = (cy // S) % n_planks
+            t = int(plank_top[plank_idx, cx])
+            b = int(plank_bot[plank_idx, cx])
+            if not (t <= cy < b):
+                continue  # centre fell into a wobbled gap - skip and retry
+            knots.append((cx, cy, rx, ry, plank_idx))
+
+    # Step 5: grain pass. For each plank lay grain_density lines parallel
+    # to plank length, with sine waviness, partial spans, and termination
+    # stubs. Knot distortion is applied in-line so grain bends around
+    # nearby knots without needing a second pass.
+    if params.grain_density > 0:
+        bevel_active = params.bevel
+        for i in range(n_planks):
+            nominal_top = i * S
+            nominal_bot = i * S + W
+            interior_top = nominal_top + (1 if bevel_active else 0)
+            interior_bot = nominal_bot - (1 if bevel_active else 0)
+            if interior_bot - interior_top < 1:
+                continue
+            for g_idx in range(params.grain_density):
+                rng = _block_rng(seed, i, g_idx, _SALT_BOARDS_GRAIN)
+                base_y = (
+                    interior_top
+                    + (g_idx + 0.5)
+                    * (interior_bot - interior_top)
+                    / params.grain_density
+                )
+                jitter = rng.randint(-1, 1)
+                y_anchor = max(
+                    interior_top,
+                    min(interior_bot - 1, int(round(base_y)) + jitter),
+                )
+
+                # Colour: 1-2 stops darker than this plank's base, capped
+                # at the darkest ramp stop.
+                darkness_step = rng.choice([1, 2])
+                grain_idx = min(n - 1, int(plank_color_idx[i]) + darkness_step)
+                grain_color = np.array(ramp_colors[grain_idx], dtype=np.uint8)
+
+                length_frac = rng.uniform(0.5, 1.0)
+                grain_len = max(1, int(round(width * length_frac)))
+                x_start = rng.randint(0, max(0, width - 1))
+                freq = rng.uniform(0.2, 0.8)
+                phase = rng.uniform(0.0, 6.283185307179586)
+
+                last_pixel: tuple[int, int] | None = None
+                for off in range(grain_len):
+                    x = (x_start + off) % width
+                    disp = 0
+                    if params.grain_waviness > 0:
+                        disp = int(
+                            round(
+                                np.sin(off * freq + phase)
+                                * params.grain_waviness
+                            )
+                        )
+                    y = y_anchor + disp
+
+                    # Knot distortion: push grain pixel away from any
+                    # knot centre within 3 px (max ±2 px right at the
+                    # knot, fading to 0 at distance 3).
+                    for cx_k, cy_k, _, _, _ in knots:
+                        dx_signed = (
+                            (x - cx_k + width // 2) % width
+                        ) - width // 2
+                        dy_diff = y - cy_k
+                        d2 = dx_signed * dx_signed + dy_diff * dy_diff
+                        if d2 < 9:
+                            dist = d2 ** 0.5
+                            if dist < 3.0:
+                                push = 2.0 * (1.0 - dist / 3.0)
+                                sign = 1 if dy_diff >= 0 else -1
+                                y += int(round(push * sign))
+
+                    # Clamp to this column's plank interior (excluding
+                    # bevel pixels if bevel is active and there is room).
+                    t = int(plank_top[i, x])
+                    b = int(plank_bot[i, x])
+                    if bevel_active and (b - t) >= 3:
+                        t += 1
+                        b -= 1
+                    if b - t < 1:
+                        continue
+                    y = max(t, min(b - 1, y))
+                    pixels[y % height, x] = grain_color
+                    last_pixel = (x, y)
+
+                if last_pixel is not None:
+                    rng_stub = _block_rng(
+                        seed, i, g_idx, _SALT_BOARDS_GRAIN_STUB
+                    )
+                    if rng_stub.random() < 0.30:
+                        stub_len = rng_stub.randint(1, 2)
+                        stub_dir = rng_stub.choice([-1, 1])
+                        lx, ly = last_pixel
+                        t = int(plank_top[i, lx])
+                        b = int(plank_bot[i, lx])
+                        if bevel_active and (b - t) >= 3:
+                            t += 1
+                            b -= 1
+                        for s in range(1, stub_len + 1):
+                            sy = ly + s * stub_dir
+                            if t <= sy < b:
+                                pixels[sy % height, lx] = grain_color
+
+    # Step 6 (painting): halo, ring, core, then SE shadow. Painted
+    # outward-in so the inner rings win on shell conflicts at the edges
+    # of the ellipse.
+    if params.knots and knots:
+        for k_idx, (cx, cy, rx, ry, plank_idx) in enumerate(knots):
+            rng_halo = _block_rng(seed, k_idx, 0, _SALT_BOARDS_KNOT_HALO)
+            halo_skip_rate = rng_halo.uniform(0.10, 0.20)
+            shadow_color = np.array(
+                (
+                    int(round((int(darkest[0]) + int(second_darkest[0])) / 2)),
+                    int(round((int(darkest[1]) + int(second_darkest[1])) / 2)),
+                    int(round((int(darkest[2]) + int(second_darkest[2])) / 2)),
+                    int(darkest[3]),
+                ),
+                dtype=np.uint8,
+            )
+            for dy in range(-(ry + 1), ry + 2):
+                for dx in range(-(rx + 1), rx + 2):
+                    nx = (cx + dx) % width
+                    ny = cy + dy
+                    if ny < 0 or ny >= height:
+                        continue
+                    # Knots respect the wobble-aware plank boundary: any
+                    # pixel that would fall in a gap is skipped.
+                    t = int(plank_top[plank_idx, nx])
+                    b = int(plank_bot[plank_idx, nx])
+                    if not (t <= ny < b):
+                        continue
+                    in_core = _ellipse_inside(dx, dy, max(1, rx - 1), max(1, ry - 1))
+                    in_ring = _ellipse_inside(dx, dy, rx, ry)
+                    in_halo = _ellipse_inside(dx, dy, rx + 1, ry + 1)
+                    if in_core:
+                        pixels[ny, nx] = darkest
+                    elif in_ring:
+                        pixels[ny, nx] = second_darkest
+                    elif in_halo:
+                        if rng_halo.random() >= halo_skip_rate:
+                            pixels[ny, nx] = darkest
+            # Shadow: 1-px crescent on the bottom-right quadrant just
+            # outside the halo. "Darkest blended slightly lighter" is
+            # implemented as the average of darkest and second-darkest.
+            for dy in range(0, ry + 3):
+                for dx in range(0, rx + 3):
+                    if _ellipse_inside(dx, dy, rx + 1, ry + 1):
+                        continue
+                    if not _ellipse_inside(dx, dy, rx + 2, ry + 2):
+                        continue
+                    nx = (cx + dx) % width
+                    ny = cy + dy
+                    if ny < 0 or ny >= height:
+                        continue
+                    t = int(plank_top[plank_idx, nx])
+                    b = int(plank_bot[plank_idx, nx])
+                    if not (t <= ny < b):
+                        continue
+                    pixels[ny, nx] = shadow_color
+
+    return pixels
+
+
+def generate_boards_texture(
+    *,
+    width: int,
+    height: int,
+    ramp_colors: list[Color],
+    params: BoardsParams,
+    seed: int,
+) -> Image.Image:
+    """Render a tileable wood-boards texture using the light-to-dark
+    `ramp_colors` (lightest first). Vertical orientation re-uses the
+    horizontal generator on a transposed canvas and rotates the result;
+    this keeps the algorithm single-sourced."""
+    if width <= 0 or height <= 0:
+        raise ValueError(f"canvas size must be positive, got {width}x{height}")
+    if len(ramp_colors) < 2:
+        raise ValueError("ramp must have at least 2 colours")
+
+    p = params.clamped(width, height)
+    if p.orientation == "vertical":
+        pixels = _generate_boards_canonical(
+            width=height,
+            height=width,
+            ramp_colors=ramp_colors,
+            params=p,
+            seed=seed,
+        )
+        pixels = np.ascontiguousarray(pixels.transpose((1, 0, 2)))
+    else:
+        pixels = _generate_boards_canonical(
+            width=width,
+            height=height,
+            ramp_colors=ramp_colors,
+            params=p,
+            seed=seed,
+        )
     return Image.fromarray(pixels, mode="RGBA")
 
 
@@ -565,7 +1344,7 @@ def generate_blocks_texture(
 # Order matters: it sets the dropdown order in the UI. "Blocks Cracked"
 # is a separate entry from "Blocks" per the user's preference - both use
 # the Blocks algorithm with different default params.
-TEXTURE_TYPES: tuple[str, ...] = ("Brick", "Blocks", "Blocks Cracked")
+TEXTURE_TYPES: tuple[str, ...] = ("Brick", "Blocks", "Blocks Cracked", "Boards")
 
 
 # Canvases below this size will surface a non-blocking warning when cracks

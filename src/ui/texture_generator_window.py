@@ -33,8 +33,10 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QRadioButton,
     QScrollArea,
     QSizePolicy,
+    QSlider,
     QSpinBox,
     QSplitter,
     QStackedWidget,
@@ -45,13 +47,21 @@ from PySide6.QtWidgets import (
 
 from src.core.texture_generator import (
     BLOCKS_CRACK_MIN_CANVAS,
+    BOARDS_KNOT_MIN_CANVAS,
     RAMP_MAX_STOPS,
     RAMP_MIN_STOPS,
     TEXTURE_TYPES,
+    VEGETATION_STYLE_BOTH,
+    VEGETATION_STYLE_GRASS,
+    VEGETATION_STYLE_MOSS,
     BlocksParams,
+    BoardsParams,
     BrickParams,
     Color,
+    VegetationParams,
+    brick_tile_remainder,
     generate_blocks_texture,
+    generate_boards_texture,
     generate_brick_texture,
     generate_ramp,
     texture_type_default_filename,
@@ -83,6 +93,24 @@ def _swatch_style(c: Color, *, border: str = "#222", size: int = 22) -> str:
         f"border: 1px solid {border}; "
         f"min-width: {size}px; min-height: {size}px; "
         f"max-width: {size}px; max-height: {size}px; }}"
+    )
+
+
+def _format_tile_warning(rx: int, ry: int, *, noun: str = "brick") -> str:
+    """Compose the brick / blocks tile-alignment hint. Empty string when
+    the canvas divides cleanly on both axes (the panel hides the label
+    in that case)."""
+    if rx <= 0 and ry <= 0:
+        return ""
+    parts = []
+    if rx > 0:
+        parts.append(f"{rx}px on the right")
+    if ry > 0:
+        parts.append(f"{ry}px on the bottom")
+    where = " and ".join(parts)
+    return (
+        f"⚠ Canvas size doesn't divide cleanly into {noun} + mortar - "
+        f"{where} won't tile seamlessly across the seam."
     )
 
 
@@ -261,6 +289,115 @@ class _RampStopButton(QPushButton):
         self.dblclicked_index.emit(self._index)
 
 
+# -- Vegetation sub-panel (shared by Brick + Blocks) -----------------------
+
+
+class _VegetationParamPanel(QWidget):
+    """Style / coverage / colour for the vegetation pass.
+
+    Lives inside Brick and Blocks parameter panels under a parent
+    "Vegetation" checkbox - the parent decides when to show / hide this
+    widget. The panel itself only emits `params_changed` when any of
+    its controls move; whether vegetation is *applied* is up to the
+    parent's checkbox state (read via `parent_panel.is_enabled()`).
+    """
+
+    params_changed = Signal()
+
+    DEFAULT_COLOR: Color = (0x4a, 0x7a, 0x3a, 0xff)
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._color: Color = self.DEFAULT_COLOR
+
+        layout = QGridLayout(self)
+        # Indent under the parent checkbox for visual hierarchy.
+        layout.setContentsMargins(18, 2, 0, 2)
+        layout.setHorizontalSpacing(8)
+        layout.setVerticalSpacing(4)
+
+        # Style radios
+        layout.addWidget(QLabel("Style:"), 0, 0)
+        style_row = QHBoxLayout()
+        style_row.setContentsMargins(0, 0, 0, 0)
+        self._style_moss = QRadioButton("Moss")
+        self._style_grass = QRadioButton("Grass")
+        self._style_both = QRadioButton("Both")
+        self._style_both.setChecked(True)
+        self._style_group = QButtonGroup(self)
+        self._style_group.setExclusive(True)
+        self._style_group.addButton(self._style_moss)
+        self._style_group.addButton(self._style_grass)
+        self._style_group.addButton(self._style_both)
+        for r in (self._style_moss, self._style_grass, self._style_both):
+            style_row.addWidget(r)
+        style_row.addStretch(1)
+        layout.addLayout(style_row, 0, 1)
+
+        # Coverage slider with live percent label
+        layout.addWidget(QLabel("Coverage:"), 1, 0)
+        cov_row = QHBoxLayout()
+        cov_row.setContentsMargins(0, 0, 0, 0)
+        self._coverage = QSlider(Qt.Orientation.Horizontal)
+        self._coverage.setRange(0, 100)
+        self._coverage.setValue(30)
+        self._coverage.setTickPosition(QSlider.TickPosition.NoTicks)
+        cov_row.addWidget(self._coverage, 1)
+        self._coverage_label = QLabel("30%")
+        self._coverage_label.setMinimumWidth(36)
+        self._coverage_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        cov_row.addWidget(self._coverage_label)
+        layout.addLayout(cov_row, 1, 1)
+
+        # Colour picker - swatch button + live hex label
+        layout.addWidget(QLabel("Color:"), 2, 0)
+        color_row = QHBoxLayout()
+        color_row.setContentsMargins(0, 0, 0, 0)
+        self._color_button = QPushButton()
+        self._color_button.setStyleSheet(_swatch_style(self._color, size=22))
+        self._color_button.setToolTip("Click to choose vegetation color")
+        self._color_button.clicked.connect(self._pick_color)
+        color_row.addWidget(self._color_button)
+        self._color_hex = QLabel(_hex(self._color))
+        self._color_hex.setStyleSheet("QLabel { color: #ccc; font-size: 10px; }")
+        color_row.addWidget(self._color_hex)
+        color_row.addStretch(1)
+        layout.addLayout(color_row, 2, 1)
+
+        for r in (self._style_moss, self._style_grass, self._style_both):
+            r.toggled.connect(self.params_changed)
+        self._coverage.valueChanged.connect(self._on_coverage_changed)
+
+    def _on_coverage_changed(self, value: int) -> None:
+        self._coverage_label.setText(f"{value}%")
+        self.params_changed.emit()
+
+    def _pick_color(self) -> None:
+        r, g, b, a = self._color
+        chosen = QColorDialog.getColor(
+            QColor(r, g, b, a), self, "Pick vegetation color"
+        )
+        if not chosen.isValid():
+            return
+        self._color = (chosen.red(), chosen.green(), chosen.blue(), 255)
+        self._color_button.setStyleSheet(_swatch_style(self._color, size=22))
+        self._color_hex.setText(_hex(self._color))
+        self.params_changed.emit()
+
+    def to_params(self) -> VegetationParams:
+        if self._style_moss.isChecked():
+            style = VEGETATION_STYLE_MOSS
+        elif self._style_grass.isChecked():
+            style = VEGETATION_STYLE_GRASS
+        else:
+            style = VEGETATION_STYLE_BOTH
+        return VegetationParams(
+            style=style,
+            coverage=float(self._coverage.value()) / 100.0,
+            color=self._color,
+        )
+
+
 # -- Brick parameter panel --------------------------------------------------
 
 
@@ -314,6 +451,30 @@ class _BrickParamPanel(QGroupBox):
         self.bevel.setChecked(True)
         layout.addWidget(self.bevel, 5, 0, 1, 2)
 
+        self.vegetation_enable = QCheckBox("Vegetation")
+        self.vegetation_enable.setToolTip(
+            "Optional moss / grass overlay in the mortar gaps"
+        )
+        layout.addWidget(self.vegetation_enable, 6, 0, 1, 2)
+
+        self.vegetation_panel = _VegetationParamPanel()
+        self.vegetation_panel.setVisible(False)
+        layout.addWidget(self.vegetation_panel, 7, 0, 1, 2)
+
+        # Non-blocking hint shown when the canvas size doesn't divide
+        # cleanly into (brick + mortar). The texture still generates fine
+        # but won't tile seamlessly across the seam on the offending axis.
+        self._tile_warning = QLabel("")
+        self._tile_warning.setWordWrap(True)
+        self._tile_warning.setStyleSheet(
+            "QLabel { color: #d8a44a; font-size: 11px; }"
+        )
+        self._tile_warning.setVisible(False)
+        layout.addWidget(self._tile_warning, 8, 0, 1, 2)
+
+        self._canvas_w = 16
+        self._canvas_h = 16
+
         for w in (
             self.brick_w, self.brick_h, self.mortar,
             self.color_variance,
@@ -321,8 +482,22 @@ class _BrickParamPanel(QGroupBox):
             w.valueChanged.connect(self.params_changed)
         self.row_offset.valueChanged.connect(self.params_changed)
         self.bevel.toggled.connect(self.params_changed)
+        self.vegetation_enable.toggled.connect(self._on_vegetation_toggled)
+        self.vegetation_panel.params_changed.connect(self.params_changed)
+        for w in (self.brick_w, self.brick_h, self.mortar):
+            w.valueChanged.connect(self._refresh_tile_warning)
+        self._refresh_tile_warning()
+
+    def _on_vegetation_toggled(self, checked: bool) -> None:
+        self.vegetation_panel.setVisible(checked)
+        self.params_changed.emit()
 
     def to_params(self) -> BrickParams:
+        veg = (
+            self.vegetation_panel.to_params()
+            if self.vegetation_enable.isChecked()
+            else None
+        )
         return BrickParams(
             brick_width=int(self.brick_w.value()),
             brick_height=int(self.brick_h.value()),
@@ -330,12 +505,23 @@ class _BrickParamPanel(QGroupBox):
             row_offset=float(self.row_offset.value()),
             color_variance=int(self.color_variance.value()),
             bevel=bool(self.bevel.isChecked()),
+            vegetation=veg,
         )
 
-    def update_canvas_size(self, _w: int, _h: int) -> None:  # noqa: ARG002
-        # Brick has no canvas-size-dependent UI state; provided so the
-        # parent can call it generically across all parameter panels.
-        return
+    def update_canvas_size(self, w: int, h: int) -> None:
+        self._canvas_w = int(w)
+        self._canvas_h = int(h)
+        self._refresh_tile_warning()
+
+    def _refresh_tile_warning(self) -> None:
+        rx, ry = brick_tile_remainder(
+            self._canvas_w, self._canvas_h,
+            int(self.brick_w.value()),
+            int(self.brick_h.value()),
+            int(self.mortar.value()),
+        )
+        self._tile_warning.setText(_format_tile_warning(rx, ry))
+        self._tile_warning.setVisible(rx > 0 or ry > 0)
 
 
 # -- Blocks parameter panel -------------------------------------------------
@@ -422,6 +608,26 @@ class _BlocksParamPanel(QGroupBox):
         self._small_canvas_warning.setVisible(False)
         layout.addWidget(self._small_canvas_warning, 8, 0, 1, 2)
 
+        # Same tile-alignment hint as the brick panel - shown when
+        # canvas size doesn't divide cleanly into (block + mortar).
+        self._tile_warning = QLabel("")
+        self._tile_warning.setWordWrap(True)
+        self._tile_warning.setStyleSheet(
+            "QLabel { color: #d8a44a; font-size: 11px; }"
+        )
+        self._tile_warning.setVisible(False)
+        layout.addWidget(self._tile_warning, 9, 0, 1, 2)
+
+        self.vegetation_enable = QCheckBox("Vegetation")
+        self.vegetation_enable.setToolTip(
+            "Optional moss / grass overlay in the mortar gaps and cracks"
+        )
+        layout.addWidget(self.vegetation_enable, 10, 0, 1, 2)
+
+        self.vegetation_panel = _VegetationParamPanel()
+        self.vegetation_panel.setVisible(False)
+        layout.addWidget(self.vegetation_panel, 11, 0, 1, 2)
+
         self._canvas_w = 16
         self._canvas_h = 16
         for w in (self.brick_w, self.brick_h, self.mortar, self.color_variance):
@@ -430,9 +636,23 @@ class _BlocksParamPanel(QGroupBox):
         for cb in (self.bevel, self.surface_dings, self.cracks):
             cb.toggled.connect(self.params_changed)
         self.cracks.toggled.connect(self._refresh_warning)
+        self.vegetation_enable.toggled.connect(self._on_vegetation_toggled)
+        self.vegetation_panel.params_changed.connect(self.params_changed)
+        for w in (self.brick_w, self.brick_h, self.mortar):
+            w.valueChanged.connect(self._refresh_tile_warning)
         self._refresh_warning()
+        self._refresh_tile_warning()
+
+    def _on_vegetation_toggled(self, checked: bool) -> None:
+        self.vegetation_panel.setVisible(checked)
+        self.params_changed.emit()
 
     def to_params(self) -> BlocksParams:
+        veg = (
+            self.vegetation_panel.to_params()
+            if self.vegetation_enable.isChecked()
+            else None
+        )
         return BlocksParams(
             brick_width=int(self.brick_w.value()),
             brick_height=int(self.brick_h.value()),
@@ -442,6 +662,159 @@ class _BlocksParamPanel(QGroupBox):
             bevel=bool(self.bevel.isChecked()),
             surface_dings=bool(self.surface_dings.isChecked()),
             cracks=bool(self.cracks.isChecked()),
+            vegetation=veg,
+        )
+
+    def update_canvas_size(self, w: int, h: int) -> None:
+        self._canvas_w = int(w)
+        self._canvas_h = int(h)
+        self._refresh_warning()
+        self._refresh_tile_warning()
+
+    def _refresh_warning(self) -> None:
+        small = (
+            self._canvas_w < BLOCKS_CRACK_MIN_CANVAS
+            or self._canvas_h < BLOCKS_CRACK_MIN_CANVAS
+        )
+        self._small_canvas_warning.setVisible(self.cracks.isChecked() and small)
+
+    def _refresh_tile_warning(self) -> None:
+        rx, ry = brick_tile_remainder(
+            self._canvas_w, self._canvas_h,
+            int(self.brick_w.value()),
+            int(self.brick_h.value()),
+            int(self.mortar.value()),
+        )
+        self._tile_warning.setText(_format_tile_warning(rx, ry, noun="block"))
+        self._tile_warning.setVisible(rx > 0 or ry > 0)
+
+
+# -- Boards parameter panel -------------------------------------------------
+
+
+class _BoardsParamPanel(QGroupBox):
+    """Edit the parameters of `BoardsParams`. Mirrors the brick/blocks
+    panel API - same signal, same `to_params()` / `update_canvas_size()`
+    surface - so the parent window can swap panels generically."""
+
+    params_changed = Signal()
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__("Boards parameters", parent)
+        layout = QGridLayout(self)
+        layout.setContentsMargins(8, 6, 8, 6)
+        layout.setHorizontalSpacing(8)
+        layout.setVerticalSpacing(4)
+
+        row = 0
+        layout.addWidget(QLabel("Plank width:"), row, 0)
+        self.plank_width = QSpinBox()
+        self.plank_width.setRange(3, 1024)
+        self.plank_width.setValue(6)
+        layout.addWidget(self.plank_width, row, 1)
+        row += 1
+
+        layout.addWidget(QLabel("Orientation:"), row, 0)
+        self.orientation = QComboBox()
+        self.orientation.addItem("Horizontal", "horizontal")
+        self.orientation.addItem("Vertical", "vertical")
+        layout.addWidget(self.orientation, row, 1)
+        row += 1
+
+        layout.addWidget(QLabel("Gap (px):"), row, 0)
+        self.gap = QSpinBox()
+        self.gap.setRange(1, 2)
+        self.gap.setValue(1)
+        layout.addWidget(self.gap, row, 1)
+        row += 1
+
+        layout.addWidget(QLabel("Color variance:"), row, 0)
+        self.color_variance = QSpinBox()
+        self.color_variance.setRange(0, 4)
+        self.color_variance.setValue(2)
+        layout.addWidget(self.color_variance, row, 1)
+        row += 1
+
+        layout.addWidget(QLabel("Edge wobble:"), row, 0)
+        self.edge_wobble = QSpinBox()
+        self.edge_wobble.setRange(0, 4)
+        self.edge_wobble.setValue(2)
+        layout.addWidget(self.edge_wobble, row, 1)
+        row += 1
+
+        layout.addWidget(QLabel("Grain density:"), row, 0)
+        self.grain_density = QSpinBox()
+        self.grain_density.setRange(1, 6)
+        self.grain_density.setValue(3)
+        layout.addWidget(self.grain_density, row, 1)
+        row += 1
+
+        layout.addWidget(QLabel("Grain waviness:"), row, 0)
+        self.grain_waviness = QSpinBox()
+        self.grain_waviness.setRange(0, 4)
+        self.grain_waviness.setValue(2)
+        layout.addWidget(self.grain_waviness, row, 1)
+        row += 1
+
+        self.bevel = QCheckBox("Bevel highlights / shadows")
+        self.bevel.setChecked(True)
+        layout.addWidget(self.bevel, row, 0, 1, 2)
+        row += 1
+
+        self.knots = QCheckBox("Knots")
+        self.knots.setChecked(True)
+        layout.addWidget(self.knots, row, 0, 1, 2)
+        row += 1
+
+        layout.addWidget(QLabel("Knots per sheet:"), row, 0)
+        self.knots_per_sheet = QSpinBox()
+        self.knots_per_sheet.setRange(0, 6)
+        self.knots_per_sheet.setValue(2)
+        layout.addWidget(self.knots_per_sheet, row, 1)
+        row += 1
+
+        # Non-blocking warning per spec - the threshold is on the axis
+        # *perpendicular* to plank length (i.e. the canvas dimension that
+        # planks stack along), so it depends on orientation.
+        self._small_canvas_warning = QLabel(
+            f"⚠ Knots may not render well at small canvas sizes "
+            f"(< {BOARDS_KNOT_MIN_CANVAS}px in plank-width axis)."
+        )
+        self._small_canvas_warning.setWordWrap(True)
+        self._small_canvas_warning.setStyleSheet(
+            "QLabel { color: #d8a44a; font-size: 11px; }"
+        )
+        self._small_canvas_warning.setVisible(False)
+        layout.addWidget(self._small_canvas_warning, row, 0, 1, 2)
+
+        self._canvas_w = 16
+        self._canvas_h = 16
+        for w in (
+            self.plank_width, self.gap, self.color_variance,
+            self.edge_wobble, self.grain_density, self.grain_waviness,
+            self.knots_per_sheet,
+        ):
+            w.valueChanged.connect(self.params_changed)
+        for cb in (self.bevel, self.knots):
+            cb.toggled.connect(self.params_changed)
+        self.orientation.currentIndexChanged.connect(self.params_changed)
+        # Warning toggles when knots, orientation, or canvas size change.
+        self.knots.toggled.connect(self._refresh_warning)
+        self.orientation.currentIndexChanged.connect(self._refresh_warning)
+        self._refresh_warning()
+
+    def to_params(self) -> BoardsParams:
+        return BoardsParams(
+            plank_width=int(self.plank_width.value()),
+            orientation=str(self.orientation.currentData()),
+            gap=int(self.gap.value()),
+            color_variance=int(self.color_variance.value()),
+            edge_wobble=int(self.edge_wobble.value()),
+            grain_density=int(self.grain_density.value()),
+            grain_waviness=int(self.grain_waviness.value()),
+            bevel=bool(self.bevel.isChecked()),
+            knots=bool(self.knots.isChecked()),
+            knots_per_sheet=int(self.knots_per_sheet.value()),
         )
 
     def update_canvas_size(self, w: int, h: int) -> None:
@@ -450,11 +823,11 @@ class _BlocksParamPanel(QGroupBox):
         self._refresh_warning()
 
     def _refresh_warning(self) -> None:
-        small = (
-            self._canvas_w < BLOCKS_CRACK_MIN_CANVAS
-            or self._canvas_h < BLOCKS_CRACK_MIN_CANVAS
-        )
-        self._small_canvas_warning.setVisible(self.cracks.isChecked() and small)
+        orient = str(self.orientation.currentData())
+        # Plank-width axis = canvas height (horizontal) or canvas width (vertical).
+        width_axis = self._canvas_h if orient == "horizontal" else self._canvas_w
+        small = width_axis < BOARDS_KNOT_MIN_CANVAS
+        self._small_canvas_warning.setVisible(self.knots.isChecked() and small)
 
 
 # -- Active-color swatch ----------------------------------------------------
@@ -632,6 +1005,7 @@ class TextureGeneratorWindow(QMainWindow):
             "Brick": _BrickParamPanel(),
             "Blocks": _BlocksParamPanel(cracked=False),
             "Blocks Cracked": _BlocksParamPanel(cracked=True),
+            "Boards": _BoardsParamPanel(),
         }
         self._param_stack = QStackedWidget()
         for name in TEXTURE_TYPES:
@@ -925,6 +1299,15 @@ class TextureGeneratorWindow(QMainWindow):
                     height=h,
                     ramp_colors=stops,
                     params=blocks_params,
+                    seed=seed,
+                )
+            elif texture_type == "Boards":
+                boards_params = self._param_panels["Boards"].to_params()
+                result = generate_boards_texture(
+                    width=w,
+                    height=h,
+                    ramp_colors=stops,
+                    params=boards_params,
                     seed=seed,
                 )
             else:
