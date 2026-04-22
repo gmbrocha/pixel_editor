@@ -16,7 +16,7 @@ import secrets
 from pathlib import Path
 
 from PIL import Image
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QAction, QColor, QKeySequence
 from PySide6.QtWidgets import (
     QButtonGroup,
@@ -59,13 +59,13 @@ from src.core.texture_generator import (
     BrickParams,
     Color,
     VegetationParams,
-    brick_tile_remainder,
     generate_blocks_texture,
     generate_boards_texture,
     generate_brick_texture,
     generate_ramp,
     texture_type_default_filename,
     unique_colors_from_image,
+    valid_brick_dimensions,
 )
 from src.ui.texture_canvas import (
     ALL_MODES,
@@ -96,22 +96,108 @@ def _swatch_style(c: Color, *, border: str = "#222", size: int = 22) -> str:
     )
 
 
-def _format_tile_warning(rx: int, ry: int, *, noun: str = "brick") -> str:
-    """Compose the brick / blocks tile-alignment hint. Empty string when
-    the canvas divides cleanly on both axes (the panel hides the label
-    in that case)."""
-    if rx <= 0 and ry <= 0:
-        return ""
-    parts = []
-    if rx > 0:
-        parts.append(f"{rx}px on the right")
-    if ry > 0:
-        parts.append(f"{ry}px on the bottom")
-    where = " and ".join(parts)
-    return (
-        f"⚠ Canvas size doesn't divide cleanly into {noun} + mortar - "
-        f"{where} won't tile seamlessly across the seam."
-    )
+_SNAP_FLASH_MS = 500
+_SNAP_FLASH_STYLE = "QSpinBox { background-color: #fff7c2; }"
+_NO_FIT_HELPER_TEXT = (
+    "No clean fit possible at this mortar size. Try adjusting canvas size."
+)
+
+
+def _flash_snap(spin: QSpinBox) -> None:
+    """Briefly tint `spin` yellow so the user notices the value was
+    auto-snapped. The tint clears itself after `_SNAP_FLASH_MS` ms."""
+    spin.setStyleSheet(_SNAP_FLASH_STYLE)
+    QTimer.singleShot(_SNAP_FLASH_MS, lambda: spin.setStyleSheet(""))
+
+
+def _nearest_valid(values: list[int], current: int) -> int:
+    """Return the entry of `values` closest to `current`. Ties prefer the
+    larger value (per spec). `values` must be non-empty."""
+    return min(values, key=lambda v: (abs(v - current), -v))
+
+
+class _BrickSnapHelper:
+    """Auto-snap brick width / height to values that tile cleanly across
+    the canvas. Shared by both the Brick and Blocks parameter panels
+    since they expose identical `brick_w` / `brick_h` / `mortar` spin
+    boxes (just relabeled).
+
+    Wiring contract:
+        * mortar.valueChanged -> snap both axes (silent, with flash)
+        * canvas size change  -> snap both axes (silent, with flash)
+        * brick_w/h.editingFinished -> snap that axis (silent, with flash)
+
+    The spec deliberately does *not* snap on every keystroke or every
+    spinner click - only on input commit (Enter / blur). That matches
+    QSpinBox.editingFinished, which is what we wire."""
+
+    def __init__(
+        self,
+        brick_w: QSpinBox,
+        brick_h: QSpinBox,
+        mortar: QSpinBox,
+        no_fit_label: QLabel,
+    ) -> None:
+        self.brick_w = brick_w
+        self.brick_h = brick_h
+        self.mortar = mortar
+        self.no_fit_label = no_fit_label
+        self._w_min = brick_w.minimum()
+        self._h_min = brick_h.minimum()
+        self._canvas_w = 16
+        self._canvas_h = 16
+
+        self.mortar.valueChanged.connect(self._on_mortar_changed)
+        self.brick_w.editingFinished.connect(self.snap_width)
+        self.brick_h.editingFinished.connect(self.snap_height)
+
+        self._refresh_no_fit_label()
+
+    def update_canvas_size(self, w: int, h: int) -> None:
+        """Push a new canvas size in. Snaps both axes only when the size
+        actually changed - this keeps the panel quiet at construction
+        time when the parent pushes the same default size that the panel
+        already assumes."""
+        new_w, new_h = int(w), int(h)
+        changed = (new_w != self._canvas_w) or (new_h != self._canvas_h)
+        self._canvas_w = new_w
+        self._canvas_h = new_h
+        if changed:
+            self._snap_axis(self.brick_w, self._canvas_w, self._w_min)
+            self._snap_axis(self.brick_h, self._canvas_h, self._h_min)
+        self._refresh_no_fit_label()
+
+    def snap_width(self) -> None:
+        self._snap_axis(self.brick_w, self._canvas_w, self._w_min)
+        self._refresh_no_fit_label()
+
+    def snap_height(self) -> None:
+        self._snap_axis(self.brick_h, self._canvas_h, self._h_min)
+        self._refresh_no_fit_label()
+
+    def _on_mortar_changed(self, _value: int) -> None:
+        self._snap_axis(self.brick_w, self._canvas_w, self._w_min)
+        self._snap_axis(self.brick_h, self._canvas_h, self._h_min)
+        self._refresh_no_fit_label()
+
+    def _snap_axis(self, spin: QSpinBox, canvas: int, minimum: int) -> None:
+        valid = valid_brick_dimensions(canvas, int(self.mortar.value()), minimum)
+        if not valid:
+            # Edge case: nothing in the allowed range divides cleanly.
+            # Per spec, leave the value alone - the helper text below the
+            # field tells the user what to try.
+            return
+        current = int(spin.value())
+        target = _nearest_valid(valid, current)
+        if target != current:
+            spin.setValue(target)
+            _flash_snap(spin)
+
+    def _refresh_no_fit_label(self) -> None:
+        m = int(self.mortar.value())
+        w_valid = valid_brick_dimensions(self._canvas_w, m, self._w_min)
+        h_valid = valid_brick_dimensions(self._canvas_h, m, self._h_min)
+        self.no_fit_label.setVisible(not w_valid or not h_valid)
 
 
 # -- Imported-palette swatch grid ------------------------------------------
@@ -451,46 +537,74 @@ class _BrickParamPanel(QGroupBox):
         self.bevel.setChecked(True)
         layout.addWidget(self.bevel, 5, 0, 1, 2)
 
+        self._highlight_length_label = QLabel("Highlight length:")
+        layout.addWidget(self._highlight_length_label, 6, 0)
+        self.highlight_length = QSpinBox()
+        self.highlight_length.setRange(10, 100)
+        self.highlight_length.setValue(50)
+        self.highlight_length.setSuffix("%")
+        self.highlight_length.setToolTip(
+            "How far the bevel highlight runs along the top and left "
+            "edges of each brick. 100% = full edge; 50% = stops halfway. "
+            "The top-left corner pixel is always lit."
+        )
+        layout.addWidget(self.highlight_length, 6, 1)
+
+        self.soft_corners = QCheckBox("Soft corners")
+        self.soft_corners.setToolTip(
+            "Repaint the centre of each 4-way mortar intersection one "
+            "ramp stop lighter, breaking the harsh 90deg cross where "
+            "four bricks meet."
+        )
+        layout.addWidget(self.soft_corners, 7, 0, 1, 2)
+
         self.vegetation_enable = QCheckBox("Vegetation")
         self.vegetation_enable.setToolTip(
             "Optional moss / grass overlay in the mortar gaps"
         )
-        layout.addWidget(self.vegetation_enable, 6, 0, 1, 2)
+        layout.addWidget(self.vegetation_enable, 8, 0, 1, 2)
 
         self.vegetation_panel = _VegetationParamPanel()
         self.vegetation_panel.setVisible(False)
-        layout.addWidget(self.vegetation_panel, 7, 0, 1, 2)
+        layout.addWidget(self.vegetation_panel, 9, 0, 1, 2)
 
-        # Non-blocking hint shown when the canvas size doesn't divide
-        # cleanly into (brick + mortar). The texture still generates fine
-        # but won't tile seamlessly across the seam on the offending axis.
-        self._tile_warning = QLabel("")
-        self._tile_warning.setWordWrap(True)
-        self._tile_warning.setStyleSheet(
+        # Edge-case helper: only shown when the current canvas + mortar
+        # combination admits zero valid brick dimensions on either axis
+        # (e.g. canvas is a prime number and mortar is large). Normal
+        # snapping is silent.
+        self._no_fit_label = QLabel(_NO_FIT_HELPER_TEXT)
+        self._no_fit_label.setWordWrap(True)
+        self._no_fit_label.setStyleSheet(
             "QLabel { color: #d8a44a; font-size: 11px; }"
         )
-        self._tile_warning.setVisible(False)
-        layout.addWidget(self._tile_warning, 8, 0, 1, 2)
-
-        self._canvas_w = 16
-        self._canvas_h = 16
+        self._no_fit_label.setVisible(False)
+        layout.addWidget(self._no_fit_label, 10, 0, 1, 2)
 
         for w in (
             self.brick_w, self.brick_h, self.mortar,
-            self.color_variance,
+            self.color_variance, self.highlight_length,
         ):
             w.valueChanged.connect(self.params_changed)
         self.row_offset.valueChanged.connect(self.params_changed)
         self.bevel.toggled.connect(self.params_changed)
+        self.bevel.toggled.connect(self._refresh_highlight_length_visible)
+        self.soft_corners.toggled.connect(self.params_changed)
         self.vegetation_enable.toggled.connect(self._on_vegetation_toggled)
         self.vegetation_panel.params_changed.connect(self.params_changed)
-        for w in (self.brick_w, self.brick_h, self.mortar):
-            w.valueChanged.connect(self._refresh_tile_warning)
-        self._refresh_tile_warning()
+
+        self._snap = _BrickSnapHelper(
+            self.brick_w, self.brick_h, self.mortar, self._no_fit_label,
+        )
+        self._refresh_highlight_length_visible()
 
     def _on_vegetation_toggled(self, checked: bool) -> None:
         self.vegetation_panel.setVisible(checked)
         self.params_changed.emit()
+
+    def _refresh_highlight_length_visible(self) -> None:
+        on = self.bevel.isChecked()
+        self._highlight_length_label.setVisible(on)
+        self.highlight_length.setVisible(on)
 
     def to_params(self) -> BrickParams:
         veg = (
@@ -505,23 +619,13 @@ class _BrickParamPanel(QGroupBox):
             row_offset=float(self.row_offset.value()),
             color_variance=int(self.color_variance.value()),
             bevel=bool(self.bevel.isChecked()),
+            highlight_length=int(self.highlight_length.value()),
+            soft_corners=bool(self.soft_corners.isChecked()),
             vegetation=veg,
         )
 
     def update_canvas_size(self, w: int, h: int) -> None:
-        self._canvas_w = int(w)
-        self._canvas_h = int(h)
-        self._refresh_tile_warning()
-
-    def _refresh_tile_warning(self) -> None:
-        rx, ry = brick_tile_remainder(
-            self._canvas_w, self._canvas_h,
-            int(self.brick_w.value()),
-            int(self.brick_h.value()),
-            int(self.mortar.value()),
-        )
-        self._tile_warning.setText(_format_tile_warning(rx, ry))
-        self._tile_warning.setVisible(rx > 0 or ry > 0)
+        self._snap.update_canvas_size(w, h)
 
 
 # -- Blocks parameter panel -------------------------------------------------
@@ -582,19 +686,40 @@ class _BlocksParamPanel(QGroupBox):
         self.bevel.setChecked(True)
         layout.addWidget(self.bevel, 5, 0, 1, 2)
 
+        self._highlight_length_label = QLabel("Highlight length:")
+        layout.addWidget(self._highlight_length_label, 6, 0)
+        self.highlight_length = QSpinBox()
+        self.highlight_length.setRange(10, 100)
+        self.highlight_length.setValue(50)
+        self.highlight_length.setSuffix("%")
+        self.highlight_length.setToolTip(
+            "How far the bevel highlight runs along the top and left "
+            "edges of each block. 100% = full edge; 50% = stops halfway. "
+            "The top-left corner pixel is always lit."
+        )
+        layout.addWidget(self.highlight_length, 6, 1)
+
+        self.soft_corners = QCheckBox("Soft corners")
+        self.soft_corners.setToolTip(
+            "Repaint the centre of each 4-way mortar intersection one "
+            "ramp stop lighter, breaking the harsh 90deg cross where "
+            "four blocks meet."
+        )
+        layout.addWidget(self.soft_corners, 7, 0, 1, 2)
+
         self.surface_dings = QCheckBox("Surface dings")
         self.surface_dings.setChecked(True)
         self.surface_dings.setToolTip(
             "Scattered dark flecks per block (40% of blocks, 1-3 dings each)"
         )
-        layout.addWidget(self.surface_dings, 6, 0, 1, 2)
+        layout.addWidget(self.surface_dings, 8, 0, 1, 2)
 
         self.cracks = QCheckBox("Cracks")
         self.cracks.setChecked(bool(cracked))
         self.cracks.setToolTip(
             "Hairline cracks radiating inward from block edges (25% of blocks)"
         )
-        layout.addWidget(self.cracks, 7, 0, 1, 2)
+        layout.addWidget(self.cracks, 9, 0, 1, 2)
 
         # Non-blocking warning shown only when cracks are enabled and the
         # canvas is small enough that the detail wouldn't read.
@@ -606,46 +731,59 @@ class _BlocksParamPanel(QGroupBox):
             "QLabel { color: #d8a44a; font-size: 11px; }"
         )
         self._small_canvas_warning.setVisible(False)
-        layout.addWidget(self._small_canvas_warning, 8, 0, 1, 2)
+        layout.addWidget(self._small_canvas_warning, 10, 0, 1, 2)
 
-        # Same tile-alignment hint as the brick panel - shown when
-        # canvas size doesn't divide cleanly into (block + mortar).
-        self._tile_warning = QLabel("")
-        self._tile_warning.setWordWrap(True)
-        self._tile_warning.setStyleSheet(
+        # Edge-case helper: only shown when the current canvas + mortar
+        # combination admits zero valid block dimensions on either axis.
+        # Normal snapping is silent (subtle yellow flash on the affected
+        # spinbox; no warning text).
+        self._no_fit_label = QLabel(_NO_FIT_HELPER_TEXT)
+        self._no_fit_label.setWordWrap(True)
+        self._no_fit_label.setStyleSheet(
             "QLabel { color: #d8a44a; font-size: 11px; }"
         )
-        self._tile_warning.setVisible(False)
-        layout.addWidget(self._tile_warning, 9, 0, 1, 2)
+        self._no_fit_label.setVisible(False)
+        layout.addWidget(self._no_fit_label, 11, 0, 1, 2)
 
         self.vegetation_enable = QCheckBox("Vegetation")
         self.vegetation_enable.setToolTip(
             "Optional moss / grass overlay in the mortar gaps and cracks"
         )
-        layout.addWidget(self.vegetation_enable, 10, 0, 1, 2)
+        layout.addWidget(self.vegetation_enable, 12, 0, 1, 2)
 
         self.vegetation_panel = _VegetationParamPanel()
         self.vegetation_panel.setVisible(False)
-        layout.addWidget(self.vegetation_panel, 11, 0, 1, 2)
+        layout.addWidget(self.vegetation_panel, 13, 0, 1, 2)
 
         self._canvas_w = 16
         self._canvas_h = 16
-        for w in (self.brick_w, self.brick_h, self.mortar, self.color_variance):
+        for w in (
+            self.brick_w, self.brick_h, self.mortar,
+            self.color_variance, self.highlight_length,
+        ):
             w.valueChanged.connect(self.params_changed)
         self.row_offset.valueChanged.connect(self.params_changed)
-        for cb in (self.bevel, self.surface_dings, self.cracks):
+        for cb in (self.bevel, self.soft_corners, self.surface_dings, self.cracks):
             cb.toggled.connect(self.params_changed)
+        self.bevel.toggled.connect(self._refresh_highlight_length_visible)
         self.cracks.toggled.connect(self._refresh_warning)
         self.vegetation_enable.toggled.connect(self._on_vegetation_toggled)
         self.vegetation_panel.params_changed.connect(self.params_changed)
-        for w in (self.brick_w, self.brick_h, self.mortar):
-            w.valueChanged.connect(self._refresh_tile_warning)
         self._refresh_warning()
-        self._refresh_tile_warning()
+        self._refresh_highlight_length_visible()
+
+        self._snap = _BrickSnapHelper(
+            self.brick_w, self.brick_h, self.mortar, self._no_fit_label,
+        )
 
     def _on_vegetation_toggled(self, checked: bool) -> None:
         self.vegetation_panel.setVisible(checked)
         self.params_changed.emit()
+
+    def _refresh_highlight_length_visible(self) -> None:
+        on = self.bevel.isChecked()
+        self._highlight_length_label.setVisible(on)
+        self.highlight_length.setVisible(on)
 
     def to_params(self) -> BlocksParams:
         veg = (
@@ -660,6 +798,8 @@ class _BlocksParamPanel(QGroupBox):
             row_offset=float(self.row_offset.value()),
             color_variance=int(self.color_variance.value()),
             bevel=bool(self.bevel.isChecked()),
+            highlight_length=int(self.highlight_length.value()),
+            soft_corners=bool(self.soft_corners.isChecked()),
             surface_dings=bool(self.surface_dings.isChecked()),
             cracks=bool(self.cracks.isChecked()),
             vegetation=veg,
@@ -669,7 +809,7 @@ class _BlocksParamPanel(QGroupBox):
         self._canvas_w = int(w)
         self._canvas_h = int(h)
         self._refresh_warning()
-        self._refresh_tile_warning()
+        self._snap.update_canvas_size(w, h)
 
     def _refresh_warning(self) -> None:
         small = (
@@ -677,16 +817,6 @@ class _BlocksParamPanel(QGroupBox):
             or self._canvas_h < BLOCKS_CRACK_MIN_CANVAS
         )
         self._small_canvas_warning.setVisible(self.cracks.isChecked() and small)
-
-    def _refresh_tile_warning(self) -> None:
-        rx, ry = brick_tile_remainder(
-            self._canvas_w, self._canvas_h,
-            int(self.brick_w.value()),
-            int(self.brick_h.value()),
-            int(self.mortar.value()),
-        )
-        self._tile_warning.setText(_format_tile_warning(rx, ry, noun="block"))
-        self._tile_warning.setVisible(rx > 0 or ry > 0)
 
 
 # -- Boards parameter panel -------------------------------------------------
