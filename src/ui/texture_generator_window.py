@@ -552,9 +552,8 @@ class _BrickParamPanel(QGroupBox):
 
         self.soft_corners = QCheckBox("Soft corners")
         self.soft_corners.setToolTip(
-            "Repaint the centre of each 4-way mortar intersection one "
-            "ramp stop lighter, breaking the harsh 90deg cross where "
-            "four bricks meet."
+            "Let mortar win at T-junction armpits and soften bevel corner "
+            "transitions with intermediate ramp stops."
         )
         layout.addWidget(self.soft_corners, 7, 0, 1, 2)
 
@@ -634,16 +633,11 @@ class _BrickParamPanel(QGroupBox):
 class _BlocksParamPanel(QGroupBox):
     """Brick parameters with two extra detail toggles (Surface Dings,
     Cracks) and a non-blocking warning when cracks are enabled at small
-    canvas sizes.
-
-    `cracked` is a defaults flag - it only controls the initial state of
-    the Cracks checkbox so the "Blocks" and "Blocks Cracked" dropdown
-    entries can share this widget class while reading differently to the
-    user. The user can still toggle either field in either type."""
+    canvas sizes."""
 
     params_changed = Signal()
 
-    def __init__(self, *, cracked: bool = False, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__("Block parameters", parent)
         layout = QGridLayout(self)
         layout.setContentsMargins(8, 6, 8, 6)
@@ -701,25 +695,45 @@ class _BlocksParamPanel(QGroupBox):
 
         self.soft_corners = QCheckBox("Soft corners")
         self.soft_corners.setToolTip(
-            "Repaint the centre of each 4-way mortar intersection one "
-            "ramp stop lighter, breaking the harsh 90deg cross where "
-            "four blocks meet."
+            "Let mortar win at T-junction armpits and soften bevel corner "
+            "transitions with intermediate ramp stops."
         )
         layout.addWidget(self.soft_corners, 7, 0, 1, 2)
 
         self.surface_dings = QCheckBox("Surface dings")
         self.surface_dings.setChecked(True)
         self.surface_dings.setToolTip(
-            "Scattered dark flecks per block (40% of blocks, 1-3 dings each)"
+            "Aliased surface chips and pits on block faces."
         )
         layout.addWidget(self.surface_dings, 8, 0, 1, 2)
 
-        self.cracks = QCheckBox("Cracks")
-        self.cracks.setChecked(bool(cracked))
-        self.cracks.setToolTip(
-            "Hairline cracks radiating inward from block edges (25% of blocks)"
+        self._ding_amount_label = QLabel("Ding amount:")
+        layout.addWidget(self._ding_amount_label, 9, 0)
+        self.ding_amount = QSpinBox()
+        self.ding_amount.setRange(0, 100)
+        self.ding_amount.setValue(50)
+        self.ding_amount.setSuffix("%")
+        self.ding_amount.setToolTip(
+            "Higher values place dings on more blocks and allow more/larger blobs."
         )
-        layout.addWidget(self.cracks, 9, 0, 1, 2)
+        layout.addWidget(self.ding_amount, 9, 1)
+
+        self.cracks = QCheckBox("Cracks")
+        self.cracks.setToolTip(
+            "Vertical-primary stress cracks anchored to one mortar seam."
+        )
+        layout.addWidget(self.cracks, 10, 0, 1, 2)
+
+        self._crack_amount_label = QLabel("Crack amount:")
+        layout.addWidget(self._crack_amount_label, 11, 0)
+        self.crack_amount = QSpinBox()
+        self.crack_amount.setRange(0, 100)
+        self.crack_amount.setValue(40)
+        self.crack_amount.setSuffix("%")
+        self.crack_amount.setToolTip(
+            "Higher values increase crack frequency and average crack length."
+        )
+        layout.addWidget(self.crack_amount, 11, 1)
 
         # Non-blocking warning shown only when cracks are enabled and the
         # canvas is small enough that the detail wouldn't read.
@@ -731,7 +745,7 @@ class _BlocksParamPanel(QGroupBox):
             "QLabel { color: #d8a44a; font-size: 11px; }"
         )
         self._small_canvas_warning.setVisible(False)
-        layout.addWidget(self._small_canvas_warning, 10, 0, 1, 2)
+        layout.addWidget(self._small_canvas_warning, 12, 0, 1, 2)
 
         # Edge-case helper: only shown when the current canvas + mortar
         # combination admits zero valid block dimensions on either axis.
@@ -743,34 +757,38 @@ class _BlocksParamPanel(QGroupBox):
             "QLabel { color: #d8a44a; font-size: 11px; }"
         )
         self._no_fit_label.setVisible(False)
-        layout.addWidget(self._no_fit_label, 11, 0, 1, 2)
+        layout.addWidget(self._no_fit_label, 13, 0, 1, 2)
 
         self.vegetation_enable = QCheckBox("Vegetation")
         self.vegetation_enable.setToolTip(
             "Optional moss / grass overlay in the mortar gaps and cracks"
         )
-        layout.addWidget(self.vegetation_enable, 12, 0, 1, 2)
+        layout.addWidget(self.vegetation_enable, 14, 0, 1, 2)
 
         self.vegetation_panel = _VegetationParamPanel()
         self.vegetation_panel.setVisible(False)
-        layout.addWidget(self.vegetation_panel, 13, 0, 1, 2)
+        layout.addWidget(self.vegetation_panel, 15, 0, 1, 2)
 
         self._canvas_w = 16
         self._canvas_h = 16
         for w in (
             self.brick_w, self.brick_h, self.mortar,
             self.color_variance, self.highlight_length,
+            self.ding_amount, self.crack_amount,
         ):
             w.valueChanged.connect(self.params_changed)
         self.row_offset.valueChanged.connect(self.params_changed)
         for cb in (self.bevel, self.soft_corners, self.surface_dings, self.cracks):
             cb.toggled.connect(self.params_changed)
         self.bevel.toggled.connect(self._refresh_highlight_length_visible)
+        self.surface_dings.toggled.connect(self._refresh_detail_amount_enabled)
         self.cracks.toggled.connect(self._refresh_warning)
+        self.cracks.toggled.connect(self._refresh_detail_amount_enabled)
         self.vegetation_enable.toggled.connect(self._on_vegetation_toggled)
         self.vegetation_panel.params_changed.connect(self.params_changed)
         self._refresh_warning()
         self._refresh_highlight_length_visible()
+        self._refresh_detail_amount_enabled()
 
         self._snap = _BrickSnapHelper(
             self.brick_w, self.brick_h, self.mortar, self._no_fit_label,
@@ -784,6 +802,15 @@ class _BlocksParamPanel(QGroupBox):
         on = self.bevel.isChecked()
         self._highlight_length_label.setVisible(on)
         self.highlight_length.setVisible(on)
+
+    def _refresh_detail_amount_enabled(self) -> None:
+        dings_on = self.surface_dings.isChecked()
+        self._ding_amount_label.setEnabled(dings_on)
+        self.ding_amount.setEnabled(dings_on)
+
+        cracks_on = self.cracks.isChecked()
+        self._crack_amount_label.setEnabled(cracks_on)
+        self.crack_amount.setEnabled(cracks_on)
 
     def to_params(self) -> BlocksParams:
         veg = (
@@ -801,7 +828,9 @@ class _BlocksParamPanel(QGroupBox):
             highlight_length=int(self.highlight_length.value()),
             soft_corners=bool(self.soft_corners.isChecked()),
             surface_dings=bool(self.surface_dings.isChecked()),
+            ding_amount=int(self.ding_amount.value()),
             cracks=bool(self.cracks.isChecked()),
+            crack_amount=int(self.crack_amount.value()),
             vegetation=veg,
         )
 
@@ -1129,12 +1158,10 @@ class TextureGeneratorWindow(QMainWindow):
         tex_layout.addLayout(type_row)
 
         # One parameter panel per texture type, swapped by a stack so each
-        # type keeps its own independent state. "Blocks Cracked" is just a
-        # Blocks panel with the Cracks checkbox pre-toggled on.
+        # type keeps its own independent state.
         self._param_panels: dict[str, QWidget] = {
             "Brick": _BrickParamPanel(),
-            "Blocks": _BlocksParamPanel(cracked=False),
-            "Blocks Cracked": _BlocksParamPanel(cracked=True),
+            "Blocks": _BlocksParamPanel(),
             "Boards": _BoardsParamPanel(),
         }
         self._param_stack = QStackedWidget()
@@ -1422,8 +1449,8 @@ class TextureGeneratorWindow(QMainWindow):
                     params=brick_params,
                     seed=seed,
                 )
-            elif texture_type in ("Blocks", "Blocks Cracked"):
-                blocks_params = self._param_panels[texture_type].to_params()
+            elif texture_type == "Blocks":
+                blocks_params = self._param_panels["Blocks"].to_params()
                 result = generate_blocks_texture(
                     width=w,
                     height=h,

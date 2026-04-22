@@ -516,9 +516,16 @@ def _apply_corner_softening(
     skipped wholesale when the ramp has fewer than 4 stops (the spec's
     hierarchy needs N>=4 to express the gradient stops).
 
+    Pass 3 - Inner face softening: the first face pixel diagonally
+    inside each softened corner is darkened two ramp stops relative to
+    that block face, clamped to the bevel-shadow stop. This extends the
+    rounding illusion one pixel into the block body, especially around
+    T-junctions where bevel-only softening still reads too angular.
+
     Pass 1 runs before Pass 2 so the gradient sees already-fixed
     armpits at the boundary - if a pixel happens to be both an armpit
-    and a corner-approach, the gradient (Pass 2) wins."""
+    and a corner-approach, the gradient (Pass 2) wins. Pass 3 runs
+    last and only touches face pixels."""
     h, w = pixels.shape[:2]
     n = len(ramp_colors)
     if h <= 0 or w <= 0 or n < 2:
@@ -551,10 +558,13 @@ def _apply_corner_softening(
     wide_left = M_left & np.roll(M_left, 1, axis=0) & np.roll(M_left, -1, axis=0)
     wide_right = M_right & np.roll(M_right, 1, axis=0) & np.roll(M_right, -1, axis=0)
 
-    vstub_top = M & wide_above & (~M_left | ~M_right)
-    vstub_bot = M & wide_below & (~M_left | ~M_right)
-    hstub_left = M & wide_left & (~M_above | ~M_below)
-    hstub_right = M & wide_right & (~M_above | ~M_below)
+    # A true T-junction has narrowed back into brick on BOTH flanks of
+    # the stub endpoint. Using OR here over-matches plus-junctions and
+    # paints non-armpit bevel pixels to mortar.
+    vstub_top = M & wide_above & (~M_left) & (~M_right)
+    vstub_bot = M & wide_below & (~M_left) & (~M_right)
+    hstub_left = M & wide_left & (~M_above) & (~M_below)
+    hstub_right = M & wide_right & (~M_above) & (~M_below)
 
     arm_h = (
         np.roll(vstub_top, -1, axis=1) | np.roll(vstub_top, 1, axis=1)
@@ -564,9 +574,15 @@ def _apply_corner_softening(
         np.roll(hstub_left, -1, axis=0) | np.roll(hstub_left, 1, axis=0)
         | np.roll(hstub_right, -1, axis=0) | np.roll(hstub_right, 1, axis=0)
     )
-    armpits = (arm_h | arm_v) & is_hi
+    # A T-end corner must collapse fully into mortar regardless of
+    # whether the bevel pixel there belongs to the highlight side or
+    # the shadow side of the adjacent block.
+    armpits = (arm_h | arm_v) & (is_hi | is_sh)
     if armpits.any():
         pixels[armpits] = mortar_color
+        is_hi[armpits] = False
+        is_sh[armpits] = False
+        is_mortar[armpits] = True
 
     # ---- Pass 2: Corner gradient ----
     if n < 4 or p.brick_width < 3 or p.brick_height < 3:
@@ -581,31 +597,62 @@ def _apply_corner_softening(
     sh_light_color = np.array(ramp_colors[n - 3], dtype=np.uint8)
     mid_spec = (1 + (n - 2)) // 2
     mid_color = np.array(ramp_colors[n - 1 - mid_spec], dtype=np.uint8)
+    is_bevel = is_hi | is_sh
+    color_to_idx = {
+        tuple(int(v) for v in color): idx for idx, color in enumerate(ramp_colors)
+    }
+
+    def _paint_if_bevel(x: int, y: int, color: np.ndarray) -> None:
+        wy = y % h
+        wx = x % w
+        if is_bevel[wy, wx]:
+            pixels[wy, wx] = color
+
+    def _paint_if_face_softened(x: int, y: int) -> None:
+        wy = y % h
+        wx = x % w
+        if not is_face[wy, wx]:
+            return
+        face_key = tuple(int(v) for v in pixels[wy, wx])
+        base_idx = color_to_idx.get(face_key)
+        if base_idx is None:
+            return
+        softened_idx = min(n - 2, base_idx + 2)
+        pixels[wy, wx] = np.array(ramp_colors[softened_idx], dtype=np.uint8)
 
     bw, bh = p.brick_width, p.brick_height
     for _col_idx, _row_idx, bx, by in _iter_brick_lattice(w, h, p):
+        # Only repaint actual bevel pixels. If a shortened highlight left
+        # a would-be corner approach as face, leave the face intact.
+
         # TL: top highlight meets left highlight - all three darkened.
-        _wrap_set_pixel(pixels, bx, by, hi_dark_color)
-        _wrap_set_pixel(pixels, bx + 1, by, hi_dark_color)
-        _wrap_set_pixel(pixels, bx, by + 1, hi_dark_color)
+        _paint_if_bevel(bx, by, hi_dark_color)
+        _paint_if_bevel(bx + 1, by, hi_dark_color)
+        _paint_if_bevel(bx, by + 1, hi_dark_color)
 
         # TR: top highlight meets right shadow - mixed; corner = midpoint.
         tr_x, tr_y = bx + bw - 1, by
-        _wrap_set_pixel(pixels, tr_x - 1, tr_y, hi_dark_color)
-        _wrap_set_pixel(pixels, tr_x, tr_y + 1, sh_light_color)
-        _wrap_set_pixel(pixels, tr_x, tr_y, mid_color)
+        _paint_if_bevel(tr_x - 1, tr_y, hi_dark_color)
+        _paint_if_bevel(tr_x, tr_y + 1, sh_light_color)
+        _paint_if_bevel(tr_x, tr_y, mid_color)
 
         # BL: per spec, both approaching pixels and corner = sh_light.
         bl_x, bl_y = bx, by + bh - 1
-        _wrap_set_pixel(pixels, bl_x, bl_y - 1, sh_light_color)
-        _wrap_set_pixel(pixels, bl_x + 1, bl_y, sh_light_color)
-        _wrap_set_pixel(pixels, bl_x, bl_y, sh_light_color)
+        _paint_if_bevel(bl_x, bl_y - 1, sh_light_color)
+        _paint_if_bevel(bl_x + 1, bl_y, sh_light_color)
+        _paint_if_bevel(bl_x, bl_y, sh_light_color)
 
         # BR: bottom shadow meets right shadow - all sh_light.
         br_x, br_y = bx + bw - 1, by + bh - 1
-        _wrap_set_pixel(pixels, br_x - 1, br_y, sh_light_color)
-        _wrap_set_pixel(pixels, br_x, br_y - 1, sh_light_color)
-        _wrap_set_pixel(pixels, br_x, br_y, sh_light_color)
+        _paint_if_bevel(br_x - 1, br_y, sh_light_color)
+        _paint_if_bevel(br_x, br_y - 1, sh_light_color)
+        _paint_if_bevel(br_x, br_y, sh_light_color)
+
+        # Extend the soft-corner gradient one face pixel inward.
+        _paint_if_face_softened(bx + 1, by + 1)
+        _paint_if_face_softened(tr_x - 1, tr_y + 1)
+        _paint_if_face_softened(bl_x + 1, bl_y - 1)
+        _paint_if_face_softened(br_x - 1, br_y - 1)
 
 
 def _classify_brick_pixels_split(
@@ -687,7 +734,9 @@ class BlocksParams(BrickParams):
     brick_height: int = 6       # range 3..canvas_h
 
     surface_dings: bool = True  # detail pass A
+    ding_amount: int = 50       # 0..100
     cracks: bool = False        # detail pass B
+    crack_amount: int = 40      # 0..100
 
     def clamped(self, canvas_w: int, canvas_h: int) -> "BlocksParams":
         return BlocksParams(
@@ -700,7 +749,9 @@ class BlocksParams(BrickParams):
             highlight_length=max(10, min(int(self.highlight_length), 100)),
             soft_corners=bool(self.soft_corners),
             surface_dings=bool(self.surface_dings),
+            ding_amount=max(0, min(int(self.ding_amount), 100)),
             cracks=bool(self.cracks),
+            crack_amount=max(0, min(int(self.crack_amount), 100)),
             vegetation=self.vegetation.clamped() if self.vegetation else None,
         )
 
@@ -743,58 +794,318 @@ def _wrap_set_pixel(pixels: np.ndarray, x: int, y: int, color: np.ndarray) -> No
     pixels[y % h, x % w] = color
 
 
+_DING_SIZE_WEIGHTS: tuple[tuple[int, int], ...] = (
+    (2, 1),
+    (3, 3),
+    (4, 4),
+    (5, 3),
+    (6, 1),
+)
+
+_DING_SHAPES: dict[int, tuple[tuple[tuple[int, int], ...], ...]] = {
+    2: (
+        ((0, 0), (1, 0)),
+        ((0, 0), (0, 1)),
+    ),
+    3: (
+        ((0, 0), (1, 0), (0, 1)),
+        ((0, 0), (1, 0), (1, 1)),
+        ((0, 0), (1, 0), (2, 0)),
+    ),
+    4: (
+        ((0, 0), (1, 0), (0, 1), (1, 1)),
+        ((0, 0), (1, 0), (2, 0), (1, 1)),
+        ((0, 0), (1, 0), (0, 1), (-1, 1)),
+    ),
+    5: (
+        ((0, 0), (1, 0), (2, 0), (0, 1), (1, 1)),
+        ((0, 0), (1, 0), (0, 1), (1, 1), (2, 1)),
+        ((0, 0), (1, 0), (2, 0), (1, 1), (1, -1)),
+    ),
+    6: (
+        ((0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1)),
+        ((0, 0), (1, 0), (2, 0), (1, -1), (1, 1), (2, 1)),
+        ((0, 0), (1, 0), (1, 1), (2, 1), (1, 2), (2, 2)),
+    ),
+}
+
+_DING_TRANSFORMS: tuple[tuple[int, int, bool], ...] = (
+    (1, 1, False),
+    (-1, 1, False),
+    (1, -1, False),
+    (-1, -1, False),
+    (1, 1, True),
+    (-1, 1, True),
+    (1, -1, True),
+    (-1, -1, True),
+)
+
+_MAX_DING_BLOCK_PROBABILITY: float = 0.70
+_MAX_CRACK_PROBABILITY: float = 0.50
+_THROUGH_CRACK_GAP_CHANCE: float = 0.18
+
+
+def _weighted_choice(rng: random.Random, weighted_values: tuple[tuple[int, int], ...]) -> int:
+    total = sum(weight for _value, weight in weighted_values)
+    roll = rng.randrange(total)
+    upto = 0
+    for value, weight in weighted_values:
+        upto += weight
+        if roll < upto:
+            return value
+    return weighted_values[-1][0]
+
+
+def _transform_offsets(
+    offsets: tuple[tuple[int, int], ...],
+    *,
+    sx: int,
+    sy: int,
+    swap: bool,
+) -> list[tuple[int, int]]:
+    out: list[tuple[int, int]] = []
+    for ox, oy in offsets:
+        tx, ty = (oy, ox) if swap else (ox, oy)
+        out.append((tx * sx, ty * sy))
+    return out
+
+
+def _nearest_face_idx(y: int, x: int, face_idx_map: np.ndarray) -> int:
+    """Return the nearest valid face ramp index around `(y, x)`, searching
+    the pixel itself first and then a small cardinal/diagonal neighbourhood."""
+    h_, w_ = face_idx_map.shape
+    base_idx = int(face_idx_map[y % h_, x % w_])
+    if base_idx >= 0:
+        return base_idx
+    for radius in (1, 2):
+        for dy in range(-radius, radius + 1):
+            for dx in range(-radius, radius + 1):
+                if abs(dx) + abs(dy) > radius:
+                    continue
+                idx = int(face_idx_map[(y + dy) % h_, (x + dx) % w_])
+                if idx >= 0:
+                    return idx
+    return -1
+
+
+def _paint_ding_blob(
+    pixels: np.ndarray,
+    positions: list[tuple[int, int]],
+    *,
+    base_idx: int,
+    ramp_colors: list[Color],
+) -> None:
+    if not positions:
+        return
+    n = len(ramp_colors)
+    if n <= 1:
+        return
+
+    centroid_y = sum(y for y, _x in positions) / len(positions)
+    centroid_x = sum(x for _y, x in positions) / len(positions)
+    core_count = 1 if len(positions) <= 4 else 2
+    ordered = sorted(
+        positions,
+        key=lambda pos: (
+            abs(pos[0] - centroid_y) + abs(pos[1] - centroid_x),
+            pos[0],
+            pos[1],
+        ),
+    )
+    core = ordered[:core_count]
+
+    light_idx = min(n - 2, base_idx + 1)
+    mid_idx = min(n - 2, base_idx + 2)
+    dark_idx = min(n - 2, base_idx + 3)
+
+    max_dist = 0
+    dists: dict[tuple[int, int], int] = {}
+    for pos in positions:
+        dist = min(abs(pos[0] - cy) + abs(pos[1] - cx) for cy, cx in core)
+        dists[pos] = dist
+        max_dist = max(max_dist, dist)
+
+    for y, x in positions:
+        dist = dists[(y, x)]
+        if max_dist <= 0:
+            idx = dark_idx
+        elif max_dist == 1:
+            idx = dark_idx if dist == 0 else mid_idx
+        else:
+            idx = dark_idx if dist == 0 else (mid_idx if dist == 1 else light_idx)
+        pixels[y, x] = np.array(ramp_colors[idx], dtype=np.uint8)
+
+
+def _plan_crack_gaps(
+    rng: random.Random,
+    spine: list[tuple[int, int]],
+    *,
+    face_idx_map: np.ndarray,
+    ramp_colors: list[Color],
+) -> tuple[
+    dict[tuple[int, int], np.ndarray],
+    dict[tuple[int, int], np.ndarray],
+    set[tuple[int, int]],
+]:
+    """Return overlay maps for optional gaps inside a through-crack spine.
+
+    `gap_fill` repaints selected centre pixels back to their face colour.
+    `gap_edge` lightly softens the crack pixels immediately before/after
+    each gap so the interruption reads intentional instead of abrupt."""
+    if len(spine) < 6 or rng.random() >= _THROUGH_CRACK_GAP_CHANCE:
+        return {}, {}, set()
+
+    h_, w_ = face_idx_map.shape
+    gap_fill: dict[tuple[int, int], np.ndarray] = {}
+    gap_edge: dict[tuple[int, int], np.ndarray] = {}
+    gap_pixels: set[tuple[int, int]] = set()
+
+    target_gap_count = 1 if rng.random() < 0.65 else 2
+    centre = len(spine) // 2
+    candidate_indices = list(range(max(2, centre - 3), min(len(spine) - 2, centre + 4)))
+    rng.shuffle(candidate_indices)
+
+    accepted_gap_count = 0
+    blocked: set[int] = set()
+    for start_idx in candidate_indices:
+        if accepted_gap_count >= target_gap_count:
+            break
+        if start_idx in blocked:
+            continue
+        gap_len = rng.randint(1, 2)
+        gap_indices = list(range(start_idx, min(start_idx + gap_len, len(spine) - 1)))
+        if any(idx in blocked for idx in gap_indices):
+            continue
+
+        base_idx = _nearest_face_idx(spine[start_idx][0], spine[start_idx][1], face_idx_map)
+        if base_idx < 0:
+            continue
+
+        face_color = np.array(ramp_colors[base_idx], dtype=np.uint8)
+        edge_idx = min(len(ramp_colors) - 2, base_idx + 2)
+        edge_color = np.array(ramp_colors[edge_idx], dtype=np.uint8)
+
+        for idx in gap_indices:
+            gy, gx = spine[idx]
+            key = (gy % h_, gx % w_)
+            gap_fill[key] = face_color
+            gap_pixels.add(key)
+            blocked.update({idx - 1, idx, idx + 1, idx + 2})
+
+        left_idx = gap_indices[0] - 1
+        right_idx = gap_indices[-1] + 1
+        if 0 <= left_idx < len(spine):
+            ey, ex = spine[left_idx]
+            key = (ey % h_, ex % w_)
+            if key not in gap_pixels:
+                gap_edge[key] = edge_color
+        if 0 <= right_idx < len(spine):
+            ey, ex = spine[right_idx]
+            key = (ey % h_, ex % w_)
+            if key not in gap_pixels:
+                gap_edge[key] = edge_color
+        accepted_gap_count += 1
+
+    if not gap_pixels:
+        return {}, {}, set()
+    return gap_fill, gap_edge, gap_pixels
+
+
 def _apply_dings(
     pixels: np.ndarray,
     bx: int, by: int, bw: int, bh: int,
     seed: int, col: int, row: int,
-    darkest: np.ndarray, second_darkest: np.ndarray,
+    ramp_colors: list[Color],
+    face_idx_map: np.ndarray,
+    ding_amount: int,
 ) -> None:
     """Detail pass A from the Blocks spec.
 
-    Ding zone is the brick interior inset by 1 px on every side - i.e. the
-    region that's inside the bevel - so dings never overwrite the bevel.
+    Dings may only land on block-face pixels. `face_idx_map` is the shared
+    per-pixel face classifier built once for the whole render; using it here
+    means dings naturally avoid mortar and bevel regardless of whether bevel
+    is enabled.
     """
+    amount_norm = max(0.0, min(float(ding_amount), 100.0)) / 100.0
+    if amount_norm <= 0.0:
+        return
+
     rng = _block_rng(seed, col, row, _SALT_DING)
-    if rng.random() >= 0.40:
+    block_probability = 0.10 + (_MAX_DING_BLOCK_PROBABILITY - 0.10) * amount_norm
+    if rng.random() >= block_probability:
         return
-    n_dings = rng.randint(1, 3)
-    zone_x0 = bx + 1
-    zone_y0 = by + 1
-    zone_w = bw - 2
-    zone_h = bh - 2
-    if zone_w <= 0 or zone_h <= 0:
+
+    h_, w_ = pixels.shape[:2]
+    valid_face: dict[tuple[int, int], int] = {}
+    for yy in range(by, by + bh):
+        wy = yy % h_
+        for xx in range(bx, bx + bw):
+            wx = xx % w_
+            face_idx = int(face_idx_map[wy, wx])
+            if face_idx >= 0:
+                valid_face[(wy, wx)] = face_idx
+    if not valid_face:
         return
-    for _ in range(n_dings):
-        ax = zone_x0 + rng.randrange(zone_w)
-        ay = zone_y0 + rng.randrange(zone_h)
-        # Alternate (seeded) between darkest and one stop lighter.
-        color = darkest if rng.random() < 0.5 else second_darkest
-        _wrap_set_pixel(pixels, ax, ay, color)
-        placed = 1
-        n_extras = rng.randint(0, 2)
-        if n_extras == 0:
-            continue
-        neighbours = [(0, -1), (0, 1), (-1, 0), (1, 0)]
-        rng.shuffle(neighbours)
-        for dx, dy in neighbours:
-            if placed >= 3 or n_extras <= 0:
+
+    ding_count = 1
+    if rng.random() < 0.30 + 0.45 * amount_norm:
+        ding_count += 1
+    if rng.random() < max(0.0, amount_norm - 0.10):
+        ding_count += 1
+
+    claimed: set[tuple[int, int]] = set()
+    all_sizes = [size for size, _weight in _DING_SIZE_WEIGHTS]
+    anchors = sorted(valid_face)
+    for _ in range(ding_count):
+        preferred_size = _weighted_choice(rng, _DING_SIZE_WEIGHTS)
+        size_order = [preferred_size] + [
+            size
+            for size in sorted(all_sizes, key=lambda value: abs(value - preferred_size))
+            if size != preferred_size
+        ]
+
+        placed = False
+        for size in size_order:
+            variants: list[list[tuple[int, int]]] = []
+            for offsets in _DING_SHAPES[size]:
+                for sx, sy, swap in _DING_TRANSFORMS:
+                    variants.append(
+                        _transform_offsets(offsets, sx=sx, sy=sy, swap=swap)
+                    )
+            rng.shuffle(variants)
+
+            anchor_order = anchors[:]
+            rng.shuffle(anchor_order)
+            for ay, ax in anchor_order:
+                if (ay, ax) in claimed:
+                    continue
+                for offsets in variants:
+                    positions: list[tuple[int, int]] = []
+                    for dx, dy in offsets:
+                        key = ((ay + dy) % h_, (ax + dx) % w_)
+                        if key not in valid_face or key in claimed:
+                            positions = []
+                            break
+                        positions.append(key)
+                    if not positions:
+                        continue
+
+                    base_idx = round(
+                        sum(valid_face[pos] for pos in positions) / len(positions)
+                    )
+                    _paint_ding_blob(
+                        pixels,
+                        positions,
+                        base_idx=max(0, min(len(ramp_colors) - 2, base_idx)),
+                        ramp_colors=ramp_colors,
+                    )
+                    claimed.update(positions)
+                    placed = True
+                    break
+                if placed:
+                    break
+            if placed:
                 break
-            nx = ax + dx
-            ny = ay + dy
-            # Must remain in the ding zone (no mortar, no bevel).
-            if not (zone_x0 <= nx < zone_x0 + zone_w):
-                continue
-            if not (zone_y0 <= ny < zone_y0 + zone_h):
-                continue
-            _wrap_set_pixel(pixels, nx, ny, color)
-            placed += 1
-            n_extras -= 1
-
-
-# Per-block crack placement probability. Fixed at 20% per spec ("rare
-# stress features rather than uniform damage") - intentionally not user-
-# configurable.
-_CRACK_PROBABILITY: float = 0.20
 
 
 def _build_face_idx_map(
@@ -843,128 +1154,132 @@ def _apply_crack(
     bx: int, by: int, bw: int, bh: int,
     seed: int, col: int, row: int,
     ramp_colors: list[Color],
+    crack_amount: int,
     *,
     bevel: bool,
     is_mortar: np.ndarray,
     face_idx_map: np.ndarray,
     crack_record: set[tuple[int, int]] | None = None,
+    gap_record: set[tuple[int, int]] | None = None,
 ) -> None:
     """Detail pass B from the Blocks spec - structured stress fracture.
 
-    A crack starts on a randomly-picked edge of the block face (top
-    weighted 40%, others 20% each), travels inward in a Manhattan-style
-    stepped path (1..4 px primary runs separated by 1..2 px perpendicular
-    pivots), tapers from a 2 px-wide stroke to a 1 px stroke at the first
-    direction change, and terminates the moment it walks into a mortar
-    pixel. A 1 px shadow fringe of block-face colour darkened by 2 ramp
-    stops is painted on either side of the crack centre to read as the
-    stone face sinking into the fissure.
+    A crack starts on the top or bottom mortar seam of the block body and
+    travels inward in a Manhattan-style
+    stepped path (1..4 px primary runs separated by 1 px perpendicular
+    pivots), tapers from a 2 px-wide stroke to a 1 px stroke after at most
+    2 px of crack progression, remains primarily vertical, and may die out
+    before it reaches the far seam. Every crack is anchored to at least one
+    mortar seam and must span at least 25% of the block height. A 1 px shadow
+    fringe of block-face colour darkened by 2 ramp stops is painted on
+    either side of the crack centre to read as the stone face sinking into
+    the fissure.
 
     All coordinates wrap modulo the canvas, so cracks placed near the
     seam continue cleanly on the opposite edge.
 
-    Per spec the placement probability is fixed at 20% (`_CRACK_PROBABILITY`)
-    - "rare stress features", not user-tunable.
+    Crack placement is amount-driven: the user-facing slider scales the
+    per-block probability up to `_MAX_CRACK_PROBABILITY` and modestly
+    stretches the nominal crack length.
 
     `crack_record` (optional) collects every painted crack centre pixel
     as a canvas-space (y, x) tuple. Used by the vegetation pass so moss
     can grow on cracks without colour-matching against the mortar shade
     (which would also flag legitimately darkest-coloured block faces).
     """
+    amount_norm = max(0.0, min(float(crack_amount), 100.0)) / 100.0
+    if amount_norm <= 0.0:
+        return
+
     rng = _block_rng(seed, col, row, _SALT_CRACK)
-    if rng.random() >= _CRACK_PROBABILITY:
+    if rng.random() >= _MAX_CRACK_PROBABILITY * amount_norm:
         return
 
     h_, w_ = pixels.shape[:2]
     n = len(ramp_colors)
 
-    # Block face area inside the bevel ring. Cracks may originate, walk
-    # centres, and accept fringe pixels only here. With bevel off, the
-    # face fills the whole brick interior.
-    if bevel and bw >= 2 and bh >= 2:
-        face_x_lo, face_x_hi = bx + 1, bx + bw - 2  # inclusive
-        face_y_lo, face_y_hi = by + 1, by + bh - 2
-    else:
-        face_x_lo, face_x_hi = bx, bx + bw - 1
-        face_y_lo, face_y_hi = by, by + bh - 1
-    if face_x_lo > face_x_hi or face_y_lo > face_y_hi:
-        return  # no block face territory to crack
+    # Crack centres may travel across bevel pixels so the fissure visibly
+    # meets its origin mortar seam. Only the fringe stays restricted to
+    # true face pixels.
+    body_x_lo, body_x_hi = bx, bx + bw - 1  # inclusive
+    body_y_lo, body_y_hi = by, by + bh - 1
+    if body_x_lo > body_x_hi or body_y_lo > body_y_hi:
+        return
 
-    # Step 2: pick origin edge. Top is weighted 40% (cracks tend to
-    # propagate down from above, mirroring real masonry stress patterns);
-    # the other three edges share the remaining 60% equally.
-    edge_roll = rng.random()
-    if edge_roll < 0.40:
-        edge = "top"
-    elif edge_roll < 0.60:
-        edge = "left"
-    elif edge_roll < 0.80:
-        edge = "right"
+    # Step 2: pick an origin along the top or bottom seam, inset from the
+    # corners so the crack starts in the body rather than in the corner
+    # blends.
+    x_min, x_max = body_x_lo + 2, body_x_hi - 2
+    if x_min > x_max:
+        return
+    ox = rng.randint(x_min, x_max)
+    if rng.random() < 0.5:
+        oy = body_y_lo
+        primary = (0, 1)
     else:
-        edge = "bottom"
+        oy = body_y_hi
+        primary = (0, -1)
+    min_vertical_span = max(2, (bh + 3) // 4)
 
-    # Origin position along the edge, inset 2 px from the face corners
-    # so cracks don't begin against the bevel corner pixels (which the
-    # bevel highlight / shadow already occupies). If the face is too
-    # narrow / short for that inset, no crack this block - the RNG roll
-    # was consumed, so other blocks remain bit-stable.
-    if edge in ("top", "bottom"):
-        x_min, x_max = face_x_lo + 2, face_x_hi - 2
-        if x_min > x_max:
-            return
-        ox = rng.randint(x_min, x_max)
-        oy = face_y_lo if edge == "top" else face_y_hi
-        primary = (0, 1) if edge == "top" else (0, -1)
-    else:
-        y_min, y_max = face_y_lo + 2, face_y_hi - 2
-        if y_min > y_max:
-            return
-        oy = rng.randint(y_min, y_max)
-        ox = face_x_lo if edge == "left" else face_x_hi
-        primary = (1, 0) if edge == "left" else (-1, 0)
+    # Keep lateral pivots inside an inner corridor so the crack can't
+    # run out into the side seams and read as a horizontal fracture.
+    lateral_lo = body_x_lo + 1 if bw >= 3 else body_x_lo
+    lateral_hi = body_x_hi - 1 if bw >= 3 else body_x_hi
 
-    # Step 4: build the structured step path. Each primary run of 1..4 px
-    # is followed by a 1..2 px perpendicular pivot (50/50 left vs right
-    # of the primary axis). After the pivot we always return to the
-    # primary direction, giving the crystalline "down-right-down-left-down"
-    # silhouette of a real stress fracture rather than a meandering walk.
-    remaining = rng.randint(4, 8)
+    # Step 4: build the structured step path. Force at least one pivot so
+    # the crack visibly tapers from its 2 px origin into a 1 px fracture.
+    # The walk is not forced to hit the far seam, but it does need enough
+    # vertical travel to read as a proper stress line.
+    nominal_total = rng.randint(
+        3 + round(2 * amount_norm),
+        6 + round(5 * amount_norm),
+    )
     path: list[tuple[tuple[int, int], int]] = []
-    cur_dir = primary
-    while remaining > 0:
-        step_len = rng.randint(1, min(4, remaining))
-        path.append((cur_dir, step_len))
-        remaining -= step_len
-        if remaining <= 0:
-            break
-        if primary[0] == 0:               # primary vertical -> pivot horizontal
-            pivot = (rng.choice((-1, 1)), 0)
-        else:                              # primary horizontal -> pivot vertical
-            pivot = (0, rng.choice((-1, 1)))
-        pivot_len = min(rng.randint(1, 2), remaining)
+    first_primary_len = rng.randint(2, 4 if amount_norm >= 0.35 else 3)
+    path.append((primary, first_primary_len))
+    total_steps = first_primary_len
+    primary_progress = first_primary_len
+    while total_steps < nominal_total or primary_progress < min_vertical_span:
+        pivot = (rng.choice((-1, 1)), 0)
+        pivot_len = 1
         path.append((pivot, pivot_len))
-        remaining -= pivot_len
-        cur_dir = primary
+        total_steps += pivot_len
+        primary_len = rng.randint(1, 4)
+        path.append((primary, primary_len))
+        total_steps += primary_len
+        primary_progress += primary_len
 
     # Step 5: walk the path. Crack centres are collected first into a
     # set so the fringe pass can look up "is this pixel a centre?" in
-    # O(1) and never overwrite a centre. The 2 px-wide phase covers
-    # everything up to (but not including) the first direction change.
+    # O(1) and never overwrite a centre. The 2 px-wide phase is capped to
+    # the first two progression steps so the crack quickly narrows into
+    # a mostly 1 px seam.
     centres: set[tuple[int, int]] = set()
     centre_dirs: dict[tuple[int, int], tuple[int, int]] = {}
+    spine: list[tuple[int, int]] = []
+    raw_x_min: int | None = None
+    raw_x_max: int | None = None
+    raw_y_min: int | None = None
+    raw_y_max: int | None = None
 
     def _add_centre(px: int, py: int, direction: tuple[int, int]) -> None:
+        nonlocal raw_x_min, raw_x_max, raw_y_min, raw_y_max
         key = (py % h_, px % w_)
         centres.add(key)
         # Keep the direction the centre was first painted with so the
         # fringe pass picks the right perpendicular axis even if a later
         # segment re-visits the same pixel from a different heading.
         centre_dirs.setdefault(key, direction)
+        raw_x_min = px if raw_x_min is None else min(raw_x_min, px)
+        raw_x_max = px if raw_x_max is None else max(raw_x_max, px)
+        raw_y_min = py if raw_y_min is None else min(raw_y_min, py)
+        raw_y_max = py if raw_y_max is None else max(raw_y_max, py)
 
     cx, cy = ox, oy
     two_px_phase = True
     pivoted = False
-    aborted = False
+    two_px_budget = 2
+    terminated = False
     for seg_idx, (direction, step_len) in enumerate(path):
         # The 2 px stroke ends at the first direction change in the
         # path - i.e. the moment we paint into the first pivot segment.
@@ -973,31 +1288,73 @@ def _apply_crack(
             pivoted = True
         for _ in range(step_len):
             wy, wx = cy % h_, cx % w_
-            # Mortar termination - the crack has reached a weak point.
+            # Crack centres run until the first mortar pixel; bevel is a
+            # valid part of the route so the fissure visibly meets the seam.
             if is_mortar[wy, wx]:
-                aborted = True
+                terminated = True
                 break
             _add_centre(cx, cy, direction)
+            key = (cy % h_, cx % w_)
+            if not spine or spine[-1] != key:
+                spine.append(key)
             if two_px_phase:
                 # Companion pixel: vertical travel widens horizontally,
                 # horizontal travel widens downward.
                 if direction[0] == 0:
-                    _add_centre(cx + 1, cy, direction)
+                    if not is_mortar[cy % h_, (cx + 1) % w_]:
+                        _add_centre(cx + 1, cy, direction)
                 else:
-                    _add_centre(cx, cy + 1, direction)
+                    if not is_mortar[(cy + 1) % h_, cx % w_]:
+                        _add_centre(cx, cy + 1, direction)
+                two_px_budget -= 1
+                if two_px_budget <= 0:
+                    two_px_phase = False
+            next_x = cx + direction[0]
+            if next_x < lateral_lo or next_x > lateral_hi:
+                terminated = True
+                break
             cx += direction[0]
             cy += direction[1]
-        if aborted:
+        if terminated:
             break
 
-    if not centres:
+    if (
+        not centres
+        or not spine
+        or raw_x_min is None
+        or raw_x_max is None
+        or raw_y_min is None
+        or raw_y_max is None
+    ):
+        return
+    vertical_span = raw_y_max - raw_y_min + 1
+    horizontal_span = raw_x_max - raw_x_min + 1
+    if vertical_span < min_vertical_span:
+        return
+    if horizontal_span > vertical_span:
+        return
+
+    through_crack = raw_y_min == body_y_lo and raw_y_max == body_y_hi
+    gap_fill: dict[tuple[int, int], np.ndarray] = {}
+    gap_edge: dict[tuple[int, int], np.ndarray] = {}
+    gap_pixels: set[tuple[int, int]] = set()
+    if through_crack:
+        gap_fill, gap_edge, gap_pixels = _plan_crack_gaps(
+            rng,
+            spine,
+            face_idx_map=face_idx_map,
+            ramp_colors=ramp_colors,
+        )
+
+    active_centres = centres.difference(gap_pixels)
+    if not active_centres:
         return
 
     # Step 5C: paint crack centres. Darkest ramp stop, same as mortar -
     # so cracks read as fissures opening into the same dark void as the
     # mortar gaps between blocks.
     darkest = np.array(ramp_colors[-1], dtype=np.uint8)
-    for cy_p, cx_p in centres:
+    for cy_p, cx_p in active_centres:
         pixels[cy_p, cx_p] = darkest
         if crack_record is not None:
             crack_record.add((cy_p, cx_p))
@@ -1014,18 +1371,27 @@ def _apply_crack(
     # outer fringe at (px-1, py) and (px+2, py) is what the spec asks
     # for - falls out naturally from skipping centre pixels.
     for (cy_p, cx_p), direction in centre_dirs.items():
+        if (cy_p, cx_p) not in active_centres:
+            continue
         if direction[0] == 0:
             neighbours = ((cy_p, (cx_p - 1) % w_), (cy_p, (cx_p + 1) % w_))
         else:
             neighbours = (((cy_p - 1) % h_, cx_p), ((cy_p + 1) % h_, cx_p))
         for ny, nx in neighbours:
-            if (ny, nx) in centres:
+            if (ny, nx) in active_centres:
                 continue
             base_idx = int(face_idx_map[ny, nx])
             if base_idx < 0:
                 continue  # mortar or bevel - leave alone
-            darkened = min(n - 1, base_idx + 2)
+            darkened = min(n - 2, base_idx + 2)
             pixels[ny, nx] = np.array(ramp_colors[darkened], dtype=np.uint8)
+
+    for key, color in gap_edge.items():
+        pixels[key] = color
+    for key, color in gap_fill.items():
+        pixels[key] = color
+        if gap_record is not None:
+            gap_record.add(key)
 
 
 # -- Vegetation pass (final pass, applied after every other detail) -------
@@ -1287,53 +1653,60 @@ def generate_blocks_texture(
         params=p.to_brick_params(),
         seed=seed,
     )
+    do_dings = p.surface_dings and p.ding_amount > 0
+    do_cracks = p.cracks and p.crack_amount > 0
+
     # Skip the detail passes entirely if neither toggle is on AND no
     # vegetation - saves both the np.array round-trip and the lattice walk.
-    if not p.surface_dings and not p.cracks and p.vegetation is None:
+    if not do_dings and not do_cracks and p.vegetation is None:
         return base
 
     pixels = np.array(base)
     n = len(ramp_colors)
-    darkest = np.array(ramp_colors[-1], dtype=np.uint8)
-    second_darkest = np.array(ramp_colors[max(0, n - 2)], dtype=np.uint8)
 
     # Capture crack pixels iff we'll need them for vegetation; skipping
     # the recorder for plain Blocks keeps the detail pass allocation-free.
     crack_record: set[tuple[int, int]] | None = (
-        set() if (p.cracks and p.vegetation is not None) else None
+        set() if (do_cracks and p.vegetation is not None) else None
     )
 
-    # Crack-pass prerequisites. Per spec these are built once before the
+    # Detail-pass prerequisites. Per spec these are built once before the
     # per-block loop, not recomputed per block:
-    #   * is_mortar - termination check (cracks stop at the first mortar
-    #                 pixel they walk into).
-    #   * face_idx_map - per-pixel block ramp index used by the shadow-
-    #                    fringe darkening so each fringe pixel darkens
-    #                    relative to its own block's face colour.
+    #   * face_idx_map - per-pixel block ramp index; dings use it as the
+    #                    valid face mask and cracks use it for both face-
+    #                    only placement and shadow-fringe darkening.
+    #   * is_mortar - crack termination check when the walk reaches a
+    #                 mortar seam rather than just the bevel boundary.
     is_mortar_mask: np.ndarray | None = None
     face_idx_map: np.ndarray | None = None
-    if p.cracks:
-        _, _, is_mortar_mask = _classify_brick_pixels(
-            width, height, p.to_brick_params()
-        )
+    if do_dings or do_cracks:
         face_idx_map = _build_face_idx_map(
             width, height, p.to_brick_params(), seed, n
+        )
+    if do_cracks:
+        _, _, is_mortar_mask = _classify_brick_pixels(
+            width, height, p.to_brick_params()
         )
 
     bw = p.brick_width
     bh = p.brick_height
     for col_idx, row_idx, brick_x, brick_y in _iter_brick_lattice(width, height, p.to_brick_params()):
-        if p.surface_dings:
+        if do_dings:
+            assert face_idx_map is not None
             _apply_dings(
                 pixels, brick_x, brick_y, bw, bh,
-                seed, col_idx, row_idx, darkest, second_darkest,
+                seed, col_idx, row_idx,
+                ramp_colors,
+                face_idx_map,
+                p.ding_amount,
             )
-        if p.cracks:
+        if do_cracks:
             assert is_mortar_mask is not None and face_idx_map is not None
             _apply_crack(
                 pixels, brick_x, brick_y, bw, bh,
                 seed, col_idx, row_idx,
                 ramp_colors,
+                p.crack_amount,
                 bevel=p.bevel,
                 is_mortar=is_mortar_mask,
                 face_idx_map=face_idx_map,
@@ -1778,10 +2151,8 @@ def generate_boards_texture(
 # -- Texture-type registry --------------------------------------------------
 
 
-# Order matters: it sets the dropdown order in the UI. "Blocks Cracked"
-# is a separate entry from "Blocks" per the user's preference - both use
-# the Blocks algorithm with different default params.
-TEXTURE_TYPES: tuple[str, ...] = ("Brick", "Blocks", "Blocks Cracked", "Boards")
+# Order matters: it sets the dropdown order in the UI.
+TEXTURE_TYPES: tuple[str, ...] = ("Brick", "Blocks", "Boards")
 
 
 # Canvases below this size will surface a non-blocking warning when cracks
