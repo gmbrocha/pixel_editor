@@ -113,6 +113,9 @@ class PreviewPanel(QWidget):
         self.max_colors_slider.setValue(2)
         self.max_colors_value_label = QLabel(str(self.max_colors()))
 
+        self.quantize_checkbox = QCheckBox("Enable palette reduction")
+        self.quantize_checkbox.setChecked(False)
+
         self.dither_checkbox = QCheckBox("Dither output")
         self.dither_checkbox.setChecked(False)
 
@@ -141,6 +144,7 @@ class PreviewPanel(QWidget):
 
         quant_group = QGroupBox("Palette Reduction")
         quant_layout = QVBoxLayout(quant_group)
+        quant_layout.addWidget(self.quantize_checkbox)
         color_row = QHBoxLayout()
         color_row.addWidget(QLabel("Max colors"))
         color_row.addWidget(self.max_colors_slider, 1)
@@ -152,7 +156,7 @@ class PreviewPanel(QWidget):
         ref_button_row.addWidget(self.load_reference_palette_button)
         ref_button_row.addWidget(self.clear_reference_palette_button)
         quant_layout.addLayout(ref_button_row)
-        quant_layout.addWidget(QLabel("Applied automatically when sampling is Nearest"))
+        quant_layout.addWidget(QLabel("Dithering/reduction only apply when sampling is Nearest"))
         output_layout.addWidget(quant_group)
 
         layout = QVBoxLayout(self)
@@ -166,6 +170,7 @@ class PreviewPanel(QWidget):
         self.resample_combo.currentIndexChanged.connect(self._emit_settings)
         self.max_colors_slider.valueChanged.connect(self._on_max_colors_changed)
         self.dither_checkbox.toggled.connect(self._emit_settings)
+        self.quantize_checkbox.toggled.connect(self._emit_settings)
         self.load_reference_palette_button.clicked.connect(self.load_reference_palette_requested.emit)
         self.clear_reference_palette_button.clicked.connect(self.clear_reference_palette_requested.emit)
 
@@ -218,6 +223,7 @@ class PreviewPanel(QWidget):
             resample_mode=self.resample_combo.currentText(),
             max_colors=self.max_colors(),
             dither=self.dither_checkbox.isChecked(),
+            quantize_enabled=self.quantize_checkbox.isChecked(),
             reference_palette=self._reference_palette,
         )
 

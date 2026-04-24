@@ -51,9 +51,11 @@ def palette_from_image(
     if not color_counts:
         return [(0, 0, 0, 0)]
 
-    normalized = (selection or "frequent").strip().lower()
+    normalized = (selection or "balanced").strip().lower()
     if normalized == "spread":
         colors = _spread_sample_colors(color_counts, max_colors)
+    elif normalized == "balanced":
+        colors = _hue_balanced_sample_colors(color_counts, max_colors)
     else:
         colors = [
             color
@@ -139,6 +141,99 @@ def _spread_sample_colors(
     return chosen
 
 
+def _hue_balanced_sample_colors(
+    color_counts: "Counter[Color]",
+    max_colors: int,
+    hue_bins: int = 12,
+) -> list[Color]:
+    """Palette-slot allocation that guarantees every occupied hue band gets
+    at least one representative color regardless of pixel count.
+
+    Colors are bucketed into `hue_bins` equal hue bands (plus a neutral
+    bucket for low-saturation colors).  Each occupied bucket is given
+    an equal share of the available slots.  If a bucket has fewer unique
+    colors than its share, unused slots are redistributed to buckets that
+    still want more.  Within each bucket, _spread_sample_colors picks the
+    most gamut-diverse representatives.
+
+    This prevents a majority hue family (e.g. 100 tan variants) from
+    consuming all palette slots and erasing minority families (e.g. 8 greens)
+    even when those minorities are a small fraction of total pixels.
+    """
+    NEUTRAL_SAT = 0.15
+
+    has_transparent = any(c[3] == 0 for c in color_counts)
+    candidates = [c for c in color_counts if c[3] > 0]
+
+    if not candidates:
+        return [(0, 0, 0, 0)] if has_transparent else []
+
+    if len(candidates) <= max_colors:
+        ordered = sorted(candidates, key=lambda c: (-color_counts[c], c))
+        if has_transparent and len(ordered) < max_colors:
+            ordered.append((0, 0, 0, 0))
+        return ordered[:max_colors]
+
+    bins: dict[int, list[Color]] = {}
+    for c in candidates:
+        h, s, _v = _rgb_to_hsv(c)
+        key = hue_bins if s < NEUTRAL_SAT else int(h * hue_bins) % hue_bins
+        bins.setdefault(key, []).append(c)
+
+    occupied = sorted(bins.keys())
+    n_occupied = len(occupied)
+
+    # Each bin guaranteed 1 slot; distribute the rest equally.
+    if max_colors <= n_occupied:
+        allocation = {k: 0 for k in occupied}
+        for k in occupied[:max_colors]:
+            allocation[k] = 1
+    else:
+        base = max_colors // n_occupied
+        extra = max_colors - base * n_occupied
+        # Extra slots go to the bins with the most unique colors first.
+        by_size = sorted(occupied, key=lambda k: -len(bins[k]))
+        allocation = {k: base for k in occupied}
+        for k in by_size[:extra]:
+            allocation[k] += 1
+
+    # Two-pass redistribution: if a bin has fewer colors than its slot budget,
+    # give the unused slots to whichever bins still want more.
+    changed = True
+    while changed:
+        changed = False
+        surplus = 0
+        for k in occupied:
+            cap = len(bins[k])
+            if allocation[k] > cap:
+                surplus += allocation[k] - cap
+                allocation[k] = cap
+        if surplus:
+            changed = True
+            hungry = [k for k in occupied if len(bins[k]) > allocation[k]]
+            if not hungry:
+                break
+            per = surplus // len(hungry)
+            leftover = surplus - per * len(hungry)
+            for k in hungry:
+                allocation[k] += per
+            for k in sorted(hungry, key=lambda k: -len(bins[k]))[:leftover]:
+                allocation[k] += 1
+
+    result: list[Color] = []
+    for k in occupied:
+        n = allocation[k]
+        if n <= 0:
+            continue
+        bin_counts: Counter[Color] = Counter({c: color_counts[c] for c in bins[k]})
+        result.extend(_spread_sample_colors(bin_counts, n))
+
+    if has_transparent and len(result) < max_colors:
+        result.append((0, 0, 0, 0))
+
+    return result[:max_colors]
+
+
 def _dither_mode(enabled: bool) -> Image.Dither:
     return Image.Dither.FLOYDSTEINBERG if enabled else Image.Dither.NONE
 
@@ -218,6 +313,46 @@ def quantize_image(
     return output
 
 
+def _rgb_to_lab(r: int, g: int, b: int) -> tuple[float, float, float]:
+    """Convert an sRGB triplet (0-255) to CIELAB (D65 illuminant).
+
+    LAB separates lightness from chroma and places the red/green axis on `a`
+    and the yellow/blue axis on `b`, so perceptually distinct hues (e.g. tan
+    vs green) remain far apart even when their RGB values are close.
+    """
+    def _linearize(c: int) -> float:
+        v = c / 255.0
+        return v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4
+
+    rl, gl, bl = _linearize(r), _linearize(g), _linearize(b)
+    x = 0.4124564 * rl + 0.3575761 * gl + 0.1804375 * bl
+    y = 0.2126729 * rl + 0.7151522 * gl + 0.0721750 * bl
+    z = 0.0193339 * rl + 0.1191920 * gl + 0.9503041 * bl
+
+    def _f(t: float) -> float:
+        return t ** (1.0 / 3.0) if t > 0.008856 else 7.787 * t + 16.0 / 116.0
+
+    fx, fy, fz = _f(x / 0.95047), _f(y / 1.00000), _f(z / 1.08883)
+    return 116.0 * fy - 16.0, 500.0 * (fx - fy), 200.0 * (fy - fz)
+
+
+def _nearest_palette_color_lab(
+    rgb: tuple[int, int, int],
+    palette_lab: list[tuple[float, float, float]],
+    palette: list[Color],
+) -> Color:
+    plab = _rgb_to_lab(rgb[0], rgb[1], rgb[2])
+    best = min(
+        range(len(palette_lab)),
+        key=lambda i: (
+            (plab[0] - palette_lab[i][0]) ** 2
+            + (plab[1] - palette_lab[i][1]) ** 2
+            + (plab[2] - palette_lab[i][2]) ** 2
+        ),
+    )
+    return palette[best]
+
+
 def quantize_to_palette(
     image: Image.Image,
     palette: list[Color],
@@ -228,11 +363,36 @@ def quantize_to_palette(
         return image.convert("RGBA")
 
     source = image.convert("RGBA")
-    output = source.convert("RGB").quantize(
-        palette=_build_palette_image(palette),
-        dither=_dither_mode(dither),
-    ).convert("RGBA")
-    output.putalpha(source.getchannel("A"))
+
+    if dither:
+        # PIL's Floyd-Steinberg dithering works in RGB space; use it for dither mode.
+        output = source.convert("RGB").quantize(
+            palette=_build_palette_image(palette),
+            dither=_dither_mode(dither),
+        ).convert("RGBA")
+        output.putalpha(source.getchannel("A"))
+        return _clear_fully_transparent_pixels(output)
+
+    # Perceptual (CIELAB) nearest-neighbor for non-dithered output.
+    # Pre-compute LAB for every palette entry, then build a unique-color
+    # lookup table so each distinct pixel color is only converted once.
+    palette_lab = [_rgb_to_lab(c[0], c[1], c[2]) for c in palette]
+
+    raw_pixels: list[tuple[int, int, int, int]] = list(source.getdata())  # type: ignore[arg-type]
+    unique_rgb: set[tuple[int, int, int]] = {p[:3] for p in raw_pixels if p[3] > 0}
+
+    color_map: dict[tuple[int, int, int], Color] = {
+        rgb: _nearest_palette_color_lab(rgb, palette_lab, palette)
+        for rgb in unique_rgb
+    }
+
+    new_pixels: list[Color] = [
+        (0, 0, 0, 0) if px[3] == 0 else (*color_map[px[:3]][:3], px[3])  # type: ignore[misc]
+        for px in raw_pixels
+    ]
+
+    output = Image.new("RGBA", source.size)
+    output.putdata(new_pixels)  # type: ignore[arg-type]
     return _clear_fully_transparent_pixels(output)
 
 

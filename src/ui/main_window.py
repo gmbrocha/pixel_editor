@@ -273,6 +273,8 @@ class MainWindow(QMainWindow):
         self.palette_panel.load_palette_requested.connect(self.load_palette)
         self.palette_panel.export_palette_requested.connect(self.export_palette)
         self.palette_panel.custom_color_requested.connect(self.add_custom_palette_color)
+        self.palette_panel.color_remove_requested.connect(self.remove_palette_color)
+        self.palette_panel.color_edit_requested.connect(self.edit_palette_color)
         self.palette_panel.sort_palette_requested.connect(self.organize_palette)
         self.palette_panel.apply_palette_to_preview_requested.connect(self.quantize_preview)
         self.palette_panel.apply_palette_to_source_requested.connect(self.apply_palette_to_source)
@@ -423,6 +425,26 @@ class MainWindow(QMainWindow):
         )
         self.palette_panel.set_palette(self.document.palette)
         self.statusBar().showMessage("Added custom color to palette")
+
+    def remove_palette_color(self, index: int) -> None:
+        if not self.document.palette or not (0 <= index < len(self.document.palette)):
+            return
+        self.document.palette = [c for i, c in enumerate(self.document.palette) if i != index]
+        self.palette_panel.set_palette(self.document.palette)
+        self.statusBar().showMessage(f"Removed palette color at index {index}")
+
+    def edit_palette_color(self, index: int) -> None:
+        if not self.document.palette or not (0 <= index < len(self.document.palette)):
+            return
+        initial_color = QColor(*self.document.palette[index])
+        color = QColorDialog.getColor(initial_color, self, "Edit Palette Color")
+        if not color.isValid():
+            return
+        rgba = (color.red(), color.green(), color.blue(), color.alpha())
+        self.document.palette = list(self.document.palette)
+        self.document.palette[index] = rgba
+        self.palette_panel.set_palette(self.document.palette)
+        self.statusBar().showMessage(f"Updated palette color at index {index}")
 
     def organize_palette(self, mode: str) -> None:
         if not self.document.palette:

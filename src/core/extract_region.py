@@ -23,6 +23,7 @@ class ExtractSettings:
     resample_mode: str = "Nearest"
     max_colors: int = 32
     dither: bool = False
+    quantize_enabled: bool = False
     reference_palette: tuple[tuple[int, int, int, int], ...] = field(default_factory=tuple)
 
 
@@ -88,7 +89,7 @@ def extract_to_preview(
 
 
 def _finalize_preview(image: Image.Image, settings: ExtractSettings) -> Image.Image:
-    if settings.resample_mode != "Nearest":
+    if settings.resample_mode != "Nearest" or not settings.quantize_enabled:
         return image
 
     return quantize_image(
