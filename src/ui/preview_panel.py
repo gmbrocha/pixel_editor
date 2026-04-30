@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import statistics
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import (
@@ -27,6 +29,8 @@ class PreviewCanvas(QLabel):
         super().__init__(parent)
         self._pil_image: Image.Image | None = None
         self._eyedropper = False
+        self._eyedropper_sample_size = 1
+        self._eyedropper_sample_method = "median"
         self.setMinimumSize(220, 220)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setMouseTracking(True)
@@ -37,6 +41,10 @@ class PreviewCanvas(QLabel):
     def set_eyedropper(self, enabled: bool) -> None:
         self._eyedropper = enabled
         self.setCursor(Qt.CursorShape.CrossCursor if enabled else Qt.CursorShape.ArrowCursor)
+
+    def set_eyedropper_sampling(self, sample_size: int, method: str) -> None:
+        self._eyedropper_sample_size = max(1, int(sample_size))
+        self._eyedropper_sample_method = method if method in {"average", "median"} else "median"
 
     def mousePressEvent(self, event) -> None:
         from PySide6.QtCore import Qt as _Qt
@@ -58,8 +66,24 @@ class PreviewCanvas(QLabel):
         iy = int(my / pm_h * self._pil_image.height)
         ix = max(0, min(ix, self._pil_image.width - 1))
         iy = max(0, min(iy, self._pil_image.height - 1))
-        rgba = self._pil_image.convert("RGBA").getpixel((ix, iy))
+        rgba = self._sample_eyedropper_color(ix, iy)
         self.color_picked.emit(tuple(rgba))
+
+    def _sample_eyedropper_color(self, px: int, py: int) -> tuple[int, int, int, int]:
+        if self._pil_image is None:
+            return (0, 0, 0, 0)
+        image = self._pil_image.convert("RGBA")
+        half = self._eyedropper_sample_size // 2
+        left = max(0, px - half)
+        top = max(0, py - half)
+        right = min(image.width, px + half + 1)
+        bottom = min(image.height, py + half + 1)
+        pixels = list(image.crop((left, top, right, bottom)).getdata())
+        if not pixels:
+            return tuple(image.getpixel((px, py)))
+        if self._eyedropper_sample_method == "average":
+            return tuple(int(round(sum(pixel[i] for pixel in pixels) / len(pixels))) for i in range(4))
+        return tuple(int(statistics.median(pixel[i] for pixel in pixels)) for i in range(4))
 
     def paintEvent(self, event) -> None:
         painter = QPainter(self)
@@ -176,6 +200,9 @@ class PreviewPanel(QWidget):
 
     def set_eyedropper(self, enabled: bool) -> None:
         self.preview_canvas.set_eyedropper(enabled)
+
+    def set_eyedropper_sampling(self, sample_size: int, method: str) -> None:
+        self.preview_canvas.set_eyedropper_sampling(sample_size, method)
 
     def set_reference_palette(
         self,

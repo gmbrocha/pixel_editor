@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import statistics
+
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QMouseEvent, QPainter, QPainterPath, QPen, QWheelEvent
 from PySide6.QtWidgets import QWidget
@@ -34,6 +36,8 @@ class SourceCanvas(QWidget):
         self._pan_anchor = QPointF()
         self._space_pan_mode = False
         self._eyedropper_mode = False
+        self._eyedropper_sample_size = 1
+        self._eyedropper_sample_method = "median"
         self.setMinimumSize(480, 360)
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -66,6 +70,10 @@ class SourceCanvas(QWidget):
             self.setCursor(Qt.CursorShape.CrossCursor)
         else:
             self.unsetCursor()
+
+    def set_eyedropper_sampling(self, sample_size: int, method: str) -> None:
+        self._eyedropper_sample_size = max(1, int(sample_size))
+        self._eyedropper_sample_method = method if method in {"average", "median"} else "median"
 
     def clear_selections(self) -> None:
         self._selections = []
@@ -140,7 +148,7 @@ class SourceCanvas(QWidget):
         if self._eyedropper_mode and event.button() == Qt.MouseButton.LeftButton and self._image is not None:
             px = int(max(0, min(image_point[0], self._image.width - 1)))
             py = int(max(0, min(image_point[1], self._image.height - 1)))
-            rgba = self._image.convert("RGBA").getpixel((px, py))
+            rgba = self._sample_eyedropper_color(px, py)
             self.color_picked.emit(tuple(rgba))
             return
 
@@ -413,6 +421,22 @@ class SourceCanvas(QWidget):
         from src.core.qt_image import pil_image_to_qimage
 
         return pil_image_to_qimage(self._image)
+
+    def _sample_eyedropper_color(self, px: int, py: int) -> tuple[int, int, int, int]:
+        if self._image is None:
+            return (0, 0, 0, 0)
+        image = self._image.convert("RGBA")
+        half = self._eyedropper_sample_size // 2
+        left = max(0, px - half)
+        top = max(0, py - half)
+        right = min(image.width, px + half + 1)
+        bottom = min(image.height, py + half + 1)
+        pixels = list(image.crop((left, top, right, bottom)).getdata())
+        if not pixels:
+            return tuple(image.getpixel((px, py)))
+        if self._eyedropper_sample_method == "average":
+            return tuple(int(round(sum(pixel[i] for pixel in pixels) / len(pixels))) for i in range(4))
+        return tuple(int(statistics.median(pixel[i] for pixel in pixels)) for i in range(4))
 
     def _handle_radius_image(self) -> float:
         rect = self._target_rect()

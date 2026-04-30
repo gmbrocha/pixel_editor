@@ -405,6 +405,17 @@ class PaletteGridWidget(QWidget):
 class PixelEditorWindow(QMainWindow):
     asset_save_requested = Signal(str, object)
 
+    @staticmethod
+    def _initial_zoom_for(document: PixelDocument) -> int:
+        longest = max(document.image.width, document.image.height)
+        if longest >= 1600:
+            return 1
+        if longest >= 900:
+            return 2
+        if longest >= 512:
+            return 4
+        return 20
+
     def __init__(
         self,
         document: PixelDocument,
@@ -418,15 +429,17 @@ class PixelEditorWindow(QMainWindow):
         self.setWindowTitle(f"PixelForge - {document.name}")
         self.resize(1100, 820)
 
+        initial_zoom = self._initial_zoom_for(document)
         self.canvas = PixelGridCanvas()
+        self.canvas.set_zoom(initial_zoom)
         self.canvas.set_document(self.document)
 
         self.layer_panel = LayerPanel()
         self.layer_panel.set_document(self.document)
 
         self.zoom_spin = QSpinBox()
-        self.zoom_spin.setRange(4, 64)
-        self.zoom_spin.setValue(20)
+        self.zoom_spin.setRange(1, 64)
+        self.zoom_spin.setValue(initial_zoom)
 
         self.color_preview = QLabel()
         self.color_preview.setFixedSize(40, 40)
@@ -1048,6 +1061,9 @@ class PixelEditorWindow(QMainWindow):
         self.document.name = Path(path).stem
         self.document.selected_pixels.clear()
         self.document.selection_rect = None
+        initial_zoom = self._initial_zoom_for(self.document)
+        self.zoom_spin.setValue(initial_zoom)
+        self.canvas.set_zoom(initial_zoom)
         self.canvas.set_document(self.document)
         self.layer_panel.refresh()
         self.setWindowTitle(f"PixelForge - {self.document.name}")
@@ -1249,12 +1265,12 @@ class PixelEditorWindow(QMainWindow):
         self.statusBar().showMessage("Painting with transparent pixels")
 
     def _on_canvas_image_changed(self) -> None:
-        self.canvas.update()
+        pass
 
     def _on_layers_changed(self) -> None:
         """Active layer or layer stack changed in the panel: redraw the
         composite and reflect the new active layer in dependent widgets."""
-        self.canvas.update()
+        self.canvas.invalidate_render_cache()
 
     def _on_mode_changed(self) -> None:
         if self.paint_radio.isChecked():
@@ -1362,7 +1378,7 @@ class PixelEditorWindow(QMainWindow):
 
         push_image_history(self.document)
         self.document.image = replaced
-        self.canvas.update()
+        self.canvas.invalidate_render_cache()
         self.statusBar().showMessage(
             f"Replaced {count} pixel{'s' if count != 1 else ''} using ramp 1 -> ramp 2"
         )
@@ -1481,7 +1497,7 @@ class PixelEditorWindow(QMainWindow):
             return
         push_image_history(self.document)
         self.document.image = result
-        self.canvas.update()
+        self.canvas.invalidate_render_cache()
         self.statusBar().showMessage(
             f"{mode_label}: recolored {recolored} pixel{'s' if recolored != 1 else ''} "
             f"along {len(ramp_colors)}-stop ramp"
@@ -1558,7 +1574,7 @@ class PixelEditorWindow(QMainWindow):
             return
         push_image_history(self.document)
         self.document.image = replaced
-        self.canvas.update()
+        self.canvas.invalidate_render_cache()
         self.statusBar().showMessage(f"Replaced {count} pixel{'s' if count != 1 else ''} with transparent")
 
     def _pick_replace_with_color(self) -> None:
@@ -1655,7 +1671,7 @@ class PixelEditorWindow(QMainWindow):
             return
         push_image_history(self.document)
         self.document.image = replaced
-        self.canvas.update()
+        self.canvas.invalidate_render_cache()
         r, g, b, a = self._replace_with_color
         self.statusBar().showMessage(
             f"Replaced {count} pixel{'s' if count != 1 else ''} with #{r:02X}{g:02X}{b:02X} / {a}"
@@ -1752,7 +1768,7 @@ class PixelEditorWindow(QMainWindow):
             return
         push_image_history(self.document)
         self.document.image = result
-        self.canvas.update()
+        self.canvas.invalidate_render_cache()
         r, g, b, a = self._morph_color
         self.statusBar().showMessage(
             f"Dilated #{r:02X}{g:02X}{b:02X} by {thickness}px ({filled} pixel{'s' if filled != 1 else ''} filled)"
@@ -1769,7 +1785,7 @@ class PixelEditorWindow(QMainWindow):
             return
         push_image_history(self.document)
         self.document.image = result
-        self.canvas.update()
+        self.canvas.invalidate_render_cache()
         r, g, b, a = self._morph_color
         self.statusBar().showMessage(
             f"Eroded #{r:02X}{g:02X}{b:02X} by {thickness}px ({cleared} pixel{'s' if cleared != 1 else ''} cleared)"
@@ -1843,7 +1859,7 @@ class PixelEditorWindow(QMainWindow):
             return
         push_image_history(self.document)
         self.document.image = result
-        self.canvas.update()
+        self.canvas.invalidate_render_cache()
         self.statusBar().showMessage(
             f"Flood Erase from ({x}, {y}): cleared {cleared} pixel{'s' if cleared != 1 else ''}"
         )

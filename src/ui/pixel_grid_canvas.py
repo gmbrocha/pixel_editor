@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import math
+
 import numpy as np
 
 from PySide6.QtCore import QPoint, QRect, Qt, Signal, QSize, QTimer
-from PySide6.QtGui import QColor, QImage, QKeyEvent, QMouseEvent, QPainter, QPen, QPixmap, QWheelEvent
+from PySide6.QtGui import QColor, QBrush, QImage, QKeyEvent, QMouseEvent, QPainter, QPen, QPixmap, QWheelEvent
 from PySide6.QtWidgets import QScrollArea, QWidget
 
 from src.core.pixel_document import PixelDocument, move_rect_contents, normalize_rect, rect_points
@@ -45,6 +47,9 @@ class PixelGridCanvas(QWidget):
         self._mid_drag: bool = False
         self._mid_drag_origin: QPoint | None = None
         self._parent_scroll: QScrollArea | None = None
+        self._render_qimage: QImage | None = None
+        self._render_cache_dirty = True
+        self._onion_qimage_cache: dict[int, QImage] = {}
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setToolTip(
@@ -85,6 +90,7 @@ class PixelGridCanvas(QWidget):
         )
         self._document = document
         self._last_image_size = (document.image.width, document.image.height)
+        self.invalidate_render_cache(update=False)
         self.updateGeometry()
         self._apply_canvas_size()
         self.update()
@@ -136,6 +142,7 @@ class PixelGridCanvas(QWidget):
         self._onion_prev = prev_image
         self._onion_next = next_image
         self._onion_opacity = max(0.0, min(1.0, opacity))
+        self._onion_qimage_cache.clear()
         self.update()
 
     def set_anchor_points(self, anchors: list[tuple[int, int, str]]) -> None:
@@ -200,89 +207,172 @@ class PixelGridCanvas(QWidget):
         self.update()
 
     def _pil_to_qpixmap(self, pil_img) -> QPixmap:
-        """Convert a PIL RGBA image to a QPixmap via numpy (fast bulk path)."""
-        arr = np.array(pil_img.convert("RGBA"))
+        return QPixmap.fromImage(self._pil_to_qimage(pil_img))
+
+    def _pil_to_qimage(self, pil_img) -> QImage:
+        """Convert a PIL RGBA image to a copied QImage through a bulk numpy path."""
+        arr = np.asarray(pil_img.convert("RGBA"))
         h, w = arr.shape[:2]
-        # RGBA -> BGRA for QImage format
-        bgra = np.empty_like(arr)
-        bgra[:, :, 0] = arr[:, :, 2]
-        bgra[:, :, 1] = arr[:, :, 1]
-        bgra[:, :, 2] = arr[:, :, 0]
-        bgra[:, :, 3] = arr[:, :, 3]
-        qimg = QImage(bgra.data, w, h, w * 4, QImage.Format.Format_ARGB32)
-        return QPixmap.fromImage(qimg.copy())
+        qimg = QImage(arr.data, w, h, w * 4, QImage.Format.Format_RGBA8888)
+        return qimg.copy()
 
-    def _build_checker_pixmap(self, w: int, h: int) -> QPixmap:
-        """Build a checkerboard pixmap at pixel resolution (1px per pixel)."""
-        arr = np.empty((h, w, 4), dtype=np.uint8)
-        for y in range(h):
-            for x in range(w):
-                if (x + y) % 2 == 0:
-                    arr[y, x] = [0x2d, 0x2d, 0x2d, 0xff]
-                else:
-                    arr[y, x] = [0x40, 0x40, 0x40, 0xff]
-        qimg = QImage(arr.data, w, h, w * 4, QImage.Format.Format_ARGB32)
-        return QPixmap.fromImage(qimg.copy())
+    def invalidate_render_cache(self, *, update: bool = True) -> None:
+        self._render_cache_dirty = True
+        self._render_qimage = None
+        if update:
+            self.update()
 
-    def paintEvent(self, _event) -> None:
+    def _ensure_render_cache(self) -> QImage | None:
+        if self._document is None:
+            return None
+        if not self._render_cache_dirty and self._render_qimage is not None:
+            return self._render_qimage
+        self._render_qimage = self._pil_to_qimage(self._document.composite_visible())
+        self._render_cache_dirty = False
+        return self._render_qimage
+
+    def _refresh_cached_pixel(self, x: int, y: int) -> None:
+        if (
+            self._document is None
+            or self._render_cache_dirty
+            or self._render_qimage is None
+            or x < 0
+            or y < 0
+            or x >= self._render_qimage.width()
+            or y >= self._render_qimage.height()
+        ):
+            return
+        r, g, b, a = self._composited_pixel_at(x, y)
+        self._render_qimage.setPixelColor(x, y, QColor(r, g, b, a))
+
+    def _composited_pixel_at(self, x: int, y: int) -> tuple[int, int, int, int]:
+        if self._document is None:
+            return (0, 0, 0, 0)
+        out_r = out_g = out_b = 0.0
+        out_a = 0.0
+        for layer in self._document.layers:
+            if not layer.visible:
+                continue
+            r, g, b, a = layer.image.getpixel((x, y))
+            src_a = a / 255.0
+            if src_a <= 0.0:
+                continue
+            next_a = src_a + out_a * (1.0 - src_a)
+            if next_a <= 0.0:
+                continue
+            out_r = (r * src_a + out_r * out_a * (1.0 - src_a)) / next_a
+            out_g = (g * src_a + out_g * out_a * (1.0 - src_a)) / next_a
+            out_b = (b * src_a + out_b * out_a * (1.0 - src_a)) / next_a
+            out_a = next_a
+        return (
+            int(round(out_r)),
+            int(round(out_g)),
+            int(round(out_b)),
+            int(round(out_a * 255.0)),
+        )
+
+    def _update_pixel_rect(self, x: int, y: int) -> None:
+        z = self._zoom
+        pad = 2 if z >= 6 else 1
+        self.update(
+            QRect(
+                self._view_margin + x * z - pad,
+                self._view_margin + y * z - pad,
+                z + pad * 2,
+                z + pad * 2,
+            )
+        )
+
+    def _visible_image_rect(self, event_rect: QRect, img_w: int, img_h: int) -> QRect:
+        z = self._zoom
+        m = self._view_margin
+        left = max(0, math.floor((event_rect.left() - m) / z))
+        top = max(0, math.floor((event_rect.top() - m) / z))
+        right = min(img_w, math.ceil((event_rect.right() + 1 - m) / z))
+        bottom = min(img_h, math.ceil((event_rect.bottom() + 1 - m) / z))
+        if right <= left or bottom <= top:
+            return QRect()
+        return QRect(left, top, right - left, bottom - top)
+
+    def _target_rect_for_source(self, source: QRect) -> QRect:
+        z = self._zoom
+        return QRect(source.x() * z, source.y() * z, source.width() * z, source.height() * z)
+
+    def _scaled_source_rect(self, source: QRect, source_w: int, source_h: int, target_w: int, target_h: int) -> QRect:
+        left = int(round(source.x() * source_w / target_w))
+        top = int(round(source.y() * source_h / target_h))
+        right = int(round((source.x() + source.width()) * source_w / target_w))
+        bottom = int(round((source.y() + source.height()) * source_h / target_h))
+        return QRect(left, top, max(0, right - left), max(0, bottom - top))
+
+    def paintEvent(self, event) -> None:
         painter = QPainter(self)
-        painter.fillRect(self.rect(), QColor("#1a1a1a"))
+        event_rect = event.rect()
+        painter.fillRect(event_rect, QColor("#1a1a1a"))
         if self._document is None:
             painter.setPen(QColor("#bdbdbd"))
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "No pixel document loaded")
             return
 
-        # Render the flattened composite of all visible layers, but keep
-        # `image` referring to that same composite so the existing checker /
-        # pixmap pipeline below works without changes. Drawing tools still
-        # operate on `document.image` (the active layer) elsewhere.
-        image = self._document.composite_visible()
+        render_image = self._ensure_render_cache()
+        if render_image is None:
+            return
         z = self._zoom
-        img_w, img_h = image.width, image.height
+        img_w, img_h = render_image.width(), render_image.height()
         canvas_w = img_w * z
         canvas_h = img_h * z
 
         m = self._view_margin
-        painter.fillRect(QRect(m - 8, m - 8, canvas_w + 16, canvas_h + 16), QColor("#202020"))
+        visible_source = self._visible_image_rect(event_rect, img_w, img_h)
+        if visible_source.isNull():
+            return
+        visible_target = self._target_rect_for_source(visible_source)
+        painter.fillRect(
+            QRect(m - 8, m - 8, canvas_w + 16, canvas_h + 16).intersected(event_rect),
+            QColor("#202020"),
+        )
         painter.translate(m, m)
 
         if self._reference_image is not None:
             painter.setOpacity(self._reference_opacity)
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
-            painter.drawPixmap(0, 0, canvas_w, canvas_h, self._reference_image)
+            reference_source = self._scaled_source_rect(
+                visible_source,
+                self._reference_image.width(),
+                self._reference_image.height(),
+                img_w,
+                img_h,
+            )
+            painter.drawPixmap(visible_target, self._reference_image, reference_source)
             painter.setOpacity(1.0)
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
 
-        self._draw_onion_layer_fast(painter, self._onion_prev, img_w, img_h, self._onion_opacity)
-        self._draw_onion_layer_fast(painter, self._onion_next, img_w, img_h, self._onion_opacity * 0.6)
+        self._draw_onion_layer_fast(painter, self._onion_prev, visible_source, self._onion_opacity)
+        self._draw_onion_layer_fast(painter, self._onion_next, visible_source, self._onion_opacity * 0.6)
 
         has_ref = self._reference_image is not None
 
-        # Draw checkerboard for transparent pixels (only if no reference)
-        arr = np.array(image.convert("RGBA"))
         if not has_ref:
-            transparent_mask = arr[:, :, 3] == 0
-            if transparent_mask.any():
-                if self._transparent_color is not None:
-                    checker = QPixmap(img_w, img_h)
-                    checker.fill(self._transparent_color)
-                else:
-                    checker = self._build_checker_pixmap(img_w, img_h)
-                painter.drawPixmap(0, 0, canvas_w, canvas_h, checker)
+            if self._transparent_color is not None:
+                painter.fillRect(visible_target, self._transparent_color)
+            else:
+                self._draw_checker(painter, visible_target)
 
-        # Draw the image as a single scaled pixmap
-        pixmap = self._pil_to_qpixmap(image)
-        painter.drawPixmap(0, 0, canvas_w, canvas_h, pixmap)
+        painter.drawImage(visible_target, render_image, visible_source)
 
         # Grid lines — skip at very low zoom for performance
         if z >= 6:
             grid_alpha = 80 if has_ref else 180
             pen = QPen(QColor(40, 40, 40, grid_alpha), 1)
             painter.setPen(pen)
-            for x in range(img_w + 1):
-                painter.drawLine(x * z, 0, x * z, canvas_h)
-            for y in range(img_h + 1):
-                painter.drawLine(0, y * z, canvas_w, y * z)
+            x_start = visible_source.left()
+            x_stop = visible_source.right() + 1
+            y_start = visible_source.top()
+            y_stop = visible_source.bottom() + 1
+            for x in range(x_start, x_stop + 1):
+                painter.drawLine(x * z, y_start * z, x * z, y_stop * z)
+            for y in range(y_start, y_stop + 1):
+                painter.drawLine(x_start * z, y * z, x_stop * z, y * z)
 
         self._draw_anchor_points(painter)
         self._draw_pivot_point(painter)
@@ -388,6 +478,7 @@ class PixelGridCanvas(QWidget):
                 self._document.selection_rect = rect
                 self._document.selected_pixels = rect_points(rect)
                 self._move_origin = point
+                self.invalidate_render_cache(update=False)
                 self.image_changed.emit()
                 self.selection_changed.emit(self._selection_summary())
                 self.update()
@@ -448,7 +539,7 @@ class PixelGridCanvas(QWidget):
             return
         step = max(1, self._zoom // 5)
         new_zoom = self._zoom + step if delta > 0 else self._zoom - step
-        new_zoom = max(4, min(64, new_zoom))
+        new_zoom = max(1, min(64, new_zoom))
         if new_zoom != self._zoom:
             self.set_zoom(new_zoom)
             self.zoom_changed.emit(new_zoom)
@@ -530,12 +621,15 @@ class PixelGridCanvas(QWidget):
             return
         color = (0, 0, 0, 0) if self._document.use_transparent_color else self._document.current_color
         self._document.image.putpixel(point, color)
+        self._refresh_cached_pixel(point[0], point[1])
+        self._update_pixel_rect(point[0], point[1])
         if self._mirror:
             mx = self._document.image.width - 1 - point[0]
             if mx != point[0] and 0 <= mx < self._document.image.width:
                 self._document.image.putpixel((mx, point[1]), color)
+                self._refresh_cached_pixel(mx, point[1])
+                self._update_pixel_rect(mx, point[1])
         self.image_changed.emit()
-        self.update()
 
     def _fill_rect(self, p0: tuple[int, int], p1: tuple[int, int]) -> None:
         if self._document is None:
@@ -550,6 +644,7 @@ class PixelGridCanvas(QWidget):
                     mx = img.width - 1 - x
                     if mx != x and 0 <= mx < img.width:
                         img.putpixel((mx, y), color)
+        self.invalidate_render_cache(update=False)
         self.image_changed.emit()
         self.update()
 
@@ -570,6 +665,7 @@ class PixelGridCanvas(QWidget):
                         mx = img.width - 1 - tx
                         if mx != tx and 0 <= mx < img.width:
                             img.putpixel((mx, ty), px)
+        self.invalidate_render_cache(update=False)
         self.image_changed.emit()
         self.update()
 
@@ -603,18 +699,22 @@ class PixelGridCanvas(QWidget):
         self,
         painter: QPainter,
         layer: 'Image.Image | None',
-        img_w: int,
-        img_h: int,
+        visible_source: QRect,
         opacity: float,
     ) -> None:
         if layer is None:
             return
-        z = self._zoom
-        canvas_w = img_w * z
-        canvas_h = img_h * z
-        pixmap = self._pil_to_qpixmap(layer)
+        cache_key = id(layer)
+        image = self._onion_qimage_cache.get(cache_key)
+        if image is None:
+            image = self._pil_to_qimage(layer)
+            self._onion_qimage_cache[cache_key] = image
+        visible_source = visible_source.intersected(QRect(0, 0, image.width(), image.height()))
+        if visible_source.isNull():
+            return
+        visible_target = self._target_rect_for_source(visible_source)
         painter.setOpacity(opacity)
-        painter.drawPixmap(0, 0, canvas_w, canvas_h, pixmap)
+        painter.drawImage(visible_target, image, visible_source)
         painter.setOpacity(1.0)
 
     def _draw_anchor_points(self, painter: QPainter) -> None:
@@ -646,10 +746,14 @@ class PixelGridCanvas(QWidget):
         if self._transparent_color is not None:
             painter.fillRect(rect, self._transparent_color)
             return
-        half = max(2, self._zoom // 2)
-        painter.fillRect(rect, QColor("#2d2d2d"))
-        painter.fillRect(rect.x(), rect.y(), half, half, QColor("#404040"))
-        painter.fillRect(rect.x() + half, rect.y() + half, half, half, QColor("#404040"))
+        tile = max(8, min(24, self._zoom * 2))
+        pixmap = QPixmap(tile * 2, tile * 2)
+        pixmap.fill(QColor("#2d2d2d"))
+        tile_painter = QPainter(pixmap)
+        tile_painter.fillRect(0, 0, tile, tile, QColor("#404040"))
+        tile_painter.fillRect(tile, tile, tile, tile, QColor("#404040"))
+        tile_painter.end()
+        painter.fillRect(rect, QBrush(pixmap))
 
     def _draw_pixel_selection(self, painter: QPainter) -> None:
         if self._document is None:

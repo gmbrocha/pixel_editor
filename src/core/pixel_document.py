@@ -386,6 +386,58 @@ def replace_color_with_transparent(image: Image.Image, color: Color) -> tuple[Im
     return replace_color(image, color, (0, 0, 0, 0))
 
 
+def replace_similar_color_with_transparent(
+    image: Image.Image,
+    color: Color,
+    tolerance: int,
+) -> tuple[Image.Image, int]:
+    source = image.convert("RGBA")
+    arr = np.array(source)
+    if color[3] == 0:
+        return source.copy(), 0
+
+    rgb = arr[..., :3].astype(np.int32)
+    target = np.array(color[:3], dtype=np.int32)
+    delta = rgb - target
+    tolerance = max(0, min(441, int(tolerance)))
+    mask = (arr[..., 3] != 0) & (np.sum(delta * delta, axis=-1) <= tolerance * tolerance)
+    replaced_count = int(mask.sum())
+    if replaced_count == 0:
+        return source.copy(), 0
+
+    replaced = arr.copy()
+    replaced[mask] = np.array([0, 0, 0, 0], dtype=np.uint8)
+    return Image.fromarray(replaced, mode="RGBA"), replaced_count
+
+
+def replace_light_background_with_transparent(
+    image: Image.Image,
+    min_brightness: int,
+    max_saturation: int,
+) -> tuple[Image.Image, int]:
+    source = image.convert("RGBA")
+    arr = np.array(source)
+    rgb = arr[..., :3].astype(np.float32)
+
+    min_brightness = max(0, min(255, int(min_brightness)))
+    max_saturation = max(0, min(255, int(max_saturation)))
+    luma = (0.299 * rgb[..., 0]) + (0.587 * rgb[..., 1]) + (0.114 * rgb[..., 2])
+    channel_max = rgb.max(axis=-1)
+    channel_min = rgb.min(axis=-1)
+    saturation = np.zeros_like(channel_max)
+    nonzero = channel_max > 0
+    saturation[nonzero] = ((channel_max[nonzero] - channel_min[nonzero]) / channel_max[nonzero]) * 255
+
+    mask = (arr[..., 3] != 0) & (luma >= min_brightness) & (saturation <= max_saturation)
+    replaced_count = int(mask.sum())
+    if replaced_count == 0:
+        return source.copy(), 0
+
+    replaced = arr.copy()
+    replaced[mask] = np.array([0, 0, 0, 0], dtype=np.uint8)
+    return Image.fromarray(replaced, mode="RGBA"), replaced_count
+
+
 def replace_colors(image: Image.Image, replacements: dict[Color, Color]) -> tuple[Image.Image, int]:
     source = image.convert("RGBA")
     replaced = source.copy()

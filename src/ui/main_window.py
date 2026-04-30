@@ -6,6 +6,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QColor, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QColorDialog,
+    QComboBox,
+    QFrame,
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
@@ -39,6 +41,8 @@ from src.core.pixel_document import (
     PixelDocument,
     create_blank_pixel_map,
     replace_color_with_transparent,
+    replace_light_background_with_transparent,
+    replace_similar_color_with_transparent,
 )
 from src.ui.asset_tray import AssetTray
 from src.ui.palette_panel import PalettePanel
@@ -65,6 +69,8 @@ class MainWindow(QMainWindow):
         self.resize(1440, 920)
 
         self._eyedropper_active = False
+        self._selected_transparency_color = (255, 255, 255, 255)
+        self._transparency_keys: list[tuple[int, int, int, int]] = [(255, 255, 255, 255)]
 
         self.source_canvas = SourceCanvas()
         self.preview_panel = PreviewPanel()
@@ -174,14 +180,50 @@ class MainWindow(QMainWindow):
         self.open_source_pixel_editor_button = QPushButton("Open Source In PixelForge")
         self.open_source_headless_button = QPushButton("Open Source Headless")
         self.remove_white_background_button = QPushButton("Remove White Background")
+        self.remove_key_range_button = QPushButton("Remove Key Range")
+        self.add_transparency_key_button = QPushButton("Add Picked Key")
+        self.remove_transparency_key_button = QPushButton("Remove Key")
+        self.apply_all_transparency_keys_button = QPushButton("Apply All Keys")
+        self.remove_light_background_button = QPushButton("Remove Light BG")
         for btn in (
             self.open_blank_pixel_map_button,
             self.open_preview_pixel_editor_button,
             self.open_source_pixel_editor_button,
             self.open_source_headless_button,
             self.remove_white_background_button,
+            self.remove_key_range_button,
+            self.add_transparency_key_button,
+            self.remove_transparency_key_button,
+            self.apply_all_transparency_keys_button,
+            self.remove_light_background_button,
         ):
             btn.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
+
+        self.transparency_color_swatch = QFrame()
+        self.transparency_color_swatch.setFixedSize(28, 20)
+        self.transparency_color_label = QLabel("#FFFFFFFF")
+        self.transparency_key_combo = QComboBox()
+
+        self.eyedropper_sample_size_combo = QComboBox()
+        for sample_size in (1, 3, 5, 9):
+            self.eyedropper_sample_size_combo.addItem(f"{sample_size} px", sample_size)
+        self.eyedropper_sample_method_combo = QComboBox()
+        self.eyedropper_sample_method_combo.addItem("Median", "median")
+        self.eyedropper_sample_method_combo.addItem("Average", "average")
+
+        self.transparency_tolerance_spin = QSpinBox()
+        self.transparency_tolerance_spin.setRange(0, 441)
+        self.transparency_tolerance_spin.setValue(30)
+        self.transparency_tolerance_spin.setToolTip("RGB distance from the sampled color")
+
+        self.light_brightness_spin = QSpinBox()
+        self.light_brightness_spin.setRange(0, 255)
+        self.light_brightness_spin.setValue(235)
+        self.light_brightness_spin.setToolTip("Minimum brightness removed by Light BG")
+        self.light_saturation_spin = QSpinBox()
+        self.light_saturation_spin.setRange(0, 255)
+        self.light_saturation_spin.setValue(28)
+        self.light_saturation_spin.setToolTip("Maximum saturation removed by Light BG")
 
         pixel_tools_layout.addLayout(blank_size_row)
         pixel_tools_layout.addWidget(self.open_blank_pixel_map_button)
@@ -189,6 +231,44 @@ class MainWindow(QMainWindow):
         pixel_tools_layout.addWidget(self.open_source_pixel_editor_button)
         pixel_tools_layout.addWidget(self.open_source_headless_button)
         pixel_tools_layout.addWidget(self.remove_white_background_button)
+
+        transparency_group = QGroupBox("Transparency Key")
+        transparency_layout = QVBoxLayout(transparency_group)
+        picked_row = QHBoxLayout()
+        picked_row.addWidget(QLabel("Picked"))
+        picked_row.addWidget(self.transparency_color_swatch)
+        picked_row.addWidget(self.transparency_color_label)
+        picked_row.addStretch(1)
+        transparency_layout.addLayout(picked_row)
+
+        sample_row = QHBoxLayout()
+        sample_row.addWidget(QLabel("Sample"))
+        sample_row.addWidget(self.eyedropper_sample_size_combo)
+        sample_row.addWidget(self.eyedropper_sample_method_combo)
+        transparency_layout.addLayout(sample_row)
+
+        tolerance_row = QHBoxLayout()
+        tolerance_row.addWidget(QLabel("Tolerance"))
+        tolerance_row.addWidget(self.transparency_tolerance_spin)
+        transparency_layout.addLayout(tolerance_row)
+
+        key_row = QHBoxLayout()
+        key_row.addWidget(self.add_transparency_key_button)
+        key_row.addWidget(self.remove_transparency_key_button)
+        transparency_layout.addLayout(key_row)
+        transparency_layout.addWidget(self.transparency_key_combo)
+        transparency_layout.addWidget(self.remove_key_range_button)
+        transparency_layout.addWidget(self.apply_all_transparency_keys_button)
+
+        light_row = QHBoxLayout()
+        light_row.addWidget(QLabel("Light B"))
+        light_row.addWidget(self.light_brightness_spin)
+        light_row.addWidget(QLabel("Sat"))
+        light_row.addWidget(self.light_saturation_spin)
+        transparency_layout.addLayout(light_row)
+        transparency_layout.addWidget(self.remove_light_background_button)
+        pixel_tools_layout.addWidget(transparency_group)
+        self._refresh_transparency_key_ui()
 
         pixel_tools_row = QHBoxLayout()
         pixel_tools_row.addWidget(self._pixel_tools_group, 0, Qt.AlignmentFlag.AlignLeft)
@@ -259,6 +339,12 @@ class MainWindow(QMainWindow):
         self.open_preview_pixel_editor_button.setMaximumWidth(bw)
         self.open_source_pixel_editor_button.setMaximumWidth(bw)
         self.open_source_headless_button.setMaximumWidth(bw)
+        self.remove_white_background_button.setMaximumWidth(bw)
+        self.remove_key_range_button.setMaximumWidth(bw)
+        self.add_transparency_key_button.setMaximumWidth(bw)
+        self.remove_transparency_key_button.setMaximumWidth(bw)
+        self.apply_all_transparency_keys_button.setMaximumWidth(bw)
+        self.remove_light_background_button.setMaximumWidth(bw)
 
     def _connect_signals(self) -> None:
         self.source_canvas.selections_changed.connect(self._on_selections_changed)
@@ -288,6 +374,14 @@ class MainWindow(QMainWindow):
         self.open_source_pixel_editor_button.clicked.connect(self.open_source_in_pixel_editor)
         self.open_source_headless_button.clicked.connect(self.open_source_headless_in_pixel_editor)
         self.remove_white_background_button.clicked.connect(self.remove_white_background)
+        self.remove_key_range_button.clicked.connect(self.remove_selected_key_range)
+        self.add_transparency_key_button.clicked.connect(self.add_picked_transparency_key)
+        self.remove_transparency_key_button.clicked.connect(self.remove_selected_transparency_key)
+        self.apply_all_transparency_keys_button.clicked.connect(self.apply_all_transparency_keys)
+        self.remove_light_background_button.clicked.connect(self.remove_light_background)
+        self.eyedropper_sample_size_combo.currentIndexChanged.connect(self._update_eyedropper_sampling)
+        self.eyedropper_sample_method_combo.currentIndexChanged.connect(self._update_eyedropper_sampling)
+        self._update_eyedropper_sampling()
 
     def open_image(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
@@ -497,6 +591,113 @@ class MainWindow(QMainWindow):
             f"Removed {replaced} pure white pixel{'s' if replaced != 1 else ''} from source image"
         )
 
+    def remove_selected_key_range(self) -> None:
+        color = self._current_transparency_key()
+        if color is None:
+            self.statusBar().showMessage("No transparency key selected")
+            return
+        self._remove_similar_colors([color])
+
+    def apply_all_transparency_keys(self) -> None:
+        if not self._transparency_keys:
+            self.statusBar().showMessage("No transparency keys to apply")
+            return
+        self._remove_similar_colors(self._transparency_keys)
+
+    def remove_light_background(self) -> None:
+        if self.document.source_image is None:
+            self.statusBar().showMessage("No source image loaded")
+            return
+
+        updated, replaced = replace_light_background_with_transparent(
+            self.document.source_image,
+            self.light_brightness_spin.value(),
+            self.light_saturation_spin.value(),
+        )
+        if replaced == 0:
+            self.statusBar().showMessage("No light background pixels matched")
+            return
+
+        self._replace_source_image(updated)
+        self.statusBar().showMessage(
+            f"Removed {replaced} light background pixel{'s' if replaced != 1 else ''}"
+        )
+
+    def add_picked_transparency_key(self) -> None:
+        color = self._selected_transparency_color
+        if color[3] == 0:
+            self.statusBar().showMessage("Transparent pixels cannot be used as a key")
+            return
+        if color not in self._transparency_keys:
+            self._transparency_keys.append(color)
+        self._refresh_transparency_key_ui(select=color)
+        self.statusBar().showMessage(f"Added transparency key {color_tooltip(color)}")
+
+    def remove_selected_transparency_key(self) -> None:
+        color = self._current_transparency_key()
+        if color is None:
+            return
+        self._transparency_keys = [item for item in self._transparency_keys if item != color]
+        self._refresh_transparency_key_ui()
+        self.statusBar().showMessage(f"Removed transparency key {color_tooltip(color)}")
+
+    def _remove_similar_colors(self, colors: list[tuple[int, int, int, int]]) -> None:
+        if self.document.source_image is None:
+            self.statusBar().showMessage("No source image loaded")
+            return
+
+        updated = self.document.source_image
+        total_replaced = 0
+        tolerance = self.transparency_tolerance_spin.value()
+        for color in colors:
+            updated, replaced = replace_similar_color_with_transparent(updated, color, tolerance)
+            total_replaced += replaced
+
+        if total_replaced == 0:
+            self.statusBar().showMessage("No pixels matched the transparency key range")
+            return
+
+        self._replace_source_image(updated)
+        key_word = "key" if len(colors) == 1 else "keys"
+        self.statusBar().showMessage(
+            f"Removed {total_replaced} pixel{'s' if total_replaced != 1 else ''} using {len(colors)} {key_word}"
+        )
+
+    def _replace_source_image(self, image) -> None:
+        self.document.source_image = image
+        self.source_canvas.set_image(self.document.source_image)
+        self.source_canvas.set_selections(self.document.selections)
+        self._refresh_preview()
+
+    def _current_transparency_key(self) -> tuple[int, int, int, int] | None:
+        index = self.transparency_key_combo.currentIndex()
+        if 0 <= index < len(self._transparency_keys):
+            return self._transparency_keys[index]
+        return None
+
+    def _refresh_transparency_key_ui(self, select: tuple[int, int, int, int] | None = None) -> None:
+        self._update_transparency_color_swatch()
+        self.transparency_key_combo.blockSignals(True)
+        self.transparency_key_combo.clear()
+        for color in self._transparency_keys:
+            self.transparency_key_combo.addItem(color_tooltip(color))
+        if select in self._transparency_keys:
+            self.transparency_key_combo.setCurrentIndex(self._transparency_keys.index(select))
+        self.transparency_key_combo.blockSignals(False)
+
+    def _update_transparency_color_swatch(self) -> None:
+        r, g, b, a = self._selected_transparency_color
+        self.transparency_color_swatch.setStyleSheet(
+            f"background: rgba({r}, {g}, {b}, {a}); border: 1px solid #555;"
+        )
+        self.transparency_color_label.setText(color_tooltip(self._selected_transparency_color))
+
+    def _update_eyedropper_sampling(self) -> None:
+        sample_size = int(self.eyedropper_sample_size_combo.currentData() or 1)
+        method = str(self.eyedropper_sample_method_combo.currentData() or "median")
+        self.source_canvas.set_eyedropper_sampling(sample_size, method)
+        self.preview_panel.set_eyedropper_sampling(sample_size, method)
+
     def save_preview_to_tray(self) -> None:
         if self.document.preview_image is None:
             return
@@ -704,6 +905,8 @@ class MainWindow(QMainWindow):
 
     def _on_eyedropper_color(self, rgba: tuple) -> None:
         color = (int(rgba[0]), int(rgba[1]), int(rgba[2]), int(rgba[3]))
+        self._selected_transparency_color = color
+        self._update_transparency_color_swatch()
         is_new = self.persistent_palette.add_color(color)
 
         self.document.palette = add_color_to_palette(
