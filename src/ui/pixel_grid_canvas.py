@@ -171,18 +171,13 @@ class PixelGridCanvas(QWidget):
         self.update()
 
     def copy_stamp(self) -> bool:
-        """Capture the current selection rect as a stamp. Returns True if successful."""
-        if self._document is None or self._document.selection_rect is None:
+        """Capture the current selection as a stamp. Returns True if successful."""
+        if self._document is None:
             return False
-        left, top, right, bottom = normalize_rect(self._document.selection_rect)
-        img = self._document.image
-        left = max(0, left)
-        top = max(0, top)
-        right = min(img.width - 1, right)
-        bottom = min(img.height - 1, bottom)
-        if right < left or bottom < top:
+        stamp = self._document.copy_selection_image(compact=True)
+        if stamp is None:
             return False
-        self._stamp = img.crop((left, top, right + 1, bottom + 1)).copy()
+        self._stamp = stamp
         return True
 
     def stamp_image(self) -> 'Image.Image | None':
@@ -435,7 +430,9 @@ class PixelGridCanvas(QWidget):
             return
 
         if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self._document.selection_rect = None
+            if self._document.selection_rect is not None:
+                self._document.selected_pixels = self._document.selected_points()
+                self._document.selection_rect = None
             if point in self._document.selected_pixels:
                 self._document.selected_pixels.remove(point)
             else:

@@ -548,6 +548,10 @@ class PixelEditorWindow(QMainWindow):
             "Keeps neutral grays/blacks in the background from being treated as the gold/yellow ring."
         )
         self.copy_stamp_button = QPushButton("Copy Selection as Stamp")
+        self.copy_selection_layer_button = QPushButton("Copy Selection to New Layer")
+        self.copy_selection_layer_button.setToolTip(
+            "Create a layer above the active layer containing the selected pixels"
+        )
 
         self.transparent_button = QPushButton("Use Transparent")
         self.custom_color_button = QPushButton("Pick Color")
@@ -726,9 +730,14 @@ class PixelEditorWindow(QMainWindow):
         mode_row.addWidget(self.select_radio)
         mode_row.addWidget(self.stamp_radio)
         mode_row.addWidget(self.flood_erase_radio)
-        mode_row.addWidget(self.copy_stamp_button)
         mode_row.addStretch(1)
         controls_layout.addLayout(mode_row)
+
+        selection_action_row = QHBoxLayout()
+        selection_action_row.addWidget(self.copy_stamp_button)
+        selection_action_row.addWidget(self.copy_selection_layer_button)
+        selection_action_row.addStretch(1)
+        controls_layout.addLayout(selection_action_row)
 
         color_row = QHBoxLayout()
         color_row.addWidget(self.color_preview)
@@ -974,6 +983,7 @@ class PixelEditorWindow(QMainWindow):
         self.stamp_radio.toggled.connect(self._on_mode_changed)
         self.flood_erase_radio.toggled.connect(self._on_mode_changed)
         self.copy_stamp_button.clicked.connect(self._copy_as_stamp)
+        self.copy_selection_layer_button.clicked.connect(self._copy_selection_to_new_layer)
         self.ref_underlay_button.clicked.connect(self._import_reference_underlay)
         self.ref_clear_button.clicked.connect(self._clear_reference_underlay)
         self.ref_opacity_slider.valueChanged.connect(
@@ -1542,7 +1552,21 @@ class PixelEditorWindow(QMainWindow):
             self.stamp_radio.setChecked(True)
             self.statusBar().showMessage(f"Stamp copied ({w}x{h}px) — click to place")
         else:
-            self.statusBar().showMessage("Select a region first (use Select mode, drag a rectangle)")
+            self.statusBar().showMessage("Select pixels first (use Select mode to drag or Ctrl+click)")
+
+    def _copy_selection_to_new_layer(self) -> None:
+        result = self.document.copy_selection_to_new_layer()
+        if result is None:
+            self.statusBar().showMessage("Select pixels first (use Select mode to drag or Ctrl+click)")
+            return
+        new_index, count = result
+        self.layer_panel.refresh()
+        self.canvas.invalidate_render_cache()
+        layer_name = self.document.layers[new_index].name
+        pixel_word = "pixel" if count == 1 else "pixels"
+        self.statusBar().showMessage(
+            f"Copied {count} selected {pixel_word} to new layer '{layer_name}'"
+        )
 
     def _pick_transparent_display_color(self) -> None:
         c = QColorDialog.getColor(QColor("#ff00ff"), self, "Transparent pixel display color")

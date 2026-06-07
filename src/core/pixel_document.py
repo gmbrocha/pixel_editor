@@ -156,6 +156,71 @@ class PixelDocument:
             n += 1
         return f"Layer {n}"
 
+    def _unique_layer_name(self, base_name: str) -> str:
+        existing = {layer.name for layer in self.layers}
+        if base_name not in existing:
+            return base_name
+        n = 2
+        while f"{base_name} {n}" in existing:
+            n += 1
+        return f"{base_name} {n}"
+
+    def selected_points(self) -> set[Point]:
+        """Return every selected pixel clipped to the document canvas."""
+        points = set(self.selected_pixels)
+        if self.selection_rect is not None:
+            points.update(rect_points(self.selection_rect))
+        return {
+            (x, y)
+            for x, y in points
+            if 0 <= x < self.width and 0 <= y < self.height
+        }
+
+    def copy_selection_image(self, *, compact: bool) -> Image.Image | None:
+        """Copy selected pixels from the active layer into a transparent image.
+
+        When `compact` is true, the returned image is cropped to the selected
+        pixels' bounds. Otherwise it matches the full document canvas.
+        """
+        points = self.selected_points()
+        if not points:
+            return None
+
+        if compact:
+            xs = [x for x, _ in points]
+            ys = [y for _, y in points]
+            left, top, right, bottom = min(xs), min(ys), max(xs), max(ys)
+            out = Image.new("RGBA", (right - left + 1, bottom - top + 1), (0, 0, 0, 0))
+        else:
+            left = top = 0
+            out = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
+
+        source = self.image.convert("RGBA")
+        source_pixels = source.load()
+        out_pixels = out.load()
+        for x, y in points:
+            out_pixels[x - left, y - top] = source_pixels[x, y]
+        return out
+
+    def copy_selection_to_new_layer(self, name: str | None = None) -> tuple[int, int] | None:
+        """Create a new layer above the active layer from the selected pixels.
+
+        The active source layer is not modified. Returns the new active layer
+        index and selected pixel count, or None if nothing is selected.
+        """
+        points = self.selected_points()
+        if not points:
+            return None
+        image = self.copy_selection_image(compact=False)
+        if image is None:
+            return None
+
+        layer_name = name or self._unique_layer_name("Selection Copy")
+        insert_at = self.active_layer_index + 1
+        self.layers.insert(insert_at, Layer(name=layer_name, image=image))
+        self.active_layer_index = insert_at
+        return insert_at, len(points)
+
     def delete_layer(self, index: int) -> bool:
         """Remove the layer at `index`. Refuses to delete the last remaining
         layer. Returns True on success."""
