@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "provisional-v1",
+  "id": "pixel-forge",
+  "displayName": "PixelForge",
+  "category": "active-lab",
+  "status": "active",
+  "summary": "PySide6 desktop pixel-art and tileset utility with image import, region extraction, palette tooling, pixel editing, animation editing, tile layout, tileset processing, tileset template generation, and procedural texture generation tools.",
+  "priorityRank": null,
+  "repository": {
+    "type": "git",
+    "defaultBranch": "main",
+    "remote": "https://github.com/gmbrocha/pixel_editor.git"
+  },
+  "docs": {
+    "currentState": "docs/CURRENT_STATE.md",
+    "additional": [
+      "pixelforge-shade-ramp.md"
+    ]
+  },
+  "urls": [
+    {
+      "label": "GitHub repository",
+      "url": "https://github.com/gmbrocha/pixel_editor.git"
+    }
+  ],
+  "commands": [
+    {
+      "name": "Run desktop app",
+      "command": "python main.py",
+      "cwd": ".",
+      "description": "Launches the PySide6 PixelForge desktop application."
+    },
+    {
+      "name": "Run tests",
+      "command": "python -m pytest -q",
+      "cwd": ".",
+      "description": "Runs the repository's pytest suite."
+    }
+  ],
+  "tasks": {
+    "enabled": false,
+    "source": null
+  },
+  "services": [],
+  "notes": [
+    "Provisional Command Center V1 manifest; review when the final schema is implemented.",
+    "Category and status are source-grounded from the personal projects path and recent git activity, but should be reviewed by the project owner.",
+    "No service suite, long-running backend process, or task-source file was found during this setup pass.",
+    "The palettes/ directory contains PNG palette assets committed with the Command Center setup."
+  ],
+  "workspacePath": null,
+  "openPathOverride": null
+}
