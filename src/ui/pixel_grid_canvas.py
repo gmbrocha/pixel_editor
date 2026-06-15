@@ -38,6 +38,9 @@ class PixelGridCanvas(QWidget):
         self._last_paint_point: tuple[int, int] | None = None
         self._fill_rect_start: tuple[int, int] | None = None
         self._fill_rect_current: tuple[int, int] | None = None
+        self._line_key_down = False
+        self._line_start: tuple[int, int] | None = None
+        self._line_current: tuple[int, int] | None = None
         self._mirror = False
         self._transparent_color: QColor | None = None
         self._stamp: 'Image.Image | None' = None
@@ -53,7 +56,7 @@ class PixelGridCanvas(QWidget):
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setToolTip(
-            "Paint mode: click or drag to paint. Shift+drag fills a rectangle.\n"
+            "Paint mode: click or drag to paint. Shift+drag fills a rectangle. Hold L and drag to draw a line.\n"
             "Select mode: drag to create a rectangle, Ctrl+click toggles pixels.\n"
             "Stamp mode: click to place the copied stamp.\n"
             "Alt+drag inside a selection moves it.\n"
@@ -89,6 +92,7 @@ class PixelGridCanvas(QWidget):
             or self._last_image_size != (document.image.width, document.image.height)
         )
         self._document = document
+        self._cancel_line_preview()
         self._last_image_size = (document.image.width, document.image.height)
         self.invalidate_render_cache(update=False)
         self.updateGeometry()
@@ -99,6 +103,8 @@ class PixelGridCanvas(QWidget):
 
     def set_mode(self, mode: str) -> None:
         self._mode = mode
+        if mode != "paint":
+            self._cancel_line_preview()
         if mode != "stamp":
             self._stamp_hover = None
         if mode == "flood_erase":
@@ -377,6 +383,7 @@ class PixelGridCanvas(QWidget):
         self._draw_pixel_selection(painter)
         self._draw_rect_selection(painter)
         self._draw_fill_rect_preview(painter)
+        self._draw_line_preview(painter)
         self._draw_stamp_preview(painter)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
@@ -415,6 +422,11 @@ class PixelGridCanvas(QWidget):
                 if event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
                     self._fill_rect_start = point
                     self._fill_rect_current = point
+                    self.update()
+                elif self._line_key_down:
+                    self._line_start = point
+                    self._line_current = point
+                    self.status_changed.emit("Line preview: release left mouse to paint")
                     self.update()
                 else:
                     self._last_paint_point = point
@@ -491,6 +503,10 @@ class PixelGridCanvas(QWidget):
                 self._fill_rect_current = point
                 self.update()
                 return
+            if self._line_start is not None:
+                self._line_current = point
+                self.update()
+                return
             if self._last_paint_point is not None and self._last_paint_point != point:
                 for p in self._bresenham(self._last_paint_point, point):
                     self._paint_point(p)
@@ -520,6 +536,10 @@ class PixelGridCanvas(QWidget):
                 self._fill_rect(self._fill_rect_start, self._fill_rect_current)
                 self._fill_rect_start = None
                 self._fill_rect_current = None
+            if self._line_start is not None and self._line_current is not None:
+                self._paint_line(self._line_start, self._line_current)
+                self._line_start = None
+                self._line_current = None
             self._drag_rect_start = None
             self._drag_rect_current = None
             self._moving_selection = False
@@ -578,6 +598,11 @@ class PixelGridCanvas(QWidget):
         self._set_scroll_position(target_x, target_y)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key.Key_L and not event.isAutoRepeat():
+            self._line_key_down = True
+            event.accept()
+            return
+
         scroll = self._scroll_area()
         if scroll is None:
             super().keyPressEvent(event)
@@ -613,6 +638,18 @@ class PixelGridCanvas(QWidget):
             return
         event.accept()
 
+    def keyReleaseEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key.Key_L and not event.isAutoRepeat():
+            self._line_key_down = False
+            event.accept()
+            return
+        super().keyReleaseEvent(event)
+
+    def focusOutEvent(self, event) -> None:
+        self._line_key_down = False
+        self._cancel_line_preview()
+        super().focusOutEvent(event)
+
     def _paint_point(self, point: tuple[int, int]) -> None:
         if self._document is None:
             return
@@ -627,6 +664,23 @@ class PixelGridCanvas(QWidget):
                 self._refresh_cached_pixel(mx, point[1])
                 self._update_pixel_rect(mx, point[1])
         self.image_changed.emit()
+
+    def _paint_line(self, p0: tuple[int, int], p1: tuple[int, int]) -> None:
+        if self._document is None:
+            return
+        points = [p0]
+        points.extend(self._bresenham(p0, p1))
+        color = (0, 0, 0, 0) if self._document.use_transparent_color else self._document.current_color
+        img = self._document.image
+        for x, y in points:
+            img.putpixel((x, y), color)
+            if self._mirror:
+                mx = img.width - 1 - x
+                if mx != x and 0 <= mx < img.width:
+                    img.putpixel((mx, y), color)
+        self.invalidate_render_cache(update=False)
+        self.image_changed.emit()
+        self.update()
 
     def _fill_rect(self, p0: tuple[int, int], p1: tuple[int, int]) -> None:
         if self._document is None:
@@ -796,6 +850,34 @@ class PixelGridCanvas(QWidget):
         painter.setPen(QPen(QColor("#ffcc00"), 2, Qt.PenStyle.DashLine))
         painter.drawRect(rect)
 
+    def _draw_line_preview(self, painter: QPainter) -> None:
+        if self._line_start is None or self._line_current is None or self._document is None:
+            return
+        z = self._zoom
+        if self._document.use_transparent_color:
+            preview_color = QColor(255, 255, 255, 70)
+        else:
+            c = self._document.current_color
+            preview_color = QColor(c[0], c[1], c[2], 120)
+        outline = QPen(QColor("#ffcc00"), 2, Qt.PenStyle.DashLine)
+        points = [self._line_start]
+        points.extend(self._bresenham(self._line_start, self._line_current))
+        for x, y in points:
+            painter.fillRect(x * z, y * z, z, z, preview_color)
+            if self._mirror:
+                mx = self._document.image.width - 1 - x
+                if mx != x and 0 <= mx < self._document.image.width:
+                    painter.fillRect(mx * z, y * z, z, z, preview_color)
+        painter.setPen(outline)
+        sx, sy = self._line_start
+        ex, ey = self._line_current
+        painter.drawLine(
+            sx * z + z // 2,
+            sy * z + z // 2,
+            ex * z + z // 2,
+            ey * z + z // 2,
+        )
+
     def _draw_rect_selection(self, painter: QPainter) -> None:
         if self._document is None or self._document.selection_rect is None:
             return
@@ -817,6 +899,13 @@ class PixelGridCanvas(QWidget):
         if x < 0 or y < 0 or x >= self._document.image.width or y >= self._document.image.height:
             return None
         return x, y
+
+    def _cancel_line_preview(self) -> None:
+        if self._line_start is None and self._line_current is None:
+            return
+        self._line_start = None
+        self._line_current = None
+        self.update()
 
     def _selection_summary(self) -> str:
         if self._document is None:

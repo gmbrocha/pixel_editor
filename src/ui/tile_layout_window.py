@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
 
 from src.core.image_io import load_image, save_image
 from src.core.pixel_document import PixelDocument
-from src.core.tile_layout import PlacedTile, next_free_position
+from src.core.tile_layout import PlacedTile, build_grid_tilesheet, next_free_position
 from src.ui.assembly_grid_widget import AssemblyGridWidget
 from src.ui.pixel_grid_canvas import PixelGridCanvas
 from src.ui.tile_layout_canvas import TileLayoutCanvas
@@ -110,6 +110,7 @@ class TileLayoutWindow(QMainWindow):
         tb.addAction("Export sheet tiles…", self._export_sheet_folder)
         tb.addSeparator()
         tb.addAction("Export grid tiles…", self._export_grid_tiles)
+        tb.addAction("Export grid tilesheet...", self._export_grid_tilesheet)
         tb.addAction("Apply edits to grid", self._apply_edits_to_grid)
 
     def _build_layout(self) -> None:
@@ -222,6 +223,7 @@ class TileLayoutWindow(QMainWindow):
 
     def _on_assembly_grid_changed(self) -> None:
         self._assembly.set_tile_size(self._tile_w, self._tile_h)
+        self._update_selected_pane()
 
     def _on_pixel_mode(self) -> None:
         mode = "paint" if self._paint_radio.isChecked() else "select"
@@ -343,9 +345,9 @@ class TileLayoutWindow(QMainWindow):
             image=composite,
             name="composite",
             palette=list(self._palette),
-            current_color=self._current_color,
-            use_transparent_color=self._transparent_btn.isChecked(),
         )
+        self._pixel_doc.current_color = self._current_color
+        self._pixel_doc.use_transparent_color = self._transparent_btn.isChecked()
         self._pixel_canvas.set_document(self._pixel_doc)
         self._pixel_canvas.set_frame_grid((self._tile_w, self._tile_h))
         self._pixel_canvas.setEnabled(True)
@@ -376,15 +378,18 @@ class TileLayoutWindow(QMainWindow):
         self._assembly.update()
         self.statusBar().showMessage(f"Applied edits to {len(slices)} grid cell(s)")
 
-    def _export_grid_tiles(self) -> None:
+    def _merged_grid_tiles(self) -> dict[tuple[int, int], Image.Image]:
         grid = self._assembly.grid_data()
-        if not grid:
-            QMessageBox.information(self, "Export", "Assembly grid is empty.")
-            return
-
         slices = self._slice_composite() if self._pixel_doc is not None and self._composite_cells else {}
         merged = dict(grid)
         merged.update(slices)
+        return merged
+
+    def _export_grid_tiles(self) -> None:
+        merged = self._merged_grid_tiles()
+        if not merged:
+            QMessageBox.information(self, "Export", "Assembly grid is empty.")
+            return
 
         folder = QFileDialog.getExistingDirectory(self, "Export grid tiles to folder")
         if not folder:
@@ -402,6 +407,31 @@ class TileLayoutWindow(QMainWindow):
             save_image(img, base / name)
             count += 1
         self.statusBar().showMessage(f"Exported {count} grid tile(s) to {folder}")
+
+    def _export_grid_tilesheet(self) -> None:
+        merged = self._merged_grid_tiles()
+        if not merged:
+            QMessageBox.information(self, "Export", "Assembly grid is empty.")
+            return
+
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export assembly grid as tilesheet",
+            "tilesheet.png",
+            "PNG (*.png)",
+        )
+        if not path:
+            return
+        out_path = Path(path)
+        if out_path.suffix.lower() != ".png":
+            out_path = out_path.with_suffix(".png")
+
+        cols, rows = self._assembly.dimensions()
+        sheet = build_grid_tilesheet(merged, cols, rows, self._tile_w, self._tile_h)
+        save_image(sheet, out_path)
+        self.statusBar().showMessage(
+            f"Exported grid tilesheet {sheet.width}x{sheet.height} to {out_path.name}"
+        )
 
     def _add_tiles(self) -> None:
         paths, _ = QFileDialog.getOpenFileNames(

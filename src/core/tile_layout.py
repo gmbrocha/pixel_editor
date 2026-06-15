@@ -46,3 +46,31 @@ def next_free_position(tiles: list[PlacedTile], max_cols: int = 4) -> tuple[int,
             if (col, row) not in occupied:
                 return col, row
         row += 1
+
+
+def build_grid_tilesheet(
+    grid: dict[tuple[int, int], Image.Image],
+    cols: int,
+    rows: int,
+    tile_w: int,
+    tile_h: int,
+) -> Image.Image:
+    """Build a row-major tilesheet from assembly-grid contents.
+
+    Empty cells remain transparent, preserving the grid's slot order.
+    """
+    cols = max(1, cols)
+    rows = max(1, rows)
+    tile_w = max(1, tile_w)
+    tile_h = max(1, tile_h)
+    sheet = Image.new("RGBA", (cols * tile_w, rows * tile_h), (0, 0, 0, 0))
+
+    for (col, row), image in sorted(grid.items(), key=lambda item: (item[0][1], item[0][0])):
+        if col < 0 or row < 0 or col >= cols or row >= rows:
+            continue
+        tile = Image.new("RGBA", (tile_w, tile_h), (0, 0, 0, 0))
+        source = image.convert("RGBA")
+        tile.alpha_composite(source.crop((0, 0, tile_w, tile_h)))
+        sheet.alpha_composite(tile, (col * tile_w, row * tile_h))
+
+    return sheet
