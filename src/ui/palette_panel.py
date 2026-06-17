@@ -3,8 +3,11 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
+    QDoubleSpinBox,
     QGridLayout,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QMenu,
@@ -13,6 +16,10 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from PIL import Image
+
+from src.core.palette import PaletteExtractionDebug, PaletteExtractionSettings
+from src.core.qt_image import pil_image_to_qpixmap
 
 
 class PaletteSwatchStrip(QWidget):
@@ -121,6 +128,76 @@ class PalettePanel(QWidget):
         self.max_colors_spin = QSpinBox()
         self.max_colors_spin.setRange(2, 256)
         self.max_colors_spin.setValue(16)
+
+        self.min_cluster_percent_spin = QDoubleSpinBox()
+        self.min_cluster_percent_spin.setRange(0.0, 10.0)
+        self.min_cluster_percent_spin.setDecimals(3)
+        self.min_cluster_percent_spin.setSingleStep(0.05)
+        self.min_cluster_percent_spin.setValue(0.1)
+        self.min_cluster_percent_spin.setSuffix("%")
+
+        self.min_distance_spin = QDoubleSpinBox()
+        self.min_distance_spin.setRange(0.0, 100.0)
+        self.min_distance_spin.setDecimals(1)
+        self.min_distance_spin.setSingleStep(1.0)
+        self.min_distance_spin.setValue(10.0)
+
+        self.neutral_saturation_spin = QDoubleSpinBox()
+        self.neutral_saturation_spin.setRange(0.0, 1.0)
+        self.neutral_saturation_spin.setDecimals(2)
+        self.neutral_saturation_spin.setSingleStep(0.01)
+        self.neutral_saturation_spin.setValue(0.15)
+
+        self.max_family_spin = QSpinBox()
+        self.max_family_spin.setRange(1, 256)
+        self.max_family_spin.setValue(4)
+
+        self.preserve_accents_checkbox = QCheckBox("Preserve accents")
+        self.preserve_accents_checkbox.setChecked(True)
+        self.cap_spread_checkbox = QCheckBox("Cap Spread")
+        self.cap_spread_checkbox.setChecked(False)
+        self.cap_frequent_checkbox = QCheckBox("Cap Frequent")
+        self.cap_frequent_checkbox.setChecked(False)
+        self.cap_balanced_checkbox = QCheckBox("Cap Balanced")
+        self.cap_balanced_checkbox.setChecked(True)
+
+        self.posterize_enabled_checkbox = QCheckBox("Posterize")
+        self.posterize_enabled_checkbox.setChecked(False)
+
+        self.posterize_preset_combo = QComboBox()
+        self.posterize_preset_combo.addItem("Custom", "custom")
+        self.posterize_preset_combo.addItem("Light Cleanup", "light")
+        self.posterize_preset_combo.addItem("Medium Cleanup", "medium")
+        self.posterize_preset_combo.addItem("Strong Cleanup", "strong")
+
+        self.posterize_strength_spin = QDoubleSpinBox()
+        self.posterize_strength_spin.setRange(0.0, 1.0)
+        self.posterize_strength_spin.setDecimals(2)
+        self.posterize_strength_spin.setSingleStep(0.05)
+        self.posterize_strength_spin.setValue(0.35)
+
+        self.posterize_rgb_levels_spin = QSpinBox()
+        self.posterize_rgb_levels_spin.setRange(2, 256)
+        self.posterize_rgb_levels_spin.setValue(12)
+
+        self.posterize_lab_lightness_spin = QSpinBox()
+        self.posterize_lab_lightness_spin.setRange(2, 100)
+        self.posterize_lab_lightness_spin.setValue(10)
+
+        self.posterize_chroma_spin = QSpinBox()
+        self.posterize_chroma_spin.setRange(2, 128)
+        self.posterize_chroma_spin.setValue(8)
+
+        self.posterize_mode_combo = QComboBox()
+        self.posterize_mode_combo.addItem("Perceptual", "perceptual")
+        self.posterize_mode_combo.addItem("RGB Levels", "rgb_levels")
+        self.posterize_mode_combo.addItem("LAB Lightness", "lab_lightness")
+
+        self.posterize_source_combo = QComboBox()
+        self.posterize_source_combo.addItem("Sampling Source", "sampling_source")
+        self.posterize_source_combo.addItem("Preview Only", "preview_only")
+        self.posterize_source_combo.addItem("Final Quantize Source", "final_quantize_source")
+
         self.sample_mode_combo = QComboBox()
         self.sample_mode_combo.addItem("Balanced", "balanced")
         self.sample_mode_combo.addItem("Spread", "spread")
@@ -128,9 +205,9 @@ class PalettePanel(QWidget):
         self.sample_mode_combo.setCurrentIndex(0)
         self.sample_mode_combo.setToolTip(
             "How to pick colors when the source has more distinct colors than Max Colors:\n"
-            "  Balanced - hue-stratified: every hue family gets palette slots regardless of pixel count.\n"
-            "  Spread - greedy farthest-point sampling in RGB (can be dominated by large hue families).\n"
-            "  Most Frequent - the N most common colors (good for sampling photos)."
+            "  Balanced - material-family quotas over perceptual clusters.\n"
+            "  Spread - weighted farthest-point sampling in LAB.\n"
+            "  Most Frequent - largest perceptual clusters with distance filtering."
         )
         self.sort_mode_combo = QComboBox()
         self.sort_mode_combo.addItems(["Brightness", "Hue"])
@@ -165,12 +242,52 @@ class PalettePanel(QWidget):
         apply_source_button.clicked.connect(self.apply_palette_to_source_requested.emit)
 
         top_row = QHBoxLayout()
-        top_row.addWidget(QLabel("Max Colors"))
+        top_row.addWidget(QLabel("Palette Size"))
         top_row.addWidget(self.max_colors_spin)
         top_row.addSpacing(8)
         top_row.addWidget(QLabel("Sampling"))
         top_row.addWidget(self.sample_mode_combo)
         top_row.addStretch(1)
+
+        cluster_row = QHBoxLayout()
+        cluster_row.addWidget(QLabel("Min Cluster"))
+        cluster_row.addWidget(self.min_cluster_percent_spin)
+        cluster_row.addWidget(QLabel("Min LAB Distance"))
+        cluster_row.addWidget(self.min_distance_spin)
+        cluster_row.addStretch(1)
+
+        family_row = QHBoxLayout()
+        family_row.addWidget(QLabel("Neutral Sat"))
+        family_row.addWidget(self.neutral_saturation_spin)
+        family_row.addWidget(QLabel("Max / Family"))
+        family_row.addWidget(self.max_family_spin)
+        family_row.addWidget(self.preserve_accents_checkbox)
+        family_row.addStretch(1)
+
+        cap_row = QHBoxLayout()
+        cap_row.addWidget(self.cap_spread_checkbox)
+        cap_row.addWidget(self.cap_frequent_checkbox)
+        cap_row.addWidget(self.cap_balanced_checkbox)
+        cap_row.addStretch(1)
+
+        posterize_group = QGroupBox("Posterize")
+        posterize_layout = QGridLayout(posterize_group)
+        posterize_layout.setContentsMargins(6, 6, 6, 6)
+        posterize_layout.addWidget(self.posterize_enabled_checkbox, 0, 0)
+        posterize_layout.addWidget(QLabel("Preset"), 0, 1)
+        posterize_layout.addWidget(self.posterize_preset_combo, 0, 2)
+        posterize_layout.addWidget(QLabel("Mode"), 1, 0)
+        posterize_layout.addWidget(self.posterize_mode_combo, 1, 1)
+        posterize_layout.addWidget(QLabel("Source"), 1, 2)
+        posterize_layout.addWidget(self.posterize_source_combo, 1, 3)
+        posterize_layout.addWidget(QLabel("Strength"), 2, 0)
+        posterize_layout.addWidget(self.posterize_strength_spin, 2, 1)
+        posterize_layout.addWidget(QLabel("RGB"), 2, 2)
+        posterize_layout.addWidget(self.posterize_rgb_levels_spin, 2, 3)
+        posterize_layout.addWidget(QLabel("LAB L"), 3, 0)
+        posterize_layout.addWidget(self.posterize_lab_lightness_spin, 3, 1)
+        posterize_layout.addWidget(QLabel("Chroma"), 3, 2)
+        posterize_layout.addWidget(self.posterize_chroma_spin, 3, 3)
 
         info_row = QHBoxLayout()
         info_row.addWidget(self.summary_label)
@@ -196,17 +313,47 @@ class PalettePanel(QWidget):
         apply_row.addWidget(apply_source_button)
         apply_row.addStretch(1)
 
+        debug_group = QGroupBox("Palette Debug")
+        debug_layout = QVBoxLayout(debug_group)
+        preview_row = QHBoxLayout()
+        self._debug_original_label = QLabel("Original")
+        self._debug_original_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._debug_original_label.setMinimumSize(96, 72)
+        self._debug_quantized_label = QLabel("Quantized")
+        self._debug_quantized_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._debug_quantized_label.setMinimumSize(96, 72)
+        preview_row.addWidget(self._debug_original_label, 1)
+        preview_row.addWidget(self._debug_quantized_label, 1)
+        debug_layout.addLayout(preview_row)
+        self._debug_swatch_container = QWidget()
+        self._debug_swatch_grid = QGridLayout(self._debug_swatch_container)
+        self._debug_swatch_grid.setContentsMargins(0, 0, 0, 0)
+        self._debug_swatch_grid.setSpacing(3)
+        debug_layout.addWidget(self._debug_swatch_container)
+        self._debug_text_label = QLabel("Extract a palette to view cluster diagnostics.")
+        self._debug_text_label.setWordWrap(True)
+        self._debug_text_label.setStyleSheet("color: #aaa; font-size: 11px;")
+        debug_layout.addWidget(self._debug_text_label)
+
         layout = QVBoxLayout(self)
         layout.addLayout(top_row)
+        layout.addLayout(cluster_row)
+        layout.addLayout(family_row)
+        layout.addLayout(cap_row)
+        layout.addWidget(posterize_group)
         layout.addWidget(self.swatches)
         layout.addLayout(info_row)
         layout.addLayout(button_grid)
         layout.addLayout(sort_row)
         layout.addLayout(apply_row)
+        layout.addWidget(debug_group)
 
         self.swatches.color_selected.connect(self._on_swatch_selected)
         self.swatches.color_remove_requested.connect(self.color_remove_requested.emit)
         self.swatches.color_edit_requested.connect(self.color_edit_requested.emit)
+        self.posterize_preset_combo.currentIndexChanged.connect(
+            self._apply_posterize_preset
+        )
 
     def max_colors(self) -> int:
         return self.max_colors_spin.value()
@@ -215,11 +362,143 @@ class PalettePanel(QWidget):
         data = self.sample_mode_combo.currentData()
         return data if isinstance(data, str) else "balanced"
 
+    def extraction_settings(self) -> PaletteExtractionSettings:
+        return PaletteExtractionSettings(
+            palette_size=self.max_colors(),
+            min_cluster_percent=self.min_cluster_percent_spin.value() / 100.0,
+            min_perceptual_distance=self.min_distance_spin.value(),
+            neutral_saturation_threshold=self.neutral_saturation_spin.value(),
+            max_colors_per_family=self.max_family_spin.value(),
+            preserve_accent_colors=self.preserve_accents_checkbox.isChecked(),
+            apply_family_cap_to_spread=self.cap_spread_checkbox.isChecked(),
+            apply_family_cap_to_most_frequent=self.cap_frequent_checkbox.isChecked(),
+            apply_family_cap_to_balanced=self.cap_balanced_checkbox.isChecked(),
+            posterize_enabled=self.posterize_enabled_checkbox.isChecked(),
+            posterize_strength=self.posterize_strength_spin.value(),
+            posterize_rgb_levels=self.posterize_rgb_levels_spin.value(),
+            posterize_lab_lightness_levels=self.posterize_lab_lightness_spin.value(),
+            posterize_chroma_levels=self.posterize_chroma_spin.value(),
+            posterize_mode=self._combo_data(self.posterize_mode_combo, "perceptual"),
+            posterize_source=self._combo_data(
+                self.posterize_source_combo,
+                "sampling_source",
+            ),
+        )
+
+    def _combo_data(self, combo: QComboBox, fallback: str) -> str:
+        data = combo.currentData()
+        return data if isinstance(data, str) else fallback
+
+    def _set_combo_data(self, combo: QComboBox, value: str) -> None:
+        index = combo.findData(value)
+        if index >= 0:
+            combo.setCurrentIndex(index)
+
+    def _apply_posterize_preset(self, _index: int | None = None) -> None:
+        preset = self.posterize_preset_combo.currentData()
+        if preset == "light":
+            self._set_posterize_controls(
+                strength=0.20,
+                rgb_levels=16,
+                lightness_levels=14,
+                chroma_levels=12,
+            )
+        elif preset == "medium":
+            self._set_posterize_controls(
+                strength=0.35,
+                rgb_levels=12,
+                lightness_levels=10,
+                chroma_levels=8,
+            )
+        elif preset == "strong":
+            self._set_posterize_controls(
+                strength=0.85,
+                rgb_levels=6,
+                lightness_levels=6,
+                chroma_levels=4,
+            )
+
+    def _set_posterize_controls(
+        self,
+        *,
+        strength: float,
+        rgb_levels: int,
+        lightness_levels: int,
+        chroma_levels: int,
+    ) -> None:
+        self.posterize_enabled_checkbox.setChecked(True)
+        self.posterize_strength_spin.setValue(strength)
+        self.posterize_rgb_levels_spin.setValue(rgb_levels)
+        self.posterize_lab_lightness_spin.setValue(lightness_levels)
+        self.posterize_chroma_spin.setValue(chroma_levels)
+        self._set_combo_data(self.posterize_mode_combo, "perceptual")
+        self._set_combo_data(self.posterize_source_combo, "sampling_source")
+
     def set_palette(self, palette: list[tuple[int, int, int, int]]) -> None:
         self.swatches.set_palette(palette)
         self.summary_label.setText(f"Palette colors: {len(palette)}")
         # Revalidate selection state after palette change
         self._on_swatch_selected(self.swatches.selected_index())
+
+    def set_extraction_debug(
+        self,
+        original: Image.Image | None,
+        debug: PaletteExtractionDebug | None,
+        quantized: Image.Image | None,
+    ) -> None:
+        self._set_debug_image(self._debug_original_label, original, "Original")
+        self._set_debug_image(self._debug_quantized_label, quantized, "Quantized")
+        self._clear_debug_swatches()
+
+        if debug is None:
+            self._debug_text_label.setText("Extract a palette to view cluster diagnostics.")
+            return
+
+        for index, selected in enumerate(debug.selected_colors):
+            swatch = QLabel()
+            swatch.setFixedSize(24, 18)
+            r, g, b, a = selected.color
+            swatch.setStyleSheet(
+                f"background: rgba({r}, {g}, {b}, {a}); border: 1px solid #111;"
+            )
+            label = QLabel(
+                f"#{r:02X}{g:02X}{b:02X} {selected.family} "
+                f"{selected.pixel_percent * 100:.2f}%"
+            )
+            label.setStyleSheet("font-size: 10px; color: #ddd;")
+            row = index // 2
+            col = (index % 2) * 2
+            self._debug_swatch_grid.addWidget(swatch, row, col)
+            self._debug_swatch_grid.addWidget(label, row, col + 1)
+
+        self._debug_text_label.setText("\n".join(debug.summary_lines()))
+
+    def _set_debug_image(
+        self,
+        label: QLabel,
+        image: Image.Image | None,
+        fallback: str,
+    ) -> None:
+        if image is None:
+            label.clear()
+            label.setText(fallback)
+            return
+        pixmap = pil_image_to_qpixmap(image)
+        label.setPixmap(
+            pixmap.scaled(
+                140,
+                100,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.FastTransformation,
+            )
+        )
+
+    def _clear_debug_swatches(self) -> None:
+        while self._debug_swatch_grid.count():
+            item = self._debug_swatch_grid.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
 
     def _on_swatch_selected(self, index: int | None) -> None:
         has_selection = index is not None

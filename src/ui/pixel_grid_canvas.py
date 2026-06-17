@@ -8,7 +8,13 @@ from PySide6.QtCore import QPoint, QRect, Qt, Signal, QSize, QTimer
 from PySide6.QtGui import QColor, QBrush, QImage, QKeyEvent, QMouseEvent, QPainter, QPen, QPixmap, QWheelEvent
 from PySide6.QtWidgets import QScrollArea, QWidget
 
-from src.core.pixel_document import PixelDocument, move_rect_contents, normalize_rect, rect_points
+from src.core.pixel_document import (
+    PixelDocument,
+    move_rect_contents,
+    normalize_rect,
+    rect_points,
+    selection_points_from_perimeter,
+)
 
 
 class PixelGridCanvas(QWidget):
@@ -33,6 +39,8 @@ class PixelGridCanvas(QWidget):
         self._pivot_point: tuple[int, int] | None = None
         self._drag_rect_start: tuple[int, int] | None = None
         self._drag_rect_current: tuple[int, int] | None = None
+        self._draw_selection_enabled = False
+        self._draw_selection_points: list[tuple[int, int]] = []
         self._moving_selection = False
         self._move_origin: tuple[int, int] | None = None
         self._last_paint_point: tuple[int, int] | None = None
@@ -58,6 +66,7 @@ class PixelGridCanvas(QWidget):
         self.setToolTip(
             "Paint mode: click or drag to paint. Shift+drag fills a rectangle. Hold L and drag to draw a line.\n"
             "Select mode: drag to create a rectangle, Ctrl+click toggles pixels.\n"
+            "Draw Selection: click perimeter cells, then click the start or adjacent closing cell.\n"
             "Stamp mode: click to place the copied stamp.\n"
             "Alt+drag inside a selection moves it.\n"
             "Middle-mouse drag or arrow keys to pan the view."
@@ -105,6 +114,8 @@ class PixelGridCanvas(QWidget):
         self._mode = mode
         if mode != "paint":
             self._cancel_line_preview()
+        if mode != "select":
+            self._cancel_draw_selection(emit_status=False)
         if mode != "stamp":
             self._stamp_hover = None
         if mode == "flood_erase":
@@ -112,6 +123,16 @@ class PixelGridCanvas(QWidget):
         else:
             self.unsetCursor()
         self.status_changed.emit(f"Pixel editor mode: {mode}")
+        self.update()
+
+    def set_draw_selection_enabled(self, enabled: bool) -> None:
+        self._draw_selection_enabled = bool(enabled)
+        if not self._draw_selection_enabled:
+            self._cancel_draw_selection()
+        elif self._mode == "select":
+            self.status_changed.emit(
+                "Draw Selection: click perimeter cells, then click the start cell to close"
+            )
         self.update()
 
     def set_zoom(self, zoom: int) -> None:
@@ -382,6 +403,7 @@ class PixelGridCanvas(QWidget):
 
         self._draw_pixel_selection(painter)
         self._draw_rect_selection(painter)
+        self._draw_selection_perimeter_preview(painter)
         self._draw_fill_rect_preview(painter)
         self._draw_line_preview(painter)
         self._draw_stamp_preview(painter)
@@ -436,6 +458,13 @@ class PixelGridCanvas(QWidget):
         if self._mode == "stamp":
             if event.button() == Qt.MouseButton.LeftButton and self._stamp is not None:
                 self._place_stamp(point)
+            return
+
+        if self._mode == "select" and self._draw_selection_enabled:
+            if event.button() == Qt.MouseButton.LeftButton:
+                self._handle_draw_selection_click(point)
+            elif event.button() == Qt.MouseButton.RightButton:
+                self._cancel_draw_selection()
             return
 
         if event.button() != Qt.MouseButton.LeftButton:
@@ -598,6 +627,11 @@ class PixelGridCanvas(QWidget):
         self._set_scroll_position(target_x, target_y)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key.Key_Escape and self._draw_selection_points:
+            self._cancel_draw_selection()
+            event.accept()
+            return
+
         if event.key() == Qt.Key.Key_L and not event.isAutoRepeat():
             self._line_key_down = True
             event.accept()
@@ -813,6 +847,20 @@ class PixelGridCanvas(QWidget):
         for x, y in self._document.selected_pixels:
             painter.drawRect(self._pixel_rect(x, y))
 
+    def _draw_selection_perimeter_preview(self, painter: QPainter) -> None:
+        if self._document is None or not self._draw_selection_points:
+            return
+        outline = self._draw_selection_outline(close=False)
+        fill = QColor(255, 204, 0, 55)
+        for x, y in outline:
+            painter.fillRect(self._pixel_rect(x, y), fill)
+        painter.setPen(QPen(QColor("#ffcc00"), 2))
+        for x, y in outline:
+            painter.drawRect(self._pixel_rect(x, y))
+        first_x, first_y = self._draw_selection_points[0]
+        painter.setPen(QPen(QColor("#00d0ff"), 2))
+        painter.drawRect(self._pixel_rect(first_x, first_y))
+
     def _draw_stamp_preview(self, painter: QPainter) -> None:
         if self._mode != "stamp" or self._stamp is None or self._stamp_hover is None:
             return
@@ -907,12 +955,92 @@ class PixelGridCanvas(QWidget):
         self._line_current = None
         self.update()
 
+    def _handle_draw_selection_click(self, point: tuple[int, int]) -> None:
+        if self._document is None:
+            return
+        if not self._draw_selection_points:
+            self._draw_selection_points = [point]
+            self.selection_changed.emit("Drawing selection perimeter: 1 cell")
+            self.status_changed.emit(
+                "Draw Selection: continue around the perimeter, then click the start cell to close"
+            )
+            self.update()
+            return
+
+        if point == self._draw_selection_points[-1]:
+            return
+
+        closes_on_start = len(self._draw_selection_points) >= 3 and point == self._draw_selection_points[0]
+        closes_adjacent = (
+            len(self._draw_selection_points) >= 4
+            and point != self._draw_selection_points[0]
+            and self._is_adjacent(point, self._draw_selection_points[0])
+        )
+
+        if closes_on_start:
+            self._complete_draw_selection()
+            return
+
+        self._draw_selection_points.append(point)
+        if closes_adjacent:
+            self._complete_draw_selection()
+            return
+
+        count = len(self._draw_selection_points)
+        self.selection_changed.emit(f"Drawing selection perimeter: {count} cells")
+        self.update()
+
+    def _complete_draw_selection(self) -> None:
+        if self._document is None:
+            return
+        selected = selection_points_from_perimeter(
+            self._draw_selection_points,
+            self._document.image.width,
+            self._document.image.height,
+        )
+        self._document.selection_rect = None
+        self._document.selected_pixels = selected
+        self._draw_selection_points = []
+        self.selection_changed.emit(self._selection_summary())
+        self.status_changed.emit(
+            f"Draw Selection completed: {len(selected)} pixel{'s' if len(selected) != 1 else ''} selected"
+        )
+        self.update()
+
+    def _cancel_draw_selection(self, *, emit_status: bool = True) -> None:
+        if not self._draw_selection_points:
+            return
+        self._draw_selection_points = []
+        self.selection_changed.emit(self._selection_summary())
+        if emit_status:
+            self.status_changed.emit("Draw Selection canceled")
+        self.update()
+
+    def _draw_selection_outline(self, *, close: bool) -> set[tuple[int, int]]:
+        if not self._draw_selection_points:
+            return set()
+        points = list(self._draw_selection_points)
+        outline: set[tuple[int, int]] = {points[0]}
+        pairs = list(zip(points, points[1:]))
+        if close and len(points) >= 3:
+            pairs.append((points[-1], points[0]))
+        for start, end in pairs:
+            outline.add(start)
+            outline.update(self._bresenham(start, end))
+        return outline
+
+    @staticmethod
+    def _is_adjacent(first: tuple[int, int], second: tuple[int, int]) -> bool:
+        return max(abs(first[0] - second[0]), abs(first[1] - second[1])) <= 1
+
     def _selection_summary(self) -> str:
         if self._document is None:
             return "No selection"
         if self._document.selection_rect is not None:
             left, top, right, bottom = normalize_rect(self._document.selection_rect)
             return f"Rect {left},{top} to {right},{bottom}"
+        if not self._document.selected_pixels:
+            return "No selection"
         return f"Pixels selected: {len(self._document.selected_pixels)}"
 
     @staticmethod

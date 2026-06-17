@@ -313,6 +313,93 @@ def rect_points(rect: Rect) -> set[Point]:
     }
 
 
+def selection_points_from_perimeter(
+    perimeter_points: Iterable[Point],
+    width: int,
+    height: int,
+) -> set[Point]:
+    """Return boundary and enclosed cells for a clicked closed perimeter."""
+    points = [
+        (int(x), int(y))
+        for x, y in perimeter_points
+        if 0 <= int(x) < width and 0 <= int(y) < height
+    ]
+    if not points:
+        return set()
+
+    deduped: list[Point] = []
+    for point in points:
+        if not deduped or deduped[-1] != point:
+            deduped.append(point)
+    if len(deduped) > 1 and deduped[0] == deduped[-1]:
+        deduped.pop()
+    if len(deduped) < 3:
+        return set(deduped)
+
+    outline: set[Point] = set()
+    for index, start in enumerate(deduped):
+        end = deduped[(index + 1) % len(deduped)]
+        outline.update(_line_points_inclusive(start, end))
+
+    min_x = max(0, min(x for x, _ in outline))
+    max_x = min(width - 1, max(x for x, _ in outline))
+    min_y = max(0, min(y for _, y in outline))
+    max_y = min(height - 1, max(y for _, y in outline))
+
+    search_left = max(-1, min_x - 1)
+    search_right = min(width, max_x + 1)
+    search_top = max(-1, min_y - 1)
+    search_bottom = min(height, max_y + 1)
+
+    start = (search_left, search_top)
+    exterior: set[Point] = {start}
+    queue: deque[Point] = deque([start])
+    while queue:
+        x, y = queue.popleft()
+        for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+            neighbor = (nx, ny)
+            if neighbor in exterior or neighbor in outline:
+                continue
+            if not (search_left <= nx <= search_right and search_top <= ny <= search_bottom):
+                continue
+            exterior.add(neighbor)
+            queue.append(neighbor)
+
+    selected: set[Point] = set()
+    for y in range(min_y, max_y + 1):
+        for x in range(min_x, max_x + 1):
+            point = (x, y)
+            if point in outline or point not in exterior:
+                selected.add(point)
+    return {
+        (x, y)
+        for x, y in selected
+        if 0 <= x < width and 0 <= y < height
+    }
+
+
+def _line_points_inclusive(start: Point, end: Point) -> set[Point]:
+    x0, y0 = start
+    x1, y1 = end
+    points: set[Point] = set()
+    dx = abs(x1 - x0)
+    dy = abs(y1 - y0)
+    sx = 1 if x0 < x1 else -1
+    sy = 1 if y0 < y1 else -1
+    err = dx - dy
+    while True:
+        points.add((x0, y0))
+        if (x0, y0) == (x1, y1):
+            return points
+        e2 = 2 * err
+        if e2 > -dy:
+            err -= dy
+            x0 += sx
+        if e2 < dx:
+            err += dx
+            y0 += sy
+
+
 def normalize_rect(rect: Rect) -> Rect:
     left, top, right, bottom = rect
     return (

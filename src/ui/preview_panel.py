@@ -132,6 +132,11 @@ class PreviewPanel(QWidget):
         self.resample_combo = QComboBox()
         self.resample_combo.addItems(["Nearest", "Bilinear", "Bicubic"])
 
+        self.post_process_combo = QComboBox()
+        self.post_process_combo.addItems(
+            ["None", "Median Filter", "Posterize", "Small Gaussian Blur"]
+        )
+
         self.max_colors_slider = QSlider(Qt.Orientation.Horizontal)
         self.max_colors_slider.setRange(0, 3)
         self.max_colors_slider.setValue(2)
@@ -165,6 +170,10 @@ class PreviewPanel(QWidget):
         size_row.addWidget(self.fit_combo)
         size_row.addWidget(self.resample_combo)
         output_layout.addLayout(size_row)
+        process_row = QHBoxLayout()
+        process_row.addWidget(QLabel("Process"))
+        process_row.addWidget(self.post_process_combo, 1)
+        output_layout.addLayout(process_row)
 
         quant_group = QGroupBox("Palette Reduction")
         quant_layout = QVBoxLayout(quant_group)
@@ -192,6 +201,7 @@ class PreviewPanel(QWidget):
         self.height_spin.valueChanged.connect(self._emit_settings)
         self.fit_combo.currentIndexChanged.connect(self._emit_settings)
         self.resample_combo.currentIndexChanged.connect(self._emit_settings)
+        self.post_process_combo.currentIndexChanged.connect(self._emit_settings)
         self.max_colors_slider.valueChanged.connect(self._on_max_colors_changed)
         self.dither_checkbox.toggled.connect(self._emit_settings)
         self.quantize_checkbox.toggled.connect(self._emit_settings)
@@ -248,6 +258,7 @@ class PreviewPanel(QWidget):
             height=self.height_spin.value(),
             fit_mode=self.fit_combo.currentText(),
             resample_mode=self.resample_combo.currentText(),
+            post_process_mode=self.post_process_combo.currentText(),
             max_colors=self.max_colors(),
             dither=self.dither_checkbox.isChecked(),
             quantize_enabled=self.quantize_checkbox.isChecked(),

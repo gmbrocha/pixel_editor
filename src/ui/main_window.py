@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from PIL import Image
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QColor, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
@@ -30,9 +31,8 @@ from src.core.image_io import load_image, save_image
 from src.core.palette import (
     add_color_to_palette,
     export_palette_strip,
-    load_palette_from_image,
     load_palette_from_source,
-    palette_from_image,
+    palette_from_image_with_debug,
     quantize_to_palette,
     sort_palette,
 )
@@ -432,13 +432,28 @@ class MainWindow(QMainWindow):
     def derive_palette_from_preview(self) -> None:
         if self.document.preview_image is None:
             return
-        palette = palette_from_image(
+        sample_mode = self.palette_panel.sample_mode()
+        palette, debug = palette_from_image_with_debug(
             self.document.preview_image,
             max_colors=self.palette_panel.max_colors(),
+            selection=sample_mode,
+            settings=self.palette_panel.extraction_settings(),
         )
         self.document.palette = palette
         self.palette_panel.set_palette(palette)
-        self.statusBar().showMessage("Palette derived from preview")
+        debug_quantize_source = (
+            debug.quantize_source_image
+            if debug.quantize_source_image is not None
+            else self.document.preview_image
+        )
+        self.palette_panel.set_extraction_debug(
+            self.document.preview_image,
+            debug,
+            quantize_to_palette(debug_quantize_source, palette),
+        )
+        self.statusBar().showMessage(
+            f"Palette derived from preview ({sample_mode} sampling, {len(palette)} colors)"
+        )
 
     def load_palette(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
@@ -451,16 +466,28 @@ class MainWindow(QMainWindow):
             return
         sample_mode = self.palette_panel.sample_mode()
         try:
-            palette = load_palette_from_image(
-                path,
+            source_image = Image.open(path).convert("RGBA")
+            palette, debug = palette_from_image_with_debug(
+                source_image,
                 max_colors=self.palette_panel.max_colors(),
                 selection=sample_mode,
+                settings=self.palette_panel.extraction_settings(),
             )
         except Exception as exc:  # pragma: no cover - GUI feedback
             QMessageBox.critical(self, "Palette load failed", str(exc))
             return
         self.document.palette = palette
         self.palette_panel.set_palette(palette)
+        debug_quantize_source = (
+            debug.quantize_source_image
+            if debug.quantize_source_image is not None
+            else source_image
+        )
+        self.palette_panel.set_extraction_debug(
+            source_image,
+            debug,
+            quantize_to_palette(debug_quantize_source, palette),
+        )
         self.statusBar().showMessage(
             f"Loaded palette from {Path(path).name} ({sample_mode} sampling, {len(palette)} colors)"
         )

@@ -1,6 +1,6 @@
 from PIL import Image
 
-from src.core.pixel_document import PixelDocument
+from src.core.pixel_document import PixelDocument, selection_points_from_perimeter
 
 
 RED = (255, 0, 0, 255)
@@ -63,3 +63,34 @@ def test_copy_selection_to_new_layer_preserves_source_layer() -> None:
     assert document.layers[1].image.getpixel((0, 0)) == RED
     assert document.layers[1].image.getpixel((3, 2)) == BLUE
     assert document.layers[1].image.getpixel((2, 0)) == TRANSPARENT
+
+
+def test_selection_points_from_perimeter_fills_enclosed_cells() -> None:
+    selected = selection_points_from_perimeter(
+        [(1, 1), (4, 1), (4, 4), (1, 4)],
+        width=8,
+        height=8,
+    )
+
+    assert selected == {
+        (x, y)
+        for y in range(1, 5)
+        for x in range(1, 5)
+    }
+    assert (2, 2) in selected
+    assert (0, 0) not in selected
+
+
+def test_selection_points_from_perimeter_handles_canvas_edge_shape() -> None:
+    selected = selection_points_from_perimeter(
+        [(0, 0), (3, 0), (3, 3), (0, 3), (0, 0)],
+        width=5,
+        height=5,
+    )
+
+    assert selected == {
+        (x, y)
+        for y in range(0, 4)
+        for x in range(0, 4)
+    }
+    assert (4, 4) not in selected

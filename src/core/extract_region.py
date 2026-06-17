@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
 from src.core.palette import quantize_image
 from src.core.selection_models import RegionSelection
@@ -21,6 +21,7 @@ class ExtractSettings:
     height: int = 16
     fit_mode: str = "Preserve"
     resample_mode: str = "Nearest"
+    post_process_mode: str = "None"
     max_colors: int = 32
     dither: bool = False
     quantize_enabled: bool = False
@@ -89,6 +90,7 @@ def extract_to_preview(
 
 
 def _finalize_preview(image: Image.Image, settings: ExtractSettings) -> Image.Image:
+    image = _apply_post_process(image, settings.post_process_mode)
     if settings.resample_mode != "Nearest" or not settings.quantize_enabled:
         return image
 
@@ -99,3 +101,16 @@ def _finalize_preview(image: Image.Image, settings: ExtractSettings) -> Image.Im
         method=Image.Quantize.MEDIANCUT,
         reference_palette=list(settings.reference_palette),
     )
+
+
+def _apply_post_process(image: Image.Image, mode: str) -> Image.Image:
+    if mode == "Median Filter":
+        return image.filter(ImageFilter.MedianFilter(size=3))
+    if mode == "Posterize":
+        alpha = image.getchannel("A")
+        posterized = ImageOps.posterize(image.convert("RGB"), bits=4).convert("RGBA")
+        posterized.putalpha(alpha)
+        return posterized
+    if mode == "Small Gaussian Blur":
+        return image.filter(ImageFilter.GaussianBlur(radius=0.75))
+    return image

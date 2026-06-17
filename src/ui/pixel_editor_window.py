@@ -7,6 +7,7 @@ from PySide6.QtGui import QAction, QColor, QDrag, QKeySequence, QMouseEvent, QPa
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
+    QCheckBox,
     QColorDialog,
     QComboBox,
     QFileDialog,
@@ -513,6 +514,11 @@ class PixelEditorWindow(QMainWindow):
 
         self.paint_radio = QRadioButton("Paint")
         self.select_radio = QRadioButton("Select")
+        self.draw_selection_checkbox = QCheckBox("Draw Selection")
+        self.draw_selection_checkbox.setToolTip(
+            "In Select mode, click perimeter cells, then click the first cell "
+            "or an adjacent closing cell to fill the enclosed selection."
+        )
         self.stamp_radio = QRadioButton("Stamp")
         self.flood_erase_radio = QRadioButton("Flood Erase")
         self.flood_erase_radio.setToolTip(
@@ -728,6 +734,7 @@ class PixelEditorWindow(QMainWindow):
         mode_row = QHBoxLayout()
         mode_row.addWidget(self.paint_radio)
         mode_row.addWidget(self.select_radio)
+        mode_row.addWidget(self.draw_selection_checkbox)
         mode_row.addWidget(self.stamp_radio)
         mode_row.addWidget(self.flood_erase_radio)
         mode_row.addStretch(1)
@@ -982,6 +989,7 @@ class PixelEditorWindow(QMainWindow):
         self.select_radio.toggled.connect(self._on_mode_changed)
         self.stamp_radio.toggled.connect(self._on_mode_changed)
         self.flood_erase_radio.toggled.connect(self._on_mode_changed)
+        self.draw_selection_checkbox.toggled.connect(self._on_draw_selection_toggled)
         self.copy_stamp_button.clicked.connect(self._copy_as_stamp)
         self.copy_selection_layer_button.clicked.connect(self._copy_selection_to_new_layer)
         self.ref_underlay_button.clicked.connect(self._import_reference_underlay)
@@ -1296,6 +1304,11 @@ class PixelEditorWindow(QMainWindow):
         else:
             mode = "select"
         self.canvas.set_mode(mode)
+
+    def _on_draw_selection_toggled(self, checked: bool) -> None:
+        if checked and not self.select_radio.isChecked():
+            self.select_radio.setChecked(True)
+        self.canvas.set_draw_selection_enabled(checked)
 
     def _reset_selection_after_transform(self) -> None:
         self.document.selected_pixels.clear()
