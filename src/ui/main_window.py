@@ -10,9 +10,11 @@ from PySide6.QtWidgets import (
     QComboBox,
     QFrame,
     QFileDialog,
+    QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QLayout,
     QMainWindow,
     QMessageBox,
     QPushButton,
@@ -20,6 +22,7 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QSplitter,
     QToolBar,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -56,6 +59,40 @@ from src.ui.tile_layout_window import TileLayoutWindow
 from src.ui.tileset_processor_window import TilesetProcessorWindow
 from src.ui.tileset_template_window import TilesetTemplateWindow
 from src.ui.texture_generator_window import TextureGeneratorWindow
+
+
+class CollapsibleSection(QWidget):
+    def __init__(self, title: str, expanded: bool = False, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+
+        self._toggle_button = QToolButton()
+        self._toggle_button.setText(title)
+        self._toggle_button.setCheckable(True)
+        self._toggle_button.setChecked(expanded)
+        self._toggle_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self._toggle_button.toggled.connect(self._set_expanded)
+
+        self._content = QFrame()
+        self._content.setFrameShape(QFrame.Shape.StyledPanel)
+        self._content.setVisible(expanded)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(3)
+        layout.addWidget(self._toggle_button)
+        layout.addWidget(self._content)
+
+        self._set_expanded(expanded)
+
+    def set_content_layout(self, layout: QLayout) -> None:
+        self._content.setLayout(layout)
+
+    def _set_expanded(self, expanded: bool) -> None:
+        self._toggle_button.setArrowType(
+            Qt.ArrowType.DownArrow if expanded else Qt.ArrowType.RightArrow
+        )
+        self._content.setVisible(expanded)
+        self.updateGeometry()
 
 
 class MainWindow(QMainWindow):
@@ -162,18 +199,32 @@ class MainWindow(QMainWindow):
         canvas_layout.addLayout(rect_tool_row)
 
         self._pixel_tools_group = QGroupBox("Pixel Map Tools")
-        pixel_tools_layout = QVBoxLayout(self._pixel_tools_group)
-        blank_size_row = QHBoxLayout()
+        self._pixel_tools_group.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum
+        )
+        pixel_tools_layout = QGridLayout(self._pixel_tools_group)
+        pixel_tools_layout.setHorizontalSpacing(8)
+        pixel_tools_layout.setVerticalSpacing(6)
+        for column in range(4):
+            pixel_tools_layout.setColumnStretch(column, 1)
+
+        blank_size_widget = QWidget()
+        blank_size_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        blank_size_row = QHBoxLayout(blank_size_widget)
+        blank_size_row.setContentsMargins(0, 0, 0, 0)
+        blank_size_row.setSpacing(4)
         self.blank_width_spin = QSpinBox()
         self.blank_width_spin.setRange(1, 1024)
         self.blank_width_spin.setValue(16)
         self.blank_height_spin = QSpinBox()
         self.blank_height_spin.setRange(1, 1024)
         self.blank_height_spin.setValue(16)
+        blank_size_row.addWidget(QLabel("Blank"))
         blank_size_row.addWidget(QLabel("X"))
         blank_size_row.addWidget(self.blank_width_spin)
         blank_size_row.addWidget(QLabel("Y"))
         blank_size_row.addWidget(self.blank_height_spin)
+        blank_size_row.addStretch(1)
 
         self.open_blank_pixel_map_button = QPushButton("Open Blank Pixel Map")
         self.open_preview_pixel_editor_button = QPushButton("Open Preview In PixelForge")
@@ -197,7 +248,7 @@ class MainWindow(QMainWindow):
             self.apply_all_transparency_keys_button,
             self.remove_light_background_button,
         ):
-            btn.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
+            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
         self.transparency_color_swatch = QFrame()
         self.transparency_color_swatch.setFixedSize(28, 20)
@@ -225,54 +276,85 @@ class MainWindow(QMainWindow):
         self.light_saturation_spin.setValue(28)
         self.light_saturation_spin.setToolTip("Maximum saturation removed by Light BG")
 
-        pixel_tools_layout.addLayout(blank_size_row)
-        pixel_tools_layout.addWidget(self.open_blank_pixel_map_button)
-        pixel_tools_layout.addWidget(self.open_preview_pixel_editor_button)
-        pixel_tools_layout.addWidget(self.open_source_pixel_editor_button)
-        pixel_tools_layout.addWidget(self.open_source_headless_button)
-        pixel_tools_layout.addWidget(self.remove_white_background_button)
+        pixel_tools_layout.addWidget(blank_size_widget, 0, 0)
+        pixel_tools_layout.addWidget(self.open_blank_pixel_map_button, 0, 1)
+        pixel_tools_layout.addWidget(self.open_preview_pixel_editor_button, 0, 2)
+        pixel_tools_layout.addWidget(self.open_source_pixel_editor_button, 0, 3)
+        pixel_tools_layout.addWidget(self.open_source_headless_button, 1, 0)
+        pixel_tools_layout.addWidget(self.remove_white_background_button, 1, 1)
 
-        transparency_group = QGroupBox("Transparency Key")
-        transparency_layout = QVBoxLayout(transparency_group)
-        picked_row = QHBoxLayout()
+        self.transparency_key_section = CollapsibleSection("Transparency Key", expanded=False)
+        transparency_layout = QGridLayout()
+        transparency_layout.setContentsMargins(8, 6, 8, 6)
+        transparency_layout.setHorizontalSpacing(8)
+        transparency_layout.setVerticalSpacing(6)
+        for column in range(4):
+            transparency_layout.setColumnStretch(column, 1)
+
+        picked_widget = QWidget()
+        picked_row = QHBoxLayout(picked_widget)
+        picked_row.setContentsMargins(0, 0, 0, 0)
+        picked_row.setSpacing(4)
         picked_row.addWidget(QLabel("Picked"))
         picked_row.addWidget(self.transparency_color_swatch)
         picked_row.addWidget(self.transparency_color_label)
         picked_row.addStretch(1)
-        transparency_layout.addLayout(picked_row)
 
-        sample_row = QHBoxLayout()
+        sample_widget = QWidget()
+        sample_row = QHBoxLayout(sample_widget)
+        sample_row.setContentsMargins(0, 0, 0, 0)
+        sample_row.setSpacing(4)
         sample_row.addWidget(QLabel("Sample"))
         sample_row.addWidget(self.eyedropper_sample_size_combo)
         sample_row.addWidget(self.eyedropper_sample_method_combo)
-        transparency_layout.addLayout(sample_row)
 
-        tolerance_row = QHBoxLayout()
+        tolerance_widget = QWidget()
+        tolerance_row = QHBoxLayout(tolerance_widget)
+        tolerance_row.setContentsMargins(0, 0, 0, 0)
+        tolerance_row.setSpacing(4)
         tolerance_row.addWidget(QLabel("Tolerance"))
         tolerance_row.addWidget(self.transparency_tolerance_spin)
-        transparency_layout.addLayout(tolerance_row)
+        tolerance_row.addStretch(1)
 
-        key_row = QHBoxLayout()
+        key_picker_widget = QWidget()
+        key_picker_row = QHBoxLayout(key_picker_widget)
+        key_picker_row.setContentsMargins(0, 0, 0, 0)
+        key_picker_row.setSpacing(4)
+        key_picker_row.addWidget(QLabel("Keys"))
+        key_picker_row.addWidget(self.transparency_key_combo, 1)
+
+        key_actions_widget = QWidget()
+        key_row = QHBoxLayout(key_actions_widget)
+        key_row.setContentsMargins(0, 0, 0, 0)
+        key_row.setSpacing(4)
         key_row.addWidget(self.add_transparency_key_button)
         key_row.addWidget(self.remove_transparency_key_button)
-        transparency_layout.addLayout(key_row)
-        transparency_layout.addWidget(self.transparency_key_combo)
-        transparency_layout.addWidget(self.remove_key_range_button)
-        transparency_layout.addWidget(self.apply_all_transparency_keys_button)
 
-        light_row = QHBoxLayout()
+        light_widget = QWidget()
+        light_row = QHBoxLayout(light_widget)
+        light_row.setContentsMargins(0, 0, 0, 0)
+        light_row.setSpacing(4)
         light_row.addWidget(QLabel("Light B"))
         light_row.addWidget(self.light_brightness_spin)
         light_row.addWidget(QLabel("Sat"))
         light_row.addWidget(self.light_saturation_spin)
-        transparency_layout.addLayout(light_row)
-        transparency_layout.addWidget(self.remove_light_background_button)
-        pixel_tools_layout.addWidget(transparency_group)
+        light_row.addStretch(1)
+
+        transparency_layout.addWidget(picked_widget, 0, 0)
+        transparency_layout.addWidget(sample_widget, 0, 1)
+        transparency_layout.addWidget(tolerance_widget, 0, 2)
+        transparency_layout.addWidget(key_picker_widget, 0, 3)
+        transparency_layout.addWidget(key_actions_widget, 1, 0, 1, 2)
+        transparency_layout.addWidget(self.remove_key_range_button, 1, 2)
+        transparency_layout.addWidget(self.apply_all_transparency_keys_button, 1, 3)
+        transparency_layout.addWidget(light_widget, 2, 0, 1, 2)
+        transparency_layout.addWidget(self.remove_light_background_button, 2, 2)
+        self.transparency_key_section.set_content_layout(transparency_layout)
+        pixel_tools_layout.addWidget(self.transparency_key_section, 2, 0, 1, 4)
         self._refresh_transparency_key_ui()
 
         pixel_tools_row = QHBoxLayout()
-        pixel_tools_row.addWidget(self._pixel_tools_group, 0, Qt.AlignmentFlag.AlignLeft)
-        pixel_tools_row.addStretch(1)
+        pixel_tools_row.addWidget(self._pixel_tools_group, 1)
         canvas_layout.addLayout(pixel_tools_row)
 
         palette_merged = QGroupBox("Palette")
@@ -333,8 +415,8 @@ class MainWindow(QMainWindow):
         w = self._canvas_group.width()
         if w < 80:
             return
-        self._pixel_tools_group.setMaximumWidth(max(100, int(w * 0.4)))
-        bw = max(72, int(w * 0.18))
+        self._pixel_tools_group.setMaximumWidth(max(100, w - 8))
+        bw = max(130, int((w - 64) / 4))
         self.open_blank_pixel_map_button.setMaximumWidth(bw)
         self.open_preview_pixel_editor_button.setMaximumWidth(bw)
         self.open_source_pixel_editor_button.setMaximumWidth(bw)

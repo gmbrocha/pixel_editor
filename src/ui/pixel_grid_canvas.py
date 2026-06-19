@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 
 import numpy as np
+from PIL import Image, ImageDraw
 
 from PySide6.QtCore import QPoint, QRect, Qt, Signal, QSize, QTimer
 from PySide6.QtGui import QColor, QBrush, QImage, QKeyEvent, QMouseEvent, QPainter, QPen, QPixmap, QWheelEvent
@@ -49,6 +50,9 @@ class PixelGridCanvas(QWidget):
         self._line_key_down = False
         self._line_start: tuple[int, int] | None = None
         self._line_current: tuple[int, int] | None = None
+        self._ellipse_key_down = False
+        self._ellipse_start: tuple[int, int] | None = None
+        self._ellipse_current: tuple[int, int] | None = None
         self._mirror = False
         self._transparent_color: QColor | None = None
         self._stamp: 'Image.Image | None' = None
@@ -64,7 +68,7 @@ class PixelGridCanvas(QWidget):
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setToolTip(
-            "Paint mode: click or drag to paint. Shift+drag fills a rectangle. Hold L and drag to draw a line.\n"
+            "Paint mode: click or drag to paint. Shift+drag fills a rectangle. Hold L and drag to draw a line. Hold C and drag to draw an ellipse.\n"
             "Select mode: drag to create a rectangle, Ctrl+click toggles pixels.\n"
             "Draw Selection: click perimeter cells, then click the start or adjacent closing cell.\n"
             "Stamp mode: click to place the copied stamp.\n"
@@ -102,6 +106,7 @@ class PixelGridCanvas(QWidget):
         )
         self._document = document
         self._cancel_line_preview()
+        self._cancel_ellipse_preview()
         self._last_image_size = (document.image.width, document.image.height)
         self.invalidate_render_cache(update=False)
         self.updateGeometry()
@@ -114,6 +119,7 @@ class PixelGridCanvas(QWidget):
         self._mode = mode
         if mode != "paint":
             self._cancel_line_preview()
+            self._cancel_ellipse_preview()
         if mode != "select":
             self._cancel_draw_selection(emit_status=False)
         if mode != "stamp":
@@ -406,6 +412,7 @@ class PixelGridCanvas(QWidget):
         self._draw_selection_perimeter_preview(painter)
         self._draw_fill_rect_preview(painter)
         self._draw_line_preview(painter)
+        self._draw_ellipse_preview(painter)
         self._draw_stamp_preview(painter)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
@@ -444,6 +451,11 @@ class PixelGridCanvas(QWidget):
                 if event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
                     self._fill_rect_start = point
                     self._fill_rect_current = point
+                    self.update()
+                elif self._ellipse_key_down:
+                    self._ellipse_start = point
+                    self._ellipse_current = point
+                    self.status_changed.emit("Ellipse preview: release left mouse to paint")
                     self.update()
                 elif self._line_key_down:
                     self._line_start = point
@@ -536,6 +548,10 @@ class PixelGridCanvas(QWidget):
                 self._line_current = point
                 self.update()
                 return
+            if self._ellipse_start is not None:
+                self._ellipse_current = point
+                self.update()
+                return
             if self._last_paint_point is not None and self._last_paint_point != point:
                 for p in self._bresenham(self._last_paint_point, point):
                     self._paint_point(p)
@@ -569,6 +585,10 @@ class PixelGridCanvas(QWidget):
                 self._paint_line(self._line_start, self._line_current)
                 self._line_start = None
                 self._line_current = None
+            if self._ellipse_start is not None and self._ellipse_current is not None:
+                self._paint_ellipse(self._ellipse_start, self._ellipse_current)
+                self._ellipse_start = None
+                self._ellipse_current = None
             self._drag_rect_start = None
             self._drag_rect_current = None
             self._moving_selection = False
@@ -636,6 +656,21 @@ class PixelGridCanvas(QWidget):
             self._line_key_down = True
             event.accept()
             return
+        if (
+            event.key() == Qt.Key.Key_C
+            and not event.isAutoRepeat()
+            and not (
+                event.modifiers()
+                & (
+                    Qt.KeyboardModifier.ControlModifier
+                    | Qt.KeyboardModifier.AltModifier
+                    | Qt.KeyboardModifier.MetaModifier
+                )
+            )
+        ):
+            self._ellipse_key_down = True
+            event.accept()
+            return
 
         scroll = self._scroll_area()
         if scroll is None:
@@ -677,11 +712,17 @@ class PixelGridCanvas(QWidget):
             self._line_key_down = False
             event.accept()
             return
+        if event.key() == Qt.Key.Key_C and not event.isAutoRepeat() and self._ellipse_key_down:
+            self._ellipse_key_down = False
+            event.accept()
+            return
         super().keyReleaseEvent(event)
 
     def focusOutEvent(self, event) -> None:
         self._line_key_down = False
+        self._ellipse_key_down = False
         self._cancel_line_preview()
+        self._cancel_ellipse_preview()
         super().focusOutEvent(event)
 
     def _paint_point(self, point: tuple[int, int]) -> None:
@@ -704,6 +745,22 @@ class PixelGridCanvas(QWidget):
             return
         points = [p0]
         points.extend(self._bresenham(p0, p1))
+        color = (0, 0, 0, 0) if self._document.use_transparent_color else self._document.current_color
+        img = self._document.image
+        for x, y in points:
+            img.putpixel((x, y), color)
+            if self._mirror:
+                mx = img.width - 1 - x
+                if mx != x and 0 <= mx < img.width:
+                    img.putpixel((mx, y), color)
+        self.invalidate_render_cache(update=False)
+        self.image_changed.emit()
+        self.update()
+
+    def _paint_ellipse(self, p0: tuple[int, int], p1: tuple[int, int]) -> None:
+        if self._document is None:
+            return
+        points = self._ellipse_outline(p0, p1)
         color = (0, 0, 0, 0) if self._document.use_transparent_color else self._document.current_color
         img = self._document.image
         for x, y in points:
@@ -926,6 +983,35 @@ class PixelGridCanvas(QWidget):
             ey * z + z // 2,
         )
 
+    def _draw_ellipse_preview(self, painter: QPainter) -> None:
+        if self._ellipse_start is None or self._ellipse_current is None or self._document is None:
+            return
+        z = self._zoom
+        if self._document.use_transparent_color:
+            preview_color = QColor(255, 255, 255, 70)
+        else:
+            c = self._document.current_color
+            preview_color = QColor(c[0], c[1], c[2], 120)
+        points = self._ellipse_outline(self._ellipse_start, self._ellipse_current)
+        for x, y in points:
+            painter.fillRect(x * z, y * z, z, z, preview_color)
+            if self._mirror:
+                mx = self._document.image.width - 1 - x
+                if mx != x and 0 <= mx < self._document.image.width:
+                    painter.fillRect(mx * z, y * z, z, z, preview_color)
+
+        left, top, right, bottom = normalize_rect(
+            (
+                self._ellipse_start[0],
+                self._ellipse_start[1],
+                self._ellipse_current[0],
+                self._ellipse_current[1],
+            )
+        )
+        rect = QRect(left * z, top * z, (right - left + 1) * z, (bottom - top + 1) * z)
+        painter.setPen(QPen(QColor("#ffcc00"), 2, Qt.PenStyle.DashLine))
+        painter.drawEllipse(rect)
+
     def _draw_rect_selection(self, painter: QPainter) -> None:
         if self._document is None or self._document.selection_rect is None:
             return
@@ -953,6 +1039,13 @@ class PixelGridCanvas(QWidget):
             return
         self._line_start = None
         self._line_current = None
+        self.update()
+
+    def _cancel_ellipse_preview(self) -> None:
+        if self._ellipse_start is None and self._ellipse_current is None:
+            return
+        self._ellipse_start = None
+        self._ellipse_current = None
         self.update()
 
     def _handle_draw_selection_click(self, point: tuple[int, int]) -> None:
@@ -1066,6 +1159,30 @@ class PixelGridCanvas(QWidget):
             if e2 < dx:
                 err += dx
                 y0 += sy
+        return points
+
+    @staticmethod
+    def _ellipse_outline(p0: tuple[int, int], p1: tuple[int, int]) -> list[tuple[int, int]]:
+        left, top, right, bottom = normalize_rect((p0[0], p0[1], p1[0], p1[1]))
+        width = right - left + 1
+        height = bottom - top + 1
+
+        if width == 1 and height == 1:
+            return [(left, top)]
+        if width == 1:
+            return [(left, y) for y in range(top, bottom + 1)]
+        if height == 1:
+            return [(x, top) for x in range(left, right + 1)]
+
+        mask = Image.new("1", (width, height), 0)
+        draw = ImageDraw.Draw(mask)
+        draw.ellipse((0, 0, width - 1, height - 1), outline=1)
+        pixels = mask.load()
+        points: list[tuple[int, int]] = []
+        for y in range(height):
+            for x in range(width):
+                if pixels[x, y]:
+                    points.append((left + x, top + y))
         return points
 
     @staticmethod
