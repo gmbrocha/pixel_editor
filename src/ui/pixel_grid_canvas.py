@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import math
 
 import numpy as np
@@ -18,12 +19,27 @@ from src.core.pixel_document import (
 )
 
 
+_ISO_GUIDE_STEP_X = 2
+_ISO_GUIDE_STEP_Y = 1
+_ISO_GUIDE_DEFAULT_STEPS = 6
+_ISO_GUIDE_MAX_STEPS = 512
+_ISO_GUIDE_HIT_RADIUS_SCREEN = 10
+
+
+@dataclass(slots=True)
+class IsometricGuide:
+    anchor: tuple[int, int]
+    direction: int
+    steps: int
+
+
 class PixelGridCanvas(QWidget):
     image_changed = Signal()
     selection_changed = Signal(str)
     status_changed = Signal(str)
     zoom_changed = Signal(int)
     flood_erase_requested = Signal(int, int)
+    isometric_guide_changed = Signal(str, int)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -59,6 +75,12 @@ class PixelGridCanvas(QWidget):
         self._stamp_hover: tuple[int, int] | None = None
         self._reference_image: 'QPixmap | None' = None
         self._reference_opacity: float = 0.5
+        self._isometric_guide: IsometricGuide | None = None
+        self._isometric_guide_steps: int = _ISO_GUIDE_DEFAULT_STEPS
+        self._isometric_guide_drag: str | None = None
+        self._isometric_guide_drag_origin: tuple[float, float] | None = None
+        self._isometric_guide_drag_anchor_origin: tuple[int, int] | None = None
+        self._isometric_guide_drag_end_origin: tuple[int, int] | None = None
         self._mid_drag: bool = False
         self._mid_drag_origin: QPoint | None = None
         self._parent_scroll: QScrollArea | None = None
@@ -72,6 +94,7 @@ class PixelGridCanvas(QWidget):
             "Select mode: drag to create a rectangle, Ctrl+click toggles pixels.\n"
             "Draw Selection: click perimeter cells, then click the start or adjacent closing cell.\n"
             "Stamp mode: click to place the copied stamp.\n"
+            "Guide mode: click to place an isometric guide, drag the guide to move it, or drag handles to resize.\n"
             "Alt+drag inside a selection moves it.\n"
             "Middle-mouse drag or arrow keys to pan the view."
         )
@@ -124,8 +147,16 @@ class PixelGridCanvas(QWidget):
             self._cancel_draw_selection(emit_status=False)
         if mode != "stamp":
             self._stamp_hover = None
+        if mode != "iso_guide":
+            self._cancel_isometric_guide_drag()
         if mode == "flood_erase":
             self.setCursor(Qt.CursorShape.CrossCursor)
+        elif mode == "iso_guide":
+            self.setCursor(
+                Qt.CursorShape.OpenHandCursor
+                if self._isometric_guide is not None
+                else Qt.CursorShape.CrossCursor
+            )
         else:
             self.unsetCursor()
         self.status_changed.emit(f"Pixel editor mode: {mode}")
@@ -219,6 +250,20 @@ class PixelGridCanvas(QWidget):
     def has_stamp(self) -> bool:
         return self._stamp is not None
 
+    def flip_stamp_horizontal(self) -> bool:
+        if self._stamp is None:
+            return False
+        self._stamp = self._flip_stamp_image(self._stamp, "horizontal")
+        self.update()
+        return True
+
+    def flip_stamp_vertical(self) -> bool:
+        if self._stamp is None:
+            return False
+        self._stamp = self._flip_stamp_image(self._stamp, "vertical")
+        self.update()
+        return True
+
     def set_reference_image(self, pixmap: QPixmap | None) -> None:
         self._reference_image = pixmap
         self.update()
@@ -232,6 +277,61 @@ class PixelGridCanvas(QWidget):
 
     def clear_reference(self) -> None:
         self._reference_image = None
+        self.update()
+
+    def show_isometric_guide(self, direction: str, steps: int | None = None) -> None:
+        guide_direction = self._isometric_direction_sign(direction)
+        guide_steps = self._coerce_isometric_steps(
+            steps if steps is not None else self._isometric_guide_steps
+        )
+        self._isometric_guide_steps = guide_steps
+        if self._document is None:
+            return
+
+        if self._isometric_guide is None:
+            anchor = self._default_isometric_anchor(guide_direction, guide_steps)
+        else:
+            start, end = self._isometric_guide_endpoints(self._isometric_guide)
+            center = ((start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0)
+            anchor = self._isometric_anchor_from_center(center, guide_direction, guide_steps)
+
+        self._isometric_guide = IsometricGuide(anchor, guide_direction, guide_steps)
+        self._emit_isometric_guide_changed()
+        self.status_changed.emit(
+            f"Isometric guide {self._isometric_direction_label(guide_direction)}: "
+            f"{guide_steps} step{'s' if guide_steps != 1 else ''} at 1/2 slope"
+        )
+        if self._mode == "iso_guide":
+            self.setCursor(Qt.CursorShape.OpenHandCursor)
+        self.update()
+
+    def set_isometric_guide_steps(self, steps: int) -> None:
+        guide_steps = self._coerce_isometric_steps(steps)
+        self._isometric_guide_steps = guide_steps
+        if self._isometric_guide is None:
+            return
+        if guide_steps == self._isometric_guide.steps:
+            return
+        start, end = self._isometric_guide_endpoints(self._isometric_guide)
+        center = ((start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0)
+        self._isometric_guide.steps = guide_steps
+        self._isometric_guide.anchor = self._isometric_anchor_from_center(
+            center,
+            self._isometric_guide.direction,
+            guide_steps,
+        )
+        self._emit_isometric_guide_changed()
+        self.update()
+
+    def clear_isometric_guide(self) -> None:
+        if self._isometric_guide is None:
+            return
+        self._isometric_guide = None
+        self._cancel_isometric_guide_drag()
+        self.isometric_guide_changed.emit("", 0)
+        if self._mode == "iso_guide":
+            self.setCursor(Qt.CursorShape.CrossCursor)
+        self.status_changed.emit("Isometric guide cleared")
         self.update()
 
     def _pil_to_qpixmap(self, pil_img) -> QPixmap:
@@ -414,6 +514,7 @@ class PixelGridCanvas(QWidget):
         self._draw_line_preview(painter)
         self._draw_ellipse_preview(painter)
         self._draw_stamp_preview(painter)
+        self._draw_isometric_guide(painter)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         self.setFocus(Qt.FocusReason.MouseFocusReason)
@@ -424,6 +525,10 @@ class PixelGridCanvas(QWidget):
             return
 
         if self._document is None:
+            return
+
+        if self._mode == "iso_guide":
+            self._handle_isometric_guide_press(event)
             return
 
         point = self._event_to_pixel(event.position().toPoint())
@@ -514,6 +619,10 @@ class PixelGridCanvas(QWidget):
         if self._document is None:
             return
 
+        if self._mode == "iso_guide":
+            self._handle_isometric_guide_move(event)
+            return
+
         point = self._event_to_pixel(event.position().toPoint())
         if point is None:
             return
@@ -577,6 +686,15 @@ class PixelGridCanvas(QWidget):
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
+            if self._isometric_guide_drag is not None:
+                self._cancel_isometric_guide_drag()
+                if self._mode == "iso_guide":
+                    self.setCursor(
+                        Qt.CursorShape.OpenHandCursor
+                        if self._isometric_guide is not None
+                        else Qt.CursorShape.CrossCursor
+                    )
+                return
             if self._fill_rect_start is not None and self._fill_rect_current is not None:
                 self._fill_rect(self._fill_rect_start, self._fill_rect_current)
                 self._fill_rect_start = None
@@ -723,6 +841,7 @@ class PixelGridCanvas(QWidget):
         self._ellipse_key_down = False
         self._cancel_line_preview()
         self._cancel_ellipse_preview()
+        self._cancel_isometric_guide_drag()
         super().focusOutEvent(event)
 
     def _paint_point(self, point: tuple[int, int]) -> None:
@@ -836,6 +955,41 @@ class PixelGridCanvas(QWidget):
         for y in range(fh, img_h, fh):
             painter.drawLine(0, y * z, img_w * z, y * z)
         painter.drawRect(0, 0, img_w * z, img_h * z)
+
+    def _draw_isometric_guide(self, painter: QPainter) -> None:
+        if self._isometric_guide is None:
+            return
+        start, end = self._isometric_guide_endpoints(self._isometric_guide)
+        z = self._zoom
+        sx = (start[0] + 0.5) * z
+        sy = (start[1] + 0.5) * z
+        ex = (end[0] + 0.5) * z
+        ey = (end[1] + 0.5) * z
+        active = self._mode == "iso_guide"
+
+        painter.save()
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        painter.setPen(QPen(QColor(0, 0, 0, 165), 5))
+        painter.drawLine(int(round(sx)), int(round(sy)), int(round(ex)), int(round(ey)))
+        painter.setPen(QPen(QColor(0, 208, 255, 230 if active else 175), 2))
+        painter.drawLine(int(round(sx)), int(round(sy)), int(round(ex)), int(round(ey)))
+
+        radius = max(4, min(9, z // 2))
+        painter.setBrush(QColor(0, 208, 255, 230 if active else 150))
+        painter.setPen(QPen(QColor(8, 28, 34, 230), 1))
+        painter.drawEllipse(
+            int(round(sx - radius)),
+            int(round(sy - radius)),
+            radius * 2,
+            radius * 2,
+        )
+        painter.drawEllipse(
+            int(round(ex - radius)),
+            int(round(ey - radius)),
+            radius * 2,
+            radius * 2,
+        )
+        painter.restore()
 
     def _draw_onion_layer_fast(
         self,
@@ -1025,6 +1179,148 @@ class PixelGridCanvas(QWidget):
         painter.setPen(QPen(QColor("#00d0ff"), 2, Qt.PenStyle.DashLine))
         painter.drawRect(rect)
 
+    def _handle_isometric_guide_press(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.RightButton:
+            self.clear_isometric_guide()
+            return
+        if event.button() != Qt.MouseButton.LeftButton:
+            return
+
+        image_point = self._event_to_image_float(event.position().toPoint())
+        if self._isometric_guide is None:
+            self._place_isometric_guide_at(image_point)
+            return
+
+        hit = self._hit_test_isometric_guide(image_point)
+        if hit is None:
+            self._place_isometric_guide_at(image_point)
+            return
+
+        self._isometric_guide_drag = hit
+        self._isometric_guide_drag_origin = image_point
+        self._isometric_guide_drag_anchor_origin = self._isometric_guide.anchor
+        _, end = self._isometric_guide_endpoints(self._isometric_guide)
+        self._isometric_guide_drag_end_origin = end
+        if hit == "move":
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            self.status_changed.emit("Moving isometric guide")
+        else:
+            self.setCursor(Qt.CursorShape.SizeAllCursor)
+            self.status_changed.emit("Resizing isometric guide")
+
+    def _handle_isometric_guide_move(self, event: QMouseEvent) -> None:
+        image_point = self._event_to_image_float(event.position().toPoint())
+        if self._isometric_guide is None:
+            self.setCursor(Qt.CursorShape.CrossCursor)
+            return
+
+        if (
+            self._isometric_guide_drag == "move"
+            and self._isometric_guide_drag_origin is not None
+            and self._isometric_guide_drag_anchor_origin is not None
+            and event.buttons() & Qt.MouseButton.LeftButton
+        ):
+            dx = int(round(image_point[0] - self._isometric_guide_drag_origin[0]))
+            dy = int(round(image_point[1] - self._isometric_guide_drag_origin[1]))
+            anchor = (
+                self._isometric_guide_drag_anchor_origin[0] + dx,
+                self._isometric_guide_drag_anchor_origin[1] + dy,
+            )
+            if anchor != self._isometric_guide.anchor:
+                self._isometric_guide.anchor = anchor
+                self.update()
+            return
+
+        if (
+            self._isometric_guide_drag in {"start", "end"}
+            and event.buttons() & Qt.MouseButton.LeftButton
+        ):
+            self._resize_isometric_guide(image_point, self._isometric_guide_drag)
+            return
+
+        hit = self._hit_test_isometric_guide(image_point)
+        if hit == "move":
+            self.setCursor(Qt.CursorShape.OpenHandCursor)
+        elif hit in {"start", "end"}:
+            self.setCursor(Qt.CursorShape.SizeAllCursor)
+        else:
+            self.setCursor(Qt.CursorShape.CrossCursor)
+
+    def _place_isometric_guide_at(self, image_point: tuple[float, float]) -> None:
+        direction = self._isometric_guide.direction if self._isometric_guide else -1
+        steps = (
+            self._isometric_guide.steps
+            if self._isometric_guide is not None
+            else self._isometric_guide_steps
+        )
+        anchor = (int(round(image_point[0] - 0.5)), int(round(image_point[1] - 0.5)))
+        self._isometric_guide = IsometricGuide(anchor, direction, steps)
+        self._emit_isometric_guide_changed()
+        self.setCursor(Qt.CursorShape.OpenHandCursor)
+        self.status_changed.emit(
+            f"Placed isometric guide {self._isometric_direction_label(direction)} "
+            f"at {anchor[0]},{anchor[1]}"
+        )
+        self.update()
+
+    def _resize_isometric_guide(self, image_point: tuple[float, float], handle: str) -> None:
+        if self._isometric_guide is None:
+            return
+        direction = self._isometric_guide.direction
+
+        if handle == "end":
+            start = self._isometric_guide.anchor
+            start_center = (start[0] + 0.5, start[1] + 0.5)
+            steps = self._isometric_steps_from_projection(start_center, image_point, direction)
+            anchor = start
+        else:
+            fixed_end = self._isometric_guide_drag_end_origin
+            if fixed_end is None:
+                _, fixed_end = self._isometric_guide_endpoints(self._isometric_guide)
+            fixed_center = (fixed_end[0] + 0.5, fixed_end[1] + 0.5)
+            reverse_point = (
+                fixed_center[0] + (fixed_center[0] - image_point[0]),
+                fixed_center[1] + (fixed_center[1] - image_point[1]),
+            )
+            steps = self._isometric_steps_from_projection(fixed_center, reverse_point, direction)
+            anchor = (
+                fixed_end[0] - _ISO_GUIDE_STEP_X * steps,
+                fixed_end[1] - direction * _ISO_GUIDE_STEP_Y * steps,
+            )
+
+        if anchor == self._isometric_guide.anchor and steps == self._isometric_guide.steps:
+            return
+        self._isometric_guide.anchor = anchor
+        self._isometric_guide.steps = steps
+        self._isometric_guide_steps = steps
+        self._emit_isometric_guide_changed()
+        self.status_changed.emit(
+            f"Isometric guide: {steps} step{'s' if steps != 1 else ''} at 1/2 slope"
+        )
+        self.update()
+
+    def _hit_test_isometric_guide(self, image_point: tuple[float, float]) -> str | None:
+        if self._isometric_guide is None:
+            return None
+        start, end = self._isometric_guide_endpoints(self._isometric_guide)
+        start_center = (start[0] + 0.5, start[1] + 0.5)
+        end_center = (end[0] + 0.5, end[1] + 0.5)
+        tolerance = max(0.35, _ISO_GUIDE_HIT_RADIUS_SCREEN / max(1, self._zoom))
+
+        if self._point_distance(image_point, start_center) <= tolerance:
+            return "start"
+        if self._point_distance(image_point, end_center) <= tolerance:
+            return "end"
+        if self._distance_to_segment(image_point, start_center, end_center) <= tolerance:
+            return "move"
+        return None
+
+    def _event_to_image_float(self, point: QPoint) -> tuple[float, float]:
+        return (
+            (point.x() - self._view_margin) / self._zoom,
+            (point.y() - self._view_margin) / self._zoom,
+        )
+
     def _event_to_pixel(self, point: QPoint) -> tuple[int, int] | None:
         if self._document is None:
             return None
@@ -1047,6 +1343,12 @@ class PixelGridCanvas(QWidget):
         self._ellipse_start = None
         self._ellipse_current = None
         self.update()
+
+    def _cancel_isometric_guide_drag(self) -> None:
+        self._isometric_guide_drag = None
+        self._isometric_guide_drag_origin = None
+        self._isometric_guide_drag_anchor_origin = None
+        self._isometric_guide_drag_end_origin = None
 
     def _handle_draw_selection_click(self, point: tuple[int, int]) -> None:
         if self._document is None:
@@ -1125,6 +1427,107 @@ class PixelGridCanvas(QWidget):
     @staticmethod
     def _is_adjacent(first: tuple[int, int], second: tuple[int, int]) -> bool:
         return max(abs(first[0] - second[0]), abs(first[1] - second[1])) <= 1
+
+    @staticmethod
+    def _flip_stamp_image(stamp: 'Image.Image', orientation: str) -> 'Image.Image':
+        if orientation == "horizontal":
+            return stamp.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+        return stamp.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+
+    def _default_isometric_anchor(self, direction: int, steps: int) -> tuple[int, int]:
+        if self._document is None:
+            return (0, 0)
+        width = self._document.image.width
+        height = self._document.image.height
+        x = int(round((width - 1 - _ISO_GUIDE_STEP_X * steps) / 2.0))
+        if direction < 0:
+            y = int(round((height - 1 + _ISO_GUIDE_STEP_Y * steps) / 2.0))
+        else:
+            y = int(round((height - 1 - _ISO_GUIDE_STEP_Y * steps) / 2.0))
+        return (max(0, x), max(0, min(height - 1, y)))
+
+    def _emit_isometric_guide_changed(self) -> None:
+        if self._isometric_guide is None:
+            return
+        self.isometric_guide_changed.emit(
+            self._isometric_direction_label(self._isometric_guide.direction),
+            self._isometric_guide.steps,
+        )
+
+    @staticmethod
+    def _isometric_guide_endpoints(guide: IsometricGuide) -> tuple[tuple[int, int], tuple[int, int]]:
+        return guide.anchor, PixelGridCanvas._isometric_guide_end(
+            guide.anchor,
+            guide.direction,
+            guide.steps,
+        )
+
+    @staticmethod
+    def _isometric_guide_end(
+        anchor: tuple[int, int],
+        direction: int,
+        steps: int,
+    ) -> tuple[int, int]:
+        return (
+            anchor[0] + _ISO_GUIDE_STEP_X * steps,
+            anchor[1] + direction * _ISO_GUIDE_STEP_Y * steps,
+        )
+
+    @staticmethod
+    def _isometric_anchor_from_center(
+        center: tuple[float, float],
+        direction: int,
+        steps: int,
+    ) -> tuple[int, int]:
+        return (
+            int(round(center[0] - (_ISO_GUIDE_STEP_X * steps) / 2.0)),
+            int(round(center[1] - (direction * _ISO_GUIDE_STEP_Y * steps) / 2.0)),
+        )
+
+    @staticmethod
+    def _isometric_steps_from_projection(
+        origin: tuple[float, float],
+        point: tuple[float, float],
+        direction: int,
+    ) -> int:
+        step_x = float(_ISO_GUIDE_STEP_X)
+        step_y = float(direction * _ISO_GUIDE_STEP_Y)
+        dx = point[0] - origin[0]
+        dy = point[1] - origin[1]
+        projected = (dx * step_x + dy * step_y) / (step_x * step_x + step_y * step_y)
+        return max(1, min(_ISO_GUIDE_MAX_STEPS, int(round(projected))))
+
+    @staticmethod
+    def _coerce_isometric_steps(steps: int) -> int:
+        return max(1, min(_ISO_GUIDE_MAX_STEPS, int(steps)))
+
+    @staticmethod
+    def _isometric_direction_sign(direction: str) -> int:
+        return 1 if direction in {"\\", "backslash", "down"} else -1
+
+    @staticmethod
+    def _isometric_direction_label(direction: int) -> str:
+        return "\\" if direction > 0 else "/"
+
+    @staticmethod
+    def _point_distance(first: tuple[float, float], second: tuple[float, float]) -> float:
+        return math.hypot(first[0] - second[0], first[1] - second[1])
+
+    @staticmethod
+    def _distance_to_segment(
+        point: tuple[float, float],
+        start: tuple[float, float],
+        end: tuple[float, float],
+    ) -> float:
+        vx = end[0] - start[0]
+        vy = end[1] - start[1]
+        length_sq = vx * vx + vy * vy
+        if length_sq <= 0.0:
+            return PixelGridCanvas._point_distance(point, start)
+        t = ((point[0] - start[0]) * vx + (point[1] - start[1]) * vy) / length_sq
+        t = max(0.0, min(1.0, t))
+        closest = (start[0] + vx * t, start[1] + vy * t)
+        return PixelGridCanvas._point_distance(point, closest)
 
     def _selection_summary(self) -> str:
         if self._document is None:

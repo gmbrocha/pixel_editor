@@ -526,6 +526,10 @@ class PixelEditorWindow(QMainWindow):
             "region to transparent. The boundary acts as a wall, so anything\n"
             "inside the boundary is preserved."
         )
+        self.iso_guide_radio = QRadioButton("Guide")
+        self.iso_guide_radio.setToolTip(
+            "Move and resize the non-pixel isometric guide overlay"
+        )
         self.paint_radio.setChecked(True)
 
         self._flood_boundary_color: tuple[int, int, int, int] | None = None
@@ -554,6 +558,12 @@ class PixelEditorWindow(QMainWindow):
             "Keeps neutral grays/blacks in the background from being treated as the gold/yellow ring."
         )
         self.copy_stamp_button = QPushButton("Copy Selection as Stamp")
+        self.flip_stamp_h_button = QPushButton("Flip Stamp H")
+        self.flip_stamp_h_button.setToolTip("Flip the copied stamp horizontally before placing it")
+        self.flip_stamp_h_button.setEnabled(False)
+        self.flip_stamp_v_button = QPushButton("Flip Stamp V")
+        self.flip_stamp_v_button.setToolTip("Flip the copied stamp vertically before placing it")
+        self.flip_stamp_v_button.setEnabled(False)
         self.copy_selection_layer_button = QPushButton("Copy Selection to New Layer")
         self.copy_selection_layer_button.setToolTip(
             "Create a layer above the active layer containing the selected pixels"
@@ -566,6 +576,19 @@ class PixelEditorWindow(QMainWindow):
         self.ref_opacity_slider = QSlider(Qt.Orientation.Horizontal)
         self.ref_opacity_slider.setRange(10, 100)
         self.ref_opacity_slider.setValue(50)
+        self.iso_slash_button = QPushButton("Guide /")
+        self.iso_slash_button.setToolTip("Show a non-pixel / guide at classic 1/2 iso slope")
+        self.iso_backslash_button = QPushButton("Guide \\")
+        self.iso_backslash_button.setToolTip("Show a non-pixel \\ guide at classic -1/2 iso slope")
+        self.iso_clear_button = QPushButton("Clear")
+        self.iso_clear_button.setEnabled(False)
+        self.iso_guide_steps_spin = QSpinBox()
+        self.iso_guide_steps_spin.setRange(1, 512)
+        self.iso_guide_steps_spin.setValue(6)
+        self.iso_guide_steps_spin.setSuffix(" steps")
+        self.iso_guide_steps_spin.setToolTip(
+            "One guide step is 2 pixels across by 1 pixel up or down"
+        )
         self.transparent_display_button = QPushButton("Transparent Color: Checker")
         self.transparent_display_button.setToolTip("Click to pick a solid color for transparent pixels.\nRight-click to reset to checkerboard.")
         self.transparent_display_button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -722,6 +745,7 @@ class PixelEditorWindow(QMainWindow):
         mode_group.addButton(self.select_radio)
         mode_group.addButton(self.stamp_radio)
         mode_group.addButton(self.flood_erase_radio)
+        mode_group.addButton(self.iso_guide_radio)
 
         # --- Right panel: painting tools, palette, replace ---
         controls_layout = QVBoxLayout()
@@ -737,11 +761,14 @@ class PixelEditorWindow(QMainWindow):
         mode_row.addWidget(self.draw_selection_checkbox)
         mode_row.addWidget(self.stamp_radio)
         mode_row.addWidget(self.flood_erase_radio)
+        mode_row.addWidget(self.iso_guide_radio)
         mode_row.addStretch(1)
         controls_layout.addLayout(mode_row)
 
         selection_action_row = QHBoxLayout()
         selection_action_row.addWidget(self.copy_stamp_button)
+        selection_action_row.addWidget(self.flip_stamp_h_button)
+        selection_action_row.addWidget(self.flip_stamp_v_button)
         selection_action_row.addWidget(self.copy_selection_layer_button)
         selection_action_row.addStretch(1)
         controls_layout.addLayout(selection_action_row)
@@ -768,6 +795,17 @@ class PixelEditorWindow(QMainWindow):
         ref_row.addWidget(self.ref_opacity_slider, 1)
         ref_row.addWidget(self.ref_clear_button)
         controls_layout.addLayout(ref_row)
+
+        iso_group = QGroupBox("Iso Guide")
+        iso_layout = QGridLayout(iso_group)
+        iso_layout.setContentsMargins(4, 4, 4, 4)
+        iso_layout.setSpacing(4)
+        iso_layout.addWidget(QLabel("Length"), 0, 0)
+        iso_layout.addWidget(self.iso_guide_steps_spin, 0, 1)
+        iso_layout.addWidget(self.iso_clear_button, 0, 2)
+        iso_layout.addWidget(self.iso_slash_button, 1, 0)
+        iso_layout.addWidget(self.iso_backslash_button, 1, 1)
+        controls_layout.addWidget(iso_group)
 
         # Palette
         controls_layout.addWidget(QLabel("Palette"))
@@ -989,14 +1027,22 @@ class PixelEditorWindow(QMainWindow):
         self.select_radio.toggled.connect(self._on_mode_changed)
         self.stamp_radio.toggled.connect(self._on_mode_changed)
         self.flood_erase_radio.toggled.connect(self._on_mode_changed)
+        self.iso_guide_radio.toggled.connect(self._on_mode_changed)
         self.draw_selection_checkbox.toggled.connect(self._on_draw_selection_toggled)
         self.copy_stamp_button.clicked.connect(self._copy_as_stamp)
+        self.flip_stamp_h_button.clicked.connect(self._flip_stamp_horizontal)
+        self.flip_stamp_v_button.clicked.connect(self._flip_stamp_vertical)
         self.copy_selection_layer_button.clicked.connect(self._copy_selection_to_new_layer)
         self.ref_underlay_button.clicked.connect(self._import_reference_underlay)
         self.ref_clear_button.clicked.connect(self._clear_reference_underlay)
         self.ref_opacity_slider.valueChanged.connect(
             lambda v: self.canvas.set_reference_opacity(v / 100.0)
         )
+        self.iso_slash_button.clicked.connect(lambda: self._show_isometric_guide("/"))
+        self.iso_backslash_button.clicked.connect(lambda: self._show_isometric_guide("\\"))
+        self.iso_clear_button.clicked.connect(self.canvas.clear_isometric_guide)
+        self.iso_guide_steps_spin.valueChanged.connect(self.canvas.set_isometric_guide_steps)
+        self.canvas.isometric_guide_changed.connect(self._on_isometric_guide_changed)
         self.opacity_slider.valueChanged.connect(self.opacity_spin.setValue)
         self.opacity_spin.valueChanged.connect(self.opacity_slider.setValue)
         self.opacity_slider.valueChanged.connect(self._on_opacity_changed)
@@ -1301,6 +1347,8 @@ class PixelEditorWindow(QMainWindow):
                 self.statusBar().showMessage(
                     "Flood Erase: pick a boundary color (gold/yellow ring) below first"
                 )
+        elif self.iso_guide_radio.isChecked():
+            mode = "iso_guide"
         else:
             mode = "select"
         self.canvas.set_mode(mode)
@@ -1309,6 +1357,19 @@ class PixelEditorWindow(QMainWindow):
         if checked and not self.select_radio.isChecked():
             self.select_radio.setChecked(True)
         self.canvas.set_draw_selection_enabled(checked)
+
+    def _show_isometric_guide(self, direction: str) -> None:
+        if not self.iso_guide_radio.isChecked():
+            self.iso_guide_radio.setChecked(True)
+        self.canvas.show_isometric_guide(direction, self.iso_guide_steps_spin.value())
+
+    def _on_isometric_guide_changed(self, _direction: str, steps: int) -> None:
+        self.iso_clear_button.setEnabled(steps > 0)
+        if steps <= 0:
+            return
+        was_blocked = self.iso_guide_steps_spin.blockSignals(True)
+        self.iso_guide_steps_spin.setValue(steps)
+        self.iso_guide_steps_spin.blockSignals(was_blocked)
 
     def _reset_selection_after_transform(self) -> None:
         self.document.selected_pixels.clear()
@@ -1562,10 +1623,37 @@ class PixelEditorWindow(QMainWindow):
         if self.canvas.copy_stamp():
             stamp = self.canvas.stamp_image()
             w, h = stamp.size if stamp else (0, 0)
+            self._update_stamp_controls()
             self.stamp_radio.setChecked(True)
             self.statusBar().showMessage(f"Stamp copied ({w}x{h}px) — click to place")
         else:
             self.statusBar().showMessage("Select pixels first (use Select mode to drag or Ctrl+click)")
+
+    def _flip_stamp_horizontal(self) -> None:
+        if not self.canvas.flip_stamp_horizontal():
+            self.statusBar().showMessage("Copy a selection as a stamp first")
+            self._update_stamp_controls()
+            return
+        self._show_stamp_transform_status("horizontally")
+
+    def _flip_stamp_vertical(self) -> None:
+        if not self.canvas.flip_stamp_vertical():
+            self.statusBar().showMessage("Copy a selection as a stamp first")
+            self._update_stamp_controls()
+            return
+        self._show_stamp_transform_status("vertically")
+
+    def _show_stamp_transform_status(self, direction: str) -> None:
+        stamp = self.canvas.stamp_image()
+        w, h = stamp.size if stamp else (0, 0)
+        self._update_stamp_controls()
+        self.stamp_radio.setChecked(True)
+        self.statusBar().showMessage(f"Stamp flipped {direction} ({w}x{h}px)")
+
+    def _update_stamp_controls(self) -> None:
+        has_stamp = self.canvas.has_stamp()
+        self.flip_stamp_h_button.setEnabled(has_stamp)
+        self.flip_stamp_v_button.setEnabled(has_stamp)
 
     def _copy_selection_to_new_layer(self) -> None:
         result = self.document.copy_selection_to_new_layer()
