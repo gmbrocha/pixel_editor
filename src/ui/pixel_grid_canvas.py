@@ -60,7 +60,12 @@ class PixelGridCanvas(QWidget):
         self._draw_selection_points: list[tuple[int, int]] = []
         self._moving_selection = False
         self._move_origin: tuple[int, int] | None = None
+        self._resizing_selection = False
+        self._resize_handle: str | None = None
+        self._resize_anchor_rect: tuple[int, int, int, int] | None = None
         self._last_paint_point: tuple[int, int] | None = None
+        self._clean_stroke_enabled = False
+        self._clean_stroke_points: set[tuple[int, int]] = set()
         self._fill_rect_start: tuple[int, int] | None = None
         self._fill_rect_current: tuple[int, int] | None = None
         self._line_key_down = False
@@ -96,6 +101,7 @@ class PixelGridCanvas(QWidget):
             "Stamp mode: click to place the copied stamp.\n"
             "Guide mode: click to place an isometric guide, drag the guide to move it, or drag handles to resize.\n"
             "Alt+drag inside a selection moves it.\n"
+            "Clean Stroke avoids repeated pixels and 2x2 double-pixel corners while dragging.\n"
             "Middle-mouse drag or arrow keys to pan the view."
         )
 
@@ -145,6 +151,9 @@ class PixelGridCanvas(QWidget):
             self._cancel_ellipse_preview()
         if mode != "select":
             self._cancel_draw_selection(emit_status=False)
+            self._resizing_selection = False
+            self._resize_handle = None
+            self._resize_anchor_rect = None
         if mode != "stamp":
             self._stamp_hover = None
         if mode != "iso_guide":
@@ -167,10 +176,23 @@ class PixelGridCanvas(QWidget):
         if not self._draw_selection_enabled:
             self._cancel_draw_selection()
         elif self._mode == "select":
+            self._resizing_selection = False
+            self._resize_handle = None
+            self._resize_anchor_rect = None
+            self.unsetCursor()
             self.status_changed.emit(
                 "Draw Selection: click perimeter cells, then click the start cell to close"
             )
         self.update()
+
+    def set_clean_stroke_enabled(self, enabled: bool) -> None:
+        self._clean_stroke_enabled = bool(enabled)
+        self._clean_stroke_points.clear()
+        self.status_changed.emit(
+            "Clean Stroke enabled: continuous paint avoids double pixels"
+            if self._clean_stroke_enabled
+            else "Clean Stroke disabled"
+        )
 
     def set_zoom(self, zoom: int) -> None:
         if zoom == self._zoom:
@@ -546,6 +568,21 @@ class PixelGridCanvas(QWidget):
             self.status_changed.emit("Moving selection rectangle")
             return
 
+        if (
+            event.button() == Qt.MouseButton.LeftButton
+            and self._mode == "select"
+            and not self._draw_selection_enabled
+            and self._document.selection_rect is not None
+        ):
+            handle = self._selection_resize_handle_at(point)
+            if handle is not None:
+                self._resizing_selection = True
+                self._resize_handle = handle
+                self._resize_anchor_rect = normalize_rect(self._document.selection_rect)
+                self.status_changed.emit(f"Resizing selection: {handle.replace('-', ' ')}")
+                self._update_hover_cursor(point)
+                return
+
         if self._mode == "flood_erase":
             if event.button() == Qt.MouseButton.LeftButton:
                 self.flood_erase_requested.emit(point[0], point[1])
@@ -569,7 +606,8 @@ class PixelGridCanvas(QWidget):
                     self.update()
                 else:
                     self._last_paint_point = point
-                    self._paint_point(point)
+                    self._clean_stroke_points.clear()
+                    self._paint_stroke_point(point)
             return
 
         if self._mode == "stamp":
@@ -625,7 +663,14 @@ class PixelGridCanvas(QWidget):
 
         point = self._event_to_pixel(event.position().toPoint())
         if point is None:
+            if not (event.buttons() & Qt.MouseButton.LeftButton):
+                self._update_hover_cursor(None)
             return
+
+        if not (event.buttons() & Qt.MouseButton.LeftButton):
+            self._update_hover_cursor(point)
+            if self._mode != "stamp":
+                return
 
         if self._moving_selection and self._move_origin and event.buttons() & Qt.MouseButton.LeftButton:
             origin_x, origin_y = self._move_origin
@@ -641,6 +686,14 @@ class PixelGridCanvas(QWidget):
                 self.image_changed.emit()
                 self.selection_changed.emit(self._selection_summary())
                 self.update()
+            return
+
+        if self._resizing_selection and self._resize_handle and self._resize_anchor_rect:
+            left, top, right, bottom = self._resized_selection_rect(point)
+            self._document.selection_rect = (left, top, right, bottom)
+            self._document.selected_pixels = rect_points(self._document.selection_rect)
+            self.selection_changed.emit(self._selection_summary())
+            self.update()
             return
 
         if self._mode == "stamp":
@@ -663,9 +716,9 @@ class PixelGridCanvas(QWidget):
                 return
             if self._last_paint_point is not None and self._last_paint_point != point:
                 for p in self._bresenham(self._last_paint_point, point):
-                    self._paint_point(p)
+                    self._paint_stroke_point(p)
             else:
-                self._paint_point(point)
+                self._paint_stroke_point(point)
             self._last_paint_point = point
             return
 
@@ -711,11 +764,20 @@ class PixelGridCanvas(QWidget):
             self._drag_rect_current = None
             self._moving_selection = False
             self._move_origin = None
+            self._resizing_selection = False
+            self._resize_handle = None
+            self._resize_anchor_rect = None
             self._last_paint_point = None
+            self._clean_stroke_points.clear()
+            if self._document is not None:
+                self._update_hover_cursor(self._event_to_pixel(event.position().toPoint()))
         if event.button() == Qt.MouseButton.MiddleButton:
             self._mid_drag = False
             self._mid_drag_origin = None
-            self.setCursor(Qt.CursorShape.ArrowCursor)
+            if self._document is None:
+                self.setCursor(Qt.CursorShape.ArrowCursor)
+            else:
+                self._update_hover_cursor(self._event_to_pixel(event.position().toPoint()))
 
     def wheelEvent(self, event: QWheelEvent) -> None:
         delta = event.angleDelta().y()
@@ -858,6 +920,32 @@ class PixelGridCanvas(QWidget):
                 self._refresh_cached_pixel(mx, point[1])
                 self._update_pixel_rect(mx, point[1])
         self.image_changed.emit()
+
+    def _paint_stroke_point(self, point: tuple[int, int]) -> None:
+        if not self._clean_stroke_enabled:
+            self._paint_point(point)
+            return
+        if point in self._clean_stroke_points:
+            return
+        if self._would_create_clean_stroke_double(point):
+            return
+        self._clean_stroke_points.add(point)
+        self._paint_point(point)
+
+    def _would_create_clean_stroke_double(self, point: tuple[int, int]) -> bool:
+        x, y = point
+        painted = self._clean_stroke_points
+        for ox in (-1, 0):
+            for oy in (-1, 0):
+                block = {
+                    (x + ox, y + oy),
+                    (x + ox + 1, y + oy),
+                    (x + ox, y + oy + 1),
+                    (x + ox + 1, y + oy + 1),
+                }
+                if point in block and block - {point} <= painted:
+                    return True
+        return False
 
     def _paint_line(self, p0: tuple[int, int], p1: tuple[int, int]) -> None:
         if self._document is None:
@@ -1178,6 +1266,14 @@ class PixelGridCanvas(QWidget):
         )
         painter.setPen(QPen(QColor("#00d0ff"), 2, Qt.PenStyle.DashLine))
         painter.drawRect(rect)
+        if self._mode != "select":
+            return
+        handle_size = max(4, min(self._zoom, 10))
+        handle_half = handle_size // 2
+        painter.setPen(QPen(QColor("#0b1f26"), 1))
+        painter.setBrush(QBrush(QColor("#00d0ff")))
+        for hx, hy in self._selection_handle_widget_points(left, top, right, bottom):
+            painter.drawRect(QRect(hx - handle_half, hy - handle_half, handle_size, handle_size))
 
     def _handle_isometric_guide_press(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.RightButton:
@@ -1329,6 +1425,97 @@ class PixelGridCanvas(QWidget):
         if x < 0 or y < 0 or x >= self._document.image.width or y >= self._document.image.height:
             return None
         return x, y
+
+    def _selection_handle_widget_points(
+        self,
+        left: int,
+        top: int,
+        right: int,
+        bottom: int,
+    ) -> list[tuple[int, int]]:
+        z = self._zoom
+        rect_left = left * z
+        rect_top = top * z
+        rect_right = (right + 1) * z
+        rect_bottom = (bottom + 1) * z
+        mid_x = (rect_left + rect_right) // 2
+        mid_y = (rect_top + rect_bottom) // 2
+        return [
+            (rect_left, rect_top),
+            (mid_x, rect_top),
+            (rect_right, rect_top),
+            (rect_left, mid_y),
+            (rect_right, mid_y),
+            (rect_left, rect_bottom),
+            (mid_x, rect_bottom),
+            (rect_right, rect_bottom),
+        ]
+
+    def _selection_resize_handle_at(self, point: tuple[int, int]) -> str | None:
+        if self._document is None or self._document.selection_rect is None:
+            return None
+        left, top, right, bottom = normalize_rect(self._document.selection_rect)
+        x, y = point
+        on_left = x == left and top <= y <= bottom
+        on_right = x == right and top <= y <= bottom
+        on_top = y == top and left <= x <= right
+        on_bottom = y == bottom and left <= x <= right
+        if on_left and on_top:
+            return "top-left"
+        if on_right and on_top:
+            return "top-right"
+        if on_left and on_bottom:
+            return "bottom-left"
+        if on_right and on_bottom:
+            return "bottom-right"
+        if on_left:
+            return "left"
+        if on_right:
+            return "right"
+        if on_top:
+            return "top"
+        if on_bottom:
+            return "bottom"
+        return None
+
+    def _resized_selection_rect(self, point: tuple[int, int]) -> tuple[int, int, int, int]:
+        if self._resize_anchor_rect is None or self._resize_handle is None:
+            raise RuntimeError("Selection resize requested without an active handle")
+        left, top, right, bottom = self._resize_anchor_rect
+        x, y = point
+        if "left" in self._resize_handle:
+            left = x
+        if "right" in self._resize_handle:
+            right = x
+        if "top" in self._resize_handle:
+            top = y
+        if "bottom" in self._resize_handle:
+            bottom = y
+        return normalize_rect((left, top, right, bottom))
+
+    def _update_hover_cursor(self, point: tuple[int, int] | None) -> None:
+        if self._mid_drag:
+            return
+        if self._mode == "flood_erase":
+            self.setCursor(Qt.CursorShape.CrossCursor)
+            return
+        if self._resizing_selection and self._resize_handle is not None:
+            handle = self._resize_handle
+        elif self._mode == "select" and point is not None and not self._draw_selection_enabled:
+            handle = self._selection_resize_handle_at(point)
+        else:
+            handle = None
+
+        if handle in {"left", "right"}:
+            self.setCursor(Qt.CursorShape.SizeHorCursor)
+        elif handle in {"top", "bottom"}:
+            self.setCursor(Qt.CursorShape.SizeVerCursor)
+        elif handle in {"top-left", "bottom-right"}:
+            self.setCursor(Qt.CursorShape.SizeFDiagCursor)
+        elif handle in {"top-right", "bottom-left"}:
+            self.setCursor(Qt.CursorShape.SizeBDiagCursor)
+        else:
+            self.unsetCursor()
 
     def _cancel_line_preview(self) -> None:
         if self._line_start is None and self._line_current is None:

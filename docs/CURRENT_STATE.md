@@ -6,7 +6,7 @@ Last updated: 2026-06-26
 PixelForge is a PySide6 desktop pixel-art and tileset utility. Source-grounded tools include image import and preview extraction, palette handling, pixel editing, animation editing, tile layout, tileset processing, tileset template generation, and procedural texture generation.
 
 ## Current Status
-Active development is indicated by recent commits on `main`, including draw-selection workflows, palette posterize/debug tooling, art-direction color families, selection copy workflows, transparency keying, texture generator updates, pixel-canvas drawing updates, isometric guide tooling, stamp flipping, and assembly-grid export work. The `active-lab` category and `active` status are reviewable classifications for Command Center setup.
+Active development is indicated by recent commits on `main`, including draw-selection workflows, palette posterize/debug tooling, art-direction color families, selection copy workflows, transparency keying, texture generator updates, pixel-canvas drawing updates, isometric guide tooling, stamp flipping, Clean Stroke painting, selection resize handling, and assembly-grid export work. The `active-lab` category and `active` status are reviewable classifications for Command Center setup.
 
 ## Blockers
 None.
@@ -34,6 +34,12 @@ Review the `category`, `status`, and `priorityRank` values when registering the 
 Update this document after commits or other git state changes made during agent sessions.
 
 ## Recent Activity
+2026-06-26: Committed Clean Stroke paint dragging, selection resize handles, and Command Center sync notes for remote push.
+
+2026-06-26: Prepared Clean Stroke paint dragging and selection resize handles for commit and remote push after syncing home changes from `origin/main`.
+
+2026-06-26: Pulled `origin/main` to `1cbf604`, reapplied local editor changes after resolving one signal-setup conflict, dropped the temporary stash, and verified focused pixel-canvas tests pass.
+
 2026-06-26: Prepared isometric guide overlay controls, stamp flip actions, related canvas tests, and removal of a root ballista asset for commit and remote push.
 
 2026-06-19: Added collapsible multi-column pixel-map tooling, ellipse-drag pixel-canvas drawing with tests, new palette family PNGs, and a root ballista asset.
