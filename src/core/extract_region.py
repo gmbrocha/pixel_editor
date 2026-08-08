@@ -1,15 +1,20 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
-from src.core.palette import quantize_image
+from src.core.image_processing import (
+    despeckle,
+    edge_preserving_denoise,
+    resize_image,
+)
 from src.core.selection_models import RegionSelection
 
 
 RESAMPLE_MAP = {
     "Nearest": Image.Resampling.NEAREST,
+    "Nearest Neighbor": Image.Resampling.NEAREST,
     "Bilinear": Image.Resampling.BILINEAR,
     "Bicubic": Image.Resampling.BICUBIC,
 }
@@ -22,10 +27,10 @@ class ExtractSettings:
     fit_mode: str = "Preserve"
     resample_mode: str = "Nearest"
     post_process_mode: str = "None"
-    max_colors: int = 32
-    dither: bool = False
-    quantize_enabled: bool = False
-    reference_palette: tuple[tuple[int, int, int, int], ...] = field(default_factory=tuple)
+    denoise_radius: int = 1
+    denoise_strength: int = 35
+    despeckle_max_size: int = 1
+    despeckle_tolerance: int = 24
 
 
 def build_selection_mask(
@@ -68,7 +73,7 @@ def extract_to_preview(
 
     if settings.fit_mode == "Fit":
         return _finalize_preview(
-            cropped.resize(target_size, RESAMPLE_MAP[settings.resample_mode]),
+            resize_image(cropped, target_size, settings.resample_mode),
             settings,
         )
 
@@ -83,27 +88,18 @@ def extract_to_preview(
             max(1, int(round(cropped.width * scale))),
             max(1, int(round(cropped.height * scale))),
         )
-        cropped = cropped.resize(new_size, RESAMPLE_MAP[settings.resample_mode])
+        cropped = resize_image(cropped, new_size, settings.resample_mode)
 
     preview.alpha_composite(cropped, (0, 0))
     return _finalize_preview(preview, settings)
 
 
 def _finalize_preview(image: Image.Image, settings: ExtractSettings) -> Image.Image:
-    image = _apply_post_process(image, settings.post_process_mode)
-    if settings.resample_mode != "Nearest" or not settings.quantize_enabled:
-        return image
-
-    return quantize_image(
-        image,
-        max_colors=settings.max_colors,
-        dither=settings.dither,
-        method=Image.Quantize.MEDIANCUT,
-        reference_palette=list(settings.reference_palette),
-    )
+    return _apply_post_process(image, settings)
 
 
-def _apply_post_process(image: Image.Image, mode: str) -> Image.Image:
+def _apply_post_process(image: Image.Image, settings: ExtractSettings) -> Image.Image:
+    mode = settings.post_process_mode
     if mode == "Median Filter":
         return image.filter(ImageFilter.MedianFilter(size=3))
     if mode == "Posterize":
@@ -113,4 +109,16 @@ def _apply_post_process(image: Image.Image, mode: str) -> Image.Image:
         return posterized
     if mode == "Small Gaussian Blur":
         return image.filter(ImageFilter.GaussianBlur(radius=0.75))
+    if mode == "Edge-Preserving Denoise":
+        return edge_preserving_denoise(
+            image,
+            radius=settings.denoise_radius,
+            strength=settings.denoise_strength,
+        )
+    if mode == "Despeckle":
+        return despeckle(
+            image,
+            max_speck_size=settings.despeckle_max_size,
+            color_tolerance=settings.despeckle_tolerance,
+        )
     return image

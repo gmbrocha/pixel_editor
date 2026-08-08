@@ -7,6 +7,7 @@ import math
 import re
 from pathlib import Path
 
+import numpy as np
 from PIL import Image, ImageDraw
 
 
@@ -988,23 +989,6 @@ def _average_lab_distance(labs: list[tuple[float, float, float]]) -> float:
     return total / pairs if pairs else 0.0
 
 
-def _dither_mode(enabled: bool) -> Image.Dither:
-    return Image.Dither.FLOYDSTEINBERG if enabled else Image.Dither.NONE
-
-
-def _build_palette_image(palette: list[Color]) -> Image.Image:
-    if not palette:
-        raise ValueError("Palette cannot be empty")
-
-    palette_image = Image.new("P", (1, 1))
-    raw_palette: list[int] = []
-    for color in palette[:256]:
-        raw_palette.extend(color[:3])
-    raw_palette.extend([0] * (768 - len(raw_palette)))
-    palette_image.putpalette(raw_palette)
-    return palette_image
-
-
 def _clear_fully_transparent_pixels(image: Image.Image) -> Image.Image:
     output = image.convert("RGBA")
     pixels = output.load()
@@ -1012,58 +996,6 @@ def _clear_fully_transparent_pixels(image: Image.Image) -> Image.Image:
         for x in range(output.width):
             if pixels[x, y][3] == 0:
                 pixels[x, y] = (0, 0, 0, 0)
-    return output
-
-
-def _opaque_sample_image(source: Image.Image) -> Image.Image | None:
-    rgba = source.convert("RGBA")
-    pixels = rgba.load()
-    visible_pixels: list[tuple[int, int, int]] = []
-    for y in range(rgba.height):
-        for x in range(rgba.width):
-            pixel = pixels[x, y]
-            if pixel[3] > 0:
-                visible_pixels.append(pixel[:3])
-    if not visible_pixels:
-        return None
-
-    sample = Image.new("RGB", (len(visible_pixels), 1))
-    sample.putdata(visible_pixels)
-    return sample
-
-
-def quantize_image(
-    image: Image.Image,
-    max_colors: int = 32,
-    *,
-    dither: bool = False,
-    method: Image.Quantize = Image.Quantize.MEDIANCUT,
-    reference_palette: list[Color] | None = None,
-) -> Image.Image:
-    source = image.convert("RGBA")
-    if source.getbbox() is None:
-        return Image.new("RGBA", source.size, (0, 0, 0, 0))
-
-    sample = _opaque_sample_image(source)
-    if sample is None:
-        return Image.new("RGBA", source.size, (0, 0, 0, 0))
-
-    quantized_sample = sample.quantize(
-        colors=max(1, min(int(max_colors), 256)),
-        method=method,
-        dither=_dither_mode(dither),
-    )
-
-    output = source.convert("RGB").quantize(
-        palette=quantized_sample,
-        dither=_dither_mode(dither),
-    ).convert("RGBA")
-    output.putalpha(source.getchannel("A"))
-    output = _clear_fully_transparent_pixels(output)
-
-    if reference_palette:
-        output = quantize_to_palette(output, reference_palette, dither=dither)
-
     return output
 
 
@@ -1146,13 +1078,7 @@ def quantize_to_palette(
     source = image.convert("RGBA")
 
     if dither:
-        # PIL's Floyd-Steinberg dithering works in RGB space; use it for dither mode.
-        output = source.convert("RGB").quantize(
-            palette=_build_palette_image(palette),
-            dither=_dither_mode(dither),
-        ).convert("RGBA")
-        output.putalpha(source.getchannel("A"))
-        return _clear_fully_transparent_pixels(output)
+        return _floyd_steinberg_to_palette(source, palette)
 
     # Perceptual (CIELAB) nearest-neighbor for non-dithered output.
     # Pre-compute LAB for every palette entry, then build a unique-color
@@ -1175,6 +1101,65 @@ def quantize_to_palette(
     output = Image.new("RGBA", source.size)
     output.putdata(new_pixels)  # type: ignore[arg-type]
     return _clear_fully_transparent_pixels(output)
+
+
+def _floyd_steinberg_to_palette(
+    image: Image.Image,
+    palette: list[Color],
+) -> Image.Image:
+    """Deterministic Floyd-Steinberg without scanline or transparency bleed."""
+    source = np.asarray(image.convert("RGBA"), dtype=np.uint8)
+    alpha = source[..., 3]
+    if np.all(alpha > 0):
+        palette_image = _pillow_palette_image(palette)
+        output = image.convert("RGB").quantize(
+            palette=palette_image,
+            dither=Image.Dither.FLOYDSTEINBERG,
+        ).convert("RGBA")
+        output.putalpha(Image.fromarray(alpha, mode="L"))
+        return output
+
+    working = source[..., :3].astype(np.float64)
+    output = np.zeros_like(source)
+    palette_rgb = np.asarray([color[:3] for color in palette], dtype=np.float64)
+    height, width = alpha.shape
+
+    for y in range(height):
+        for x in range(width):
+            if alpha[y, x] == 0:
+                continue
+            current = np.clip(working[y, x], 0.0, 255.0)
+            distances = np.sum((palette_rgb - current) ** 2, axis=1)
+            selected = palette_rgb[int(np.argmin(distances))]
+            output[y, x, :3] = selected.astype(np.uint8)
+            output[y, x, 3] = alpha[y, x]
+            error = current - selected
+
+            # Explicit coordinates prevent right-edge error from wrapping to
+            # the next scanline. Transparent pixels neither receive nor pass
+            # error, so hidden RGB cannot contaminate sprite boundaries.
+            for nx, ny, weight in (
+                (x + 1, y, 7.0 / 16.0),
+                (x - 1, y + 1, 3.0 / 16.0),
+                (x, y + 1, 5.0 / 16.0),
+                (x + 1, y + 1, 1.0 / 16.0),
+            ):
+                if 0 <= nx < width and ny < height and alpha[ny, nx] > 0:
+                    working[ny, nx] += error * weight
+
+    return Image.fromarray(output, mode="RGBA")
+
+
+def _pillow_palette_image(palette: list[Color]) -> Image.Image:
+    palette_image = Image.new("P", (1, 1))
+    raw: list[int] = []
+    for color in palette[:256]:
+        raw.extend(color[:3])
+    last = list(palette[min(len(palette), 256) - 1][:3])
+    while len(raw) < 768:
+        raw.extend(last)
+    palette_image.putpalette(raw)
+    return palette_image
 
 
 def load_palette_from_hex_list(text: str, max_colors: int = 256) -> list[Color]:

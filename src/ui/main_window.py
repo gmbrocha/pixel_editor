@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PIL import Image
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QColor, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
@@ -42,6 +41,7 @@ from src.core.palette import (
 from src.core.persistent_palette import add_color_persistent, color_tooltip
 from src.core.pixel_document import (
     PixelDocument,
+    RGB_DISTANCE_MAX,
     create_blank_pixel_map,
     replace_color_with_transparent,
     replace_light_background_with_transparent,
@@ -134,6 +134,16 @@ class MainWindow(QMainWindow):
         open_action = QAction("Open Image", self)
         open_action.triggered.connect(self.open_image)
         toolbar.addAction(open_action)
+
+        self.undo_source_action = QAction("Undo Source", self)
+        self.undo_source_action.setShortcut(QKeySequence.StandardKey.Undo)
+        self.undo_source_action.triggered.connect(self.undo_source_change)
+        toolbar.addAction(self.undo_source_action)
+
+        self.redo_source_action = QAction("Redo Source", self)
+        self.redo_source_action.setShortcut(QKeySequence.StandardKey.Redo)
+        self.redo_source_action.triggered.connect(self.redo_source_change)
+        toolbar.addAction(self.redo_source_action)
 
         clear_action = QAction("Clear Selections", self)
         clear_action.triggered.connect(self.source_canvas.clear_selections)
@@ -263,7 +273,7 @@ class MainWindow(QMainWindow):
         self.eyedropper_sample_method_combo.addItem("Average", "average")
 
         self.transparency_tolerance_spin = QSpinBox()
-        self.transparency_tolerance_spin.setRange(0, 441)
+        self.transparency_tolerance_spin.setRange(0, RGB_DISTANCE_MAX)
         self.transparency_tolerance_spin.setValue(30)
         self.transparency_tolerance_spin.setToolTip("RGB distance from the sampled color")
 
@@ -357,7 +367,7 @@ class MainWindow(QMainWindow):
         pixel_tools_row.addWidget(self._pixel_tools_group, 1)
         canvas_layout.addLayout(pixel_tools_row)
 
-        palette_merged = QGroupBox("Palette")
+        palette_merged = QGroupBox("Palette & Quantization")
         palette_merged.setMinimumHeight(40)
         palette_merged_layout = QVBoxLayout(palette_merged)
         palette_merged_layout.addWidget(self.palette_panel)
@@ -435,8 +445,6 @@ class MainWindow(QMainWindow):
         self.preview_panel.color_picked.connect(self._on_eyedropper_color)
         self.preview_panel.settings_changed.connect(self._on_preview_settings_changed)
         self.preview_panel.save_requested.connect(self.save_preview_to_tray)
-        self.preview_panel.load_reference_palette_requested.connect(self.load_reference_palette)
-        self.preview_panel.clear_reference_palette_requested.connect(self.clear_reference_palette)
         self.palette_panel.derive_from_preview_requested.connect(self.derive_palette_from_preview)
         self.palette_panel.load_palette_requested.connect(self.load_palette)
         self.palette_panel.export_palette_requested.connect(self.export_palette)
@@ -446,6 +454,11 @@ class MainWindow(QMainWindow):
         self.palette_panel.sort_palette_requested.connect(self.organize_palette)
         self.palette_panel.apply_palette_to_preview_requested.connect(self.quantize_preview)
         self.palette_panel.apply_palette_to_source_requested.connect(self.apply_palette_to_source)
+        self.palette_panel.clear_palette_requested.connect(self.clear_active_palette)
+        self.palette_panel.clear_quantized_preview_requested.connect(
+            self.clear_quantized_preview
+        )
+        self.palette_panel.dither_changed.connect(self._on_palette_dither_changed)
         self.asset_tray.import_requested.connect(self.import_asset)
         self.asset_tray.export_requested.connect(self.export_tilesheet)
         self.asset_tray.clear_requested.connect(self.clear_assets)
@@ -483,8 +496,12 @@ class MainWindow(QMainWindow):
 
         self.document.source_image = image
         self.document.source_path = path
+        self.document.source_history.clear()
+        self.document.source_redo_history.clear()
         self.document.selections.clear()
+        self.document.unquantized_preview_image = None
         self.document.preview_image = None
+        self.document.preview_quantized = False
         self.source_canvas.set_image(image)
         self.source_canvas.set_selections([])
         self._refresh_preview()
@@ -500,39 +517,35 @@ class MainWindow(QMainWindow):
 
     def _refresh_preview(self) -> None:
         if self.document.source_image is None:
+            self.document.unquantized_preview_image = None
             self.document.preview_image = None
+            self.document.preview_quantized = False
             self.preview_panel.set_preview_image(None)
+            self.palette_panel.set_quantization_state(False)
             return
 
-        self.document.preview_image = extract_to_preview(
+        unquantized = extract_to_preview(
             self.document.source_image,
             self.document.selections,
             self.document.preview_settings,
         )
+        self.document.unquantized_preview_image = unquantized
+        self.document.preview_image = unquantized.copy()
+        self.document.preview_quantized = False
         self.preview_panel.set_preview_image(self.document.preview_image)
+        self.palette_panel.set_quantization_state(False)
 
     def derive_palette_from_preview(self) -> None:
-        if self.document.preview_image is None:
+        if self.document.unquantized_preview_image is None:
             return
         sample_mode = self.palette_panel.sample_mode()
-        palette, debug = palette_from_image_with_debug(
-            self.document.preview_image,
+        palette, _debug = palette_from_image_with_debug(
+            self.document.unquantized_preview_image,
             max_colors=self.palette_panel.max_colors(),
             selection=sample_mode,
             settings=self.palette_panel.extraction_settings(),
         )
-        self.document.palette = palette
-        self.palette_panel.set_palette(palette)
-        debug_quantize_source = (
-            debug.quantize_source_image
-            if debug.quantize_source_image is not None
-            else self.document.preview_image
-        )
-        self.palette_panel.set_extraction_debug(
-            self.document.preview_image,
-            debug,
-            quantize_to_palette(debug_quantize_source, palette),
-        )
+        self._set_active_palette(palette, "generated from preview")
         self.statusBar().showMessage(
             f"Palette derived from preview ({sample_mode} sampling, {len(palette)} colors)"
         )
@@ -542,36 +555,18 @@ class MainWindow(QMainWindow):
             self,
             "Load Palette From Image",
             "",
-            "Images (*.png *.bmp *.gif *.jpg *.jpeg *.webp)",
+            "Palette Sources (*.png *.bmp *.gif *.jpg *.jpeg *.webp *.txt *.hex *.pal)",
         )
         if not path:
             return
-        sample_mode = self.palette_panel.sample_mode()
         try:
-            source_image = Image.open(path).convert("RGBA")
-            palette, debug = palette_from_image_with_debug(
-                source_image,
-                max_colors=self.palette_panel.max_colors(),
-                selection=sample_mode,
-                settings=self.palette_panel.extraction_settings(),
-            )
+            palette = load_palette_from_source(path, max_colors=256)
         except Exception as exc:  # pragma: no cover - GUI feedback
             QMessageBox.critical(self, "Palette load failed", str(exc))
             return
-        self.document.palette = palette
-        self.palette_panel.set_palette(palette)
-        debug_quantize_source = (
-            debug.quantize_source_image
-            if debug.quantize_source_image is not None
-            else source_image
-        )
-        self.palette_panel.set_extraction_debug(
-            source_image,
-            debug,
-            quantize_to_palette(debug_quantize_source, palette),
-        )
+        self._set_active_palette(palette, Path(path).name)
         self.statusBar().showMessage(
-            f"Loaded palette from {Path(path).name} ({sample_mode} sampling, {len(palette)} colors)"
+            f"Loaded active palette from {Path(path).name} ({len(palette)} colors)"
         )
 
     def export_palette(self) -> None:
@@ -588,30 +583,6 @@ class MainWindow(QMainWindow):
         export_palette_strip(self.document.palette, path)
         self.statusBar().showMessage(f"Exported palette to {Path(path).name}")
 
-    def load_reference_palette(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Load Reference Palette",
-            "",
-            "Palette Sources (*.png *.bmp *.gif *.jpg *.jpeg *.webp *.txt *.hex *.pal)",
-        )
-        if not path:
-            return
-        try:
-            palette = load_palette_from_source(path, max_colors=256)
-        except Exception as exc:  # pragma: no cover - GUI feedback
-            QMessageBox.critical(self, "Reference palette load failed", str(exc))
-            return
-
-        self.preview_panel.set_reference_palette(palette, Path(path).name)
-        self.statusBar().showMessage(
-            f"Loaded reference palette from {Path(path).name} ({len(palette)} colors)"
-        )
-
-    def clear_reference_palette(self) -> None:
-        self.preview_panel.set_reference_palette([], None)
-        self.statusBar().showMessage("Cleared reference palette")
-
     def add_custom_palette_color(self) -> None:
         initial_color = QColor(255, 255, 255, 255)
         if self.document.palette:
@@ -626,14 +597,14 @@ class MainWindow(QMainWindow):
             rgba,
             max_colors=self.palette_panel.max_colors(),
         )
-        self.palette_panel.set_palette(self.document.palette)
+        self._active_palette_changed()
         self.statusBar().showMessage("Added custom color to palette")
 
     def remove_palette_color(self, index: int) -> None:
         if not self.document.palette or not (0 <= index < len(self.document.palette)):
             return
         self.document.palette = [c for i, c in enumerate(self.document.palette) if i != index]
-        self.palette_panel.set_palette(self.document.palette)
+        self._active_palette_changed()
         self.statusBar().showMessage(f"Removed palette color at index {index}")
 
     def edit_palette_color(self, index: int) -> None:
@@ -646,7 +617,7 @@ class MainWindow(QMainWindow):
         rgba = (color.red(), color.green(), color.blue(), color.alpha())
         self.document.palette = list(self.document.palette)
         self.document.palette[index] = rgba
-        self.palette_panel.set_palette(self.document.palette)
+        self._active_palette_changed()
         self.statusBar().showMessage(f"Updated palette color at index {index}")
 
     def organize_palette(self, mode: str) -> None:
@@ -654,30 +625,107 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("No palette to organize")
             return
         self.document.palette = sort_palette(self.document.palette, mode)
-        self.palette_panel.set_palette(self.document.palette)
+        self._active_palette_changed()
         self.statusBar().showMessage(f"Palette organized by {mode}")
 
     def quantize_preview(self) -> None:
-        if self.document.preview_image is None or not self.document.palette:
+        if self.document.unquantized_preview_image is None:
+            self.statusBar().showMessage("No preview available to quantize")
+            return
+        if not self.document.palette:
+            self.statusBar().showMessage("Generate or load an active palette first")
             return
         self.document.preview_image = quantize_to_palette(
-            self.document.preview_image,
+            self.document.unquantized_preview_image,
             self.document.palette,
+            dither=self.palette_panel.dither_enabled(),
         )
+        self.document.preview_quantized = True
         self.preview_panel.set_preview_image(self.document.preview_image)
-        self.statusBar().showMessage("Preview quantized to current palette")
+        self.palette_panel.set_quantization_state(True)
+        dither_label = "with dithering" if self.palette_panel.dither_enabled() else "without dithering"
+        self.statusBar().showMessage(
+            f"Preview quantized once to the active palette {dither_label}"
+        )
+
+    def clear_quantized_preview(self) -> None:
+        self._restore_unquantized_preview()
+        self.statusBar().showMessage("Restored unquantized preview")
+
+    def clear_active_palette(self) -> None:
+        self.document.palette = []
+        self.document.palette_name = None
+        self._active_palette_changed()
+        self.statusBar().showMessage("Cleared active palette and quantized preview")
+
+    def _set_active_palette(
+        self,
+        palette: list[tuple[int, int, int, int]],
+        name: str | None = "custom",
+    ) -> None:
+        self.document.palette = list(palette)
+        self.document.palette_name = name if palette else None
+        self._active_palette_changed()
+
+    def _active_palette_changed(self) -> None:
+        self.palette_panel.set_palette(
+            self.document.palette,
+            self.document.palette_name,
+        )
+        self._restore_unquantized_preview()
+
+    def _restore_unquantized_preview(self) -> None:
+        if self.document.unquantized_preview_image is None:
+            self.document.preview_image = None
+            self.document.preview_quantized = False
+            self.preview_panel.set_preview_image(None)
+        else:
+            self.document.preview_image = self.document.unquantized_preview_image.copy()
+            self.document.preview_quantized = False
+            self.preview_panel.set_preview_image(self.document.preview_image)
+        self.palette_panel.set_quantization_state(False)
+
+    def _on_palette_dither_changed(self, _enabled: bool) -> None:
+        if self.document.preview_quantized:
+            self._restore_unquantized_preview()
+            self.statusBar().showMessage(
+                "Dithering preference changed; quantize the preview again to apply it"
+            )
 
     def apply_palette_to_source(self) -> None:
         if self.document.source_image is None or not self.document.palette:
             return
-        self.document.source_image = quantize_to_palette(
+        if not self.document.preview_quantized:
+            self.statusBar().showMessage("Quantize Preview before applying to the source")
+            return
+        self.document.push_source_history()
+        quantized_source = quantize_to_palette(
             self.document.source_image,
             self.document.palette,
+            dither=self.palette_panel.dither_enabled(),
         )
+        self.document.source_image = quantized_source
+        self.source_canvas.set_image(self.document.source_image)
+        self.source_canvas.set_selections(self.document.selections)
+        self.statusBar().showMessage("Applied active palette to source (undo available)")
+
+    def undo_source_change(self) -> None:
+        if not self.document.undo_source():
+            self.statusBar().showMessage("Nothing to undo on the source")
+            return
         self.source_canvas.set_image(self.document.source_image)
         self.source_canvas.set_selections(self.document.selections)
         self._refresh_preview()
-        self.statusBar().showMessage("Palette applied to source image")
+        self.statusBar().showMessage("Undid source change")
+
+    def redo_source_change(self) -> None:
+        if not self.document.redo_source():
+            self.statusBar().showMessage("Nothing to redo on the source")
+            return
+        self.source_canvas.set_image(self.document.source_image)
+        self.source_canvas.set_selections(self.document.selections)
+        self._refresh_preview()
+        self.statusBar().showMessage("Redid source change")
 
     def remove_white_background(self) -> None:
         if self.document.source_image is None:
@@ -692,10 +740,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("No pure white background pixels found")
             return
 
-        self.document.source_image = updated
-        self.source_canvas.set_image(self.document.source_image)
-        self.source_canvas.set_selections(self.document.selections)
-        self._refresh_preview()
+        self._replace_source_image(updated)
         self.statusBar().showMessage(
             f"Removed {replaced} pure white pixel{'s' if replaced != 1 else ''} from source image"
         )
@@ -773,6 +818,8 @@ class MainWindow(QMainWindow):
         )
 
     def _replace_source_image(self, image) -> None:
+        if self.document.source_image is not None:
+            self.document.push_source_history()
         self.document.source_image = image
         self.source_canvas.set_image(self.document.source_image)
         self.source_canvas.set_selections(self.document.selections)

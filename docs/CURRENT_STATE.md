@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-06-26
+Last updated: 2026-08-07
 
 ## Summary
 PixelForge is a PySide6 desktop pixel-art and tileset utility. Source-grounded tools include image import and preview extraction, palette handling, pixel editing, animation editing, tile layout, tileset processing, tileset template generation, and procedural texture generation.
@@ -34,6 +34,10 @@ Review the `category`, `status`, and `priorityRank` values when registering the 
 Update this document after commits or other git state changes made during agent sessions.
 
 ## Recent Activity
+2026-08-07: Committed the complete image-processing, transparency, palette-consolidation, and test changes on `agent/image-processing-palette-workflow` and prepared the branch for remote publication.
+
+2026-08-07: Added alpha-aware Area and Lanczos 3 resizing, denoise/despeckle processing, redo-capable history, and consolidated palette generation plus explicit quantization/dithering into one active-palette workflow; removed the automatic Limit Colors and palette-debug panes, with 67 tests passing.
+
 2026-06-26: Prepared isometric guide overlay controls, stamp flip actions, related canvas tests, and removal of a root ballista asset for commit and remote push.
 
 2026-06-19: Added collapsible multi-column pixel-map tooling, ellipse-drag pixel-canvas drawing with tests, new palette family PNGs, and a root ballista asset.

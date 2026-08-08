@@ -5,13 +5,12 @@ import statistics
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import (
-    QCheckBox,
     QComboBox,
+    QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QSlider,
     QSpinBox,
     QVBoxLayout,
     QWidget,
@@ -106,14 +105,10 @@ class PreviewPanel(QWidget):
     settings_changed = Signal(object)
     save_requested = Signal()
     color_picked = Signal(tuple)
-    load_reference_palette_requested = Signal()
-    clear_reference_palette_requested = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._preview_image: Image.Image | None = None
-        self._reference_palette: tuple[tuple[int, int, int, int], ...] = ()
-        self._reference_palette_name: str | None = None
 
         self.preview_canvas = PreviewCanvas()
         self.size_label = QLabel("Preview: no output")
@@ -130,29 +125,67 @@ class PreviewPanel(QWidget):
         self.fit_combo.addItems(["Preserve", "Fit", "Actual"])
 
         self.resample_combo = QComboBox()
-        self.resample_combo.addItems(["Nearest", "Bilinear", "Bicubic"])
+        self.resample_combo.addItem("Nearest Neighbor", "Nearest")
+        self.resample_combo.addItem("Bilinear", "Bilinear")
+        self.resample_combo.addItem("Bicubic", "Bicubic")
+        self.resample_combo.addItem("Area (Box Average)", "Area (Box Average)")
+        self.resample_combo.addItem("Lanczos 3", "Lanczos 3")
+        self.resample_combo.setItemData(
+            3,
+            "Smooth, noise-reducing area-weighted sampling intended for downscaling.",
+            Qt.ItemDataRole.ToolTipRole,
+        )
+        self.resample_combo.setItemData(
+            4,
+            "Sharper high-quality resizing; extreme contrast transitions may show slight ringing.",
+            Qt.ItemDataRole.ToolTipRole,
+        )
 
         self.post_process_combo = QComboBox()
         self.post_process_combo.addItems(
-            ["None", "Median Filter", "Posterize", "Small Gaussian Blur"]
+            [
+                "None",
+                "Median Filter",
+                "Posterize",
+                "Small Gaussian Blur",
+                "Edge-Preserving Denoise",
+                "Despeckle",
+            ]
+        )
+        self.post_process_combo.setItemData(
+            self.post_process_combo.findText("Edge-Preserving Denoise"),
+            "Mildly reduces low-contrast variation while retaining strong pixel boundaries.",
+            Qt.ItemDataRole.ToolTipRole,
+        )
+        self.post_process_combo.setItemData(
+            self.post_process_combo.findText("Despeckle"),
+            "Conservatively replaces small isolated color clusters with coherent surroundings.",
+            Qt.ItemDataRole.ToolTipRole,
         )
 
-        self.max_colors_slider = QSlider(Qt.Orientation.Horizontal)
-        self.max_colors_slider.setRange(0, 3)
-        self.max_colors_slider.setValue(2)
-        self.max_colors_value_label = QLabel(str(self.max_colors()))
+        self.denoise_radius_spin = QSpinBox()
+        self.denoise_radius_spin.setRange(1, 3)
+        self.denoise_radius_spin.setValue(1)
+        self.denoise_radius_spin.setSuffix(" px")
+        self.denoise_strength_spin = QSpinBox()
+        self.denoise_strength_spin.setRange(0, 100)
+        self.denoise_strength_spin.setValue(35)
+        self.denoise_strength_spin.setSuffix("%")
 
-        self.quantize_checkbox = QCheckBox("Enable palette reduction")
-        self.quantize_checkbox.setChecked(False)
-
-        self.dither_checkbox = QCheckBox("Dither output")
-        self.dither_checkbox.setChecked(False)
-
-        self.reference_palette_label = QLabel("Reference palette: none")
-        self.reference_palette_label.setWordWrap(True)
-
-        self.load_reference_palette_button = QPushButton("Load Ref Palette")
-        self.clear_reference_palette_button = QPushButton("Clear Ref")
+        self.despeckle_max_size_spin = QSpinBox()
+        self.despeckle_max_size_spin.setRange(1, 8)
+        self.despeckle_max_size_spin.setValue(1)
+        self.despeckle_max_size_spin.setSuffix(" px")
+        self.despeckle_tolerance_spin = QSpinBox()
+        self.despeckle_tolerance_spin.setRange(0, 128)
+        self.despeckle_tolerance_spin.setValue(24)
+        self.despeckle_tolerance_spin.setToolTip(
+            "Maximum RGBA distance used to group a speck or coherent surroundings"
+        )
+        self.reset_processing_button = QPushButton("Reset Processing")
+        self.reset_processing_button.setToolTip(
+            "Disable cleanup and restore its controls to their mild defaults"
+        )
 
         self.save_button = QPushButton("Save Output To Tray")
         self.save_button.clicked.connect(self.save_requested.emit)
@@ -174,23 +207,23 @@ class PreviewPanel(QWidget):
         process_row.addWidget(QLabel("Process"))
         process_row.addWidget(self.post_process_combo, 1)
         output_layout.addLayout(process_row)
-
-        quant_group = QGroupBox("Palette Reduction")
-        quant_layout = QVBoxLayout(quant_group)
-        quant_layout.addWidget(self.quantize_checkbox)
-        color_row = QHBoxLayout()
-        color_row.addWidget(QLabel("Max colors"))
-        color_row.addWidget(self.max_colors_slider, 1)
-        color_row.addWidget(self.max_colors_value_label)
-        quant_layout.addLayout(color_row)
-        quant_layout.addWidget(self.dither_checkbox)
-        quant_layout.addWidget(self.reference_palette_label)
-        ref_button_row = QHBoxLayout()
-        ref_button_row.addWidget(self.load_reference_palette_button)
-        ref_button_row.addWidget(self.clear_reference_palette_button)
-        quant_layout.addLayout(ref_button_row)
-        quant_layout.addWidget(QLabel("Dithering/reduction only apply when sampling is Nearest"))
-        output_layout.addWidget(quant_group)
+        self.process_controls_widget = QWidget()
+        process_controls_layout = QGridLayout(self.process_controls_widget)
+        process_controls_layout.setContentsMargins(0, 0, 0, 0)
+        self.denoise_radius_label = QLabel("Radius")
+        self.denoise_strength_label = QLabel("Strength")
+        self.despeckle_size_label = QLabel("Maximum speck size")
+        self.despeckle_tolerance_label = QLabel("Color tolerance")
+        process_controls_layout.addWidget(self.denoise_radius_label, 0, 0)
+        process_controls_layout.addWidget(self.denoise_radius_spin, 0, 1)
+        process_controls_layout.addWidget(self.denoise_strength_label, 0, 2)
+        process_controls_layout.addWidget(self.denoise_strength_spin, 0, 3)
+        process_controls_layout.addWidget(self.despeckle_size_label, 1, 0)
+        process_controls_layout.addWidget(self.despeckle_max_size_spin, 1, 1)
+        process_controls_layout.addWidget(self.despeckle_tolerance_label, 1, 2)
+        process_controls_layout.addWidget(self.despeckle_tolerance_spin, 1, 3)
+        process_controls_layout.addWidget(self.reset_processing_button, 2, 0, 1, 4)
+        output_layout.addWidget(self.process_controls_widget)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -201,34 +234,21 @@ class PreviewPanel(QWidget):
         self.height_spin.valueChanged.connect(self._emit_settings)
         self.fit_combo.currentIndexChanged.connect(self._emit_settings)
         self.resample_combo.currentIndexChanged.connect(self._emit_settings)
-        self.post_process_combo.currentIndexChanged.connect(self._emit_settings)
-        self.max_colors_slider.valueChanged.connect(self._on_max_colors_changed)
-        self.dither_checkbox.toggled.connect(self._emit_settings)
-        self.quantize_checkbox.toggled.connect(self._emit_settings)
-        self.load_reference_palette_button.clicked.connect(self.load_reference_palette_requested.emit)
-        self.clear_reference_palette_button.clicked.connect(self.clear_reference_palette_requested.emit)
+        self.resample_combo.currentIndexChanged.connect(self._update_resample_tooltip)
+        self.post_process_combo.currentIndexChanged.connect(self._on_process_changed)
+        self.denoise_radius_spin.valueChanged.connect(self._emit_settings)
+        self.denoise_strength_spin.valueChanged.connect(self._emit_settings)
+        self.despeckle_max_size_spin.valueChanged.connect(self._emit_settings)
+        self.despeckle_tolerance_spin.valueChanged.connect(self._emit_settings)
+        self.reset_processing_button.clicked.connect(self._reset_processing)
+        self._update_resample_tooltip()
+        self._update_process_controls()
 
     def set_eyedropper(self, enabled: bool) -> None:
         self.preview_canvas.set_eyedropper(enabled)
 
     def set_eyedropper_sampling(self, sample_size: int, method: str) -> None:
         self.preview_canvas.set_eyedropper_sampling(sample_size, method)
-
-    def set_reference_palette(
-        self,
-        palette: list[tuple[int, int, int, int]] | tuple[tuple[int, int, int, int], ...],
-        name: str | None = None,
-    ) -> None:
-        self._reference_palette = tuple(palette)
-        self._reference_palette_name = name
-        if self._reference_palette:
-            label = name or "custom"
-            self.reference_palette_label.setText(
-                f"Reference palette: {label} ({len(self._reference_palette)} colors)"
-            )
-        else:
-            self.reference_palette_label.setText("Reference palette: none")
-        self._emit_settings()
 
     def set_preview_image(self, image: Image.Image | None) -> None:
         self._preview_image = image
@@ -253,24 +273,66 @@ class PreviewPanel(QWidget):
             self.set_preview_image(self._preview_image)
 
     def settings(self) -> ExtractSettings:
+        resample_mode = self.resample_combo.currentData()
         return ExtractSettings(
             width=self.width_spin.value(),
             height=self.height_spin.value(),
             fit_mode=self.fit_combo.currentText(),
-            resample_mode=self.resample_combo.currentText(),
+            resample_mode=(
+                resample_mode if isinstance(resample_mode, str) else "Nearest"
+            ),
             post_process_mode=self.post_process_combo.currentText(),
-            max_colors=self.max_colors(),
-            dither=self.dither_checkbox.isChecked(),
-            quantize_enabled=self.quantize_checkbox.isChecked(),
-            reference_palette=self._reference_palette,
+            denoise_radius=self.denoise_radius_spin.value(),
+            denoise_strength=self.denoise_strength_spin.value(),
+            despeckle_max_size=self.despeckle_max_size_spin.value(),
+            despeckle_tolerance=self.despeckle_tolerance_spin.value(),
         )
 
     def _emit_settings(self) -> None:
         self.settings_changed.emit(self.settings())
 
-    def max_colors(self) -> int:
-        return [8, 16, 32, 64][self.max_colors_slider.value()]
-
-    def _on_max_colors_changed(self) -> None:
-        self.max_colors_value_label.setText(str(self.max_colors()))
+    def _on_process_changed(self) -> None:
+        self._update_process_controls()
         self._emit_settings()
+
+    def _update_process_controls(self) -> None:
+        mode = self.post_process_combo.currentText()
+        denoise = mode == "Edge-Preserving Denoise"
+        despeckle_mode = mode == "Despeckle"
+        for widget in (
+            self.denoise_radius_label,
+            self.denoise_radius_spin,
+            self.denoise_strength_label,
+            self.denoise_strength_spin,
+        ):
+            widget.setVisible(denoise)
+        for widget in (
+            self.despeckle_size_label,
+            self.despeckle_max_size_spin,
+            self.despeckle_tolerance_label,
+            self.despeckle_tolerance_spin,
+        ):
+            widget.setVisible(despeckle_mode)
+        self.reset_processing_button.setVisible(denoise or despeckle_mode)
+
+    def _reset_processing(self) -> None:
+        self.denoise_radius_spin.setValue(1)
+        self.denoise_strength_spin.setValue(35)
+        self.despeckle_max_size_spin.setValue(1)
+        self.despeckle_tolerance_spin.setValue(24)
+        self.post_process_combo.setCurrentText("None")
+        self._update_process_controls()
+        self._emit_settings()
+
+    def _update_resample_tooltip(self) -> None:
+        descriptions = {
+            "Area (Box Average)": (
+                "Smooth, noise-reducing area-weighted sampling intended for downscaling."
+            ),
+            "Lanczos 3": (
+                "Sharper high-quality resizing; extreme contrast transitions may show slight ringing."
+            ),
+        }
+        self.resample_combo.setToolTip(
+            descriptions.get(self.resample_combo.currentText(), "Resize sampling method")
+        )

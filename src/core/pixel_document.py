@@ -12,6 +12,7 @@ from PIL import Image
 Point = tuple[int, int]
 Rect = tuple[int, int, int, int]
 Color = tuple[int, int, int, int]
+RGB_DISTANCE_MAX = int(np.ceil(np.sqrt(3 * (255 ** 2))))
 
 
 @dataclass
@@ -27,6 +28,7 @@ class Layer:
     image: Image.Image
     visible: bool = True
     history: list[Image.Image] = field(default_factory=list)
+    redo_history: list[Image.Image] = field(default_factory=list)
 
 
 def composite_layers(layers: Iterable[Layer]) -> Image.Image:
@@ -111,6 +113,14 @@ class PixelDocument:
     @image_history.setter
     def image_history(self, value: list[Image.Image]) -> None:
         self.active_layer.history = value
+
+    @property
+    def image_redo_history(self) -> list[Image.Image]:
+        return self.active_layer.redo_history
+
+    @image_redo_history.setter
+    def image_redo_history(self, value: list[Image.Image]) -> None:
+        self.active_layer.redo_history = value
 
     # --- Geometry ------------------------------------------------------------
 
@@ -289,6 +299,7 @@ class PixelDocument:
         for layer, new_img in zip(self.layers, new_layers):
             layer.image = new_img
             layer.history.clear()
+            layer.redo_history.clear()
 
 
 @dataclass(slots=True)
@@ -538,6 +549,11 @@ def replace_color_with_transparent(image: Image.Image, color: Color) -> tuple[Im
     return replace_color(image, color, (0, 0, 0, 0))
 
 
+def rgb_distance_tolerance_from_percent(percent: int | float) -> int:
+    clamped = max(0.0, min(100.0, float(percent)))
+    return int(round(RGB_DISTANCE_MAX * clamped / 100.0))
+
+
 def replace_similar_color_with_transparent(
     image: Image.Image,
     color: Color,
@@ -551,7 +567,7 @@ def replace_similar_color_with_transparent(
     rgb = arr[..., :3].astype(np.int32)
     target = np.array(color[:3], dtype=np.int32)
     delta = rgb - target
-    tolerance = max(0, min(441, int(tolerance)))
+    tolerance = max(0, min(RGB_DISTANCE_MAX, int(tolerance)))
     mask = (arr[..., 3] != 0) & (np.sum(delta * delta, axis=-1) <= tolerance * tolerance)
     replaced_count = int(mask.sum())
     if replaced_count == 0:
@@ -902,6 +918,7 @@ def _shortest_hue_delta(start_hue: float, end_hue: float) -> float:
 
 def push_image_history(document: PixelDocument, max_entries: int = 20) -> None:
     document.image_history.append(document.image.copy())
+    document.image_redo_history.clear()
     if len(document.image_history) > max_entries:
         document.image_history = document.image_history[-max_entries:]
 
@@ -909,5 +926,16 @@ def push_image_history(document: PixelDocument, max_entries: int = 20) -> None:
 def undo_image_history(document: PixelDocument) -> bool:
     if not document.image_history:
         return False
+    document.image_redo_history.append(document.image.copy())
     document.image = document.image_history.pop()
+    return True
+
+
+def redo_image_history(document: PixelDocument, max_entries: int = 20) -> bool:
+    if not document.image_redo_history:
+        return False
+    document.image_history.append(document.image.copy())
+    if len(document.image_history) > max_entries:
+        document.image_history = document.image_history[-max_entries:]
+    document.image = document.image_redo_history.pop()
     return True

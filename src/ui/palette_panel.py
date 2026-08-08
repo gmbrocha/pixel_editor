@@ -16,10 +16,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PIL import Image
-
-from src.core.palette import PaletteExtractionDebug, PaletteExtractionSettings
-from src.core.qt_image import pil_image_to_qpixmap
+from src.core.palette import PaletteExtractionSettings
 
 
 class PaletteSwatchStrip(QWidget):
@@ -29,6 +26,7 @@ class PaletteSwatchStrip(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self._active_palette_name: str | None = None
         self._palette: list[tuple[int, int, int, int]] = []
         self._selected_index: int | None = None
         self.setMinimumHeight(48)
@@ -116,6 +114,9 @@ class PalettePanel(QWidget):
     export_palette_requested = Signal()
     apply_palette_to_preview_requested = Signal()
     apply_palette_to_source_requested = Signal()
+    clear_palette_requested = Signal()
+    clear_quantized_preview_requested = Signal()
+    dither_changed = Signal(bool)
     custom_color_requested = Signal()
     color_remove_requested = Signal(int)
     color_edit_requested = Signal(int)
@@ -163,6 +164,9 @@ class PalettePanel(QWidget):
 
         self.posterize_enabled_checkbox = QCheckBox("Posterize")
         self.posterize_enabled_checkbox.setChecked(False)
+        self.posterize_enabled_checkbox.setToolTip(
+            "Posterize the palette-generation sampling source; the preview remains unquantized"
+        )
 
         self.posterize_preset_combo = QComboBox()
         self.posterize_preset_combo.addItem("Custom", "custom")
@@ -193,15 +197,10 @@ class PalettePanel(QWidget):
         self.posterize_mode_combo.addItem("RGB Levels", "rgb_levels")
         self.posterize_mode_combo.addItem("LAB Lightness", "lab_lightness")
 
-        self.posterize_source_combo = QComboBox()
-        self.posterize_source_combo.addItem("Sampling Source", "sampling_source")
-        self.posterize_source_combo.addItem("Preview Only", "preview_only")
-        self.posterize_source_combo.addItem("Final Quantize Source", "final_quantize_source")
-
         self.sample_mode_combo = QComboBox()
         self.sample_mode_combo.addItem("Balanced", "balanced")
-        self.sample_mode_combo.addItem("Spread", "spread")
         self.sample_mode_combo.addItem("Most Frequent", "frequent")
+        self.sample_mode_combo.addItem("Spread", "spread")
         self.sample_mode_combo.setCurrentIndex(0)
         self.sample_mode_combo.setToolTip(
             "How to pick colors when the source has more distinct colors than Max Colors:\n"
@@ -212,7 +211,9 @@ class PalettePanel(QWidget):
         self.sort_mode_combo = QComboBox()
         self.sort_mode_combo.addItems(["Brightness", "Hue"])
 
-        self.summary_label = QLabel("Palette colors: 0")
+        self.summary_label = QLabel("Active palette: none")
+        self.quantization_status_label = QLabel("Preview: unquantized")
+        self.quantization_status_label.setStyleSheet("color: #aaa; font-size: 11px;")
         self._selected_color_label = QLabel("")
         self._selected_color_label.setStyleSheet("color: #888; font-size: 11px;")
 
@@ -232,14 +233,43 @@ class PalettePanel(QWidget):
         self._remove_button.setEnabled(False)
         self._remove_button.clicked.connect(self._emit_remove_selected)
 
+        self.clear_palette_button = QPushButton("Clear Palette")
+        self.clear_palette_button.setEnabled(False)
+        self.clear_palette_button.clicked.connect(self.clear_palette_requested.emit)
+
         sort_button = QPushButton("Sort Palette")
         sort_button.clicked.connect(self._emit_sort_requested)
 
-        apply_preview_button = QPushButton("Quantize Preview")
-        apply_preview_button.clicked.connect(self.apply_palette_to_preview_requested.emit)
+        self.dither_quantized_checkbox = QCheckBox("Dither Quantized Result")
+        self.dither_quantized_checkbox.setChecked(False)
+        self.dither_quantized_checkbox.setEnabled(False)
+        self.dither_quantized_checkbox.setToolTip(
+            "Use deterministic Floyd-Steinberg error diffusion when explicitly quantizing"
+        )
 
-        apply_source_button = QPushButton("Apply To Source")
-        apply_source_button.clicked.connect(self.apply_palette_to_source_requested.emit)
+        self.quantize_preview_button = QPushButton("Quantize Preview")
+        self.quantize_preview_button.setEnabled(False)
+        self.quantize_preview_button.setToolTip(
+            "Generate or load an active palette before quantizing the preview"
+        )
+        self.quantize_preview_button.clicked.connect(
+            self.apply_palette_to_preview_requested.emit
+        )
+
+        self.clear_quantized_preview_button = QPushButton("Clear Quantized Preview")
+        self.clear_quantized_preview_button.setEnabled(False)
+        self.clear_quantized_preview_button.clicked.connect(
+            self.clear_quantized_preview_requested.emit
+        )
+
+        self.apply_source_button = QPushButton("Apply To Source")
+        self.apply_source_button.setEnabled(False)
+        self.apply_source_button.setToolTip(
+            "Quantize Preview first, then commit the active palette to the source with undo history"
+        )
+        self.apply_source_button.clicked.connect(
+            self.apply_palette_to_source_requested.emit
+        )
 
         top_row = QHBoxLayout()
         top_row.addWidget(QLabel("Palette Size"))
@@ -278,8 +308,6 @@ class PalettePanel(QWidget):
         posterize_layout.addWidget(self.posterize_preset_combo, 0, 2)
         posterize_layout.addWidget(QLabel("Mode"), 1, 0)
         posterize_layout.addWidget(self.posterize_mode_combo, 1, 1)
-        posterize_layout.addWidget(QLabel("Source"), 1, 2)
-        posterize_layout.addWidget(self.posterize_source_combo, 1, 3)
         posterize_layout.addWidget(QLabel("Strength"), 2, 0)
         posterize_layout.addWidget(self.posterize_strength_spin, 2, 1)
         posterize_layout.addWidget(QLabel("RGB"), 2, 2)
@@ -301,6 +329,7 @@ class PalettePanel(QWidget):
         button_grid.addWidget(export_button, 1, 0)
         button_grid.addWidget(self._add_button, 1, 1)
         button_grid.addWidget(self._remove_button, 1, 2)
+        button_grid.addWidget(self.clear_palette_button, 2, 0)
 
         sort_row = QHBoxLayout()
         sort_row.addWidget(QLabel("Sort"))
@@ -309,31 +338,11 @@ class PalettePanel(QWidget):
         sort_row.addStretch(1)
 
         apply_row = QHBoxLayout()
-        apply_row.addWidget(apply_preview_button)
-        apply_row.addWidget(apply_source_button)
+        apply_row.addWidget(self.dither_quantized_checkbox)
+        apply_row.addWidget(self.quantize_preview_button)
+        apply_row.addWidget(self.clear_quantized_preview_button)
+        apply_row.addWidget(self.apply_source_button)
         apply_row.addStretch(1)
-
-        debug_group = QGroupBox("Palette Debug")
-        debug_layout = QVBoxLayout(debug_group)
-        preview_row = QHBoxLayout()
-        self._debug_original_label = QLabel("Original")
-        self._debug_original_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._debug_original_label.setMinimumSize(96, 72)
-        self._debug_quantized_label = QLabel("Quantized")
-        self._debug_quantized_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._debug_quantized_label.setMinimumSize(96, 72)
-        preview_row.addWidget(self._debug_original_label, 1)
-        preview_row.addWidget(self._debug_quantized_label, 1)
-        debug_layout.addLayout(preview_row)
-        self._debug_swatch_container = QWidget()
-        self._debug_swatch_grid = QGridLayout(self._debug_swatch_container)
-        self._debug_swatch_grid.setContentsMargins(0, 0, 0, 0)
-        self._debug_swatch_grid.setSpacing(3)
-        debug_layout.addWidget(self._debug_swatch_container)
-        self._debug_text_label = QLabel("Extract a palette to view cluster diagnostics.")
-        self._debug_text_label.setWordWrap(True)
-        self._debug_text_label.setStyleSheet("color: #aaa; font-size: 11px;")
-        debug_layout.addWidget(self._debug_text_label)
 
         layout = QVBoxLayout(self)
         layout.addLayout(top_row)
@@ -345,8 +354,8 @@ class PalettePanel(QWidget):
         layout.addLayout(info_row)
         layout.addLayout(button_grid)
         layout.addLayout(sort_row)
+        layout.addWidget(self.quantization_status_label)
         layout.addLayout(apply_row)
-        layout.addWidget(debug_group)
 
         self.swatches.color_selected.connect(self._on_swatch_selected)
         self.swatches.color_remove_requested.connect(self.color_remove_requested.emit)
@@ -354,6 +363,7 @@ class PalettePanel(QWidget):
         self.posterize_preset_combo.currentIndexChanged.connect(
             self._apply_posterize_preset
         )
+        self.dither_quantized_checkbox.toggled.connect(self.dither_changed.emit)
 
     def max_colors(self) -> int:
         return self.max_colors_spin.value()
@@ -379,10 +389,7 @@ class PalettePanel(QWidget):
             posterize_lab_lightness_levels=self.posterize_lab_lightness_spin.value(),
             posterize_chroma_levels=self.posterize_chroma_spin.value(),
             posterize_mode=self._combo_data(self.posterize_mode_combo, "perceptual"),
-            posterize_source=self._combo_data(
-                self.posterize_source_combo,
-                "sampling_source",
-            ),
+            posterize_source="sampling_source",
         )
 
     def _combo_data(self, combo: QComboBox, fallback: str) -> str:
@@ -432,73 +439,51 @@ class PalettePanel(QWidget):
         self.posterize_lab_lightness_spin.setValue(lightness_levels)
         self.posterize_chroma_spin.setValue(chroma_levels)
         self._set_combo_data(self.posterize_mode_combo, "perceptual")
-        self._set_combo_data(self.posterize_source_combo, "sampling_source")
 
-    def set_palette(self, palette: list[tuple[int, int, int, int]]) -> None:
+    def set_palette(
+        self,
+        palette: list[tuple[int, int, int, int]],
+        name: str | None = None,
+    ) -> None:
         self.swatches.set_palette(palette)
-        self.summary_label.setText(f"Palette colors: {len(palette)}")
+        self._active_palette_name = name if palette else None
+        has_palette = bool(palette)
+        if has_palette:
+            label = name or "custom"
+            self.summary_label.setText(f"Active palette: {label} ({len(palette)} colors)")
+        else:
+            self.summary_label.setText("Active palette: none")
+        self.clear_palette_button.setEnabled(has_palette)
+        self.dither_quantized_checkbox.setEnabled(has_palette)
+        self.quantize_preview_button.setEnabled(has_palette)
+        self.quantize_preview_button.setToolTip(
+            "Map the unquantized preview to the active palette exactly once"
+            if has_palette
+            else "Generate or load an active palette before quantizing the preview"
+        )
         # Revalidate selection state after palette change
         self._on_swatch_selected(self.swatches.selected_index())
 
-    def set_extraction_debug(
-        self,
-        original: Image.Image | None,
-        debug: PaletteExtractionDebug | None,
-        quantized: Image.Image | None,
-    ) -> None:
-        self._set_debug_image(self._debug_original_label, original, "Original")
-        self._set_debug_image(self._debug_quantized_label, quantized, "Quantized")
-        self._clear_debug_swatches()
+    def dither_enabled(self) -> bool:
+        return self.dither_quantized_checkbox.isChecked()
 
-        if debug is None:
-            self._debug_text_label.setText("Extract a palette to view cluster diagnostics.")
-            return
-
-        for index, selected in enumerate(debug.selected_colors):
-            swatch = QLabel()
-            swatch.setFixedSize(24, 18)
-            r, g, b, a = selected.color
-            swatch.setStyleSheet(
-                f"background: rgba({r}, {g}, {b}, {a}); border: 1px solid #111;"
-            )
-            label = QLabel(
-                f"#{r:02X}{g:02X}{b:02X} {selected.family} "
-                f"{selected.pixel_percent * 100:.2f}%"
-            )
-            label.setStyleSheet("font-size: 10px; color: #ddd;")
-            row = index // 2
-            col = (index % 2) * 2
-            self._debug_swatch_grid.addWidget(swatch, row, col)
-            self._debug_swatch_grid.addWidget(label, row, col + 1)
-
-        self._debug_text_label.setText("\n".join(debug.summary_lines()))
-
-    def _set_debug_image(
-        self,
-        label: QLabel,
-        image: Image.Image | None,
-        fallback: str,
-    ) -> None:
-        if image is None:
-            label.clear()
-            label.setText(fallback)
-            return
-        pixmap = pil_image_to_qpixmap(image)
-        label.setPixmap(
-            pixmap.scaled(
-                140,
-                100,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.FastTransformation,
-            )
+    def set_quantization_state(self, quantized: bool) -> None:
+        self.quantization_status_label.setText(
+            f"Preview: quantized with {self._active_palette_name or 'active palette'}"
+            if quantized
+            else "Preview: unquantized"
         )
+        self.clear_quantized_preview_button.setEnabled(quantized)
+        self.apply_source_button.setEnabled(quantized and bool(self.swatches._palette))
 
-    def _clear_debug_swatches(self) -> None:
-        while self._debug_swatch_grid.count():
-            item = self._debug_swatch_grid.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
+    def apply_legacy_quantization_settings(self, settings: dict[str, object]) -> None:
+        """Migrate preferences without re-enabling legacy automatic quantization."""
+        legacy_max = settings.get("max_colors")
+        if isinstance(legacy_max, (int, float)):
+            self.max_colors_spin.setValue(int(legacy_max))
+        legacy_dither = settings.get("dither")
+        if isinstance(legacy_dither, bool):
+            self.dither_quantized_checkbox.setChecked(legacy_dither)
 
     def _on_swatch_selected(self, index: int | None) -> None:
         has_selection = index is not None

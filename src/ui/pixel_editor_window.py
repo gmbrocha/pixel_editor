@@ -61,11 +61,14 @@ from src.core.pixel_document import (
     lighten_image,
     normalize_to_black_white,
     push_image_history,
+    redo_image_history,
     replace_color,
     replace_colors,
     replace_color_with_transparent,
+    replace_similar_color_with_transparent,
     rotate_image_clockwise,
     rotate_image_counterclockwise,
+    rgb_distance_tolerance_from_percent,
     undo_image_history,
 )
 from src.ui.pixel_grid_canvas import PixelGridCanvas
@@ -486,6 +489,17 @@ class PixelEditorWindow(QMainWindow):
         self.replace_with_button = QPushButton("Pick")
         self.add_replace_with_to_palette_button = QPushButton("+ Palette")
         self.transparent_replace_clear_button = QPushButton("Clear")
+        self.white_transparency_percent_spin = QSpinBox()
+        self.white_transparency_percent_spin.setRange(0, 100)
+        self.white_transparency_percent_spin.setValue(7)
+        self.white_transparency_percent_spin.setSuffix("%")
+        self.white_transparency_percent_spin.setToolTip(
+            "RGB-distance percentage from pure white. 0% only clears #FFFFFF."
+        )
+        self.white_to_transparency_button = QPushButton("white -> trans")
+        self.white_to_transparency_button.setToolTip(
+            "Clear active-layer pixels near pure white to transparent"
+        )
         self.calculate_change_button = QPushButton("Calculate Change")
         self.change_target_button = QPushButton("Change Target")
         self.color_shift_summary = QLabel("Delta: none")
@@ -729,6 +743,14 @@ class PixelEditorWindow(QMainWindow):
         toolbar.addAction(self.undo_action)
         self.addAction(self.undo_action)
 
+        self.redo_action = QAction("Redo", self)
+        self.redo_action.setShortcut(QKeySequence.StandardKey.Redo)
+        self.redo_action.setShortcutContext(Qt.ShortcutContext.WindowShortcut)
+        self.redo_action.setToolTip("Redo the last undone reversible edit. Shortcut: Ctrl+Y")
+        self.redo_action.triggered.connect(self.redo_last_edit)
+        toolbar.addAction(self.redo_action)
+        self.addAction(self.redo_action)
+
         toolbar.addSeparator()
         self._mirror_action = QAction("Mirror", self)
         self._mirror_action.setCheckable(True)
@@ -855,6 +877,13 @@ class PixelEditorWindow(QMainWindow):
         replace_group_layout = QVBoxLayout(replace_group)
         replace_group_layout.setContentsMargins(4, 4, 4, 4)
         replace_group_layout.setSpacing(4)
+
+        white_key_row = QHBoxLayout()
+        white_key_row.addWidget(QLabel("White range"))
+        white_key_row.addWidget(self.white_transparency_percent_spin)
+        white_key_row.addWidget(self.white_to_transparency_button)
+        white_key_row.addStretch(1)
+        replace_group_layout.addLayout(white_key_row)
 
         target_row = QHBoxLayout()
         target_row.addWidget(QLabel("Target"))
@@ -1071,6 +1100,7 @@ class PixelEditorWindow(QMainWindow):
         self.replace_with_button.clicked.connect(self._pick_replace_with_color)
         self.add_replace_with_to_palette_button.clicked.connect(self._add_replace_with_to_palette)
         self.transparent_replace_clear_button.clicked.connect(self._clear_transparent_replace_target)
+        self.white_to_transparency_button.clicked.connect(self._replace_near_white_with_transparent)
         self.calculate_change_button.clicked.connect(self._calculate_color_shift)
         self.change_target_button.clicked.connect(self._apply_color_shift_to_target)
         self.transparent_replace_preview.color_dropped.connect(self._drop_replace_target_color)
@@ -1299,6 +1329,13 @@ class PixelEditorWindow(QMainWindow):
             return
         self._reset_selection_after_transform()
         self.statusBar().showMessage("Undid last edit")
+
+    def redo_last_edit(self) -> None:
+        if not redo_image_history(self.document):
+            self.statusBar().showMessage("Nothing to redo")
+            return
+        self._reset_selection_after_transform()
+        self.statusBar().showMessage("Redid last edit")
 
     # Backwards-compatible alias for the previous, tone-specific name.
     undo_tone_adjustment = undo_last_edit
@@ -1701,6 +1738,28 @@ class PixelEditorWindow(QMainWindow):
         self.document.image = replaced
         self.canvas.invalidate_render_cache()
         self.statusBar().showMessage(f"Replaced {count} pixel{'s' if count != 1 else ''} with transparent")
+
+    def _replace_near_white_with_transparent(self) -> None:
+        percent = self.white_transparency_percent_spin.value()
+        tolerance = rgb_distance_tolerance_from_percent(percent)
+        replaced, count = replace_similar_color_with_transparent(
+            self.document.image,
+            (255, 255, 255, 255),
+            tolerance,
+        )
+        if count == 0:
+            self.statusBar().showMessage(
+                f"No pixels found within {percent}% of pure white"
+            )
+            return
+
+        push_image_history(self.document)
+        self.document.image = replaced
+        self.canvas.invalidate_render_cache()
+        self.statusBar().showMessage(
+            f"Cleared {count} near-white pixel{'s' if count != 1 else ''} "
+            f"within {percent}% of pure white"
+        )
 
     def _pick_replace_with_color(self) -> None:
         initial = QColor(*self._replace_with_color)
