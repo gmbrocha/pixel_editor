@@ -6,7 +6,7 @@ Last updated: 2026-08-16
 PixelForge is a PySide6 desktop pixel-art and tileset utility. Source-grounded tools include image import and preview extraction, palette handling, pixel editing, animation editing, modular Character Forge assembly/export, tile layout, tileset processing, tileset template generation, and procedural texture generation.
 
 ## Current Status
-Active development is indicated by the operational Pip & Pyre Component Factory: authoritative Idle/Walk/Run geometry, manifest-driven Character Forge composition, recipe schema 2, resumable GPT Image jobs, deterministic normalization/extraction/QA, review and Pixel Editor cleanup, and guarded production promotion are implemented. A generation-only reserved-blue mannequin ramp avoids false nudity moderation. The seven-component pilot completed 21 animation jobs and 63 candidates with zero API failures, but a full visual audit found zero production-ready candidates and zero coherent components spanning Idle, Walk, and Run because generated pixels do not reliably preserve the authoritative sprite geometry or design identity. The remaining 28 ideas stay queued and should not be generated with the current workflow. The existing walking shirt remains available as an incomplete, recolorable Tops component.
+Active development is indicated by the operational Pip & Pyre Component Factory: authoritative Idle/Walk/Run geometry, manifest-driven Character Forge composition, recipe schema 2, resumable GPT Image jobs, deterministic normalization/extraction/QA, review and Pixel Editor cleanup, and guarded production promotion are implemented. Pixel editing also includes Clean Stroke painting and selection resize handling from the latest `main` work. A generation-only reserved-blue mannequin ramp avoids false nudity moderation. The seven-component pilot completed 21 animation jobs and 63 candidates with zero API failures, but a full visual audit found zero production-ready candidates and zero coherent components spanning Idle, Walk, and Run because generated pixels do not reliably preserve the authoritative sprite geometry or design identity. The remaining 28 ideas stay queued and should not be generated with the current workflow. The existing walking shirt remains available as an incomplete, recolorable Tops component.
 
 ## Blockers
 None. The pilot is complete and the remaining bootstrap queue is intentionally held for human review of the pilot.
@@ -38,6 +38,8 @@ Update this document after commits or other git state changes made during agent 
 Pivot component production toward reusable hand-authored topology families with authoritative-base underlays, animation-aware editing, linked ramps, and deterministic variants. Retain the pilot as optional concept/reference material. Do not run `python component_pipeline.py generate --bootstrap --remaining` with the current generation workflow; only reconsider API generation after a tightly controlled single-component exact-fit experiment succeeds.
 
 ## Recent Activity
+2026-08-16: Integrated the latest `main` Clean Stroke painting and selection resize work with the complete Character Forge and component-production branch while preserving both pixel-canvas workflows.
+
 2026-08-16: Validated and prepared the complete Pixel Forge worktree for integration, including Character Forge, the component pipeline and review tooling, palette and shade-ramp improvements, UI refinements, documentation, tests, and all current art under `assets/`; the full suite passes with 124 tests.
 
 2026-08-16: Added the manually authored Leather Boots as an incomplete Feet component covering all six Walk/Front frames, stripped the lower-row base references from its production overlay, and verified unsupported directions and animations fall back exactly to the authoritative base.
@@ -87,6 +89,12 @@ Pivot component production toward reusable hand-authored topology families with 
 2026-08-07: Committed the complete image-processing, transparency, palette-consolidation, and test changes on `agent/image-processing-palette-workflow` and prepared the branch for remote publication.
 
 2026-08-07: Added alpha-aware Area and Lanczos 3 resizing, denoise/despeckle processing, redo-capable history, and consolidated palette generation plus explicit quantization/dithering into one active-palette workflow; removed the automatic Limit Colors and palette-debug panes, with 67 tests passing.
+
+2026-06-26: Committed Clean Stroke paint dragging, selection resize handles, and Command Center sync notes for remote push.
+
+2026-06-26: Prepared Clean Stroke paint dragging and selection resize handles for commit and remote push after syncing home changes from `origin/main`.
+
+2026-06-26: Pulled `origin/main` to `1cbf604`, reapplied local editor changes after resolving one signal-setup conflict, dropped the temporary stash, and verified focused pixel-canvas tests pass.
 
 2026-06-26: Prepared isometric guide overlay controls, stamp flip actions, related canvas tests, and removal of a root ballista asset for commit and remote push.
 

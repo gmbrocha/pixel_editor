@@ -537,6 +537,11 @@ class PixelEditorWindow(QMainWindow):
 
         self.paint_radio = QRadioButton("Paint")
         self.select_radio = QRadioButton("Select")
+        self.clean_stroke_checkbox = QCheckBox("Clean Stroke")
+        self.clean_stroke_checkbox.setToolTip(
+            "In Paint mode, drag continuously while avoiding repeated pixels "
+            "and 2x2 double-pixel corners."
+        )
         self.draw_selection_checkbox = QCheckBox("Draw Selection")
         self.draw_selection_checkbox.setToolTip(
             "In Select mode, click perimeter cells, then click the first cell "
@@ -803,6 +808,7 @@ class PixelEditorWindow(QMainWindow):
         # Mode + color
         mode_row = QHBoxLayout()
         mode_row.addWidget(self.paint_radio)
+        mode_row.addWidget(self.clean_stroke_checkbox)
         mode_row.addWidget(self.select_radio)
         mode_row.addWidget(self.draw_selection_checkbox)
         mode_row.addWidget(self.stamp_radio)
@@ -1083,6 +1089,7 @@ class PixelEditorWindow(QMainWindow):
         self.stamp_radio.toggled.connect(self._on_mode_changed)
         self.flood_erase_radio.toggled.connect(self._on_mode_changed)
         self.iso_guide_radio.toggled.connect(self._on_mode_changed)
+        self.clean_stroke_checkbox.toggled.connect(self.canvas.set_clean_stroke_enabled)
         self.draw_selection_checkbox.toggled.connect(self._on_draw_selection_toggled)
         self.copy_stamp_button.clicked.connect(self._copy_as_stamp)
         self.flip_stamp_h_button.clicked.connect(self._flip_stamp_horizontal)
