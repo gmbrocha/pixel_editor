@@ -212,6 +212,25 @@ def palette_from_image(
     return colors
 
 
+def all_colors_from_image(image: Image.Image) -> list[Color]:
+    """Return every distinct visible RGBA color in first-appearance order.
+
+    Fully transparent pixels are ignored so hidden RGB data cannot create
+    phantom palette entries. A transparent-only image returns one transparent
+    swatch, matching the existing palette-extraction fallback.
+    """
+    colors: list[Color] = []
+    seen: set[Color] = set()
+    pixels = np.asarray(image.convert("RGBA"), dtype=np.uint8).reshape(-1, 4)
+    for red, green, blue, alpha in pixels:
+        color: Color = (int(red), int(green), int(blue), int(alpha))
+        if color[3] == 0 or color in seen:
+            continue
+        seen.add(color)
+        colors.append(color)
+    return colors or [(0, 0, 0, 0)]
+
+
 def palette_from_image_with_debug(
     image: Image.Image,
     max_colors: int = 16,
@@ -1162,7 +1181,7 @@ def _pillow_palette_image(palette: list[Color]) -> Image.Image:
     return palette_image
 
 
-def load_palette_from_hex_list(text: str, max_colors: int = 256) -> list[Color]:
+def load_palette_from_hex_list(text: str, max_colors: int | None = 256) -> list[Color]:
     colors: list[Color] = []
     for match in _HEX_COLOR_RE.finditer(text):
         raw = match.group(0).lstrip("#")
@@ -1182,7 +1201,7 @@ def load_palette_from_hex_list(text: str, max_colors: int = 256) -> list[Color]:
             )
         if color not in colors:
             colors.append(color)
-        if len(colors) >= max_colors:
+        if max_colors is not None and len(colors) >= max_colors:
             break
 
     if not colors:
@@ -1192,7 +1211,7 @@ def load_palette_from_hex_list(text: str, max_colors: int = 256) -> list[Color]:
 
 def load_palette_from_source(
     path_or_text: str | Path,
-    max_colors: int = 256,
+    max_colors: int | None = 256,
     *,
     selection: str = "frequent",
     settings: PaletteExtractionSettings | None = None,
@@ -1215,12 +1234,14 @@ def load_palette_from_source(
 
 def load_palette_from_image(
     path: str | Path,
-    max_colors: int = 16,
+    max_colors: int | None = 16,
     *,
     selection: str = "frequent",
     settings: PaletteExtractionSettings | None = None,
 ) -> list[Color]:
     image = Image.open(path).convert("RGBA")
+    if max_colors is None:
+        return all_colors_from_image(image)
     return palette_from_image(
         image,
         max_colors=max_colors,

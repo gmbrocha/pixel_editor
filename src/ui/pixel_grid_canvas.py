@@ -69,6 +69,10 @@ class PixelGridCanvas(QWidget):
         self._ellipse_key_down = False
         self._ellipse_start: tuple[int, int] | None = None
         self._ellipse_current: tuple[int, int] | None = None
+        self._measurement_enabled = False
+        self._measurement_start: tuple[int, int] | None = None
+        self._measurement_current: tuple[int, int] | None = None
+        self._measurement_end: tuple[int, int] | None = None
         self._mirror = False
         self._transparent_color: QColor | None = None
         self._stamp: 'Image.Image | None' = None
@@ -130,6 +134,7 @@ class PixelGridCanvas(QWidget):
         self._document = document
         self._cancel_line_preview()
         self._cancel_ellipse_preview()
+        self._clear_measurement(update=False)
         self._last_image_size = (document.image.width, document.image.height)
         self.invalidate_render_cache(update=False)
         self.updateGeometry()
@@ -149,18 +154,38 @@ class PixelGridCanvas(QWidget):
             self._stamp_hover = None
         if mode != "iso_guide":
             self._cancel_isometric_guide_drag()
-        if mode == "flood_erase":
-            self.setCursor(Qt.CursorShape.CrossCursor)
-        elif mode == "iso_guide":
-            self.setCursor(
-                Qt.CursorShape.OpenHandCursor
-                if self._isometric_guide is not None
-                else Qt.CursorShape.CrossCursor
-            )
-        else:
-            self.unsetCursor()
+        self._update_mode_cursor()
         self.status_changed.emit(f"Pixel editor mode: {mode}")
         self.update()
+
+    def set_measurement_enabled(self, enabled: bool) -> None:
+        enabled = bool(enabled)
+        if enabled == self._measurement_enabled:
+            return
+        self._measurement_enabled = enabled
+        self._clear_measurement(update=False)
+        self._update_mode_cursor()
+        if enabled:
+            self.status_changed.emit(
+                "Measure: click a start pixel, move to the end pixel, then click again"
+            )
+        else:
+            self.status_changed.emit("Measurement tool off")
+        self.update()
+
+    def is_measurement_enabled(self) -> bool:
+        return self._measurement_enabled
+
+    def measurement(self) -> tuple[tuple[int, int], tuple[int, int]] | None:
+        if self._measurement_start is None or self._measurement_end is None:
+            return None
+        return self._measurement_start, self._measurement_end
+
+    def measurement_distance(self) -> float | None:
+        measurement = self.measurement()
+        if measurement is None:
+            return None
+        return self._pixel_distance(*measurement)
 
     def set_draw_selection_enabled(self, enabled: bool) -> None:
         self._draw_selection_enabled = bool(enabled)
@@ -244,6 +269,16 @@ class PixelGridCanvas(QWidget):
         self._stamp = stamp
         return True
 
+    def set_stamp_image(self, stamp: 'Image.Image') -> None:
+        """Load a native-size image as a floating, not-yet-committed stamp."""
+        self._stamp = stamp.convert("RGBA").copy()
+        if self._document is not None:
+            self._stamp_hover = (
+                self._document.image.width // 2,
+                self._document.image.height // 2,
+            )
+        self.update()
+
     def stamp_image(self) -> 'Image.Image | None':
         return self._stamp
 
@@ -301,8 +336,7 @@ class PixelGridCanvas(QWidget):
             f"Isometric guide {self._isometric_direction_label(guide_direction)}: "
             f"{guide_steps} step{'s' if guide_steps != 1 else ''} at 1/2 slope"
         )
-        if self._mode == "iso_guide":
-            self.setCursor(Qt.CursorShape.OpenHandCursor)
+        self._update_mode_cursor()
         self.update()
 
     def set_isometric_guide_steps(self, steps: int) -> None:
@@ -329,8 +363,7 @@ class PixelGridCanvas(QWidget):
         self._isometric_guide = None
         self._cancel_isometric_guide_drag()
         self.isometric_guide_changed.emit("", 0)
-        if self._mode == "iso_guide":
-            self.setCursor(Qt.CursorShape.CrossCursor)
+        self._update_mode_cursor()
         self.status_changed.emit("Isometric guide cleared")
         self.update()
 
@@ -515,6 +548,7 @@ class PixelGridCanvas(QWidget):
         self._draw_ellipse_preview(painter)
         self._draw_stamp_preview(painter)
         self._draw_isometric_guide(painter)
+        self._draw_measurement(painter)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         self.setFocus(Qt.FocusReason.MouseFocusReason)
@@ -525,6 +559,37 @@ class PixelGridCanvas(QWidget):
             return
 
         if self._document is None:
+            return
+
+        if self._measurement_enabled:
+            if event.button() == Qt.MouseButton.RightButton:
+                if self._clear_measurement():
+                    self.status_changed.emit("Measurement cleared")
+                else:
+                    self.status_changed.emit(
+                        "Measure: click a start pixel, move to the end pixel, then click again"
+                    )
+                return
+            if event.button() != Qt.MouseButton.LeftButton:
+                return
+            point = self._event_to_pixel(event.position().toPoint())
+            if point is None:
+                return
+            if self._measurement_start is None or self._measurement_end is not None:
+                self._measurement_start = point
+                self._measurement_current = point
+                self._measurement_end = None
+                self.status_changed.emit(
+                    f"Measurement start: ({point[0]}, {point[1]}). Click the end pixel"
+                )
+            else:
+                self._measurement_current = point
+                self._measurement_end = point
+                distance = self._pixel_distance(self._measurement_start, point)
+                self.status_changed.emit(
+                    f"Distance: {self._format_pixel_distance(distance)}. Right-click to clear"
+                )
+            self.update()
             return
 
         if self._mode == "iso_guide":
@@ -619,6 +684,14 @@ class PixelGridCanvas(QWidget):
         if self._document is None:
             return
 
+        if self._measurement_enabled:
+            if self._measurement_start is not None and self._measurement_end is None:
+                point = self._event_to_pixel(event.position().toPoint())
+                if point is not None and point != self._measurement_current:
+                    self._measurement_current = point
+                    self.update()
+            return
+
         if self._mode == "iso_guide":
             self._handle_isometric_guide_move(event)
             return
@@ -685,6 +758,8 @@ class PixelGridCanvas(QWidget):
             self.update()
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if self._measurement_enabled and event.button() != Qt.MouseButton.MiddleButton:
+            return
         if event.button() == Qt.MouseButton.LeftButton:
             if self._isometric_guide_drag is not None:
                 self._cancel_isometric_guide_drag()
@@ -715,7 +790,7 @@ class PixelGridCanvas(QWidget):
         if event.button() == Qt.MouseButton.MiddleButton:
             self._mid_drag = False
             self._mid_drag_origin = None
-            self.setCursor(Qt.CursorShape.ArrowCursor)
+            self._update_mode_cursor()
 
     def wheelEvent(self, event: QWheelEvent) -> None:
         delta = event.angleDelta().y()
@@ -1137,6 +1212,53 @@ class PixelGridCanvas(QWidget):
             ey * z + z // 2,
         )
 
+    def _draw_measurement(self, painter: QPainter) -> None:
+        if not self._measurement_enabled or self._measurement_start is None:
+            return
+        endpoint = self._measurement_end or self._measurement_current
+        if endpoint is None:
+            return
+
+        z = self._zoom
+        start_x = self._measurement_start[0] * z + z // 2
+        start_y = self._measurement_start[1] * z + z // 2
+        end_x = endpoint[0] * z + z // 2
+        end_y = endpoint[1] * z + z // 2
+        color = QColor("#00e5ff")
+        line_style = (
+            Qt.PenStyle.SolidLine
+            if self._measurement_end is not None
+            else Qt.PenStyle.DashLine
+        )
+        painter.setPen(QPen(color, 2, line_style))
+        painter.drawLine(start_x, start_y, end_x, end_y)
+
+        radius = max(4, min(8, z // 3))
+        painter.setBrush(QColor(0, 20, 24, 220))
+        painter.setPen(QPen(color, 2))
+        painter.drawEllipse(QRect(start_x - radius, start_y - radius, radius * 2, radius * 2))
+        painter.drawEllipse(QRect(end_x - radius, end_y - radius, radius * 2, radius * 2))
+
+        distance = self._pixel_distance(self._measurement_start, endpoint)
+        label = self._format_pixel_distance(distance)
+        metrics = painter.fontMetrics()
+        label_width = metrics.horizontalAdvance(label) + 12
+        label_height = metrics.height() + 6
+        midpoint_x = (start_x + end_x) // 2
+        midpoint_y = (start_y + end_y) // 2
+        label_x = midpoint_x - label_width // 2
+        label_y = midpoint_y - label_height - 8
+        if label_y < 0:
+            label_y = midpoint_y + 8
+        if self._document is not None:
+            label_x = max(0, min(label_x, self._document.image.width * z - label_width))
+            label_y = max(0, min(label_y, self._document.image.height * z - label_height))
+        label_rect = QRect(label_x, label_y, label_width, label_height)
+        painter.setPen(QPen(color, 1))
+        painter.setBrush(QColor(8, 18, 22, 225))
+        painter.drawRoundedRect(label_rect, 4, 4)
+        painter.drawText(label_rect, Qt.AlignmentFlag.AlignCenter, label)
+
     def _draw_ellipse_preview(self, painter: QPainter) -> None:
         if self._ellipse_start is None or self._ellipse_current is None or self._document is None:
             return
@@ -1336,6 +1458,41 @@ class PixelGridCanvas(QWidget):
         self._line_start = None
         self._line_current = None
         self.update()
+
+    def _clear_measurement(self, *, update: bool = True) -> bool:
+        had_measurement = self._measurement_start is not None
+        self._measurement_start = None
+        self._measurement_current = None
+        self._measurement_end = None
+        if had_measurement and update:
+            self.update()
+        return had_measurement
+
+    def _update_mode_cursor(self) -> None:
+        if self._measurement_enabled or self._mode == "flood_erase":
+            self.setCursor(Qt.CursorShape.CrossCursor)
+        elif self._mode == "iso_guide":
+            self.setCursor(
+                Qt.CursorShape.OpenHandCursor
+                if self._isometric_guide is not None
+                else Qt.CursorShape.CrossCursor
+            )
+        else:
+            self.unsetCursor()
+
+    @staticmethod
+    def _pixel_distance(
+        start: tuple[int, int],
+        end: tuple[int, int],
+    ) -> float:
+        return math.hypot(end[0] - start[0], end[1] - start[1])
+
+    @staticmethod
+    def _format_pixel_distance(distance: float) -> str:
+        nearest_integer = round(distance)
+        if math.isclose(distance, nearest_integer, abs_tol=1e-9):
+            return f"{nearest_integer} px"
+        return f"{distance:.3f} px"
 
     def _cancel_ellipse_preview(self) -> None:
         if self._ellipse_start is None and self._ellipse_current is None:

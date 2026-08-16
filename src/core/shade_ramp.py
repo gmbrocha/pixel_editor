@@ -10,6 +10,16 @@ from skimage.morphology import medial_axis
 Color = tuple[int, int, int, int]
 
 
+# Pixel-art ramps read more cohesively when their hue movement has a stable
+# temperature direction instead of applying the same signed hue offset to every
+# color family. Shadows move toward blue-violet; lights move toward warm yellow.
+# The movement is deliberately capped per stop so blue does not suddenly become
+# green and red does not jump straight to yellow.
+COOL_SHADOW_HUE_DEG: float = 245.0
+WARM_HIGHLIGHT_HUE_DEG: float = 50.0
+NEUTRAL_SATURATION_THRESHOLD: float = 8.0
+
+
 # Minimum normalized distance for any filled pixel in radial shading.
 # Clamping the floor keeps 1-pixel tips, thin vines, and edges from collapsing
 # to ramp[0] (the darkest shadow), which would make them visually disappear or
@@ -39,27 +49,94 @@ def hsb_to_rgb(h: float, s: float, b: float) -> tuple[int, int, int]:
     return int(round(r * 255)), int(round(g * 255)), int(round(bv * 255))
 
 
-def _apply_offset(h: float, s: float, b: float, dh: float, ds: float, db: float) -> tuple[float, float, float]:
-    return (h + dh) % 360.0, max(0.0, min(100.0, s + ds)), max(0.0, min(100.0, b + db))
+def _move_hue_toward(
+    hue: float,
+    target: float,
+    amount: float,
+    maximum_degrees: float,
+) -> float:
+    """Interpolate ``hue`` toward ``target`` on the shortest path, with a cap.
+
+    Fractional movement keeps related hues graded when the base already sits
+    near a temperature anchor. The cap prevents very distant anchors from
+    producing an abrupt intermediate hue.
+    """
+    delta = ((target - hue + 180.0) % 360.0) - 180.0
+    requested = delta * max(0.0, min(1.0, amount))
+    shift = max(-maximum_degrees, min(maximum_degrees, requested))
+    return (hue + shift) % 360.0
+
+
+def _shadow_saturation(saturation: float, strength: float) -> float:
+    """Increase chroma toward the shadow end without forcing neon colors."""
+    return min(92.0, saturation + (100.0 - saturation) * strength)
 
 
 def shade_ramp(color: Color) -> list[tuple[str, Color]]:
-    """Return [(label, rgba), ...] for shadow / base / midlight / highlight."""
+    """Return a six-stop authored-style pixel-art ramp around ``color``.
+
+    The selected color remains the exact Base stop. Three darker stops move
+    progressively toward a blue-violet shadow temperature, while two lighter
+    stops move toward warm yellow. Value changes are proportional to the base,
+    avoiding the heavy clipping caused by fixed ``B +/- N`` offsets.
+
+    Near-neutral colors receive restrained cool and warm chroma because their
+    HSV hue is otherwise undefined and a same-hue gray ramp looks lifeless.
+    """
     r, g, b = color[0], color[1], color[2]
     a = color[3]
     h, s, bv = rgb_to_hsb(r, g, b)
 
-    offsets = [
-        ("Shadow",    +12, +15, -40),
-        ("Base",        0,   0,   0),
-        ("Midlight",   -6, -12, +22),
-        ("Highlight", -12, -30, +45),
+    neutral = s < NEUTRAL_SATURATION_THRESHOLD
+    if neutral:
+        shadow_hues = (245.0, 240.0, 230.0)
+        light_hues = (58.0, WARM_HIGHLIGHT_HUE_DEG)
+        shadow_saturations = (28.0, 19.0, 11.0)
+        light_saturations = (7.0, 10.0)
+    else:
+        shadow_hues = (
+            _move_hue_toward(h, COOL_SHADOW_HUE_DEG, 0.62, 90.0),
+            _move_hue_toward(h, COOL_SHADOW_HUE_DEG, 0.38, 56.0),
+            _move_hue_toward(h, COOL_SHADOW_HUE_DEG, 0.18, 28.0),
+        )
+        light_hues = (
+            _move_hue_toward(h, WARM_HIGHLIGHT_HUE_DEG, 0.24, 12.0),
+            _move_hue_toward(h, WARM_HIGHLIGHT_HUE_DEG, 0.52, 26.0),
+        )
+        shadow_saturations = (
+            _shadow_saturation(s, 0.40),
+            _shadow_saturation(s, 0.28),
+            _shadow_saturation(s, 0.14),
+        )
+        light_saturations = (max(5.0, s * 0.78), max(4.0, s * 0.52))
+
+    # Three shadow colors deliberately give the artist room for occlusion,
+    # ordinary form shadow, and a soft transition back into the exact base.
+    values = (
+        bv * 0.36,
+        bv * 0.56,
+        bv * 0.78,
+        bv,
+        bv + (100.0 - bv) * 0.34,
+        bv + (100.0 - bv) * 0.68,
+    )
+    stops = [
+        ("Deep", shadow_hues[0], shadow_saturations[0], values[0]),
+        ("Shadow", shadow_hues[1], shadow_saturations[1], values[1]),
+        ("Soft", shadow_hues[2], shadow_saturations[2], values[2]),
+        ("Base", h, s, values[3]),
+        ("Light", light_hues[0], light_saturations[0], values[4]),
+        ("Highlight", light_hues[1], light_saturations[1], values[5]),
     ]
+
     ramp: list[tuple[str, Color]] = []
-    for label, dh, ds, db in offsets:
-        nh, ns, nb = _apply_offset(h, s, bv, dh, ds, db)
-        nr, ng, nbl = hsb_to_rgb(nh, ns, nb)
+    for label, hue, saturation, brightness in stops:
+        nr, ng, nbl = hsb_to_rgb(hue, saturation, brightness)
         ramp.append((label, (nr, ng, nbl, a)))
+
+    # HSV round-tripping can move the selected RGB by one channel value. The
+    # base swatch is an editing anchor, so preserve it byte-for-byte.
+    ramp[3] = ("Base", color)
     return ramp
 
 

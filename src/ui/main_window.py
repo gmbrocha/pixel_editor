@@ -27,11 +27,13 @@ from PySide6.QtWidgets import (
 )
 
 from src.core.assets import SavedAsset, build_tilesheet
+from src.core.character_forge import CharacterForgeError
 from src.core.document import EditorDocument
-from src.core.extract_region import extract_to_preview
+from src.core.extract_region import extract_to_preview, selection_source_size
 from src.core.image_io import load_image, save_image
 from src.core.palette import (
     add_color_to_palette,
+    all_colors_from_image,
     export_palette_strip,
     load_palette_from_source,
     palette_from_image_with_debug,
@@ -48,6 +50,8 @@ from src.core.pixel_document import (
     replace_similar_color_with_transparent,
 )
 from src.ui.asset_tray import AssetTray
+from src.ui.character_forge_window import CharacterForgeWindow
+from src.ui.component_review_window import ComponentReviewWindow
 from src.ui.palette_panel import PalettePanel
 from src.ui.persistent_palette_widget import PersistentPaletteWidget
 from src.ui.animation_editor_window import AnimationEditorWindow
@@ -160,6 +164,13 @@ class MainWindow(QMainWindow):
         toolbar.addAction(self._eyedropper_action)
 
         toolbar.addSeparator()
+        self.character_forge_action = QAction("Character Forge", self)
+        self.character_forge_action.triggered.connect(self.open_character_forge)
+        toolbar.addAction(self.character_forge_action)
+        self.component_review_action = QAction("Component Factory", self)
+        self.component_review_action.triggered.connect(self.open_component_review)
+        toolbar.addAction(self.component_review_action)
+
         anim_action = QAction("Animation Editor…", self)
         anim_action.triggered.connect(self.open_animation_editor)
         toolbar.addAction(anim_action)
@@ -205,6 +216,12 @@ class MainWindow(QMainWindow):
         self.drop_rect_button = QPushButton("Drop")
         self.drop_rect_button.clicked.connect(self._drop_rect_selection)
         rect_tool_row.addWidget(self.drop_rect_button)
+        self.select_all_button = QPushButton("Select All")
+        self.select_all_button.setToolTip(
+            "Set W and H to the imported image resolution and select the full image"
+        )
+        self.select_all_button.clicked.connect(self._select_all_source_image)
+        rect_tool_row.addWidget(self.select_all_button)
         rect_tool_row.addStretch(1)
         canvas_layout.addLayout(rect_tool_row)
 
@@ -517,12 +534,20 @@ class MainWindow(QMainWindow):
 
     def _refresh_preview(self) -> None:
         if self.document.source_image is None:
+            self.preview_panel.set_source_size(None)
             self.document.unquantized_preview_image = None
             self.document.preview_image = None
             self.document.preview_quantized = False
             self.preview_panel.set_preview_image(None)
             self.palette_panel.set_quantization_state(False)
             return
+
+        self.preview_panel.set_source_size(
+            selection_source_size(
+                self.document.source_image,
+                self.document.selections,
+            )
+        )
 
         unquantized = extract_to_preview(
             self.document.source_image,
@@ -538,16 +563,21 @@ class MainWindow(QMainWindow):
     def derive_palette_from_preview(self) -> None:
         if self.document.unquantized_preview_image is None:
             return
-        sample_mode = self.palette_panel.sample_mode()
-        palette, _debug = palette_from_image_with_debug(
-            self.document.unquantized_preview_image,
-            max_colors=self.palette_panel.max_colors(),
-            selection=sample_mode,
-            settings=self.palette_panel.extraction_settings(),
-        )
+        if self.palette_panel.reduce_colors_enabled():
+            sample_mode = self.palette_panel.sample_mode()
+            palette, _debug = palette_from_image_with_debug(
+                self.document.unquantized_preview_image,
+                max_colors=self.palette_panel.max_colors(),
+                selection=sample_mode,
+                settings=self.palette_panel.extraction_settings(),
+            )
+            detail = f"reduced with {sample_mode} sampling"
+        else:
+            palette = all_colors_from_image(self.document.unquantized_preview_image)
+            detail = "all distinct colors"
         self._set_active_palette(palette, "generated from preview")
         self.statusBar().showMessage(
-            f"Palette derived from preview ({sample_mode} sampling, {len(palette)} colors)"
+            f"Palette derived from preview ({detail}, {len(palette)} colors)"
         )
 
     def load_palette(self) -> None:
@@ -560,7 +590,15 @@ class MainWindow(QMainWindow):
         if not path:
             return
         try:
-            palette = load_palette_from_source(path, max_colors=256)
+            if self.palette_panel.reduce_colors_enabled():
+                palette = load_palette_from_source(
+                    path,
+                    max_colors=self.palette_panel.max_colors(),
+                    selection=self.palette_panel.sample_mode(),
+                    settings=self.palette_panel.extraction_settings(),
+                )
+            else:
+                palette = load_palette_from_source(path, max_colors=None)
         except Exception as exc:  # pragma: no cover - GUI feedback
             QMessageBox.critical(self, "Palette load failed", str(exc))
             return
@@ -984,6 +1022,34 @@ class MainWindow(QMainWindow):
     def _remove_pixel_window(self, target: PixelEditorWindow) -> None:
         self._pixel_windows = [window for window in self._pixel_windows if window is not target]
 
+    def open_character_forge(self) -> None:
+        try:
+            window = CharacterForgeWindow(self)
+        except CharacterForgeError as exc:
+            QMessageBox.critical(self, "Character Forge unavailable", str(exc))
+            return
+        window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
+        self._tool_windows.append(window)
+        window.show()
+        self.statusBar().showMessage("Opened Character Forge")
+
+    def open_component_review(self) -> None:
+        window = ComponentReviewWindow(parent=self)
+        window.component_promoted.connect(self._on_component_promoted)
+        window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
+        self._tool_windows.append(window)
+        window.show()
+        self.statusBar().showMessage("Opened component review factory")
+
+    def _on_component_promoted(self, path: str) -> None:
+        refreshed = 0
+        for window in tuple(self._tool_windows):
+            if isinstance(window, CharacterForgeWindow):
+                window._reload_catalog()
+                refreshed += 1
+        suffix = f"; refreshed {refreshed} open Character Forge window(s)" if refreshed else ""
+        self.statusBar().showMessage(f"Promoted component {path}{suffix}")
+
     def open_animation_editor(self) -> None:
         window = AnimationEditorWindow(self, initial_palette=list(self.document.palette))
         window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
@@ -1038,6 +1104,20 @@ class MainWindow(QMainWindow):
         h = self.rect_h_spin.value()
         self.source_canvas.drop_rect_selection(w, h)
         self.statusBar().showMessage(f"Dropped {w}x{h} rectangle — drag to position, right-click to delete")
+
+    def _select_all_source_image(self) -> None:
+        image = self.document.source_image
+        if image is None:
+            self.statusBar().showMessage("Load an image first")
+            return
+
+        width, height = image.size
+        self.rect_w_spin.setMaximum(max(self.rect_w_spin.maximum(), width))
+        self.rect_h_spin.setMaximum(max(self.rect_h_spin.maximum(), height))
+        self.rect_w_spin.setValue(width)
+        self.rect_h_spin.setValue(height)
+        self.source_canvas.drop_rect_selection(width, height, replace=True)
+        self.statusBar().showMessage(f"Selected full image: {width}x{height} pixels")
 
     def _remove_tool_window(self, target: QMainWindow) -> None:
         self._tool_windows = [window for window in self._tool_windows if window is not target]

@@ -1,6 +1,6 @@
 from PIL import Image
 
-from src.core.extract_region import ExtractSettings, extract_to_preview
+from src.core.extract_region import ExtractSettings, extract_to_preview, selection_source_size
 from src.core.selection_models import RegionSelection
 
 
@@ -16,6 +16,17 @@ def _full_selection(width: int, height: int) -> list[RegionSelection]:
             ],
         )
     ]
+
+
+def test_selection_source_size_reports_native_selected_extent() -> None:
+    image = Image.new("RGBA", (10, 8))
+    selection = RegionSelection(
+        kind="polygon",
+        points=[(2, 1), (7, 1), (7, 5), (2, 5)],
+    )
+
+    assert selection_source_size(image, [selection]) == (6, 5)
+    assert selection_source_size(image, []) is None
 
 
 def test_preview_median_filter_removes_single_pixel_noise() -> None:

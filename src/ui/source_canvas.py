@@ -100,7 +100,7 @@ class SourceCanvas(QWidget):
         self.selections_changed.emit(self._selections)
         self.update()
 
-    def drop_rect_selection(self, width: int, height: int) -> None:
+    def drop_rect_selection(self, width: int, height: int, *, replace: bool = False) -> None:
         """Place a width x height rectangle selection at the center of the visible image."""
         if self._image is None:
             return
@@ -114,7 +114,10 @@ class SourceCanvas(QWidget):
             (cx - hw, cy + hh),
         ]
         selection = RegionSelection(kind="rect", points=points)
-        self._selections.append(selection)
+        if replace:
+            self._selections = [selection]
+        else:
+            self._selections.append(selection)
         self._active_selection_id = selection.id
         self.selections_changed.emit(self._selections)
         self.status_changed.emit(f"Dropped {width}x{height} rectangle")

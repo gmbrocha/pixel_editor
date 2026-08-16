@@ -45,6 +45,18 @@ def build_selection_mask(
     return mask
 
 
+def selection_source_size(
+    image: Image.Image,
+    selections: list[RegionSelection],
+) -> tuple[int, int] | None:
+    """Return the native pixel extent covered by the current selections."""
+    bounds = build_selection_mask(image.size, selections).getbbox()
+    if bounds is None:
+        return None
+    left, top, right, bottom = bounds
+    return right - left, bottom - top
+
+
 def extract_to_preview(
     image: Image.Image,
     selections: list[RegionSelection],

@@ -3,6 +3,7 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PIL import Image
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QGroupBox
 
 from src.core.palette import quantize_to_palette
@@ -84,11 +85,63 @@ def test_palette_panel_consolidates_status_dither_and_legacy_preferences() -> No
     )
     assert panel.max_colors() == 64
     assert panel.dither_enabled() is True
-    assert panel.quantization_status_label.text() == "Preview: unquantized"
+    assert not hasattr(panel, "quantization_status_label")
 
     panel.set_palette(BLACK_WHITE)
     assert panel.quantize_preview_button.isEnabled() is True
     assert panel.dither_quantized_checkbox.isEnabled() is True
+    panel.deleteLater()
+    application.processEvents()
+
+
+def test_palette_sampling_posterize_details_collapse_when_inactive() -> None:
+    application = QApplication.instance() or QApplication([])
+    panel = PalettePanel()
+
+    assert panel.posterize_enabled_checkbox.text() == "Posterize palette sampling"
+    assert panel.posterize_details.isHidden() is True
+    assert panel.posterize_details_toggle.isEnabled() is False
+    assert panel.extraction_settings().posterize_enabled is False
+
+    panel.posterize_enabled_checkbox.setChecked(True)
+    assert panel.posterize_details.isHidden() is False
+    assert panel.posterize_details_toggle.isEnabled() is True
+    assert panel.posterize_details_toggle.arrowType() == Qt.ArrowType.DownArrow
+    assert panel.extraction_settings().posterize_enabled is True
+
+    panel.posterize_details_toggle.setChecked(False)
+    assert panel.posterize_details.isHidden() is True
+    assert panel.extraction_settings().posterize_enabled is True
+
+    panel.posterize_enabled_checkbox.setChecked(False)
+    assert panel.posterize_details.isHidden() is True
+    assert panel.posterize_details_toggle.isEnabled() is False
+
+    panel.deleteLater()
+    application.processEvents()
+
+
+def test_palette_panel_compacts_advanced_options_and_actions() -> None:
+    application = QApplication.instance() or QApplication([])
+    panel = PalettePanel()
+
+    assert panel.reduce_colors_enabled() is False
+    assert panel.reduction_controls.isHidden() is True
+    panel.reduce_colors_checkbox.setChecked(True)
+    assert panel.reduction_controls.isHidden() is False
+    assert panel.advanced_details.isHidden() is True
+    assert panel.advanced_details_toggle.arrowType() == Qt.ArrowType.RightArrow
+    panel.advanced_details_toggle.setChecked(True)
+    assert panel.advanced_details.isHidden() is False
+    assert panel.advanced_details_toggle.arrowType() == Qt.ArrowType.DownArrow
+
+    assert panel.button_grid.count() == 6
+    clear_index = panel.button_grid.indexOf(panel.clear_palette_button)
+    clear_row, clear_column, _row_span, _column_span = panel.button_grid.getItemPosition(
+        clear_index
+    )
+    assert (clear_row, clear_column) == (0, 2)
+
     panel.deleteLater()
     application.processEvents()
 
@@ -106,6 +159,7 @@ def test_explicit_preview_workflow_uses_one_active_palette_and_one_baseline() ->
     assert "Limit Colors" not in group_titles
     assert "Palette & Quantization" in group_titles
 
+    window.palette_panel.reduce_colors_checkbox.setChecked(True)
     window.palette_panel.max_colors_spin.setValue(8)
     window.derive_palette_from_preview()
     assert window.document.palette

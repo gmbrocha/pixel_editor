@@ -1,26 +1,34 @@
-# PixelForge — Shade Ramp Generator Cursor Prompt
+# PixelForge — Shade Ramp Generator Reference
 
 ```
-Add a "Shade Ramp Generator" feature to PixelForge.
+The Pixel Editor includes a base-color-driven Shade Ramp Generator.
 
 ## Behavior
-When the user selects any color in the palette, a button or panel appears
-that generates a 4-shade ramp from that base color using HSB math.
+When the user selects a non-transparent color, **Shade Ramp** generates a
+six-stop pixel-art ramp. The selected RGB remains the exact Base swatch.
 
 ## The Math
-Given a base color in HSB (H: 0-360, S: 0-100, B: 0-100), generate 4 swatches:
+Given a base color in HSB (H: 0-360, S: 0-100, B: 0-100), generate:
 
-Shadow:    H +12, S +15, B -40  (clamp all values to valid range)
-Base:      unchanged
-Midlight:  H -6,  S -12, B +22
-Highlight: H -12, S -30, B +45
+- Deep: darkest, most saturated shadow; hue moves furthest toward blue-violet.
+- Shadow: ordinary form shadow with a smaller cool shift.
+- Soft: near-base transitional shade with a restrained cool shift.
+- Base: the selected RGBA value unchanged.
+- Light: brighter, less saturated, and gently shifted toward warm yellow.
+- Highlight: brightest and least saturated, with the strongest warm shift.
 
-All values clamp: H wraps 0-360, S and B clamp 0-100.
+Shadow hues interpolate along the shortest hue-wheel path toward 245 degrees;
+light hues interpolate toward 50 degrees. Per-stop movement is capped to keep
+distant color families coherent. Values scale proportionally around the Base
+instead of using fixed additions that clip dark or bright colors. Near-neutrals
+receive restrained blue-violet shadows and warm cream highlights because their
+input hue is otherwise undefined.
 
 ## Output
-Display the 4 swatches as a horizontal row, labeled Shadow / Base / Midlight / Highlight.
-Each swatch should be clickable to set it as the active drawing color.
-Add an "Add all to palette" button that drops all 4 into the current palette.
+Display the six swatches as Deep / Shadow / Soft / Base / Light / Highlight.
+Each swatch is clickable to set it as the active drawing color. **+ Palette**
+adds all six colors to the current palette. The radial and directional shading
+tools consume the same dark-to-light ramp.
 
 ## Tech notes
 - Convert the existing active color to HSB before applying the math
@@ -30,7 +38,7 @@ Add an "Add all to palette" button that drops all 4 into the current palette.
 
 ## UI placement
 Put it in the palette panel area, triggered when a color is selected.
-Keep it minimal — 4 swatches in a row is the entire UI.
+Keep it minimal — six compact swatches in a row is the entire UI.
 ```
 
 ---
@@ -160,42 +168,32 @@ On curved edges, manually place a single pixel of mid-tone between the shape
 edge and the background. Makes curves read as smooth without blurring.
 
 **Limit your palette ruthlessly**
-3-4 shades per color region max. The constraint forces clarity and readability.
-More shades = muddier, not better.
+The generator offers six useful stops, but a sprite region does not need to use
+all six. Use only the stops that improve the form at its actual display size.
+The extra shadows are choices for occlusion, outline variation, and larger forms,
+not a requirement to band every surface with every color.
 
 ## The HSB Shade Ramp Table
 
-For warm/neutral colors (skin, grey, horns):
+For chromatic colors, `toward` means shortest-path hue interpolation toward the
+temperature anchor, limited by the stated maximum shift:
 
-| Shade     | H   | S   | B   |
-|-----------|-----|-----|-----|
-| Shadow    | +12 | +15 | −40 |
-| Base      |  0  |  0  |  0  |
-| Midlight  |  −6 | −12 | +22 |
-| Highlight | −12 | −30 | +45 |
+| Stop | Hue | Saturation | Brightness |
+|------|-----|------------|------------|
+| Deep | 62% toward 245°, max 90° | 40% toward 100, capped at 92 | Base × 0.36 |
+| Shadow | 38% toward 245°, max 56° | 28% toward 100, capped at 92 | Base × 0.56 |
+| Soft | 18% toward 245°, max 28° | 14% toward 100, capped at 92 | Base × 0.78 |
+| Base | unchanged | unchanged | unchanged |
+| Light | 24% toward 50°, max 12° | Base × 0.78, minimum 5 | Base + 34% of remaining range |
+| Highlight | 52% toward 50°, max 26° | Base × 0.52, minimum 4 | Base + 68% of remaining range |
 
-For greens:
-
-| Shade     | H   | S   | B   |
-|-----------|-----|-----|-----|
-| Shadow    | +15 | +15 | −40 |
-| Base      |  0  |  0  |  0  |
-| Midlight  |  −8 | −10 | +22 |
-| Highlight | −15 | −25 | +45 |
-
-For pink/purple:
-
-| Shade     | H   | S   | B   |
-|-----------|-----|-----|-----|
-| Shadow    | −12 | +15 | −40 |
-| Base      |  0  |  0  |  0  |
-| Midlight  |  +6 | −10 | +22 |
-| Highlight | +12 | −30 | +45 |
+Near-neutral inputs use explicitly restrained cool shadow hues and warm highlight
+hues instead of trusting HSV's undefined neutral hue.
 
 **Rule to memorize:**
 - Shadows: S up, B way down, hue toward nearest cool color
 - Highlights: S way down, B way up, hue toward yellow/warm
-- Midlight: half values, opposite hue direction from shadow
+- Base stays exact; transitional stops bridge into it without fixed-value clipping
 
 ---
 

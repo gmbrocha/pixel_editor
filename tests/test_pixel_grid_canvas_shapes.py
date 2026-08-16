@@ -1,5 +1,15 @@
-from PIL import Image
+import math
+import os
 
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+from PIL import Image
+from PySide6.QtCore import QPoint, Qt
+from PySide6.QtTest import QTest
+from PySide6.QtWidgets import QApplication, QFileDialog
+
+from src.core.pixel_document import PixelDocument
+from src.ui.pixel_editor_window import PixelEditorWindow
 from src.ui.pixel_grid_canvas import PixelGridCanvas
 
 
@@ -83,3 +93,104 @@ def test_stamp_flip_image_handles_horizontal_and_vertical_orientation() -> None:
         (255, 0, 0, 255),
         (0, 255, 0, 255),
     ]
+
+
+def test_pixel_measurement_uses_euclidean_center_distance() -> None:
+    assert PixelGridCanvas._pixel_distance((2, 4), (5, 6)) == math.sqrt(13)
+    assert PixelGridCanvas._format_pixel_distance(5.0) == "5 px"
+    assert PixelGridCanvas._format_pixel_distance(math.sqrt(13)) == "3.606 px"
+
+
+def test_measurement_click_move_click_and_right_click_clear() -> None:
+    application = QApplication.instance() or QApplication([])
+    canvas = PixelGridCanvas()
+    document = PixelDocument(image=Image.new("RGBA", (10, 10)))
+    original_pixels = document.image.tobytes()
+    canvas.set_document(document)
+    canvas.show()
+    application.processEvents()
+    statuses: list[str] = []
+    canvas.status_changed.connect(statuses.append)
+    canvas.set_measurement_enabled(True)
+
+    margin = canvas._view_margin
+    zoom = canvas._zoom
+    start = QPoint(margin + 2 * zoom + zoom // 2, margin + 3 * zoom + zoom // 2)
+    end = QPoint(margin + 5 * zoom + zoom // 2, margin + 5 * zoom + zoom // 2)
+    QTest.mouseClick(canvas, Qt.MouseButton.LeftButton, pos=start)
+    QTest.mouseMove(canvas, end)
+    QTest.mouseClick(canvas, Qt.MouseButton.LeftButton, pos=end)
+
+    assert canvas.measurement() == ((2, 3), (5, 5))
+    assert canvas.measurement_distance() == math.sqrt(13)
+    assert statuses[-1] == "Distance: 3.606 px. Right-click to clear"
+    assert document.image.tobytes() == original_pixels
+
+    QTest.mouseClick(canvas, Qt.MouseButton.RightButton, pos=end)
+    assert canvas.measurement() is None
+    assert statuses[-1] == "Measurement cleared"
+    canvas.close()
+    application.processEvents()
+
+
+def test_header_measure_action_toggles_canvas_tool() -> None:
+    application = QApplication.instance() or QApplication([])
+    window = PixelEditorWindow(
+        PixelDocument(image=Image.new("RGBA", (4, 4))),
+        headless=True,
+    )
+
+    assert window.measure_action.isCheckable()
+    assert window.canvas.is_measurement_enabled() is False
+    window.measure_action.setChecked(True)
+    assert window.canvas.is_measurement_enabled() is True
+    window.measure_action.setChecked(False)
+    assert window.canvas.is_measurement_enabled() is False
+
+    window.close()
+    application.processEvents()
+
+
+def test_import_sprite_stays_native_and_floating_until_canvas_click(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    application = QApplication.instance() or QApplication([])
+    base = Image.new("RGBA", (8, 8), (80, 20, 10, 255))
+    sprite = Image.new("RGBA", (3, 2), (0, 0, 0, 0))
+    sprite.putpixel((0, 0), (0, 255, 0, 255))
+    sprite.putpixel((2, 1), (0, 0, 255, 255))
+    sprite_path = tmp_path / "native-sprite.png"
+    sprite.save(sprite_path)
+    document = PixelDocument(image=base)
+    original_pixels = document.image.tobytes()
+    window = PixelEditorWindow(document, headless=True)
+    monkeypatch.setattr(
+        QFileDialog,
+        "getOpenFileName",
+        lambda *_args, **_kwargs: (str(sprite_path), ""),
+    )
+
+    window.import_sprite_button.click()
+
+    assert document.image.tobytes() == original_pixels
+    assert window.canvas.stamp_image() is not None
+    assert window.canvas.stamp_image().size == (3, 2)
+    assert window.stamp_radio.isChecked() is True
+    assert window.flip_stamp_h_button.isEnabled() is True
+    assert "native size (3x2px)" in window.statusBar().currentMessage()
+
+    window.canvas.show()
+    application.processEvents()
+    zoom = window.canvas._zoom
+    margin = window.canvas._view_margin
+    placement = QPoint(margin + 4 * zoom + zoom // 2, margin + 4 * zoom + zoom // 2)
+    QTest.mouseClick(window.canvas, Qt.MouseButton.LeftButton, pos=placement)
+
+    assert document.image.getpixel((3, 3)) == (0, 255, 0, 255)
+    assert document.image.getpixel((5, 4)) == (0, 0, 255, 255)
+    assert document.image.getpixel((4, 3)) == (80, 20, 10, 255)
+
+    window.canvas.close()
+    window.close()
+    application.processEvents()

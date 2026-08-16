@@ -7,12 +7,12 @@ from PySide6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QGridLayout,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
     QMenu,
     QPushButton,
     QSpinBox,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -47,11 +47,12 @@ class PaletteSwatchStrip(QWidget):
         self.update()
 
     def _swatch_at(self, x: int) -> int | None:
-        if not self._palette:
+        if not self._palette or self.width() <= 0 or x < 0 or x >= self.width():
             return None
-        sw = max(18, self.width() // max(1, len(self._palette)))
-        idx = x // sw
-        return idx if 0 <= idx < len(self._palette) else None
+        return min(
+            len(self._palette) - 1,
+            ((x + 1) * len(self._palette) - 1) // self.width(),
+        )
 
     def mousePressEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
@@ -95,17 +96,26 @@ class PaletteSwatchStrip(QWidget):
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "No palette loaded")
             return
 
-        sw = max(18, self.width() // max(1, len(self._palette)))
+        count = len(self._palette)
         for index, color in enumerate(self._palette):
-            x = index * sw
-            painter.fillRect(x, 0, sw, self.height(), QColor(*color))
+            left = index * self.width() // count
+            right = (index + 1) * self.width() // count
+            if right <= left:
+                continue
+            swatch_width = right - left
+            painter.fillRect(left, 0, swatch_width, self.height(), QColor(*color))
             if index == self._selected_index:
                 pen = QPen(QColor("#ffffff"), 2)
                 painter.setPen(pen)
-                painter.drawRect(x + 1, 1, sw - 3, self.height() - 3)
+                painter.drawRect(
+                    left + 1,
+                    1,
+                    max(0, swatch_width - 3),
+                    self.height() - 3,
+                )
             else:
                 painter.setPen(QColor("#111111"))
-                painter.drawRect(x, 0, sw, self.height() - 1)
+                painter.drawRect(left, 0, max(0, swatch_width - 1), self.height() - 1)
 
 
 class PalettePanel(QWidget):
@@ -162,10 +172,42 @@ class PalettePanel(QWidget):
         self.cap_balanced_checkbox = QCheckBox("Cap Balanced")
         self.cap_balanced_checkbox.setChecked(True)
 
-        self.posterize_enabled_checkbox = QCheckBox("Posterize")
+        self.reduce_colors_checkbox = QCheckBox("Reduce colors")
+        self.reduce_colors_checkbox.setChecked(False)
+        self.reduce_colors_checkbox.setToolTip(
+            "Off loads every distinct visible color. Enable to use palette-size and sampling options."
+        )
+
+        self.advanced_details_toggle = QToolButton()
+        self.advanced_details_toggle.setText("Advanced extraction")
+        self.advanced_details_toggle.setCheckable(True)
+        self.advanced_details_toggle.setChecked(False)
+        self.advanced_details_toggle.setAutoRaise(True)
+        self.advanced_details_toggle.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonTextBesideIcon
+        )
+        self.advanced_details_toggle.setArrowType(Qt.ArrowType.RightArrow)
+        self.advanced_details_toggle.setToolTip(
+            "Show cluster thresholds, family controls, and palette-sampling posterize"
+        )
+
+        self.posterize_enabled_checkbox = QCheckBox("Posterize palette sampling")
         self.posterize_enabled_checkbox.setChecked(False)
         self.posterize_enabled_checkbox.setToolTip(
-            "Posterize the palette-generation sampling source; the preview remains unquantized"
+            "Simplify colors only while generating a palette; this does not posterize the preview"
+        )
+        self.posterize_details_toggle = QToolButton()
+        self.posterize_details_toggle.setText("Settings")
+        self.posterize_details_toggle.setCheckable(True)
+        self.posterize_details_toggle.setChecked(False)
+        self.posterize_details_toggle.setEnabled(False)
+        self.posterize_details_toggle.setAutoRaise(True)
+        self.posterize_details_toggle.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonTextBesideIcon
+        )
+        self.posterize_details_toggle.setArrowType(Qt.ArrowType.RightArrow)
+        self.posterize_details_toggle.setToolTip(
+            "Expand or collapse palette-sampling posterize settings"
         )
 
         self.posterize_preset_combo = QComboBox()
@@ -212,8 +254,6 @@ class PalettePanel(QWidget):
         self.sort_mode_combo.addItems(["Brightness", "Hue"])
 
         self.summary_label = QLabel("Active palette: none")
-        self.quantization_status_label = QLabel("Preview: unquantized")
-        self.quantization_status_label.setStyleSheet("color: #aaa; font-size: 11px;")
         self._selected_color_label = QLabel("")
         self._selected_color_label.setStyleSheet("color: #888; font-size: 11px;")
 
@@ -300,36 +340,71 @@ class PalettePanel(QWidget):
         cap_row.addWidget(self.cap_balanced_checkbox)
         cap_row.addStretch(1)
 
-        posterize_group = QGroupBox("Posterize")
-        posterize_layout = QGridLayout(posterize_group)
-        posterize_layout.setContentsMargins(6, 6, 6, 6)
-        posterize_layout.addWidget(self.posterize_enabled_checkbox, 0, 0)
-        posterize_layout.addWidget(QLabel("Preset"), 0, 1)
-        posterize_layout.addWidget(self.posterize_preset_combo, 0, 2)
-        posterize_layout.addWidget(QLabel("Mode"), 1, 0)
-        posterize_layout.addWidget(self.posterize_mode_combo, 1, 1)
-        posterize_layout.addWidget(QLabel("Strength"), 2, 0)
-        posterize_layout.addWidget(self.posterize_strength_spin, 2, 1)
-        posterize_layout.addWidget(QLabel("RGB"), 2, 2)
-        posterize_layout.addWidget(self.posterize_rgb_levels_spin, 2, 3)
-        posterize_layout.addWidget(QLabel("LAB L"), 3, 0)
-        posterize_layout.addWidget(self.posterize_lab_lightness_spin, 3, 1)
-        posterize_layout.addWidget(QLabel("Chroma"), 3, 2)
-        posterize_layout.addWidget(self.posterize_chroma_spin, 3, 3)
+        self.posterize_section = QWidget()
+        posterize_section_layout = QVBoxLayout(self.posterize_section)
+        posterize_section_layout.setContentsMargins(0, 0, 0, 0)
+        posterize_section_layout.setSpacing(2)
+
+        posterize_header = QHBoxLayout()
+        posterize_header.setContentsMargins(0, 0, 0, 0)
+        posterize_header.addWidget(self.posterize_enabled_checkbox)
+        posterize_header.addStretch(1)
+        posterize_header.addWidget(self.posterize_details_toggle)
+        posterize_section_layout.addLayout(posterize_header)
+
+        self.posterize_details = QWidget()
+        posterize_layout = QGridLayout(self.posterize_details)
+        posterize_layout.setContentsMargins(18, 0, 0, 0)
+        posterize_layout.setVerticalSpacing(3)
+        posterize_layout.addWidget(QLabel("Preset"), 0, 0)
+        posterize_layout.addWidget(self.posterize_preset_combo, 0, 1)
+        posterize_layout.addWidget(QLabel("Mode"), 0, 2)
+        posterize_layout.addWidget(self.posterize_mode_combo, 0, 3)
+        posterize_layout.addWidget(QLabel("Strength"), 1, 0)
+        posterize_layout.addWidget(self.posterize_strength_spin, 1, 1)
+        posterize_layout.addWidget(QLabel("RGB"), 1, 2)
+        posterize_layout.addWidget(self.posterize_rgb_levels_spin, 1, 3)
+        posterize_layout.addWidget(QLabel("LAB L"), 2, 0)
+        posterize_layout.addWidget(self.posterize_lab_lightness_spin, 2, 1)
+        posterize_layout.addWidget(QLabel("Chroma"), 2, 2)
+        posterize_layout.addWidget(self.posterize_chroma_spin, 2, 3)
+        posterize_section_layout.addWidget(self.posterize_details)
+
+        advanced_header = QHBoxLayout()
+        advanced_header.setContentsMargins(0, 0, 0, 0)
+        advanced_header.addWidget(self.advanced_details_toggle)
+        advanced_header.addStretch(1)
+
+        self.advanced_details = QWidget()
+        advanced_layout = QVBoxLayout(self.advanced_details)
+        advanced_layout.setContentsMargins(12, 0, 0, 0)
+        advanced_layout.setSpacing(3)
+        advanced_layout.addLayout(cluster_row)
+        advanced_layout.addLayout(family_row)
+        advanced_layout.addLayout(cap_row)
+        advanced_layout.addWidget(self.posterize_section)
+
+        self.reduction_controls = QWidget()
+        reduction_layout = QVBoxLayout(self.reduction_controls)
+        reduction_layout.setContentsMargins(12, 0, 0, 0)
+        reduction_layout.setSpacing(3)
+        reduction_layout.addLayout(top_row)
+        reduction_layout.addLayout(advanced_header)
+        reduction_layout.addWidget(self.advanced_details)
 
         info_row = QHBoxLayout()
         info_row.addWidget(self.summary_label)
         info_row.addStretch(1)
         info_row.addWidget(self._selected_color_label)
 
-        button_grid = QGridLayout()
-        button_grid.setContentsMargins(0, 0, 0, 0)
-        button_grid.addWidget(derive_button, 0, 0)
-        button_grid.addWidget(load_button, 0, 1)
-        button_grid.addWidget(export_button, 1, 0)
-        button_grid.addWidget(self._add_button, 1, 1)
-        button_grid.addWidget(self._remove_button, 1, 2)
-        button_grid.addWidget(self.clear_palette_button, 2, 0)
+        self.button_grid = QGridLayout()
+        self.button_grid.setContentsMargins(0, 0, 0, 0)
+        self.button_grid.addWidget(derive_button, 0, 0)
+        self.button_grid.addWidget(load_button, 0, 1)
+        self.button_grid.addWidget(self.clear_palette_button, 0, 2)
+        self.button_grid.addWidget(export_button, 1, 0)
+        self.button_grid.addWidget(self._add_button, 1, 1)
+        self.button_grid.addWidget(self._remove_button, 1, 2)
 
         sort_row = QHBoxLayout()
         sort_row.addWidget(QLabel("Sort"))
@@ -345,16 +420,12 @@ class PalettePanel(QWidget):
         apply_row.addStretch(1)
 
         layout = QVBoxLayout(self)
-        layout.addLayout(top_row)
-        layout.addLayout(cluster_row)
-        layout.addLayout(family_row)
-        layout.addLayout(cap_row)
-        layout.addWidget(posterize_group)
+        layout.addWidget(self.reduce_colors_checkbox)
+        layout.addWidget(self.reduction_controls)
         layout.addWidget(self.swatches)
         layout.addLayout(info_row)
-        layout.addLayout(button_grid)
+        layout.addLayout(self.button_grid)
         layout.addLayout(sort_row)
-        layout.addWidget(self.quantization_status_label)
         layout.addLayout(apply_row)
 
         self.swatches.color_selected.connect(self._on_swatch_selected)
@@ -363,10 +434,28 @@ class PalettePanel(QWidget):
         self.posterize_preset_combo.currentIndexChanged.connect(
             self._apply_posterize_preset
         )
+        self.posterize_enabled_checkbox.toggled.connect(
+            self._on_posterize_enabled_changed
+        )
+        self.posterize_details_toggle.toggled.connect(
+            self._update_posterize_details_visibility
+        )
+        self.advanced_details_toggle.toggled.connect(
+            self._update_advanced_details_visibility
+        )
+        self.reduce_colors_checkbox.toggled.connect(
+            self._update_reduction_controls_visibility
+        )
         self.dither_quantized_checkbox.toggled.connect(self.dither_changed.emit)
+        self._update_posterize_details_visibility()
+        self._update_advanced_details_visibility()
+        self._update_reduction_controls_visibility()
 
     def max_colors(self) -> int:
         return self.max_colors_spin.value()
+
+    def reduce_colors_enabled(self) -> bool:
+        return self.reduce_colors_checkbox.isChecked()
 
     def sample_mode(self) -> str:
         data = self.sample_mode_combo.currentData()
@@ -425,6 +514,31 @@ class PalettePanel(QWidget):
                 chroma_levels=4,
             )
 
+    def _on_posterize_enabled_changed(self, enabled: bool) -> None:
+        self.posterize_details_toggle.setEnabled(enabled)
+        self.posterize_details_toggle.setChecked(enabled)
+        self._update_posterize_details_visibility()
+
+    def _update_advanced_details_visibility(self, _expanded: bool | None = None) -> None:
+        visible = self.advanced_details_toggle.isChecked()
+        self.advanced_details.setVisible(visible)
+        self.advanced_details_toggle.setArrowType(
+            Qt.ArrowType.DownArrow if visible else Qt.ArrowType.RightArrow
+        )
+
+    def _update_reduction_controls_visibility(self, _enabled: bool | None = None) -> None:
+        self.reduction_controls.setVisible(self.reduce_colors_enabled())
+
+    def _update_posterize_details_visibility(self, _expanded: bool | None = None) -> None:
+        visible = (
+            self.posterize_enabled_checkbox.isChecked()
+            and self.posterize_details_toggle.isChecked()
+        )
+        self.posterize_details.setVisible(visible)
+        self.posterize_details_toggle.setArrowType(
+            Qt.ArrowType.DownArrow if visible else Qt.ArrowType.RightArrow
+        )
+
     def _set_posterize_controls(
         self,
         *,
@@ -468,11 +582,6 @@ class PalettePanel(QWidget):
         return self.dither_quantized_checkbox.isChecked()
 
     def set_quantization_state(self, quantized: bool) -> None:
-        self.quantization_status_label.setText(
-            f"Preview: quantized with {self._active_palette_name or 'active palette'}"
-            if quantized
-            else "Preview: unquantized"
-        )
         self.clear_quantized_preview_button.setEnabled(quantized)
         self.apply_source_button.setEnabled(quantized and bool(self.swatches._palette))
 

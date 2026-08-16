@@ -109,9 +109,9 @@ class PreviewPanel(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._preview_image: Image.Image | None = None
+        self._source_size: tuple[int, int] | None = None
 
         self.preview_canvas = PreviewCanvas()
-        self.size_label = QLabel("Preview: no output")
 
         self.width_spin = QSpinBox()
         self.width_spin.setRange(1, 1024)
@@ -120,6 +120,16 @@ class PreviewPanel(QWidget):
         self.height_spin = QSpinBox()
         self.height_spin.setRange(1, 1024)
         self.height_spin.setValue(16)
+
+        self.downscale_combo = QComboBox()
+        self.downscale_combo.addItem("Manual", None)
+        for factor in range(2, 17):
+            self.downscale_combo.addItem(f"{factor}×", factor)
+        self.downscale_combo.setEnabled(False)
+        self.downscale_combo.setMaximumWidth(82)
+        self.downscale_combo.setToolTip(
+            "Set W and H from the selected source region using an integer divisor"
+        )
 
         self.fit_combo = QComboBox()
         self.fit_combo.addItems(["Preserve", "Fit", "Actual"])
@@ -130,6 +140,9 @@ class PreviewPanel(QWidget):
         self.resample_combo.addItem("Bicubic", "Bicubic")
         self.resample_combo.addItem("Area (Box Average)", "Area (Box Average)")
         self.resample_combo.addItem("Lanczos 3", "Lanczos 3")
+        self.resample_combo.setToolTip(
+            "Resize sampling: controls how source pixels are reconstructed when dimensions change"
+        )
         self.resample_combo.setItemData(
             3,
             "Smooth, noise-reducing area-weighted sampling intended for downscaling.",
@@ -151,6 +164,9 @@ class PreviewPanel(QWidget):
                 "Edge-Preserving Denoise",
                 "Despeckle",
             ]
+        )
+        self.post_process_combo.setToolTip(
+            "Post-process: applies a cleanup or stylization filter after extraction and resizing"
         )
         self.post_process_combo.setItemData(
             self.post_process_combo.findText("Edge-Preserving Denoise"),
@@ -193,20 +209,34 @@ class PreviewPanel(QWidget):
         output_group = QGroupBox("Output")
         output_layout = QVBoxLayout(output_group)
         output_layout.addWidget(self.preview_canvas, 1)
-        output_layout.addWidget(self.size_label)
         output_layout.addWidget(self.save_button)
-        size_row = QHBoxLayout()
-        size_row.addWidget(QLabel("W"))
-        size_row.addWidget(self.width_spin)
-        size_row.addWidget(QLabel("H"))
-        size_row.addWidget(self.height_spin)
-        size_row.addWidget(self.fit_combo)
-        size_row.addWidget(self.resample_combo)
-        output_layout.addLayout(size_row)
-        process_row = QHBoxLayout()
-        process_row.addWidget(QLabel("Process"))
-        process_row.addWidget(self.post_process_combo, 1)
-        output_layout.addLayout(process_row)
+
+        self.width_label = QLabel("W")
+        width_pair = QWidget()
+        self.width_pair_layout = QHBoxLayout(width_pair)
+        self.width_pair_layout.setContentsMargins(0, 0, 0, 0)
+        self.width_pair_layout.setSpacing(0)
+        self.width_pair_layout.addWidget(self.width_label)
+        self.width_pair_layout.addWidget(self.width_spin)
+
+        self.height_label = QLabel("H")
+        height_pair = QWidget()
+        self.height_pair_layout = QHBoxLayout(height_pair)
+        self.height_pair_layout.setContentsMargins(0, 0, 0, 0)
+        self.height_pair_layout.setSpacing(0)
+        self.height_pair_layout.addWidget(self.height_label)
+        self.height_pair_layout.addWidget(self.height_spin)
+
+        self.output_controls_layout = QHBoxLayout()
+        self.output_controls_layout.addWidget(width_pair)
+        self.output_controls_layout.addWidget(height_pair)
+        self.output_controls_layout.addWidget(QLabel("Downscale"))
+        self.output_controls_layout.addWidget(self.downscale_combo)
+        self.output_controls_layout.addWidget(self.fit_combo)
+        self.output_controls_layout.addWidget(self.resample_combo)
+        self.output_controls_layout.addWidget(QLabel("Process"))
+        self.output_controls_layout.addWidget(self.post_process_combo)
+        output_layout.addLayout(self.output_controls_layout)
         self.process_controls_widget = QWidget()
         process_controls_layout = QGridLayout(self.process_controls_widget)
         process_controls_layout.setContentsMargins(0, 0, 0, 0)
@@ -230,8 +260,9 @@ class PreviewPanel(QWidget):
         layout.addWidget(output_group, 1)
 
         self.preview_canvas.color_picked.connect(self.color_picked.emit)
-        self.width_spin.valueChanged.connect(self._emit_settings)
-        self.height_spin.valueChanged.connect(self._emit_settings)
+        self.width_spin.valueChanged.connect(self._on_manual_size_changed)
+        self.height_spin.valueChanged.connect(self._on_manual_size_changed)
+        self.downscale_combo.currentIndexChanged.connect(self._apply_downscale_preset)
         self.fit_combo.currentIndexChanged.connect(self._emit_settings)
         self.resample_combo.currentIndexChanged.connect(self._emit_settings)
         self.resample_combo.currentIndexChanged.connect(self._update_resample_tooltip)
@@ -250,12 +281,28 @@ class PreviewPanel(QWidget):
     def set_eyedropper_sampling(self, sample_size: int, method: str) -> None:
         self.preview_canvas.set_eyedropper_sampling(sample_size, method)
 
+    def set_source_size(self, size: tuple[int, int] | None) -> None:
+        self._source_size = size
+        self.downscale_combo.setEnabled(size is not None)
+        if size is None:
+            was_blocked = self.downscale_combo.blockSignals(True)
+            self.downscale_combo.setCurrentIndex(0)
+            self.downscale_combo.blockSignals(was_blocked)
+            self.downscale_combo.setToolTip(
+                "Select a source region before applying an integer downscale"
+            )
+            return
+        self.downscale_combo.setToolTip(
+            f"Selected source: {size[0]}×{size[1]} px. Choose a divisor to set W and H."
+        )
+        if self.downscale_combo.currentData() is not None:
+            self._apply_downscale_preset()
+
     def set_preview_image(self, image: Image.Image | None) -> None:
         self._preview_image = image
         self.preview_canvas.set_pil_image(image)
         if image is None:
             self.preview_canvas.clear()
-            self.size_label.setText("Preview: no output")
             return
 
         pixmap = pil_image_to_qpixmap(image)
@@ -265,7 +312,6 @@ class PreviewPanel(QWidget):
             Qt.TransformationMode.FastTransformation,
         )
         self.preview_canvas.setPixmap(scaled)
-        self.size_label.setText(f"Preview: {image.width} x {image.height}")
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
@@ -290,6 +336,39 @@ class PreviewPanel(QWidget):
 
     def _emit_settings(self) -> None:
         self.settings_changed.emit(self.settings())
+
+    def _on_manual_size_changed(self) -> None:
+        if self.downscale_combo.currentData() is not None:
+            was_blocked = self.downscale_combo.blockSignals(True)
+            self.downscale_combo.setCurrentIndex(0)
+            self.downscale_combo.blockSignals(was_blocked)
+        self._emit_settings()
+
+    def _apply_downscale_preset(self, _index: int | None = None) -> None:
+        factor = self.downscale_combo.currentData()
+        if self._source_size is None or not isinstance(factor, int):
+            return
+
+        target_width = max(1, self._source_size[0] // factor)
+        target_height = max(1, self._source_size[1] // factor)
+        self.width_spin.setMaximum(max(self.width_spin.maximum(), target_width))
+        self.height_spin.setMaximum(max(self.height_spin.maximum(), target_height))
+        if (
+            self.width_spin.value() == target_width
+            and self.height_spin.value() == target_height
+            and self.fit_combo.currentText() == "Fit"
+        ):
+            return
+        width_blocked = self.width_spin.blockSignals(True)
+        height_blocked = self.height_spin.blockSignals(True)
+        fit_blocked = self.fit_combo.blockSignals(True)
+        self.width_spin.setValue(target_width)
+        self.height_spin.setValue(target_height)
+        self.fit_combo.setCurrentText("Fit")
+        self.width_spin.blockSignals(width_blocked)
+        self.height_spin.blockSignals(height_blocked)
+        self.fit_combo.blockSignals(fit_blocked)
+        self._emit_settings()
 
     def _on_process_changed(self) -> None:
         self._update_process_controls()
@@ -334,5 +413,8 @@ class PreviewPanel(QWidget):
             ),
         }
         self.resample_combo.setToolTip(
-            descriptions.get(self.resample_combo.currentText(), "Resize sampling method")
+            descriptions.get(
+                self.resample_combo.currentText(),
+                "Resize sampling: controls how source pixels are reconstructed when dimensions change",
+            )
         )

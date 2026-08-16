@@ -31,6 +31,7 @@ from PySide6.QtWidgets import (
 from src.core.image_io import load_image, save_image
 from src.core.palette import (
     add_color_to_palette,
+    all_colors_from_image,
     export_palette_grid,
     export_palette_strip,
     load_palette_from_image,
@@ -426,10 +427,18 @@ class PixelEditorWindow(QMainWindow):
         parent: QWidget | None = None,
         *,
         headless: bool = False,
+        restore_reference=None,
     ) -> None:
         super().__init__(parent)
         self.document = document
         self._headless = headless
+        self._restore_reference = (
+            restore_reference.convert("RGBA").copy()
+            if restore_reference is not None
+            else None
+        )
+        if self._restore_reference is not None and self._restore_reference.size != document.image.size:
+            raise ValueError("Cleanup restore reference must match the document geometry")
         self.setWindowTitle(f"PixelForge - {document.name}")
         self.resize(1100, 820)
 
@@ -582,14 +591,15 @@ class PixelEditorWindow(QMainWindow):
         self.copy_selection_layer_button.setToolTip(
             "Create a layer above the active layer containing the selected pixels"
         )
+        self.restore_source_button = QPushButton("Restore Source Selection")
+        self.restore_source_button.setEnabled(self._restore_reference is not None)
 
         self.transparent_button = QPushButton("Use Transparent")
         self.custom_color_button = QPushButton("Pick Color")
-        self.ref_underlay_button = QPushButton("Import Sprite to Grid")
-        self.ref_clear_button = QPushButton("Clear Reference")
-        self.ref_opacity_slider = QSlider(Qt.Orientation.Horizontal)
-        self.ref_opacity_slider.setRange(10, 100)
-        self.ref_opacity_slider.setValue(50)
+        self.import_sprite_button = QPushButton("Import Sprite")
+        self.import_sprite_button.setToolTip(
+            "Load a sprite at native resolution as a movable stamp; click the canvas to commit it"
+        )
         self.iso_slash_button = QPushButton("Guide /")
         self.iso_slash_button.setToolTip("Show a non-pixel / guide at classic 1/2 iso slope")
         self.iso_backslash_button = QPushButton("Guide \\")
@@ -613,6 +623,11 @@ class PixelEditorWindow(QMainWindow):
         self.add_palette_from_file_button = QPushButton("Add from File")
         self.palette_from_current_button = QPushButton("From Current (replace)")
         self.add_palette_from_current_button = QPushButton("Add from Current")
+        self.reduce_palette_import_checkbox = QCheckBox("Reduce to 64")
+        self.reduce_palette_import_checkbox.setChecked(False)
+        self.reduce_palette_import_checkbox.setToolTip(
+            "Off loads every distinct visible color; enable for the previous 64-color reduction"
+        )
         self.export_palette_button = QPushButton("Export")
         self.sort_palette_combo = QComboBox()
         self.sort_palette_combo.addItems(["Brightness", "Hue"])
@@ -757,6 +772,15 @@ class PixelEditorWindow(QMainWindow):
         self._mirror_action.toggled.connect(self.canvas.set_mirror)
         toolbar.addAction(self._mirror_action)
 
+        self.measure_action = QAction("Measure", self)
+        self.measure_action.setCheckable(True)
+        self.measure_action.setToolTip(
+            "Measure center-to-center pixel distance: click a start pixel, "
+            "move and click the endpoint, then right-click to clear"
+        )
+        self.measure_action.toggled.connect(self.canvas.set_measurement_enabled)
+        toolbar.addAction(self.measure_action)
+
         toolbar.addSeparator()
         toolbar.addWidget(QLabel("Zoom"))
         toolbar.addWidget(self.zoom_spin)
@@ -792,6 +816,7 @@ class PixelEditorWindow(QMainWindow):
         selection_action_row.addWidget(self.flip_stamp_h_button)
         selection_action_row.addWidget(self.flip_stamp_v_button)
         selection_action_row.addWidget(self.copy_selection_layer_button)
+        selection_action_row.addWidget(self.restore_source_button)
         selection_action_row.addStretch(1)
         controls_layout.addLayout(selection_action_row)
 
@@ -810,13 +835,10 @@ class PixelEditorWindow(QMainWindow):
 
         controls_layout.addWidget(self.transparent_display_button)
 
-        # Reference underlay
-        ref_row = QHBoxLayout()
-        ref_row.addWidget(self.ref_underlay_button)
-        ref_row.addWidget(QLabel("Opacity"))
-        ref_row.addWidget(self.ref_opacity_slider, 1)
-        ref_row.addWidget(self.ref_clear_button)
-        controls_layout.addLayout(ref_row)
+        import_sprite_row = QHBoxLayout()
+        import_sprite_row.addWidget(self.import_sprite_button)
+        import_sprite_row.addStretch(1)
+        controls_layout.addLayout(import_sprite_row)
 
         iso_group = QGroupBox("Iso Guide")
         iso_layout = QGridLayout(iso_group)
@@ -830,7 +852,11 @@ class PixelEditorWindow(QMainWindow):
         controls_layout.addWidget(iso_group)
 
         # Palette
-        controls_layout.addWidget(QLabel("Palette"))
+        palette_header = QHBoxLayout()
+        palette_header.addWidget(QLabel("Palette"))
+        palette_header.addStretch(1)
+        palette_header.addWidget(self.reduce_palette_import_checkbox)
+        controls_layout.addLayout(palette_header)
         controls_layout.addWidget(self.palette_container)
 
         pal_grid = QGridLayout()
@@ -1062,11 +1088,8 @@ class PixelEditorWindow(QMainWindow):
         self.flip_stamp_h_button.clicked.connect(self._flip_stamp_horizontal)
         self.flip_stamp_v_button.clicked.connect(self._flip_stamp_vertical)
         self.copy_selection_layer_button.clicked.connect(self._copy_selection_to_new_layer)
-        self.ref_underlay_button.clicked.connect(self._import_reference_underlay)
-        self.ref_clear_button.clicked.connect(self._clear_reference_underlay)
-        self.ref_opacity_slider.valueChanged.connect(
-            lambda v: self.canvas.set_reference_opacity(v / 100.0)
-        )
+        self.restore_source_button.clicked.connect(self._restore_source_selection)
+        self.import_sprite_button.clicked.connect(self._import_sprite_as_stamp)
         self.iso_slash_button.clicked.connect(lambda: self._show_isometric_guide("/"))
         self.iso_backslash_button.clicked.connect(lambda: self._show_isometric_guide("\\"))
         self.iso_clear_button.clicked.connect(self.canvas.clear_isometric_guide)
@@ -1173,12 +1196,17 @@ class PixelEditorWindow(QMainWindow):
         if not path:
             return
         try:
-            self.document.palette = load_palette_from_image(path, max_colors=64)
+            self.document.palette = load_palette_from_image(
+                path,
+                max_colors=64 if self.reduce_palette_import_checkbox.isChecked() else None,
+            )
         except Exception as exc:  # pragma: no cover - GUI feedback
             QMessageBox.critical(self, "Palette load failed", str(exc))
             return
         self._refresh_palette_buttons()
-        self.statusBar().showMessage(f"Loaded palette from {Path(path).name}")
+        self.statusBar().showMessage(
+            f"Loaded {len(self.document.palette)} colors from {Path(path).name}"
+        )
 
     def save_image(self) -> None:
         path, _ = QFileDialog.getSaveFileName(
@@ -1208,25 +1236,36 @@ class PixelEditorWindow(QMainWindow):
         if not path:
             return
         try:
-            incoming = load_palette_from_image(path, max_colors=64)
+            incoming = load_palette_from_image(
+                path,
+                max_colors=64 if self.reduce_palette_import_checkbox.isChecked() else None,
+            )
         except Exception as exc:
             QMessageBox.critical(self, "Palette load failed", str(exc))
             return
         self.document.palette = merge_palettes(self.document.palette, incoming)
         self._refresh_palette_buttons()
-        added = len(self.document.palette) - len(set(self.document.palette) & set(incoming))
-        self.statusBar().showMessage(f"Merged palette from {Path(path).name}")
+        self.statusBar().showMessage(
+            f"Merged colors from {Path(path).name} ({len(self.document.palette)} total)"
+        )
 
     def palette_from_current_image(self) -> None:
-        self.document.palette = palette_from_image(self.document.image, max_colors=64)
+        self.document.palette = self._palette_colors_from_current_image()
         self._refresh_palette_buttons()
-        self.statusBar().showMessage("Loaded palette from current editor image")
+        self.statusBar().showMessage(
+            f"Loaded {len(self.document.palette)} colors from current editor image"
+        )
 
     def add_palette_from_current_image(self) -> None:
-        incoming = palette_from_image(self.document.image, max_colors=64)
+        incoming = self._palette_colors_from_current_image()
         self.document.palette = merge_palettes(self.document.palette, incoming)
         self._refresh_palette_buttons()
         self.statusBar().showMessage("Added colors from current image to palette")
+
+    def _palette_colors_from_current_image(self) -> list[tuple[int, int, int, int]]:
+        if self.reduce_palette_import_checkbox.isChecked():
+            return palette_from_image(self.document.image, max_colors=64)
+        return all_colors_from_image(self.document.image)
 
     def add_external_color(self, color: tuple[int, int, int, int]) -> None:
         """Called by the main window when the eyedropper picks a color."""
@@ -1329,6 +1368,25 @@ class PixelEditorWindow(QMainWindow):
             return
         self._reset_selection_after_transform()
         self.statusBar().showMessage("Undid last edit")
+
+    def _restore_source_selection(self) -> None:
+        if self._restore_reference is None:
+            return
+        points = self.document.selected_points()
+        if not points:
+            self.statusBar().showMessage("Select one or more pixels to restore")
+            return
+        push_image_history(self.document)
+        target = self.document.image.convert("RGBA").copy()
+        target_pixels = target.load()
+        source_pixels = self._restore_reference.load()
+        for x, y in points:
+            target_pixels[x, y] = source_pixels[x, y]
+        self.document.image = target
+        self.canvas.update()
+        self.statusBar().showMessage(
+            f"Restored {len(points)} pixel{'s' if len(points) != 1 else ''} from extraction"
+        )
 
     def redo_last_edit(self) -> None:
         if not redo_image_history(self.document):
@@ -1570,7 +1628,7 @@ class PixelEditorWindow(QMainWindow):
         for label, rgba in self._current_ramp:
             btn = QPushButton(label)
             btn.setFixedHeight(32)
-            btn.setMinimumWidth(60)
+            btn.setMinimumWidth(52)
             r, g, b, a = rgba
             luma = 0.299 * r + 0.587 * g + 0.114 * b
             text_color = "#000" if luma > 128 else "#fff"
@@ -1582,7 +1640,9 @@ class PixelEditorWindow(QMainWindow):
             self.shade_ramp_layout.addWidget(btn)
         self.shade_add_all_button.setEnabled(True)
         self.apply_shading_button.setEnabled(True)
-        self.statusBar().showMessage("Shade ramp generated from current color")
+        self.statusBar().showMessage(
+            "Generated 6-stop ramp: three cool shadows, exact base, and two warm lights"
+        )
 
     def _add_ramp_to_palette(self) -> None:
         if not self._current_ramp:
@@ -1624,37 +1684,27 @@ class PixelEditorWindow(QMainWindow):
             f"along {len(ramp_colors)}-stop ramp"
         )
 
-    def _import_reference_underlay(self) -> None:
+    def _import_sprite_as_stamp(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
             self,
-            "Import reference image",
+            "Import Sprite",
             "",
             "Images (*.png *.bmp *.gif *.jpg *.jpeg *.webp)",
         )
         if not path:
             return
-        from PySide6.QtGui import QPixmap
-        pixmap = QPixmap(path)
-        if pixmap.isNull():
-            QMessageBox.critical(self, "Load failed", "Could not load image.")
+        try:
+            sprite = load_image(path)
+        except Exception as exc:  # pragma: no cover - GUI feedback
+            QMessageBox.critical(self, "Load failed", str(exc))
             return
-        from PIL import Image
-        self.document.image = Image.new(
-            "RGBA",
-            (self.document.image.width, self.document.image.height),
-            (0, 0, 0, 0),
-        )
-        self.canvas.set_document(self.document)
-        self.canvas.set_reference_image(pixmap)
-        self.canvas.set_reference_opacity(self.ref_opacity_slider.value() / 100.0)
+        self.canvas.set_stamp_image(sprite)
+        self._update_stamp_controls()
+        self.stamp_radio.setChecked(True)
         self.statusBar().showMessage(
-            f"Reference loaded ({pixmap.width()}x{pixmap.height()}) — "
-            f"canvas cleared to transparent. Paint over it!"
+            f"Sprite ready at native size ({sprite.width}x{sprite.height}px) — "
+            "move it over the canvas and click to place"
         )
-
-    def _clear_reference_underlay(self) -> None:
-        self.canvas.clear_reference()
-        self.statusBar().showMessage("Reference underlay removed")
 
     def _copy_as_stamp(self) -> None:
         if self.canvas.copy_stamp():
