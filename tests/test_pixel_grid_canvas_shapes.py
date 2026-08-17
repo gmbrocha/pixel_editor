@@ -151,6 +151,117 @@ def test_header_measure_action_toggles_canvas_tool() -> None:
     application.processEvents()
 
 
+def test_right_click_transparent_toggle_erases_without_changing_left_color() -> None:
+    application = QApplication.instance() or QApplication([])
+    green = (20, 210, 70, 255)
+    document = PixelDocument(image=Image.new("RGBA", (4, 2), (90, 80, 70, 255)))
+    document.current_color = green
+    document.use_transparent_color = False
+    window = PixelEditorWindow(document, headless=True)
+    window.canvas.show()
+    application.processEvents()
+
+    assert window.right_click_transparent_checkbox.isChecked() is False
+    assert window.canvas.right_click_transparent_enabled() is False
+    window.right_click_transparent_checkbox.setChecked(True)
+    assert window.canvas.right_click_transparent_enabled() is True
+
+    margin = window.canvas._view_margin
+    zoom = window.canvas._zoom
+
+    def pixel_center(x: int, y: int) -> QPoint:
+        return QPoint(margin + x * zoom + zoom // 2, margin + y * zoom + zoom // 2)
+
+    QTest.mouseClick(window.canvas, Qt.MouseButton.LeftButton, pos=pixel_center(0, 0))
+    QTest.mouseClick(window.canvas, Qt.MouseButton.RightButton, pos=pixel_center(1, 0))
+    QTest.mouseClick(window.canvas, Qt.MouseButton.LeftButton, pos=pixel_center(2, 0))
+
+    assert document.image.getpixel((0, 0)) == green
+    assert document.image.getpixel((1, 0)) == (0, 0, 0, 0)
+    assert document.image.getpixel((2, 0)) == green
+    assert document.current_color == green
+    assert document.use_transparent_color is False
+
+    window.canvas.close()
+    window.close()
+    application.processEvents()
+
+
+def test_right_click_transparent_uses_fill_line_ellipse_and_mirror_paint_paths() -> None:
+    application = QApplication.instance() or QApplication([])
+    document = PixelDocument(image=Image.new("RGBA", (8, 8), (30, 40, 50, 255)))
+    canvas = PixelGridCanvas()
+    canvas.set_document(document)
+    canvas.set_right_click_transparent_enabled(True)
+    canvas.show()
+    application.processEvents()
+
+    margin = canvas._view_margin
+    zoom = canvas._zoom
+
+    def pixel_center(x: int, y: int) -> QPoint:
+        return QPoint(margin + x * zoom + zoom // 2, margin + y * zoom + zoom // 2)
+
+    QTest.mousePress(
+        canvas,
+        Qt.MouseButton.RightButton,
+        Qt.KeyboardModifier.ShiftModifier,
+        pixel_center(1, 1),
+    )
+    QTest.mouseMove(canvas, pixel_center(2, 2))
+    QTest.mouseRelease(
+        canvas,
+        Qt.MouseButton.RightButton,
+        Qt.KeyboardModifier.ShiftModifier,
+        pixel_center(2, 2),
+    )
+
+    QTest.keyPress(canvas, Qt.Key.Key_L)
+    QTest.mousePress(canvas, Qt.MouseButton.RightButton, pos=pixel_center(0, 4))
+    QTest.mouseMove(canvas, pixel_center(3, 4))
+    QTest.mouseRelease(canvas, Qt.MouseButton.RightButton, pos=pixel_center(3, 4))
+    QTest.keyRelease(canvas, Qt.Key.Key_L)
+
+    QTest.keyPress(canvas, Qt.Key.Key_C)
+    QTest.mousePress(canvas, Qt.MouseButton.RightButton, pos=pixel_center(3, 0))
+    QTest.mouseMove(canvas, pixel_center(6, 3))
+    QTest.mouseRelease(canvas, Qt.MouseButton.RightButton, pos=pixel_center(6, 3))
+    QTest.keyRelease(canvas, Qt.Key.Key_C)
+
+    canvas.set_mirror(True)
+    QTest.mouseClick(canvas, Qt.MouseButton.RightButton, pos=pixel_center(0, 7))
+
+    assert document.image.getpixel((1, 1)) == (0, 0, 0, 0)
+    assert document.image.getpixel((2, 2)) == (0, 0, 0, 0)
+    assert document.image.getpixel((2, 4)) == (0, 0, 0, 0)
+    assert document.image.getpixel((3, 1)) == (0, 0, 0, 0)
+    assert document.image.getpixel((7, 7)) == (0, 0, 0, 0)
+
+    canvas.close()
+    application.processEvents()
+
+
+def test_right_click_transparent_does_not_override_select_mode_right_click() -> None:
+    application = QApplication.instance() or QApplication([])
+    original = (100, 110, 120, 255)
+    document = PixelDocument(image=Image.new("RGBA", (3, 3), original))
+    canvas = PixelGridCanvas()
+    canvas.set_document(document)
+    canvas.set_right_click_transparent_enabled(True)
+    canvas.set_mode("select")
+    canvas.show()
+    application.processEvents()
+
+    margin = canvas._view_margin
+    zoom = canvas._zoom
+    point = QPoint(margin + zoom // 2, margin + zoom // 2)
+    QTest.mouseClick(canvas, Qt.MouseButton.RightButton, pos=point)
+
+    assert document.image.getpixel((0, 0)) == original
+    canvas.close()
+    application.processEvents()
+
+
 def test_import_sprite_stays_native_and_floating_until_canvas_click(
     tmp_path,
     monkeypatch,

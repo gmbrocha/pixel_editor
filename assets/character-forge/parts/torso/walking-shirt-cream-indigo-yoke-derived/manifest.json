@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "walking-shirt-cream-indigo-yoke-derived",
+  "displayName": "Cream Shirt + Indigo Yoke (Derived)",
+  "slot": "torso",
+  "occupiesSlots": [
+    "torso"
+  ],
+  "reservedSlots": [],
+  "layer": "torso",
+  "tags": [
+    "shirt",
+    "linen",
+    "two_tone",
+    "deterministic"
+  ],
+  "fit": "standard",
+  "version": 1,
+  "status": "incomplete",
+  "developmentVisible": true,
+  "animations": {
+    "walk": "walk.png"
+  },
+  "coverage": {
+    "walk": [
+      "front"
+    ]
+  },
+  "provenance": {
+    "kind": "deterministic_variant",
+    "generator": "tools/generate_character_component_variants.py",
+    "generatorVersion": 1,
+    "sourceComponent": "walking-shirt-test",
+    "sourceSha256": "65bb30ef11109e2f7c2279eefadb522c001c18efe7f78dfed8a3dd5a5671502f",
+    "walkSha256": "f8e012d40b0ede052e118de9721fa0e8f25d2c99ed01431bf685b39946e03c10",
+    "transformation": "Exact silhouette with a coordinate-masked indigo yoke over cream linen."
+  }
+}

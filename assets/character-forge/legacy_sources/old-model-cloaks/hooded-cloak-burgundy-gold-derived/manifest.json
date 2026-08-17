@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "hooded-cloak-burgundy-gold-derived",
+  "displayName": "Burgundy Cloak + Gold Hem (Derived)",
+  "slot": "outerwear",
+  "occupiesSlots": [
+    "outerwear"
+  ],
+  "reservedSlots": [
+    "headwear",
+    "neck"
+  ],
+  "layer": "outerwear",
+  "tags": [
+    "cloak",
+    "burgundy",
+    "gold_trim",
+    "deterministic"
+  ],
+  "fit": "standard",
+  "version": 1,
+  "status": "incomplete",
+  "developmentVisible": true,
+  "animations": {
+    "walk": "walk.png"
+  },
+  "coverage": {
+    "walk": [
+      "front"
+    ]
+  },
+  "provenance": {
+    "kind": "deterministic_variant",
+    "generator": "tools/generate_character_component_variants.py",
+    "generatorVersion": 1,
+    "sourceComponent": "hooded-cloak-pointy-front-test",
+    "sourceSha256": "e8d04b260fa447a26abb501839625818755dfbd8dc3fe5b5745fdf523bc5c3ab",
+    "walkSha256": "34f4d1bd5208b414a33bf2c58efcc954b9501f52a93d1378d8c7234e723c5ff3",
+    "transformation": "Exact silhouette with a burgundy material ramp and detected gold hem edge.",
+    "seed": 1201
+  }
+}

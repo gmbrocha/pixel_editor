@@ -1064,19 +1064,94 @@ def build_generation_prompt(idea: ComponentIdea, animation: CharacterAnimation) 
         "hands": "coat, hat, weapon, jewelry, backpack, or scenery",
         "feet": "coat, hat, gloves, weapon, backpack, or scenery",
     }
-    return (
-        "Use the supplied pixel-art animation sprite sheet as locked character and animation geometry. "
-        "The blue/cyan figure is a deliberately synthetic, opaque, full-coverage game-development fit mannequin. "
-        "Its blue colors are reserved pipeline colors, not skin; preserve its pixels and silhouette except where the "
-        "requested wearable visibly covers it. Do not use blue or cyan mannequin colors in the requested component. "
-        f"It contains {animation.frames_per_direction} frame(s) per direction in {', '.join(animation.directions)} views. "
-        "Preserve every sprite's body proportions, pose, limb position, head position, facing direction, frame position, "
-        "spacing, solid magenta canvas matte, and canvas registration. Add exactly one requested wearable component "
-        "consistently across every sprite and frame. Do not redesign the body or animation. Do not add any other clothing, "
-        "accessories, weapons, scenery, effects, text, borders, or objects. Translate the same component logically through "
-        "all views. Maintain the tiny-scale pixel-art visual language with bold readable shapes, restrained shading, and "
-        f"limited colors. Specifically do not add {forbidden[idea.slot]}. "
-        f"The requested component is: {idea.concept}"
+    fit_contract = {
+        "headwear": (
+            "Fit it onto the existing crown and brow. Keep the original head, face, eyes, hair, neck, and facing "
+            "direction unchanged; extend beyond the head only where the physical item requires it."
+        ),
+        "face": (
+            "Anchor it to the existing eyes, brow, nose, ears, or jaw as appropriate. Keep the original head outline, "
+            "face, eyes, hair, skin, expression, and facing direction unchanged."
+        ),
+        "neck": (
+            "Fit it around the existing neck and collar line. Keep the original head, face, shoulders, torso, and arms "
+            "unchanged, and do not turn it into a coat or mantle."
+        ),
+        "torso": (
+            "Fit it over the existing torso and follow the exact shoulder, waist, and arm positions. Keep the original "
+            "head, arms, hands, legs, anatomy, and pose unchanged."
+        ),
+        "waist": (
+            "Anchor it to the existing waistline and follow the exact torso and hip position. Keep the original torso, "
+            "arms, hands, legs, anatomy, and pose unchanged."
+        ),
+        "outerwear": (
+            "Drape it from the existing shoulders and torso, following the exact pose. Keep the original head, face, "
+            "arms, hands, legs, anatomy, and facing direction unchanged; allow only physically necessary garment silhouette growth."
+        ),
+        "hands": (
+            "Fit it directly to the existing hands or wrists. Keep every hand position, finger/mitten silhouette, arm, "
+            "weapon-free pose, and facing direction unchanged."
+        ),
+        "feet": (
+            "Fit it directly over the existing feet and lower ankles. Keep every foot position, leg, stance, ground "
+            "contact point, pose, and facing direction unchanged."
+        ),
+    }
+    ordered_directions = sorted(animation.direction_rows.items(), key=lambda item: item[1])
+    row_map = ", ".join(
+        f"row {row + 1} = {direction.title()}" for direction, row in ordered_directions
+    )
+    return "\n".join(
+        (
+            "USE CASE: precise-object-edit for a production pixel-art paper-doll component.",
+            "",
+            "EDIT TARGET",
+            "Image 1 is the authoritative sprite sheet and immutable raster template, not inspiration to reinterpret. "
+            "If Image 2 is supplied, it is a design reference for the wearable only and never replaces Image 1 geometry.",
+            "",
+            "PRIMARY REQUEST",
+            f"Add exactly one wearable component: {idea.concept}",
+            f"Component slot: {idea.slot}. {fit_contract[idea.slot]}",
+            "",
+            "NON-NEGOTIABLE BASE LOCK",
+            "Perform additive paper-doll compositing, not character generation. Treat every input pixel as read-only. "
+            "Do not redraw, regenerate, reinterpret, improve, clean up, recolor, rescale, rotate, mirror, or reposition "
+            "the mannequin or animation. New component pixels may cover the mannequin only where the physical wearable "
+            "naturally occludes it. Every original pixel that remains visible must be identical to Image 1.",
+            "Preserve exact anatomy, proportions, silhouette, pose, limb and head positions, facing direction, frame "
+            "coordinates, spacing, alignment, canvas dimensions, solid magenta matte, and registration. Preserve all "
+            "pixels outside the legitimate component coverage area exactly.",
+            "The blue/cyan figure is a synthetic opaque fit mannequin. Blue and cyan are reserved pipeline colors, not "
+            "skin or garment colors. Do not include blue, cyan, magenta, mannequin, anatomy, or background pixels as part "
+            "of the component.",
+            "",
+            "ANIMATION AND DESIGN LOCK",
+            f"The sheet has {animation.frames_per_direction} frame(s) per direction. Exact direction layout: {row_map}. "
+            "Frames progress left to right. Do not reverse, reorder, omit, duplicate, or invent frames.",
+            "Use one identical component design in every frame: the same construction, material, palette, proportions, "
+            "fastenings, trim, and recognizable landmarks. Change only its perspective, occlusion, and folds as required "
+            "by the existing pose. If a detail cannot be represented consistently, omit that detail everywhere.",
+            "",
+            "PIXEL-ART REQUIREMENTS",
+            "Match the supplied native pixel density, outline weight, lighting direction, and detail level. Use hard "
+            "pixel edges, compact intentional clusters, bold readable shapes, and a small shared color ramp. No "
+            "antialiasing, blur, gradients, glow, painterly texture, semitransparent fringe, or scattered noise.",
+            "",
+            "EXCLUSIONS",
+            f"Do not add {forbidden[idea.slot]}. Do not add any second garment, unrelated accessory, ground plane, cast "
+            "shadow, scenery, effect, text, border, box, label, or object. Never fill an editable or masked rectangle with "
+            "black, white, magenta, or any other background color.",
+            "",
+            "FAIL-SAFE",
+            "When uncertain about a pixel, preserve the original pixel unchanged. Missing a minor wearable detail is "
+            "preferable to altering the base character.",
+            "",
+            "OUTPUT CHECK",
+            "Return the complete sheet with exactly the same dimensions and layout. The requested wearable must be the "
+            "only visible difference. Before returning it, verify that anatomy and poses are unchanged, all frames remain "
+            "registered, the design is consistent, no mask-shaped fill was added, and untouched pixels still match Image 1.",
+        )
     )
 
 

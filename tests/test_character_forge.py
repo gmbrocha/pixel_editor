@@ -35,7 +35,7 @@ BASE_HASHES = {
     "run-front.png": "d642400d860c197e8bdf9f62434275154250c286212693fa8ff018fceeca7e74",
     "run-left.png": "32566d95b52b00a3eb21e2a2db0710f58e1256c042e1f8741a26c75ae4e2f9eb",
     "run-right.png": "f5c4ae57e7cb6ca039a1b7bf52b27ff165d42d2f43bdb74d5f1bde39bd9f1d9b",
-    "walk.png": "a1841bea06359c85edbe95a4b65b48848a19d2e07e4e4991f526f6402605f7a7",
+    "walk.png": "90f886c15de51a3e6fbdb1a1280b50203aed38bb310016c3edb01fb6f8c76fce",
 }
 
 
@@ -150,14 +150,18 @@ def test_partial_walking_shirt_is_registered_only_for_its_authored_sheet() -> No
     assert all(
         recipe.parts[slot] is None for slot in CHARACTER_SLOTS if slot != "torso"
     )
-    assert catalog.parts_for_slot("torso") == (shirt,)
-    assert tuple(part.id for part in catalog.parts_for_slot("feet")) == (
+    assert {part.id for part in catalog.parts_for_slot("torso")} == {
+        "walking-shirt-test",
+        "walking-shirt-crimson-derived",
+        "walking-shirt-cream-indigo-yoke-derived",
+    }
+    assert {part.id for part in catalog.parts_for_slot("feet")} == {
         "leather-boots-front-test",
-    )
+        "leather-boots-blackened-iron-derived",
+    }
     assert all(
         catalog.parts_for_slot(slot) == ()
-        for slot in CHARACTER_SLOTS
-        if slot not in {"torso", "feet"}
+        for slot in ("waist", "legwear", "facial_hair", "back")
     )
 
     with Image.open(shirt.animations["walk"]) as source:
@@ -210,6 +214,52 @@ def test_partial_leather_boots_are_front_walk_only_and_fall_back_to_base() -> No
             assert extract_character_frame(
                 composed_walk, walk, direction, frame_index
             ).tobytes() == extract_character_frame(
+                base_walk, walk, direction, frame_index
+            ).tobytes()
+
+    for animation_id in ("idle", "run"):
+        assert composite_character_animation(
+            catalog, recipe, animation_id
+        ).tobytes() == load_base_animation(
+            catalog, recipe.base_id, animation_id
+        ).tobytes()
+
+
+def test_semantic_pointed_hood_cloak_covers_every_walk_direction() -> None:
+    catalog = create_default_catalog()
+    cloak = catalog.part("hooded-cloak-semantic-pointed-green")
+    recipe = CharacterRecipe()
+    recipe.parts["outerwear"] = cloak.id
+
+    assert cloak.name == "Pointed Green Hooded Cloak (Full Walk)"
+    assert cloak.slot == "outerwear"
+    assert cloak.layer == "outerwear"
+    assert cloak.status == "incomplete"
+    assert cloak.occupies_slots == ("outerwear",)
+    assert cloak.reserved_slots == ("headwear", "neck")
+    assert set(cloak.animations) == {"walk"}
+    assert cloak.coverage == {"walk": ("front", "back", "right", "left")}
+
+    overlay = load_part_animation(catalog, cloak.id, "walk")
+    assert overlay.size == (384, 259)
+    assert all(
+        overlay.crop(
+            (column * 64, row * 64, column * 64 + 64, row * 64 + 64)
+        ).getbbox()
+        is not None
+        for row in range(4)
+        for column in range(6)
+    )
+    assert overlay.crop((0, 256, 384, 259)).getbbox() is None
+
+    walk = catalog.base(recipe.base_id).animations["walk"]
+    base_walk = load_base_animation(catalog, recipe.base_id, "walk")
+    composed_walk = composite_character_animation(catalog, recipe, "walk")
+    for frame_index in range(walk.frames_per_direction):
+        for direction in ("front", "back", "right", "left"):
+            assert extract_character_frame(
+                composed_walk, walk, direction, frame_index
+            ).tobytes() != extract_character_frame(
                 base_walk, walk, direction, frame_index
             ).tobytes()
 
@@ -340,13 +390,38 @@ def test_character_forge_window_exposes_animation_direction_zoom_parts_and_color
     ] == ["idle", "walk", "run"]
     assert window.preview_label.pixmap().size().toTuple() == (512, 512)
     assert set(window.part_combos) == set(CHARACTER_SLOTS)
-    assert window.part_combos["torso"].count() == 2
+    assert window.part_combos["torso"].count() == 4
     assert window.part_combos["torso"].isEnabled()
     assert window.part_combos["torso"].currentData() == "walking-shirt-test"
-    assert window.part_combos["feet"].count() == 2
+    assert window.part_combos["feet"].count() == 3
     assert window.part_combos["feet"].isEnabled()
-    assert window.part_combos["feet"].itemData(1) == "leather-boots-front-test"
+    assert window.part_combos["feet"].findData("leather-boots-front-test") >= 1
     assert window.part_combos["feet"].currentData() is None
+    assert window.part_combos["outerwear"].count() == 18
+    assert window.part_combos["outerwear"].isEnabled()
+    assert (
+        window.part_combos["outerwear"].findData("hooded-cloak-semantic-pointed-green")
+        >= 1
+    )
+    assert (
+        window.part_combos["outerwear"].findData(
+            "warlock-robe-semantic-void-amethyst"
+        )
+        >= 1
+    )
+    assert window.part_combos["outerwear"].currentData() is None
+    assert window.part_combos["hair"].count() == 2
+    assert window.part_combos["hair"].isEnabled()
+    assert window.part_combos["face"].count() == 3
+    assert window.part_combos["face"].isEnabled()
+    assert window.part_combos["headwear"].count() == 2
+    assert window.part_combos["headwear"].isEnabled()
+    assert window.part_combos["neck"].count() == 2
+    assert window.part_combos["neck"].isEnabled()
+    assert window.part_combos["hands"].count() == 2
+    assert window.part_combos["hands"].isEnabled()
+    assert window.part_combos["shoulder_chest"].count() == 3
+    assert window.part_combos["shoulder_chest"].isEnabled()
     assert not window.edit_part_buttons["torso"].isEnabled()
     assert window.part_color_button.isEnabled()
     assert window.part_color_button.text() == "#2C4267"
@@ -354,7 +429,18 @@ def test_character_forge_window_exposes_animation_direction_zoom_parts_and_color
     assert all(
         combo.count() == 1 and combo.itemText(0) == "None" and not combo.isEnabled()
         for slot, combo in window.part_combos.items()
-        if slot not in {"torso", "feet"}
+        if slot
+        not in {
+            "torso",
+            "outerwear",
+            "feet",
+            "hair",
+            "face",
+            "headwear",
+            "neck",
+            "hands",
+            "shoulder_chest",
+        }
     )
 
     window.animation_combo.setCurrentIndex(window.animation_combo.findData("walk"))
@@ -365,7 +451,9 @@ def test_character_forge_window_exposes_animation_direction_zoom_parts_and_color
     assert "Frame 1/6" in window.frame_label.text()
     assert "384x259 sheet" in window.frame_label.text()
     assert window.edit_part_buttons["torso"].isEnabled()
-    window.part_combos["feet"].setCurrentIndex(1)
+    window.part_combos["feet"].setCurrentIndex(
+        window.part_combos["feet"].findData("leather-boots-front-test")
+    )
     assert window.recipe.parts["feet"] == "leather-boots-front-test"
     assert window.edit_part_buttons["feet"].isEnabled()
 

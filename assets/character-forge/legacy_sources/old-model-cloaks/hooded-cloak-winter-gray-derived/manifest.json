@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "hooded-cloak-winter-gray-derived",
+  "displayName": "Winter Gray Cloak (Derived)",
+  "slot": "outerwear",
+  "occupiesSlots": [
+    "outerwear"
+  ],
+  "reservedSlots": [
+    "headwear",
+    "neck"
+  ],
+  "layer": "outerwear",
+  "tags": [
+    "cloak",
+    "winter",
+    "palette_variant",
+    "deterministic"
+  ],
+  "fit": "standard",
+  "version": 1,
+  "status": "incomplete",
+  "developmentVisible": true,
+  "animations": {
+    "walk": "walk.png"
+  },
+  "coverage": {
+    "walk": [
+      "front"
+    ]
+  },
+  "provenance": {
+    "kind": "deterministic_variant",
+    "generator": "tools/generate_character_component_variants.py",
+    "generatorVersion": 1,
+    "sourceComponent": "hooded-cloak-pointy-front-test",
+    "sourceSha256": "e8d04b260fa447a26abb501839625818755dfbd8dc3fe5b5745fdf523bc5c3ab",
+    "walkSha256": "12ff4c6bde37c075401884ec279582a944bfc8362520abd3bf2c3488fa886e69",
+    "transformation": "Exact silhouette with a stable seven-step winter-gray material ramp."
+  }
+}

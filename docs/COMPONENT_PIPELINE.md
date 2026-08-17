@@ -7,8 +7,11 @@ generation job.
 
 ## Setup and folders
 
-Install `requirements.txt` and set `OPENAI_API_KEY` in the environment or an ignored
-`.env.local`/`.env` file. Keys are never copied into job metadata.
+Install `requirements.txt`. This project keeps `OPENAI_API_KEY` in the ignored
+root-level `.env` file, which the component pipeline loads automatically. Check that
+file through `openai_api_available()` before reporting that credentials are missing;
+never print its contents or copy the key into job metadata. A process environment
+variable or ignored `.env.local` remains a supported override.
 
 `art_pipeline/` is an ignored working tree containing canonical working copies,
 reserved-blue mannequin references, reversible ramp metadata, 4x generation

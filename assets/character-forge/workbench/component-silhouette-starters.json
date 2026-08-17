@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "generator": "tools/generate_component_silhouette_starters.py",
+  "generatorVersion": 1,
+  "baseWalkSha256": "90f886c15de51a3e6fbdb1a1280b50203aed38bb310016c3edb01fb6f8c76fce",
+  "conceptBoard": "starter-component-concept-board.png",
+  "starters": [
+    {
+      "id": "workbench-messy-frost-hair",
+      "displayName": "Workbench \u2014 Messy Frost Hair",
+      "slot": "hair",
+      "regions": "parts/hair/workbench-messy-frost-hair/regions.png",
+      "preview": "parts/hair/workbench-messy-frost-hair/walk.png",
+      "status": "rough-editable-silhouette"
+    },
+    {
+      "id": "workbench-one-shoulder-pauldron",
+      "displayName": "Workbench \u2014 One-Shoulder Pauldron",
+      "slot": "shoulder_chest",
+      "regions": "parts/shoulder_chest/workbench-one-shoulder-pauldron/regions.png",
+      "preview": "parts/shoulder_chest/workbench-one-shoulder-pauldron/walk.png",
+      "status": "rough-editable-silhouette"
+    },
+    {
+      "id": "workbench-leather-gloves",
+      "displayName": "Workbench \u2014 Leather Gloves",
+      "slot": "hands",
+      "regions": "parts/hands/workbench-leather-gloves/regions.png",
+      "preview": "parts/hands/workbench-leather-gloves/walk.png",
+      "status": "rough-editable-silhouette"
+    },
+    {
+      "id": "workbench-eye-patch",
+      "displayName": "Workbench \u2014 Eye Patch",
+      "slot": "face",
+      "regions": "parts/face/workbench-eye-patch/regions.png",
+      "preview": "parts/face/workbench-eye-patch/walk.png",
+      "status": "rough-editable-silhouette"
+    },
+    {
+      "id": "workbench-double-leaf-pauldrons",
+      "displayName": "Workbench \u2014 Double Leaf Pauldrons",
+      "slot": "shoulder_chest",
+      "regions": "parts/shoulder_chest/workbench-double-leaf-pauldrons/regions.png",
+      "preview": "parts/shoulder_chest/workbench-double-leaf-pauldrons/walk.png",
+      "status": "rough-editable-silhouette"
+    },
+    {
+      "id": "workbench-crooked-mage-vestments",
+      "displayName": "Workbench \u2014 Crooked Mage Hat + Vestments",
+      "slot": "outerwear",
+      "regions": "parts/outerwear/workbench-crooked-mage-vestments/regions.png",
+      "preview": "parts/outerwear/workbench-crooked-mage-vestments/walk.png",
+      "status": "rough-editable-silhouette"
+    },
+    {
+      "id": "workbench-rugged-leather-armor",
+      "displayName": "Workbench \u2014 Rugged Leather Armor",
+      "slot": "outerwear",
+      "regions": "parts/outerwear/workbench-rugged-leather-armor/regions.png",
+      "preview": "parts/outerwear/workbench-rugged-leather-armor/walk.png",
+      "status": "rough-editable-silhouette"
+    },
+    {
+      "id": "workbench-ratty-shawl",
+      "displayName": "Workbench \u2014 Ratty Shawl",
+      "slot": "neck",
+      "regions": "parts/neck/workbench-ratty-shawl/regions.png",
+      "preview": "parts/neck/workbench-ratty-shawl/walk.png",
+      "status": "rough-editable-silhouette"
+    },
+    {
+      "id": "workbench-cloth-headband",
+      "displayName": "Workbench \u2014 Cloth Headband",
+      "slot": "headwear",
+      "regions": "parts/headwear/workbench-cloth-headband/regions.png",
+      "preview": "parts/headwear/workbench-cloth-headband/walk.png",
+      "status": "rough-editable-silhouette"
+    },
+    {
+      "id": "workbench-orcish-spiked-armor",
+      "displayName": "Workbench \u2014 Orcish Spiked Armor",
+      "slot": "outerwear",
+      "regions": "parts/outerwear/workbench-orcish-spiked-armor/regions.png",
+      "preview": "parts/outerwear/workbench-orcish-spiked-armor/walk.png",
+      "status": "rough-editable-silhouette"
+    },
+    {
+      "id": "workbench-horned-cult-mask",
+      "displayName": "Workbench \u2014 Horned Cult Mask",
+      "slot": "face",
+      "regions": "parts/face/workbench-horned-cult-mask/regions.png",
+      "preview": "parts/face/workbench-horned-cult-mask/walk.png",
+      "status": "rough-editable-silhouette"
+    }
+  ]
+}

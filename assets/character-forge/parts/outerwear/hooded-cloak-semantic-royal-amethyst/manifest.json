@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "id": "hooded-cloak-semantic-royal-amethyst",
+  "displayName": "Royal Amethyst + Gold Hooded Cloak (Full Walk)",
+  "slot": "outerwear",
+  "occupiesSlots": [
+    "outerwear"
+  ],
+  "reservedSlots": [
+    "headwear",
+    "neck"
+  ],
+  "layer": "outerwear",
+  "tags": [
+    "cloak",
+    "hooded_cloak",
+    "semantic_regions",
+    "deterministic",
+    "royal",
+    "amethyst",
+    "gold_trim"
+  ],
+  "fit": "standard",
+  "version": 2,
+  "status": "incomplete",
+  "developmentVisible": true,
+  "animations": {
+    "walk": "walk.png"
+  },
+  "coverage": {
+    "walk": [
+      "front",
+      "back",
+      "right",
+      "left"
+    ]
+  },
+  "provenance": {
+    "kind": "deterministic_semantic_finish",
+    "generator": "tools/generate_cloak_walk_variants.py",
+    "generatorVersion": 1,
+    "finisher": "tools/finish_component_regions.py",
+    "preset": "royal-amethyst",
+    "authoredSource": "semantic_sources/hooded-cloak-walk/authored-regions.png",
+    "authoredSourceSha256": "60d7dbe9aa2dff9cc14ac68ae1be380801cbdb44f1ead68fe66327f763296e42",
+    "semanticSource": "semantic_sources/hooded-cloak-walk/semantic-regions.png",
+    "semanticRegionsSha256": "bb3fcf966c5b5fbc70bb1bdc5cdf562e0e5c4f20347f533f8670a4f303a89c18",
+    "walkSha256": "23ac98225bcb238f4c4487f4c453f8aeef8d4b976f335004bc6320dcf8934112",
+    "authoredDirections": [
+      "front",
+      "back",
+      "right"
+    ],
+    "sideFrameOrder": [
+      1,
+      2,
+      3,
+      6,
+      5,
+      4
+    ],
+    "derivedDirections": {
+      "left": {
+        "operation": "horizontal-frame-mirror-of-right",
+        "alignmentOffset": [
+          -1,
+          -1
+        ]
+      }
+    },
+    "framesPerDirection": 6
+  }
+}

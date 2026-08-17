@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-eye-patch",
+  "displayName": "Workbench \u2014 Eye Patch",
+  "slot": "face",
+  "occupiesSlots": [
+    "face"
+  ],
+  "reservedSlots": [],
+  "layer": "face_accessory",
+  "tags": [
+    "workbench",
+    "silhouette_starter",
+    "semantic_regions",
+    "eyepatch",
+    "leather"
+  ],
+  "fit": "standard",
+  "version": 1,
+  "status": "incomplete",
+  "developmentVisible": true,
+  "animations": {
+    "walk": "walk.png"
+  },
+  "coverage": {
+    "walk": [
+      "front"
+    ]
+  },
+  "semanticRegions": {
+    "walk": "regions.png"
+  },
+  "provenance": {
+    "kind": "deterministic_semantic_silhouette_starter",
+    "generator": "tools/generate_component_silhouette_starters.py",
+    "generatorVersion": 1,
+    "baseWalkSha256": "90f886c15de51a3e6fbdb1a1280b50203aed38bb310016c3edb01fb6f8c76fce",
+    "regionsSha256": "1082ec58057ae0fc017907a87a6262e84f045a0935462a1831cc134f26cada51",
+    "walkSha256": "48aa4b9a32df79f6cb06430ed255f6ae3ba38f18631cd9a814af628dc1bd4ab8",
+    "authoredDirections": [
+      "front"
+    ],
+    "authoredFrameIndices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "conceptBoard": "workbench/starter-component-concept-board.png",
+    "readiness": "rough-editable-silhouette"
+  }
+}

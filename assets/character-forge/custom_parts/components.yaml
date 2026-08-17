@@ -22,7 +22,7 @@ components:
   - common
   fit: standard
   priority: high
-  status: queued
+  status: review
 - id: quilted_coif_01
   slot: headwear
   layer: headwear
@@ -34,7 +34,7 @@ components:
   - practical
   fit: standard
   priority: medium
-  status: queued
+  status: review
 - id: iron_kettle_helm_01
   slot: headwear
   layer: headwear
@@ -46,7 +46,7 @@ components:
   - armor
   fit: standard
   priority: high
-  status: queued
+  status: review
 - id: linen_headwrap_01
   slot: headwear
   layer: headwear
@@ -141,7 +141,7 @@ components:
   - traveler
   fit: standard
   priority: medium
-  status: queued
+  status: review
 - id: leather_gorget_01
   slot: neck
   layer: neck
@@ -165,7 +165,7 @@ components:
   - prosperous
   fit: standard
   priority: medium
-  status: queued
+  status: review
 - id: merchant_cravat_01
   slot: neck
   layer: neck
@@ -201,7 +201,7 @@ components:
   - cloth
   fit: standard
   priority: high
-  status: queued
+  status: review
 - id: rope_cord_belt_01
   slot: waist
   layer: waist
@@ -225,7 +225,7 @@ components:
   - utility
   fit: standard
   priority: high
-  status: queued
+  status: review
 - id: officers_waist_sash_01
   slot: waist
   layer: waist
@@ -261,7 +261,7 @@ components:
   - outdoors
   fit: standard
   priority: high
-  status: queued
+  status: review
 - id: quilted_gambeson_01
   slot: outerwear
   layer: outerwear
@@ -273,7 +273,7 @@ components:
   - armor
   fit: bulky
   priority: high
-  status: queued
+  status: review
 - id: leather_work_apron_01
   slot: outerwear
   layer: outerwear
@@ -297,7 +297,7 @@ components:
   - town
   fit: standard
   priority: high
-  status: queued
+  status: review
 - id: plain_leather_gloves_01
   slot: hands
   layer: handwear

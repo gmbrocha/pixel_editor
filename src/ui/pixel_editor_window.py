@@ -542,6 +542,12 @@ class PixelEditorWindow(QMainWindow):
             "In Paint mode, drag continuously while avoiding repeated pixels "
             "and 2x2 double-pixel corners."
         )
+        self.right_click_transparent_checkbox = QCheckBox("Right-click Transparent")
+        self.right_click_transparent_checkbox.setToolTip(
+            "When enabled in Paint mode, right-click uses transparency for the "
+            "brush, Clean Stroke, mirror, Shift-fill, line, and ellipse tools. "
+            "Left-click continues to use the selected color."
+        )
         self.draw_selection_checkbox = QCheckBox("Draw Selection")
         self.draw_selection_checkbox.setToolTip(
             "In Select mode, click perimeter cells, then click the first cell "
@@ -808,14 +814,19 @@ class PixelEditorWindow(QMainWindow):
         # Mode + color
         mode_row = QHBoxLayout()
         mode_row.addWidget(self.paint_radio)
-        mode_row.addWidget(self.clean_stroke_checkbox)
         mode_row.addWidget(self.select_radio)
-        mode_row.addWidget(self.draw_selection_checkbox)
         mode_row.addWidget(self.stamp_radio)
         mode_row.addWidget(self.flood_erase_radio)
         mode_row.addWidget(self.iso_guide_radio)
         mode_row.addStretch(1)
         controls_layout.addLayout(mode_row)
+
+        mode_option_row = QHBoxLayout()
+        mode_option_row.addWidget(self.clean_stroke_checkbox)
+        mode_option_row.addWidget(self.right_click_transparent_checkbox)
+        mode_option_row.addWidget(self.draw_selection_checkbox)
+        mode_option_row.addStretch(1)
+        controls_layout.addLayout(mode_option_row)
 
         selection_action_row = QHBoxLayout()
         selection_action_row.addWidget(self.copy_stamp_button)
@@ -1090,6 +1101,9 @@ class PixelEditorWindow(QMainWindow):
         self.flood_erase_radio.toggled.connect(self._on_mode_changed)
         self.iso_guide_radio.toggled.connect(self._on_mode_changed)
         self.clean_stroke_checkbox.toggled.connect(self.canvas.set_clean_stroke_enabled)
+        self.right_click_transparent_checkbox.toggled.connect(
+            self.canvas.set_right_click_transparent_enabled
+        )
         self.draw_selection_checkbox.toggled.connect(self._on_draw_selection_toggled)
         self.copy_stamp_button.clicked.connect(self._copy_as_stamp)
         self.flip_stamp_h_button.clicked.connect(self._flip_stamp_horizontal)
@@ -1151,9 +1165,11 @@ class PixelEditorWindow(QMainWindow):
         self.flood_boundary_preview.color_dropped.connect(self._drop_flood_boundary_color)
         self.canvas.flood_erase_requested.connect(self._flood_erase_at)
         self.canvas.image_changed.connect(self._on_canvas_image_changed)
-        self.canvas.selection_changed.connect(self.selection_summary.setText)
+        self.canvas.selection_changed.connect(self._on_selection_changed)
         self.canvas.status_changed.connect(self.statusBar().showMessage)
         self.layer_panel.layers_changed.connect(self._on_layers_changed)
+        self.layer_panel.selection_transfer_requested.connect(self._transfer_selection_to_layer)
+        self.layer_panel.status_message.connect(self.statusBar().showMessage)
         self._update_transparent_replace_preview()
         self._update_replace_with_preview()
         self._update_color_shift_summary()
@@ -1370,6 +1386,16 @@ class PixelEditorWindow(QMainWindow):
         )
 
     def undo_last_edit(self) -> None:
+        if self.document.undo_layer_transfer():
+            self.layer_panel.refresh()
+            self.canvas.invalidate_render_cache()
+            self._on_selection_changed(
+                f"Pixels selected: {len(self.document.selected_points())}"
+            )
+            self.statusBar().showMessage(
+                f"Undid selection transfer; editing '{self.document.active_layer.name}'"
+            )
+            return
         if not undo_image_history(self.document):
             self.statusBar().showMessage("Nothing to undo")
             return
@@ -1396,6 +1422,16 @@ class PixelEditorWindow(QMainWindow):
         )
 
     def redo_last_edit(self) -> None:
+        if self.document.redo_layer_transfer():
+            self.layer_panel.refresh()
+            self.canvas.invalidate_render_cache()
+            self._on_selection_changed(
+                f"Pixels selected: {len(self.document.selected_points())}"
+            )
+            self.statusBar().showMessage(
+                f"Redid selection transfer; editing '{self.document.active_layer.name}'"
+            )
+            return
         if not redo_image_history(self.document):
             self.statusBar().showMessage("Nothing to redo")
             return
@@ -1437,6 +1473,17 @@ class PixelEditorWindow(QMainWindow):
         """Active layer or layer stack changed in the panel: redraw the
         composite and reflect the new active layer in dependent widgets."""
         self.canvas.invalidate_render_cache()
+        selection_count = len(self.document.selected_points())
+        self.layer_panel.set_selection_count(selection_count)
+        self.selection_summary.setText(
+            "No selection"
+            if selection_count == 0
+            else f"Pixels selected: {selection_count}"
+        )
+
+    def _on_selection_changed(self, summary: str) -> None:
+        self.selection_summary.setText(summary)
+        self.layer_panel.set_selection_count(len(self.document.selected_points()))
 
     def _on_mode_changed(self) -> None:
         if self.paint_radio.isChecked():
@@ -1761,6 +1808,27 @@ class PixelEditorWindow(QMainWindow):
         pixel_word = "pixel" if count == 1 else "pixels"
         self.statusBar().showMessage(
             f"Copied {count} selected {pixel_word} to new layer '{layer_name}'"
+        )
+
+    def _transfer_selection_to_layer(self, target_index: int, move: bool) -> None:
+        source_name = self.document.active_layer.name
+        target_name = self.document.layers[target_index].name
+        result = self.document.transfer_selection_to_layer(target_index, move=move)
+        if result is None:
+            self.statusBar().showMessage(
+                f"Nothing visible selected on editing layer '{source_name}'"
+            )
+            self.layer_panel.set_selection_count(len(self.document.selected_points()))
+            return
+        _new_index, count = result
+        self.layer_panel.refresh()
+        self.layer_panel.set_selection_count(count)
+        self.canvas.invalidate_render_cache()
+        self.selection_summary.setText(f"Pixels selected: {count}")
+        verb = "Moved" if move else "Copied"
+        self.statusBar().showMessage(
+            f"{verb} {count} pixel{'s' if count != 1 else ''} from '{source_name}' "
+            f"to '{target_name}'. Now editing '{target_name}'."
         )
 
     def _pick_transparent_display_color(self) -> None:

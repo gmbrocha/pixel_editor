@@ -9,6 +9,7 @@ import src.component_pipeline.pipeline as pipeline
 from src.component_pipeline.pipeline import (
     PipelineError,
     analyze_candidate,
+    build_generation_prompt,
     create_allowed_region_mask,
     create_native_region_mask,
     extract_component_overlay,
@@ -67,6 +68,31 @@ def test_bootstrap_catalog_has_all_35_compact_records() -> None:
         "hands",
         "feet",
     }
+
+
+def test_generation_prompt_locks_base_and_component_identity() -> None:
+    idea = next(idea for idea in load_component_ideas() if idea.id == "short_wool_travel_coat_01")
+    animation = CharacterAnimation(
+        id="walk",
+        name="Walk",
+        filename="walk.png",
+        sheet_size=(384, 256),
+        frame_size=(64, 64),
+        frames_per_direction=6,
+        direction_rows={"front": 0, "back": 1, "right": 2, "left": 3},
+        fps=8,
+        matte_rgb=None,
+    )
+
+    prompt = build_generation_prompt(idea, animation)
+
+    assert "immutable raster template" in prompt
+    assert "Perform additive paper-doll compositing" in prompt
+    assert "Every original pixel that remains visible must be identical" in prompt
+    assert "row 1 = Front, row 2 = Back, row 3 = Right, row 4 = Left" in prompt
+    assert "same construction, material, palette, proportions" in prompt
+    assert "When uncertain about a pixel, preserve the original pixel unchanged" in prompt
+    assert idea.concept in prompt
 
 
 def test_checksum_validation_refuses_silent_master_change(isolated_pipeline) -> None:

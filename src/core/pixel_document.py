@@ -31,6 +31,18 @@ class Layer:
     redo_history: list[Image.Image] = field(default_factory=list)
 
 
+@dataclass(slots=True)
+class LayerTransferRecord:
+    source_layer: Layer
+    target_layer: Layer
+    source_before: Image.Image
+    target_before: Image.Image
+    source_after: Image.Image
+    target_after: Image.Image
+    selected_points: set[Point]
+    move: bool
+
+
 def composite_layers(layers: Iterable[Layer]) -> Image.Image:
     """Composite layers in stack order (bottom -> top) using normal alpha
     compositing. Invisible layers are skipped. Returns a fresh RGBA image.
@@ -89,6 +101,8 @@ class PixelDocument:
         self.selection_rect: Rect | None = None
         self.current_color: Color = (0, 0, 0, 255)
         self.use_transparent_color: bool = False
+        self._transfer_undo: LayerTransferRecord | None = None
+        self._transfer_redo: LayerTransferRecord | None = None
 
     # --- Active-layer facade -------------------------------------------------
 
@@ -150,12 +164,14 @@ class PixelDocument:
     def add_layer(self, name: str | None = None) -> int:
         """Insert a new fully-transparent layer directly above the active
         layer and make it active. Returns the new active index."""
+        self.clear_transfer_history()
         size = (self.width, self.height)
         blank = Image.new("RGBA", size, (0, 0, 0, 0))
         layer = Layer(name=name or self._next_layer_name(), image=blank)
         insert_at = self.active_layer_index + 1
         self.layers.insert(insert_at, layer)
         self.active_layer_index = insert_at
+        self.clear_selection()
         return self.active_layer_index
 
     def _next_layer_name(self) -> str:
@@ -231,16 +247,155 @@ class PixelDocument:
         self.active_layer_index = insert_at
         return insert_at, len(points)
 
+    def transfer_selection_to_layer(
+        self,
+        target_index: int,
+        *,
+        move: bool,
+    ) -> tuple[int, int] | None:
+        """Copy or move selected, non-transparent pixels to an existing layer.
+
+        Pixels retain their exact canvas coordinates and are alpha-composited
+        over the target layer. A move clears those pixels from the source.
+        The target becomes active while the selection remains selected there.
+        Returns ``(target_index, transferred_pixel_count)`` or ``None`` when
+        the request has no valid target or no visible source pixels.
+        """
+        source_index = self.active_layer_index
+        if not (0 <= target_index < len(self.layers)) or target_index == source_index:
+            return None
+
+        self.clear_transfer_history()
+        points = self.selected_points()
+        if not points:
+            return None
+
+        source_layer = self.layers[source_index]
+        target_layer = self.layers[target_index]
+        source_before = source_layer.image.convert("RGBA").copy()
+        target_before = target_layer.image.convert("RGBA").copy()
+        overlay = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
+        overlay_pixels = overlay.load()
+        source_pixels = source_before.load()
+        transferred_points: set[Point] = set()
+        for x, y in points:
+            pixel = source_pixels[x, y]
+            if pixel[3] == 0:
+                continue
+            overlay_pixels[x, y] = pixel
+            transferred_points.add((x, y))
+        if not transferred_points:
+            return None
+
+        target_after = target_before.copy()
+        target_after.alpha_composite(overlay)
+        target_layer.image = target_after
+
+        if move:
+            source_after = source_before.copy()
+            source_after_pixels = source_after.load()
+            for point in transferred_points:
+                source_after_pixels[point] = (0, 0, 0, 0)
+            source_layer.image = source_after
+        else:
+            source_after = source_before.copy()
+
+        self.active_layer_index = target_index
+        self.selected_pixels = set(transferred_points)
+        self.selection_rect = None
+        self._transfer_undo = LayerTransferRecord(
+            source_layer=source_layer,
+            target_layer=target_layer,
+            source_before=source_before,
+            target_before=target_before,
+            source_after=source_after,
+            target_after=target_after,
+            selected_points=set(transferred_points),
+            move=move,
+        )
+        self._transfer_redo = None
+        return target_index, len(transferred_points)
+
+    def clear_selection(self) -> None:
+        self.selected_pixels.clear()
+        self.selection_rect = None
+
+    def clear_transfer_history(self) -> None:
+        self._transfer_undo = None
+        self._transfer_redo = None
+
+    def undo_layer_transfer(self) -> bool:
+        record = self._transfer_undo
+        if record is None or not self._transfer_record_is_current(record, after=True):
+            self.clear_transfer_history()
+            return False
+        record.source_layer.image = record.source_before.copy()
+        record.target_layer.image = record.target_before.copy()
+        self.active_layer_index = self._layer_identity_index(record.source_layer)
+        self.selected_pixels = set(record.selected_points)
+        self.selection_rect = None
+        self._transfer_undo = None
+        self._transfer_redo = record
+        return True
+
+    def redo_layer_transfer(self) -> bool:
+        record = self._transfer_redo
+        if record is None or not self._transfer_record_is_current(record, after=False):
+            self.clear_transfer_history()
+            return False
+        record.source_layer.image = record.source_after.copy()
+        record.target_layer.image = record.target_after.copy()
+        self.active_layer_index = self._layer_identity_index(record.target_layer)
+        self.selected_pixels = set(record.selected_points)
+        self.selection_rect = None
+        self._transfer_redo = None
+        self._transfer_undo = record
+        return True
+
+    def _transfer_record_is_current(
+        self,
+        record: LayerTransferRecord,
+        *,
+        after: bool,
+    ) -> bool:
+        if not any(layer is record.source_layer for layer in self.layers) or not any(
+            layer is record.target_layer for layer in self.layers
+        ):
+            return False
+        expected_source = record.source_after if after else record.source_before
+        expected_target = record.target_after if after else record.target_before
+        return self._images_equal(record.source_layer.image, expected_source) and self._images_equal(
+            record.target_layer.image, expected_target
+        )
+
+    @staticmethod
+    def _images_equal(first: Image.Image, second: Image.Image) -> bool:
+        return (
+            first.mode == second.mode
+            and first.size == second.size
+            and first.tobytes() == second.tobytes()
+        )
+
+    def _layer_identity_index(self, target: Layer) -> int:
+        for index, layer in enumerate(self.layers):
+            if layer is target:
+                return index
+        raise ValueError("Layer transfer target is no longer in the document")
+
     def delete_layer(self, index: int) -> bool:
         """Remove the layer at `index`. Refuses to delete the last remaining
         layer. Returns True on success."""
         if not (0 <= index < len(self.layers)) or len(self.layers) <= 1:
             return False
+        self.clear_transfer_history()
+        deleting_active = index == self.active_layer_index
         del self.layers[index]
         if self.active_layer_index >= len(self.layers):
             self.active_layer_index = len(self.layers) - 1
         elif self.active_layer_index > index:
             self.active_layer_index -= 1
+        if deleting_active:
+            self.clear_selection()
         return True
 
     def move_layer(self, index: int, delta: int) -> int | None:
@@ -254,6 +409,7 @@ class PixelDocument:
             return None
         if not (0 <= new_index < len(self.layers)):
             return None
+        self.clear_transfer_history()
         layer = self.layers.pop(index)
         self.layers.insert(new_index, layer)
         # Keep the active-layer pointer attached to whichever layer the user
@@ -269,7 +425,13 @@ class PixelDocument:
     def set_active_layer(self, index: int) -> bool:
         if not (0 <= index < len(self.layers)):
             return False
+        if index == self.active_layer_index:
+            return True
         self.active_layer_index = index
+        # A selection is interpreted against the active layer's pixels. Never
+        # carry it silently onto a different layer where a later edit could
+        # erase or transform unrelated content.
+        self.clear_selection()
         return True
 
     def rename_layer(self, index: int, new_name: str) -> bool:
@@ -917,6 +1079,7 @@ def _shortest_hue_delta(start_hue: float, end_hue: float) -> float:
 
 
 def push_image_history(document: PixelDocument, max_entries: int = 20) -> None:
+    document.clear_transfer_history()
     document.image_history.append(document.image.copy())
     document.image_redo_history.clear()
     if len(document.image_history) > max_entries:

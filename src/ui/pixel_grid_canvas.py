@@ -64,6 +64,9 @@ class PixelGridCanvas(QWidget):
         self._resize_handle: str | None = None
         self._resize_anchor_rect: tuple[int, int, int, int] | None = None
         self._last_paint_point: tuple[int, int] | None = None
+        self._right_click_transparent_enabled = False
+        self._active_paint_button: Qt.MouseButton | None = None
+        self._paint_transparent_override = False
         self._clean_stroke_enabled = False
         self._clean_stroke_points: set[tuple[int, int]] = set()
         self._fill_rect_start: tuple[int, int] | None = None
@@ -100,6 +103,7 @@ class PixelGridCanvas(QWidget):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setToolTip(
             "Paint mode: click or drag to paint. Shift+drag fills a rectangle. Hold L and drag to draw a line. Hold C and drag to draw an ellipse.\n"
+            "Right-click Transparent (when enabled) gives right-click all of those paint actions using transparency while left-click keeps the selected color.\n"
             "Select mode: drag to create a rectangle, Ctrl+click toggles pixels.\n"
             "Draw Selection: click perimeter cells, then click the start or adjacent closing cell.\n"
             "Stamp mode: click to place the copied stamp.\n"
@@ -138,6 +142,7 @@ class PixelGridCanvas(QWidget):
             or self._last_image_size != (document.image.width, document.image.height)
         )
         self._document = document
+        self._reset_paint_gesture()
         self._cancel_line_preview()
         self._cancel_ellipse_preview()
         self._clear_measurement(update=False)
@@ -152,8 +157,7 @@ class PixelGridCanvas(QWidget):
     def set_mode(self, mode: str) -> None:
         self._mode = mode
         if mode != "paint":
-            self._cancel_line_preview()
-            self._cancel_ellipse_preview()
+            self._reset_paint_gesture()
         if mode != "select":
             self._cancel_draw_selection(emit_status=False)
             self._resizing_selection = False
@@ -218,6 +222,23 @@ class PixelGridCanvas(QWidget):
             if self._clean_stroke_enabled
             else "Clean Stroke disabled"
         )
+
+    def set_right_click_transparent_enabled(self, enabled: bool) -> None:
+        self._right_click_transparent_enabled = bool(enabled)
+        if not self._right_click_transparent_enabled and (
+            self._active_paint_button == Qt.MouseButton.RightButton
+        ):
+            self._reset_paint_gesture()
+            self.update()
+        self.status_changed.emit(
+            "Right-click Transparent enabled: right-click paints with transparency; "
+            "left-click keeps the selected color"
+            if self._right_click_transparent_enabled
+            else "Right-click Transparent disabled"
+        )
+
+    def right_click_transparent_enabled(self) -> bool:
+        return self._right_click_transparent_enabled
 
     def set_zoom(self, zoom: int) -> None:
         if zoom == self._zoom:
@@ -618,6 +639,24 @@ class PixelGridCanvas(QWidget):
             self._handle_isometric_guide_press(event)
             return
 
+        is_paint_button = self._is_paint_button(event.button())
+        if (
+            (
+                event.button() == Qt.MouseButton.LeftButton
+                or (self._mode == "paint" and is_paint_button)
+            )
+            and not self._document.active_layer.visible
+            and (
+                self._mode in {"paint", "stamp", "flood_erase"}
+                or bool(event.modifiers() & Qt.KeyboardModifier.AltModifier)
+            )
+        ):
+            self.status_changed.emit(
+                f"Cannot edit hidden layer '{self._document.active_layer.name}'. "
+                "Enable its visibility checkbox or choose another editing layer."
+            )
+            return
+
         point = self._event_to_pixel(event.position().toPoint())
         if point is None:
             return
@@ -654,7 +693,14 @@ class PixelGridCanvas(QWidget):
             return
 
         if self._mode == "paint":
-            if event.button() == Qt.MouseButton.LeftButton:
+            if is_paint_button:
+                self._active_paint_button = event.button()
+                self._paint_transparent_override = (
+                    event.button() == Qt.MouseButton.RightButton
+                )
+                button_name = (
+                    "right" if event.button() == Qt.MouseButton.RightButton else "left"
+                )
                 if event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
                     self._fill_rect_start = point
                     self._fill_rect_current = point
@@ -662,12 +708,16 @@ class PixelGridCanvas(QWidget):
                 elif self._ellipse_key_down:
                     self._ellipse_start = point
                     self._ellipse_current = point
-                    self.status_changed.emit("Ellipse preview: release left mouse to paint")
+                    self.status_changed.emit(
+                        f"Ellipse preview: release {button_name} mouse to paint"
+                    )
                     self.update()
                 elif self._line_key_down:
                     self._line_start = point
                     self._line_current = point
-                    self.status_changed.emit("Line preview: release left mouse to paint")
+                    self.status_changed.emit(
+                        f"Line preview: release {button_name} mouse to paint"
+                    )
                     self.update()
                 else:
                     self._last_paint_point = point
@@ -736,11 +786,14 @@ class PixelGridCanvas(QWidget):
 
         point = self._event_to_pixel(event.position().toPoint())
         if point is None:
-            if not (event.buttons() & Qt.MouseButton.LeftButton):
+            if not (event.buttons() & Qt.MouseButton.LeftButton) and not self._paint_drag_active(
+                event.buttons()
+            ):
                 self._update_hover_cursor(None)
             return
 
-        if not (event.buttons() & Qt.MouseButton.LeftButton):
+        paint_drag_active = self._paint_drag_active(event.buttons())
+        if not (event.buttons() & Qt.MouseButton.LeftButton) and not paint_drag_active:
             self._update_hover_cursor(point)
             if self._mode != "stamp":
                 return
@@ -774,7 +827,7 @@ class PixelGridCanvas(QWidget):
             self.update()
             return
 
-        if self._mode == "paint" and event.buttons() & Qt.MouseButton.LeftButton:
+        if self._mode == "paint" and paint_drag_active:
             if self._fill_rect_start is not None:
                 self._fill_rect_current = point
                 self.update()
@@ -812,6 +865,22 @@ class PixelGridCanvas(QWidget):
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         if self._measurement_enabled and event.button() != Qt.MouseButton.MiddleButton:
+            return
+        if (
+            self._mode == "paint"
+            and self._active_paint_button is not None
+            and event.button() == self._active_paint_button
+        ):
+            if self._fill_rect_start is not None and self._fill_rect_current is not None:
+                self._fill_rect(self._fill_rect_start, self._fill_rect_current)
+            if self._line_start is not None and self._line_current is not None:
+                self._paint_line(self._line_start, self._line_current)
+            if self._ellipse_start is not None and self._ellipse_current is not None:
+                self._paint_ellipse(self._ellipse_start, self._ellipse_current)
+            self._reset_paint_gesture()
+            if self._document is not None:
+                self._update_hover_cursor(self._event_to_pixel(event.position().toPoint()))
+            self.update()
             return
         if event.button() == Qt.MouseButton.LeftButton:
             if self._isometric_guide_drag is not None:
@@ -978,15 +1047,44 @@ class PixelGridCanvas(QWidget):
     def focusOutEvent(self, event) -> None:
         self._line_key_down = False
         self._ellipse_key_down = False
-        self._cancel_line_preview()
-        self._cancel_ellipse_preview()
+        self._reset_paint_gesture()
         self._cancel_isometric_guide_drag()
         super().focusOutEvent(event)
+
+    def _is_paint_button(self, button: Qt.MouseButton) -> bool:
+        return button == Qt.MouseButton.LeftButton or (
+            button == Qt.MouseButton.RightButton
+            and self._right_click_transparent_enabled
+        )
+
+    def _paint_drag_active(self, buttons: Qt.MouseButton) -> bool:
+        return self._active_paint_button is not None and bool(
+            buttons & self._active_paint_button
+        )
+
+    def _reset_paint_gesture(self) -> None:
+        self._last_paint_point = None
+        self._clean_stroke_points.clear()
+        self._fill_rect_start = None
+        self._fill_rect_current = None
+        self._line_start = None
+        self._line_current = None
+        self._ellipse_start = None
+        self._ellipse_current = None
+        self._active_paint_button = None
+        self._paint_transparent_override = False
+
+    def _active_paint_color(self) -> tuple[int, int, int, int]:
+        if self._document is None:
+            return (0, 0, 0, 0)
+        if self._paint_transparent_override or self._document.use_transparent_color:
+            return (0, 0, 0, 0)
+        return self._document.current_color
 
     def _paint_point(self, point: tuple[int, int]) -> None:
         if self._document is None:
             return
-        color = (0, 0, 0, 0) if self._document.use_transparent_color else self._document.current_color
+        color = self._active_paint_color()
         self._document.image.putpixel(point, color)
         self._refresh_cached_pixel(point[0], point[1])
         self._update_pixel_rect(point[0], point[1])
@@ -1029,7 +1127,7 @@ class PixelGridCanvas(QWidget):
             return
         points = [p0]
         points.extend(self._bresenham(p0, p1))
-        color = (0, 0, 0, 0) if self._document.use_transparent_color else self._document.current_color
+        color = self._active_paint_color()
         img = self._document.image
         for x, y in points:
             img.putpixel((x, y), color)
@@ -1045,7 +1143,7 @@ class PixelGridCanvas(QWidget):
         if self._document is None:
             return
         points = self._ellipse_outline(p0, p1)
-        color = (0, 0, 0, 0) if self._document.use_transparent_color else self._document.current_color
+        color = self._active_paint_color()
         img = self._document.image
         for x, y in points:
             img.putpixel((x, y), color)
@@ -1061,7 +1159,7 @@ class PixelGridCanvas(QWidget):
         if self._document is None:
             return
         left, top, right, bottom = normalize_rect((p0[0], p0[1], p1[0], p1[1]))
-        color = (0, 0, 0, 0) if self._document.use_transparent_color else self._document.current_color
+        color = self._active_paint_color()
         img = self._document.image
         for y in range(max(0, top), min(img.height, bottom + 1)):
             for x in range(max(0, left), min(img.width, right + 1)):

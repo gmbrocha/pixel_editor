@@ -1,7 +1,10 @@
 {
   "schema_version": 1,
   "base_id": "human-01",
-  "frame_size": [64, 64],
+  "frame_size": [
+    64,
+    64
+  ],
   "layers": [
     "body_back",
     "hair_back",
@@ -19,29 +22,121 @@
     "foreground_accessory"
   ],
   "slots": {
-    "headwear": {"label": "Headwear", "layer": "headwear", "generation": true},
-    "face": {"label": "Face", "layer": "face_accessory", "generation": true},
-    "neck": {"label": "Neck", "layer": "neck", "generation": true},
-    "torso": {"label": "Tops", "layer": "torso", "generation": true},
-    "waist": {"label": "Waist", "layer": "waist", "generation": true},
-    "outerwear": {"label": "Outerwear", "layer": "outerwear", "generation": true},
-    "hands": {"label": "Hands", "layer": "handwear", "generation": true},
-    "feet": {"label": "Feet", "layer": "footwear", "generation": true},
-    "legwear": {"label": "Legwear", "layer": "legwear", "generation": false},
-    "hair": {"label": "Hair", "layer": "hair_front", "generation": false},
-    "facial_hair": {"label": "Facial Hair", "layer": "face_accessory", "generation": false},
-    "shoulder_chest": {"label": "Shoulder / Chest", "layer": "foreground_accessory", "generation": false},
-    "back": {"label": "Back", "layer": "body_back", "generation": false}
+    "headwear": {
+      "label": "Headwear",
+      "layer": "headwear",
+      "generation": true
+    },
+    "face": {
+      "label": "Face",
+      "layer": "face_accessory",
+      "generation": true
+    },
+    "neck": {
+      "label": "Neck",
+      "layer": "neck",
+      "generation": true
+    },
+    "torso": {
+      "label": "Tops",
+      "layer": "torso",
+      "generation": true
+    },
+    "waist": {
+      "label": "Waist",
+      "layer": "waist",
+      "generation": true
+    },
+    "outerwear": {
+      "label": "Outerwear",
+      "layer": "outerwear",
+      "generation": true
+    },
+    "hands": {
+      "label": "Hands",
+      "layer": "handwear",
+      "generation": true
+    },
+    "feet": {
+      "label": "Feet",
+      "layer": "footwear",
+      "generation": true
+    },
+    "legwear": {
+      "label": "Legwear",
+      "layer": "legwear",
+      "generation": false
+    },
+    "hair": {
+      "label": "Hair",
+      "layer": "hair_front",
+      "generation": false
+    },
+    "facial_hair": {
+      "label": "Facial Hair",
+      "layer": "face_accessory",
+      "generation": false
+    },
+    "shoulder_chest": {
+      "label": "Shoulder / Chest",
+      "layer": "foreground_accessory",
+      "generation": false
+    },
+    "back": {
+      "label": "Back",
+      "layer": "body_back",
+      "generation": false
+    }
   },
   "regions": {
-    "headwear": [12, 2, 52, 27],
-    "face": [16, 7, 48, 30],
-    "neck": [15, 17, 49, 35],
-    "torso": [9, 15, 55, 44],
-    "waist": [10, 25, 54, 47],
-    "outerwear": [7, 14, 57, 52],
-    "hands": [4, 18, 60, 54],
-    "feet": [6, 36, 60, 64]
+    "headwear": [
+      12,
+      2,
+      52,
+      27
+    ],
+    "face": [
+      16,
+      7,
+      48,
+      30
+    ],
+    "neck": [
+      15,
+      17,
+      49,
+      35
+    ],
+    "torso": [
+      9,
+      15,
+      55,
+      44
+    ],
+    "waist": [
+      10,
+      25,
+      54,
+      47
+    ],
+    "outerwear": [
+      7,
+      14,
+      57,
+      52
+    ],
+    "hands": [
+      4,
+      18,
+      60,
+      54
+    ],
+    "feet": [
+      6,
+      36,
+      60,
+      64
+    ]
   },
   "generation": {
     "scale": 4,
@@ -56,8 +151,16 @@
       "minimum_red": 16,
       "minimum_red_lead": 4,
       "minimum_green_lead": 1,
-      "target_dark": [0, 96, 210],
-      "target_light": [96, 245, 255],
+      "target_dark": [
+        0,
+        96,
+        210
+      ],
+      "target_light": [
+        96,
+        245,
+        255
+      ],
       "reverse_threshold": 64,
       "leak_threshold": 64,
       "matte_restore_threshold": 64,
@@ -71,54 +174,133 @@
       "name": "Idle",
       "runtime_file": "bases/human-01/idle.png",
       "runtime_sha256": "80326212e8a23301f9d2d5309ae3f2edb269251dbeeee5b6f2325dcfc497eeee",
-      "sheet_size": [64, 256],
-      "logical_extent": [64, 256],
+      "sheet_size": [
+        64,
+        256
+      ],
+      "logical_extent": [
+        64,
+        256
+      ],
       "frames_per_direction": 1,
-      "direction_rows": {"front": 0, "left": 1, "right": 2, "back": 3},
+      "direction_rows": {
+        "front": 0,
+        "left": 1,
+        "right": 2,
+        "back": 3
+      },
       "fps": 2,
       "source_matte": "#FFFFFF",
       "pivot": null,
-      "generation_size": [656, 1024],
-      "padding": [200, 0, 200, 0],
+      "generation_size": [
+        656,
+        1024
+      ],
+      "padding": [
+        200,
+        0,
+        200,
+        0
+      ],
       "sources": [
-        {"file": "bases/human-01/idle.png", "sha256": "80326212e8a23301f9d2d5309ae3f2edb269251dbeeee5b6f2325dcfc497eeee"}
+        {
+          "file": "bases/human-01/idle.png",
+          "sha256": "80326212e8a23301f9d2d5309ae3f2edb269251dbeeee5b6f2325dcfc497eeee"
+        }
       ]
     },
     "walk": {
       "name": "Walk",
       "runtime_file": "bases/human-01/walk.png",
-      "runtime_sha256": "a1841bea06359c85edbe95a4b65b48848a19d2e07e4e4991f526f6402605f7a7",
-      "sheet_size": [384, 259],
-      "logical_extent": [384, 256],
+      "runtime_sha256": "90f886c15de51a3e6fbdb1a1280b50203aed38bb310016c3edb01fb6f8c76fce",
+      "sheet_size": [
+        384,
+        259
+      ],
+      "logical_extent": [
+        384,
+        256
+      ],
       "frames_per_direction": 6,
-      "direction_rows": {"front": 0, "back": 1, "right": 2, "left": 3},
+      "direction_rows": {
+        "front": 0,
+        "back": 1,
+        "right": 2,
+        "left": 3
+      },
       "fps": 8,
       "source_matte": null,
       "pivot": null,
-      "generation_size": [1536, 1040],
-      "padding": [0, 2, 0, 2],
+      "generation_size": [
+        1536,
+        1040
+      ],
+      "padding": [
+        0,
+        2,
+        0,
+        2
+      ],
       "sources": [
-        {"file": "bases/human-01/walk.png", "sha256": "a1841bea06359c85edbe95a4b65b48848a19d2e07e4e4991f526f6402605f7a7"}
+        {
+          "file": "base_sources/human-01/walk-authored.png",
+          "sha256": "90973da1c34fab3f46fa137c5bfbd8946c9ec5c3368da2e7afb2be5e48b2fb08"
+        }
       ]
     },
     "run": {
       "name": "Run",
       "runtime_file": "bases/human-01/run.png",
       "runtime_sha256": "89d33142892d0d6d8095875e0aac33448fa1353138db004399ba1f66d7acc947",
-      "sheet_size": [384, 256],
-      "logical_extent": [384, 256],
+      "sheet_size": [
+        384,
+        256
+      ],
+      "logical_extent": [
+        384,
+        256
+      ],
       "frames_per_direction": 6,
-      "direction_rows": {"front": 0, "back": 1, "right": 2, "left": 3},
+      "direction_rows": {
+        "front": 0,
+        "back": 1,
+        "right": 2,
+        "left": 3
+      },
       "fps": 10,
       "source_matte": null,
       "pivot": null,
-      "generation_size": [1536, 1024],
-      "padding": [0, 0, 0, 0],
+      "generation_size": [
+        1536,
+        1024
+      ],
+      "padding": [
+        0,
+        0,
+        0,
+        0
+      ],
       "sources": [
-        {"file": "bases/human-01/run-front.png", "sha256": "d642400d860c197e8bdf9f62434275154250c286212693fa8ff018fceeca7e74", "row": "front"},
-        {"file": "bases/human-01/run-back.png", "sha256": "0cc0486c27824dc5eb07d68d106d452f8153e2c16355635f1fe4b5c8f89c2e2c", "row": "back"},
-        {"file": "bases/human-01/run-right.png", "sha256": "f5c4ae57e7cb6ca039a1b7bf52b27ff165d42d2f43bdb74d5f1bde39bd9f1d9b", "row": "right"},
-        {"file": "bases/human-01/run-left.png", "sha256": "32566d95b52b00a3eb21e2a2db0710f58e1256c042e1f8741a26c75ae4e2f9eb", "row": "left"}
+        {
+          "file": "bases/human-01/run-front.png",
+          "sha256": "d642400d860c197e8bdf9f62434275154250c286212693fa8ff018fceeca7e74",
+          "row": "front"
+        },
+        {
+          "file": "bases/human-01/run-back.png",
+          "sha256": "0cc0486c27824dc5eb07d68d106d452f8153e2c16355635f1fe4b5c8f89c2e2c",
+          "row": "back"
+        },
+        {
+          "file": "bases/human-01/run-right.png",
+          "sha256": "f5c4ae57e7cb6ca039a1b7bf52b27ff165d42d2f43bdb74d5f1bde39bd9f1d9b",
+          "row": "right"
+        },
+        {
+          "file": "bases/human-01/run-left.png",
+          "sha256": "32566d95b52b00a3eb21e2a2db0710f58e1256c042e1f8741a26c75ae4e2f9eb",
+          "row": "left"
+        }
       ]
     }
   }

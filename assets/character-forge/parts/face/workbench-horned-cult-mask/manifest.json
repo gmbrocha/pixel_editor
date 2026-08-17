@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-horned-cult-mask",
+  "displayName": "Workbench \u2014 Horned Cult Mask",
+  "slot": "face",
+  "occupiesSlots": [
+    "face"
+  ],
+  "reservedSlots": [
+    "headwear"
+  ],
+  "layer": "face_accessory",
+  "tags": [
+    "workbench",
+    "silhouette_starter",
+    "semantic_regions",
+    "mask",
+    "cult",
+    "animal",
+    "horned"
+  ],
+  "fit": "standard",
+  "version": 1,
+  "status": "incomplete",
+  "developmentVisible": true,
+  "animations": {
+    "walk": "walk.png"
+  },
+  "coverage": {
+    "walk": [
+      "front"
+    ]
+  },
+  "semanticRegions": {
+    "walk": "regions.png"
+  },
+  "provenance": {
+    "kind": "deterministic_semantic_silhouette_starter",
+    "generator": "tools/generate_component_silhouette_starters.py",
+    "generatorVersion": 1,
+    "baseWalkSha256": "90f886c15de51a3e6fbdb1a1280b50203aed38bb310016c3edb01fb6f8c76fce",
+    "regionsSha256": "d9b98b4acada8662c381cef50e2ea39dda7a8e4228cf5cf8d6a82e11bc9707bf",
+    "walkSha256": "e06e5653e97ba5c39ab4ece3e947d49e66120cf7e9c95bb8271445f8fd8c0d1b",
+    "authoredDirections": [
+      "front"
+    ],
+    "authoredFrameIndices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "conceptBoard": "workbench/starter-component-concept-board.png",
+    "readiness": "rough-editable-silhouette"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-orcish-spiked-armor",
+  "displayName": "Workbench \u2014 Orcish Spiked Armor",
+  "slot": "outerwear",
+  "occupiesSlots": [
+    "outerwear"
+  ],
+  "reservedSlots": [
+    "shoulder_chest"
+  ],
+  "layer": "outerwear",
+  "tags": [
+    "workbench",
+    "silhouette_starter",
+    "semantic_regions",
+    "orcish",
+    "armor",
+    "spiked"
+  ],
+  "fit": "standard",
+  "version": 1,
+  "status": "incomplete",
+  "developmentVisible": true,
+  "animations": {
+    "walk": "walk.png"
+  },
+  "coverage": {
+    "walk": [
+      "front"
+    ]
+  },
+  "semanticRegions": {
+    "walk": "regions.png"
+  },
+  "provenance": {
+    "kind": "deterministic_semantic_silhouette_starter",
+    "generator": "tools/generate_component_silhouette_starters.py",
+    "generatorVersion": 1,
+    "baseWalkSha256": "90f886c15de51a3e6fbdb1a1280b50203aed38bb310016c3edb01fb6f8c76fce",
+    "regionsSha256": "388c14a38073e277369fe771aed474676f8a061c1e45d60469ca370bea8b93db",
+    "walkSha256": "9c3daca5606d96a6bf89272807428db6409508d2fec9a8d9718cef42d7863978",
+    "authoredDirections": [
+      "front"
+    ],
+    "authoredFrameIndices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "conceptBoard": "workbench/starter-component-concept-board.png",
+    "readiness": "rough-editable-silhouette"
+  }
+}
