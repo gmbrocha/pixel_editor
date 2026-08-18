@@ -187,7 +187,51 @@ def test_right_click_transparent_toggle_erases_without_changing_left_color() -> 
     application.processEvents()
 
 
-def test_right_click_transparent_uses_fill_line_ellipse_and_mirror_paint_paths() -> None:
+def test_pixel_editor_undo_last_action_treats_each_brush_gesture_as_one_edit() -> None:
+    application = QApplication.instance() or QApplication([])
+    transparent = (0, 0, 0, 0)
+    red = (230, 40, 60, 255)
+    document = PixelDocument(image=Image.new("RGBA", (5, 2), transparent))
+    document.current_color = red
+    window = PixelEditorWindow(document, headless=True)
+    window.canvas.show()
+    application.processEvents()
+    margin = window.canvas._view_margin
+    zoom = window.canvas._zoom
+
+    def pixel_center(x: int, y: int) -> QPoint:
+        return QPoint(margin + x * zoom + zoom // 2, margin + y * zoom + zoom // 2)
+
+    QTest.mousePress(window.canvas, Qt.MouseButton.LeftButton, pos=pixel_center(0, 0))
+    QTest.mouseMove(window.canvas, pixel_center(2, 0))
+    QTest.mouseRelease(window.canvas, Qt.MouseButton.LeftButton, pos=pixel_center(2, 0))
+    QTest.mouseClick(window.canvas, Qt.MouseButton.LeftButton, pos=pixel_center(4, 0))
+
+    assert len(document.image_history) == 2
+    assert all(document.image.getpixel((x, 0)) == red for x in range(3))
+    assert document.image.getpixel((4, 0)) == red
+    assert window.undo_last_action_button.text() == "Undo Last Action"
+
+    window.undo_last_action_button.click()
+    assert all(document.image.getpixel((x, 0)) == red for x in range(3))
+    assert document.image.getpixel((4, 0)) == transparent
+
+    # Painting an already-identical pixel is a no-op and must not discard Redo.
+    QTest.mouseClick(window.canvas, Qt.MouseButton.LeftButton, pos=pixel_center(0, 0))
+    window.redo_action.trigger()
+    assert document.image.getpixel((4, 0)) == red
+
+    window.undo_action.trigger()
+    window.undo_action.trigger()
+    assert all(document.image.getpixel((x, 0)) == transparent for x in range(5))
+
+    window.close()
+    application.processEvents()
+
+
+def test_right_click_transparent_uses_fill_line_ellipse_and_mirror_paint_paths() -> (
+    None
+):
     application = QApplication.instance() or QApplication([])
     document = PixelDocument(image=Image.new("RGBA", (8, 8), (30, 40, 50, 255)))
     canvas = PixelGridCanvas()
@@ -237,6 +281,43 @@ def test_right_click_transparent_uses_fill_line_ellipse_and_mirror_paint_paths()
     assert document.image.getpixel((3, 1)) == (0, 0, 0, 0)
     assert document.image.getpixel((7, 7)) == (0, 0, 0, 0)
 
+    canvas.close()
+    application.processEvents()
+
+
+def test_explicit_fill_line_and_ellipse_modes_draw_without_keyboard_modifiers() -> None:
+    application = QApplication.instance() or QApplication([])
+    document = PixelDocument(image=Image.new("RGBA", (8, 8), (0, 0, 0, 0)))
+    document.current_color = (220, 40, 60, 255)
+    canvas = PixelGridCanvas()
+    canvas.set_document(document)
+    canvas.show()
+    application.processEvents()
+    margin = canvas._view_margin
+    zoom = canvas._zoom
+
+    def pixel_center(x: int, y: int) -> QPoint:
+        return QPoint(margin + x * zoom + zoom // 2, margin + y * zoom + zoom // 2)
+
+    canvas.set_mode("fill")
+    QTest.mousePress(canvas, Qt.MouseButton.LeftButton, pos=pixel_center(1, 1))
+    QTest.mouseMove(canvas, pixel_center(2, 2))
+    QTest.mouseRelease(canvas, Qt.MouseButton.LeftButton, pos=pixel_center(2, 2))
+
+    canvas.set_mode("line")
+    QTest.mousePress(canvas, Qt.MouseButton.LeftButton, pos=pixel_center(0, 4))
+    QTest.mouseMove(canvas, pixel_center(3, 4))
+    QTest.mouseRelease(canvas, Qt.MouseButton.LeftButton, pos=pixel_center(3, 4))
+
+    canvas.set_mode("ellipse")
+    QTest.mousePress(canvas, Qt.MouseButton.LeftButton, pos=pixel_center(3, 0))
+    QTest.mouseMove(canvas, pixel_center(6, 3))
+    QTest.mouseRelease(canvas, Qt.MouseButton.LeftButton, pos=pixel_center(6, 3))
+
+    assert document.image.getpixel((1, 1)) == document.current_color
+    assert document.image.getpixel((2, 2)) == document.current_color
+    assert document.image.getpixel((2, 4)) == document.current_color
+    assert document.image.getpixel((3, 1)) == document.current_color
     canvas.close()
     application.processEvents()
 

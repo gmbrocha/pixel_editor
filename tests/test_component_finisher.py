@@ -106,18 +106,18 @@ def test_full_semantic_source_preserves_authored_rows_and_mirrors_left_exactly()
         )
         assert left.tobytes() == expected_left.tobytes()
     assert source_manifest["authoredDirections"] == ["front", "back", "right"]
-    assert source_manifest["sideFrameOrder"] == [1, 2, 3, 6, 5, 4]
+    assert source_manifest["sideFrameOrder"] == [1, 2, 3, 4, 5, 6]
     assert source_manifest["derivedDirections"]["right"]["sourceFrameOrder"] == [
         1,
         2,
         3,
-        6,
-        5,
         4,
+        5,
+        6,
     ]
     assert (
         source_manifest["derivedDirections"]["left"]["sourceDirection"]
-        == "phase-corrected-right"
+        == "right"
     )
     assert source_manifest["derivedDirections"]["left"]["alignmentOffset"] == [
         -1,

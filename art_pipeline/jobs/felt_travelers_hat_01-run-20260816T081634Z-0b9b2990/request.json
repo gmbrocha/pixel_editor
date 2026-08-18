@@ -1,0 +1,12 @@
+{
+  "model": "gpt-image-2",
+  "quality": "medium",
+  "background": "opaque",
+  "output_format": "png",
+  "size": "1536x1024",
+  "image_sha256": "afb2559272bbdb611e8786b54ea6cdae7bd68fac7500cb4442f33f04ab19195f",
+  "mask_sha256": "7ed26e06c66e98aba727c00bc48e759032dfac737a7ed292a55ddc89cfec21fd",
+  "mannequin_ramp_sha256": "c72ee761633e8d85bba3d2cc08c6ceed309a0d1e556bc8563bcc4e5f99f0b2b7",
+  "prompt_sha256": "d3836d5881faf8c120c9b9525a972db90ba7a274e68cf4a7aad09a4f4056c09b",
+  "design_reference": null
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "felt_travelers_hat_01-run-20260816T081634Z-0b9b2990",
+  "component_id": "felt_travelers_hat_01",
+  "animation_id": "run",
+  "slot": "headwear",
+  "layer": "headwear",
+  "component": {
+    "concept": "Soft broad-brimmed felt traveler's hat, weather-beaten and slightly irregular; practical Old World fantasy silhouette, explicitly not a cowboy hat.",
+    "tags": [
+      "traveler",
+      "outdoors",
+      "common"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "0b9b29902c6d15967460cdee0e4753bb12cafaf0f44fb1a150f5f7e8955b00ed",
+  "created_at": "2026-08-16T08:16:34Z",
+  "updated_at": "2026-08-16T08:16:34Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

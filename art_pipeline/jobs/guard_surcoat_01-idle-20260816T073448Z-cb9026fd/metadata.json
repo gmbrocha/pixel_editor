@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "guard_surcoat_01-idle-20260816T073448Z-cb9026fd",
+  "component_id": "guard_surcoat_01",
+  "animation_id": "idle",
+  "slot": "outerwear",
+  "layer": "outerwear",
+  "component": {
+    "concept": "Plain sleeveless guard surcoat or tabard with strong color blocking and no elaborate heraldry.",
+    "tags": [
+      "guard",
+      "military",
+      "town"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "cb9026fd4eee5451ed004ed2c797bcafd543901549ed65c37cb13e3ed4eea70c",
+  "created_at": "2026-08-16T07:34:48Z",
+  "updated_at": "2026-08-16T07:34:48Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

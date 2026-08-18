@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "job_id": "wool_scarf_01-idle-20260816T135451Z-4ac6c1d8",
+  "component_id": "wool_scarf_01",
+  "animation_id": "idle",
+  "slot": "neck",
+  "layer": "neck",
+  "component": {
+    "concept": "Short worn wool scarf wrapped once around the neck with restrained hanging ends.",
+    "tags": [
+      "cold_weather",
+      "common",
+      "traveler"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "4ac6c1d8d27cf18e94de2c42d75fe83fc3b7d5426affee5e64dd4c481d4ee1d4",
+  "created_at": "2026-08-16T13:54:51Z",
+  "updated_at": "2026-08-16T14:25:23Z",
+  "status": "review",
+  "candidate_count": 1,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "review",
+      "attempts": 2,
+      "raw_sha256": "489d0aa5640a994428e8e29c93657e58906dc133214e315a64c722c84c8b6f93",
+      "api": {
+        "request_id": "req_8c27514f57874ddbad0795192bf454a5",
+        "attempt": 1,
+        "created": 1786890321,
+        "usage": {
+          "input_tokens": 1347,
+          "input_tokens_details": {
+            "image_tokens": 672,
+            "text_tokens": 675
+          },
+          "output_tokens": 994,
+          "total_tokens": 2341,
+          "output_tokens_details": {
+            "image_tokens": 994,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "66774774d1653b237e6839d14b106d8c7ea2e0502ff99a569a93eae885082611",
+        "processed_at": "2026-08-16T14:25:23Z"
+      },
+      "extracted_sha256": "a72d49a0a6e3d703d6dc7780fa438de25deac1009fca4408ba888fb461edf599",
+      "qa": {
+        "status": "fail",
+        "score": 83.48,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              14
+            ],
+            "back": [
+              41
+            ],
+            "left": [
+              6
+            ],
+            "right": [
+              9
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 67,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 16,
+          "reconstruction_mean_rgb_error": 0.0,
+          "overlay_bbox": [
+            16,
+            33,
+            47,
+            227
+          ]
+        }
+      }
+    }
+  }
+}

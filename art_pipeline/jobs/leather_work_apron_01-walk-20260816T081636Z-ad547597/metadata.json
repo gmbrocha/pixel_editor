@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "leather_work_apron_01-walk-20260816T081636Z-ad547597",
+  "component_id": "leather_work_apron_01",
+  "animation_id": "walk",
+  "slot": "outerwear",
+  "layer": "outerwear",
+  "component": {
+    "concept": "Heavy worn leather work apron covering the front torso and upper legs with simple shoulder or neck support.",
+    "tags": [
+      "smith",
+      "butcher",
+      "craftsman"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "ad547597c42d62cc11daf3ed9f63393fa2b14227a407a3f4f1867862b670fa96",
+  "created_at": "2026-08-16T08:16:36Z",
+  "updated_at": "2026-08-16T08:16:36Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

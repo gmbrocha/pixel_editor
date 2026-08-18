@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "wool_scarf_01-walk-20260816T081635Z-95f4940f",
+  "component_id": "wool_scarf_01",
+  "animation_id": "walk",
+  "slot": "neck",
+  "layer": "neck",
+  "component": {
+    "concept": "Short worn wool scarf wrapped once around the neck with restrained hanging ends.",
+    "tags": [
+      "cold_weather",
+      "common",
+      "traveler"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "95f4940fc5f3ad34c059967b399e064274a0064db3d0bee33f04dac86fc33ea3",
+  "created_at": "2026-08-16T08:16:35Z",
+  "updated_at": "2026-08-16T08:16:35Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

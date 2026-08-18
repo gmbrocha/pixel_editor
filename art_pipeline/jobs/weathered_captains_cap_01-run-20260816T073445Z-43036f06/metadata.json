@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "job_id": "weathered_captains_cap_01-run-20260816T073445Z-43036f06",
+  "component_id": "weathered_captains_cap_01",
+  "animation_id": "run",
+  "slot": "headwear",
+  "layer": "headwear",
+  "component": {
+    "concept": "Low-crowned weathered naval captain's cap with a short practical brim; muted wool and leather construction; authoritative but worn and grounded.",
+    "tags": [
+      "seafaring",
+      "coastal",
+      "authority"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "43036f068df7ceab5f70ffa4d2196244235eadada3c3f18a179420d677966da7",
+  "created_at": "2026-08-16T07:34:46Z",
+  "updated_at": "2026-08-16T07:49:53Z",
+  "status": "review",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "failed",
+      "attempts": 1,
+      "error": {
+        "type": "permanent_api",
+        "code": "moderation_blocked",
+        "request_id": "req_a259127b740340ca814731ee99f178d7",
+        "message": "OpenAI request failed (moderation_blocked, request req_a259127b740340ca814731ee99f178d7): Error code: 400 - {'error': {'message': 'Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID req_a259127b740340ca814731ee99f178d7. safety_violations=[sexual].', 'type': 'image_generation_user_error', 'param': None, 'code': 'moderation_blocked', 'moderation_details': {'moderation_stage': 'output', 'categories': ['sexual']}}}",
+        "at": "2026-08-16T07:48:15Z"
+      }
+    },
+    "candidate-002": {
+      "status": "failed",
+      "attempts": 1,
+      "error": {
+        "type": "permanent_api",
+        "code": "moderation_blocked",
+        "request_id": "req_de7e106e51ea42f18c04948ee8d6e781",
+        "message": "OpenAI request failed (moderation_blocked, request req_de7e106e51ea42f18c04948ee8d6e781): Error code: 400 - {'error': {'message': 'Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID req_de7e106e51ea42f18c04948ee8d6e781. safety_violations=[sexual].', 'type': 'image_generation_user_error', 'param': None, 'code': 'moderation_blocked', 'moderation_details': {'moderation_stage': 'output', 'categories': ['sexual']}}}",
+        "at": "2026-08-16T07:48:50Z"
+      }
+    },
+    "candidate-003": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "3f0649a580287efe1550dcc2eee28d857bffef576248ab4fff9ccb51df630f63",
+      "api": {
+        "request_id": "req_2192b96a3d28439fb39610eac324756b",
+        "attempt": 1,
+        "created": 1786866571,
+        "usage": {
+          "input_tokens": 1733,
+          "input_tokens_details": {
+            "image_tokens": 1536,
+            "text_tokens": 197
+          },
+          "output_tokens": 1372,
+          "total_tokens": 3105,
+          "output_tokens_details": {
+            "image_tokens": 1372,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "bf0eb03ffe045e8e014901790296cacfe83327ba651c95a5b31dc75ed4444dc2",
+      "qa": {
+        "status": "fail",
+        "score": 42.36,
+        "hard_failures": [
+          "outside_region_drift",
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 14430,
+          "outside_drift_ratio": 0.713932317435187,
+          "frame_coverage": {
+            "front": [
+              610,
+              610,
+              542,
+              540,
+              504,
+              472
+            ],
+            "back": [
+              673,
+              556,
+              573,
+              578,
+              584,
+              554
+            ],
+            "left": [
+              600,
+              612,
+              609,
+              579,
+              608,
+              608
+            ],
+            "right": [
+              669,
+              634,
+              602,
+              598,
+              607,
+              607
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 10131,
+          "partial_alpha_colors": 0,
+          "silhouette_growth_pixels": 7390,
+          "reconstruction_mean_rgb_error": 7.319412561750051,
+          "overlay_bbox": [
+            12,
+            2,
+            372,
+            219
+          ]
+        }
+      }
+    }
+  }
+}

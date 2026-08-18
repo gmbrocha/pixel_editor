@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "officers_waist_sash_01-idle-20260816T081635Z-6b000aed",
+  "component_id": "officers_waist_sash_01",
+  "animation_id": "idle",
+  "slot": "waist",
+  "layer": "waist",
+  "component": {
+    "concept": "Muted military-style cloth waist sash tied neatly at one side; worn and restrained rather than ceremonial.",
+    "tags": [
+      "military",
+      "officer",
+      "authority"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "6b000aed2d0bbd4d49b56a137bb38325cf56641e9b08bc804c779d27224f02c6",
+  "created_at": "2026-08-16T08:16:36Z",
+  "updated_at": "2026-08-16T08:16:36Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

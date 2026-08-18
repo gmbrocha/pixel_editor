@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "rope_cord_belt_01-walk-20260816T081635Z-3a37e106",
+  "component_id": "rope_cord_belt_01",
+  "animation_id": "walk",
+  "slot": "waist",
+  "layer": "waist",
+  "component": {
+    "concept": "Simple rope or heavy cord tied at the waist with one visible knot and short ends.",
+    "tags": [
+      "clergy",
+      "laborer",
+      "poor"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "3a37e10612d352704c77b4437a9f04b131ffd5dbaec45aa4c5a0a6410827ba4b",
+  "created_at": "2026-08-16T08:16:35Z",
+  "updated_at": "2026-08-16T08:16:35Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

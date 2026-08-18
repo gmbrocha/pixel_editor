@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "rope_cord_belt_01-idle-20260816T081635Z-b1e28bc1",
+  "component_id": "rope_cord_belt_01",
+  "animation_id": "idle",
+  "slot": "waist",
+  "layer": "waist",
+  "component": {
+    "concept": "Simple rope or heavy cord tied at the waist with one visible knot and short ends.",
+    "tags": [
+      "clergy",
+      "laborer",
+      "poor"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "b1e28bc1b71445f29e77f3ea69056dad5c44259d11c62453f6d7dc8c49a3cc59",
+  "created_at": "2026-08-16T08:16:35Z",
+  "updated_at": "2026-08-16T08:16:35Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

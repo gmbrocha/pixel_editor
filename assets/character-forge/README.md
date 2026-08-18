@@ -13,10 +13,10 @@ runtime sheets are never recolored.
   preserved.
 - `walk.png`: 384x259 RGBA; six frames in Front, Back, Right, Left rows. Its three
   extra transparent bottom pixels are preserved. The corrected authored sheet is
-  retained at `base_sources/human-01/walk-authored.png`; the runtime side cycle is
-  built as frames `1, 2, 3, 6, 5, 4`, and Left is a per-frame Right mirror with
-  the authored `-1, -1` alignment offset. This gives each planted foot the same
-  front-to-rear travel and prevents reversed-time moonwalking.
+  retained at `base_sources/human-01/walk-authored.png`. Runtime rows 1–3 are
+  preserved exactly, and only the Left row is reversed as frames
+  `6, 5, 4, 3, 2, 1`. The resulting Left frames are the authored `-1, -1` aligned
+  mirrors of the corresponding Right frames.
 - `run-front.png`, `run-back.png`, `run-right.png`, and `run-left.png`: authoritative
   384x64 six-frame strips.
 - `run.png`: derived 384x256 sheet assembled pixel-identically in Front, Back,

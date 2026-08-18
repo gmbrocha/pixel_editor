@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "job_id": "side_pouch_belt_01-idle-20260816T135451Z-ff8d3467",
+  "component_id": "side_pouch_belt_01",
+  "animation_id": "idle",
+  "slot": "waist",
+  "layer": "waist",
+  "component": {
+    "concept": "Simple belt carrying one modest leather utility pouch at one hip; practical rather than overloaded.",
+    "tags": [
+      "artisan",
+      "traveler",
+      "utility"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "ff8d3467ebbad5a5eac99d041d28afe690cd40d2fa6e7226e367a2484a92cc86",
+  "created_at": "2026-08-16T13:54:51Z",
+  "updated_at": "2026-08-16T14:27:34Z",
+  "status": "review",
+  "candidate_count": 1,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "review",
+      "attempts": 2,
+      "raw_sha256": "84edb191601c45bb06b638228759364ea2488c7506982a2356a2588a5ab2cb32",
+      "api": {
+        "request_id": "req_b8dbcf4c7e8b4f8fbfa4e14fea93cf57",
+        "attempt": 1,
+        "created": 1786890453,
+        "usage": {
+          "input_tokens": 1350,
+          "input_tokens_details": {
+            "image_tokens": 672,
+            "text_tokens": 678
+          },
+          "output_tokens": 994,
+          "total_tokens": 2344,
+          "output_tokens_details": {
+            "image_tokens": 994,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "66774774d1653b237e6839d14b106d8c7ea2e0502ff99a569a93eae885082611",
+        "processed_at": "2026-08-16T14:27:34Z"
+      },
+      "extracted_sha256": "0447da21263c900079442a1701793e730d2325c38e23b4a1604f33962cc10345",
+      "qa": {
+        "status": "fail",
+        "score": 83.91,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              80
+            ],
+            "back": [
+              70
+            ],
+            "left": [
+              51
+            ],
+            "right": [
+              48
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 249,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 40,
+          "reconstruction_mean_rgb_error": 0.01703823841557504,
+          "overlay_bbox": [
+            24,
+            25,
+            40,
+            235
+          ]
+        }
+      }
+    }
+  }
+}

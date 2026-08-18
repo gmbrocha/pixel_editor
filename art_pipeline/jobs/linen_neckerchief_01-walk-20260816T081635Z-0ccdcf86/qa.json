@@ -1,0 +1,220 @@
+{
+  "job_id": "linen_neckerchief_01-walk-20260816T081635Z-0ccdcf86",
+  "candidates": {
+    "candidate-001": {
+      "status": "fail",
+      "score": 81.53,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [
+        "region_edge_contact"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 0,
+        "outside_drift_ratio": 0.0,
+        "frame_coverage": {
+          "front": [
+            107,
+            95,
+            105,
+            104,
+            98,
+            91
+          ],
+          "back": [
+            88,
+            88,
+            98,
+            89,
+            92,
+            85
+          ],
+          "left": [
+            73,
+            71,
+            67,
+            65,
+            51,
+            75
+          ],
+          "right": [
+            66,
+            63,
+            63,
+            70,
+            76,
+            70
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 1924,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 1007,
+        "reconstruction_mean_rgb_error": 0.018829278155739423,
+        "overlay_bbox": [
+          19,
+          17,
+          353,
+          227
+        ]
+      }
+    },
+    "candidate-002": {
+      "status": "fail",
+      "score": 75.0,
+      "hard_failures": [
+        "missing_frame_coverage"
+      ],
+      "warnings": [],
+      "metrics": {
+        "outside_changed_pixels": 0,
+        "outside_drift_ratio": 0.0,
+        "frame_coverage": {
+          "front": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "back": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "left": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "right": [
+            2,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "missing_frames": [
+          "front:2",
+          "front:3",
+          "front:4",
+          "front:5",
+          "front:6",
+          "back:1",
+          "back:2",
+          "back:3",
+          "back:4",
+          "back:5",
+          "back:6",
+          "left:1",
+          "left:2",
+          "left:3",
+          "left:4",
+          "left:5",
+          "left:6",
+          "right:2",
+          "right:3",
+          "right:4",
+          "right:5",
+          "right:6"
+        ],
+        "unique_colors": 3,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 3,
+        "reconstruction_mean_rgb_error": 0.0,
+        "overlay_bbox": [
+          48,
+          20,
+          49,
+          152
+        ]
+      }
+    },
+    "candidate-003": {
+      "status": "fail",
+      "score": 69.28,
+      "hard_failures": [
+        "missing_frame_coverage",
+        "palette_complexity"
+      ],
+      "warnings": [
+        "region_edge_contact",
+        "silhouette_growth"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 0,
+        "outside_drift_ratio": 0.0,
+        "frame_coverage": {
+          "front": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          "back": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "left": [
+            4,
+            4,
+            4,
+            3,
+            2,
+            1
+          ],
+          "right": [
+            5,
+            6,
+            5,
+            6,
+            12,
+            5
+          ]
+        },
+        "missing_frames": [
+          "front:1",
+          "front:3",
+          "front:4",
+          "front:5",
+          "front:6",
+          "back:1",
+          "back:2",
+          "back:3",
+          "back:4",
+          "back:5",
+          "back:6"
+        ],
+        "unique_colors": 53,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 57,
+        "reconstruction_mean_rgb_error": 0.0,
+        "overlay_bbox": [
+          18,
+          31,
+          369,
+          217
+        ]
+      }
+    }
+  }
+}

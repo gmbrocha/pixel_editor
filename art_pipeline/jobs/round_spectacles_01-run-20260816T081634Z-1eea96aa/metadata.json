@@ -1,0 +1,303 @@
+{
+  "schema_version": 1,
+  "job_id": "round_spectacles_01-run-20260816T081634Z-1eea96aa",
+  "component_id": "round_spectacles_01",
+  "animation_id": "run",
+  "slot": "face",
+  "layer": "face_accessory",
+  "component": {
+    "concept": "Small round iron-rim spectacles with thin restrained frames, readable at native sprite scale.",
+    "tags": [
+      "scholar",
+      "clerk",
+      "healer"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "1eea96aa60cf5e79d665ef10d12cc4bd83eb544c8e417da419443983335427b5",
+  "created_at": "2026-08-16T08:16:34Z",
+  "updated_at": "2026-08-16T09:21:23Z",
+  "status": "review",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "c013d6d6a04683b5c560e316f3757d53307a591c376c1539bc10cc802300bc8a",
+      "api": {
+        "request_id": "req_958dd760d9784b5d9baa07f772d9f9ae",
+        "attempt": 1,
+        "created": 1786869042,
+        "usage": {
+          "input_tokens": 1778,
+          "input_tokens_details": {
+            "image_tokens": 1536,
+            "text_tokens": 242
+          },
+          "output_tokens": 1372,
+          "total_tokens": 3150,
+          "output_tokens_details": {
+            "image_tokens": 1372,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "f63fb8258600496c89ba72a6fbf63b5b7236e486934b2ae82993b659ec2d0b46",
+      "qa": {
+        "status": "fail",
+        "score": 77.03,
+        "hard_failures": [
+          "missing_frame_coverage",
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 100,
+          "outside_drift_ratio": 0.004947555907381753,
+          "frame_coverage": {
+            "front": [
+              3,
+              3,
+              0,
+              0,
+              2,
+              0
+            ],
+            "back": [
+              2,
+              1,
+              1,
+              0,
+              2,
+              0
+            ],
+            "left": [
+              20,
+              14,
+              10,
+              10,
+              11,
+              16
+            ],
+            "right": [
+              5,
+              4,
+              4,
+              3,
+              5,
+              4
+            ]
+          },
+          "missing_frames": [
+            "front:3",
+            "front:4",
+            "front:6",
+            "back:4",
+            "back:6"
+          ],
+          "unique_colors": 118,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 15,
+          "reconstruction_mean_rgb_error": 0.0009146000012117024,
+          "overlay_bbox": [
+            21,
+            27,
+            358,
+            222
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "c3e4a203094177225551bb691d4ade3cd4954b44f37d6b094e89fa7571874a55",
+        "processed_at": "2026-08-16T09:21:02Z"
+      }
+    },
+    "candidate-002": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "3959bef9b852b94a01614af4e2025cd993e57738a9129ab3e0e79ef0f305f1ba",
+      "api": {
+        "request_id": "req_ec49229a7b014e1fbe0d5002fcbe8caa",
+        "attempt": 1,
+        "created": 1786869078,
+        "usage": {
+          "input_tokens": 1778,
+          "input_tokens_details": {
+            "image_tokens": 1536,
+            "text_tokens": 242
+          },
+          "output_tokens": 1372,
+          "total_tokens": 3150,
+          "output_tokens_details": {
+            "image_tokens": 1372,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "ae7a6edbd216c25f1b3c80d813c0d109f5cb1866c4bb483b4a9a780eb48147e4",
+      "qa": {
+        "status": "fail",
+        "score": 81.16,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 100,
+          "outside_drift_ratio": 0.004947555907381753,
+          "frame_coverage": {
+            "front": [
+              42,
+              53,
+              56,
+              57,
+              48,
+              36
+            ],
+            "back": [
+              16,
+              25,
+              30,
+              31,
+              23,
+              23
+            ],
+            "left": [
+              37,
+              32,
+              38,
+              33,
+              39,
+              38
+            ],
+            "right": [
+              39,
+              30,
+              33,
+              32,
+              35,
+              31
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 820,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 110,
+          "reconstruction_mean_rgb_error": 0.014541155335428995,
+          "overlay_bbox": [
+            23,
+            17,
+            361,
+            222
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "c3e4a203094177225551bb691d4ade3cd4954b44f37d6b094e89fa7571874a55",
+        "processed_at": "2026-08-16T09:21:12Z"
+      }
+    },
+    "candidate-003": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "9f9b0b0e683d234aba55dfc7b130054887710a1a80111421958fb3b2bafb069e",
+      "api": {
+        "request_id": "req_1cb624a6093543fc9c17781bb223f1a1",
+        "attempt": 1,
+        "created": 1786869120,
+        "usage": {
+          "input_tokens": 1778,
+          "input_tokens_details": {
+            "image_tokens": 1536,
+            "text_tokens": 242
+          },
+          "output_tokens": 1372,
+          "total_tokens": 3150,
+          "output_tokens_details": {
+            "image_tokens": 1372,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "dc68dcf93500793b6e1a848d5cb39ad60c9ba6e60e12dd832b60a1a2a82f958b",
+      "qa": {
+        "status": "fail",
+        "score": 81.39,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 100,
+          "outside_drift_ratio": 0.004947555907381753,
+          "frame_coverage": {
+            "front": [
+              83,
+              82,
+              81,
+              80,
+              72,
+              79
+            ],
+            "back": [
+              22,
+              26,
+              25,
+              27,
+              20,
+              22
+            ],
+            "left": [
+              37,
+              19,
+              24,
+              37,
+              23,
+              26
+            ],
+            "right": [
+              43,
+              46,
+              50,
+              29,
+              24,
+              38
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 816,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 94,
+          "reconstruction_mean_rgb_error": 0.015691554881418112,
+          "overlay_bbox": [
+            20,
+            13,
+            361,
+            222
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "c3e4a203094177225551bb691d4ade3cd4954b44f37d6b094e89fa7571874a55",
+        "processed_at": "2026-08-16T09:21:22Z"
+      }
+    }
+  }
+}

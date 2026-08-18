@@ -35,7 +35,7 @@ BASE_HASHES = {
     "run-front.png": "d642400d860c197e8bdf9f62434275154250c286212693fa8ff018fceeca7e74",
     "run-left.png": "32566d95b52b00a3eb21e2a2db0710f58e1256c042e1f8741a26c75ae4e2f9eb",
     "run-right.png": "f5c4ae57e7cb6ca039a1b7bf52b27ff165d42d2f43bdb74d5f1bde39bd9f1d9b",
-    "walk.png": "90f886c15de51a3e6fbdb1a1280b50203aed38bb310016c3edb01fb6f8c76fce",
+    "walk.png": "7e148f5d0aa37d4493a681c2b1f63f13b79f4f62c28f308444608bb3da37c920",
 }
 
 

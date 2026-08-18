@@ -1,0 +1,121 @@
+{
+  "job_id": "leather_work_vest_01-idle-20260816T081636Z-da168449",
+  "candidates": {
+    "candidate-001": {
+      "status": "fail",
+      "score": 86.57,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [],
+      "metrics": {
+        "outside_changed_pixels": 0,
+        "outside_drift_ratio": 0.0,
+        "frame_coverage": {
+          "front": [
+            304
+          ],
+          "back": [
+            167
+          ],
+          "left": [
+            370
+          ],
+          "right": [
+            183
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 915,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 524,
+        "reconstruction_mean_rgb_error": 0.014109855933309035,
+        "overlay_bbox": [
+          18,
+          15,
+          46,
+          240
+        ]
+      }
+    },
+    "candidate-002": {
+      "status": "fail",
+      "score": 87.11,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [],
+      "metrics": {
+        "outside_changed_pixels": 0,
+        "outside_drift_ratio": 0.0,
+        "frame_coverage": {
+          "front": [
+            244
+          ],
+          "back": [
+            24
+          ],
+          "left": [
+            276
+          ],
+          "right": [
+            110
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 590,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 279,
+        "reconstruction_mean_rgb_error": 0.03372160147238168,
+        "overlay_bbox": [
+          18,
+          15,
+          46,
+          236
+        ]
+      }
+    },
+    "candidate-003": {
+      "status": "fail",
+      "score": 82.2,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [
+        "region_edge_contact"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 0,
+        "outside_drift_ratio": 0.0,
+        "frame_coverage": {
+          "front": [
+            451
+          ],
+          "back": [
+            119
+          ],
+          "left": [
+            376
+          ],
+          "right": [
+            195
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 989,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 480,
+        "reconstruction_mean_rgb_error": 0.0,
+        "overlay_bbox": [
+          16,
+          14,
+          48,
+          233
+        ]
+      }
+    }
+  }
+}

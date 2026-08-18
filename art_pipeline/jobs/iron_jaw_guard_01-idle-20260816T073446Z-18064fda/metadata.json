@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "iron_jaw_guard_01-idle-20260816T073446Z-18064fda",
+  "component_id": "iron_jaw_guard_01",
+  "animation_id": "idle",
+  "slot": "face",
+  "layer": "face_accessory",
+  "component": {
+    "concept": "Small utilitarian iron guard covering part of the lower face and jaw; minimal martial protection without becoming a full fantasy mask.",
+    "tags": [
+      "guard",
+      "mercenary",
+      "armor"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "18064fda31e27384328ba874b8c3864d1a7c6bfd4fd24ef487e3181951e8c9a1",
+  "created_at": "2026-08-16T07:34:46Z",
+  "updated_at": "2026-08-16T07:34:46Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

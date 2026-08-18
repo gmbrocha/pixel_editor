@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "fur_collar_01-walk-20260816T081635Z-a737af80",
+  "component_id": "fur_collar_01",
+  "animation_id": "walk",
+  "slot": "neck",
+  "layer": "neck",
+  "component": {
+    "concept": "Small rough fur collar framing the neck and upper shoulders without becoming an oversized mantle.",
+    "tags": [
+      "hunter",
+      "northern",
+      "prosperous"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "a737af802c3ce03874e2c954be0256ddab53ac57cca7b38a08cd40f37deab8e9",
+  "created_at": "2026-08-16T08:16:35Z",
+  "updated_at": "2026-08-16T08:16:35Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

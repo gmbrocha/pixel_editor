@@ -1,0 +1,11 @@
+{
+  "model": "gpt-image-2",
+  "quality": "medium",
+  "background": "opaque",
+  "output_format": "png",
+  "size": "1536x1024",
+  "image_sha256": "62ba57023d0e7caadc15584591a05f5cfbc5d218d1da052de3f777a44e44b310",
+  "mask_sha256": "9a703d195d293f0d875b1a41f123c53a339ed402790c6523b1c12b987656b8f2",
+  "prompt_sha256": "c8bde6a86a031823a774e355bd61270ee1fdcb69c962532b9905b4638140dc58",
+  "design_reference": null
+}

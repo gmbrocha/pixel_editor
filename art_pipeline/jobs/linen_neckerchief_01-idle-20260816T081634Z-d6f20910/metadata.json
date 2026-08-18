@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "job_id": "linen_neckerchief_01-idle-20260816T081634Z-d6f20910",
+  "component_id": "linen_neckerchief_01",
+  "animation_id": "idle",
+  "slot": "neck",
+  "layer": "neck",
+  "component": {
+    "concept": "Simple faded linen neckerchief tied slightly to one side with a small readable knot.",
+    "tags": [
+      "laborer",
+      "sailor",
+      "traveler"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "d6f209100aa804815ce81488d8b4896ebf4bda197488c506e26c7b7de9a5f538",
+  "created_at": "2026-08-16T08:16:34Z",
+  "updated_at": "2026-08-16T09:21:24Z",
+  "status": "review",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "e968712e7f65f77b1b6e77fa3e4b685102c2144d6941398d482b228e5e8560ea",
+      "api": {
+        "request_id": "req_5a947c91bb054535b2933e01509c30f5",
+        "attempt": 1,
+        "created": 1786869356,
+        "usage": {
+          "input_tokens": 914,
+          "input_tokens_details": {
+            "image_tokens": 672,
+            "text_tokens": 242
+          },
+          "output_tokens": 994,
+          "total_tokens": 1908,
+          "output_tokens_details": {
+            "image_tokens": 994,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "f31d7deeca2ed1239706d77f006453b28de557719791c34270da1cda2999b54b",
+      "qa": {
+        "status": "fail",
+        "score": 83.24,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              84
+            ],
+            "back": [
+              58
+            ],
+            "left": [
+              91
+            ],
+            "right": [
+              73
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 306,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 75,
+          "reconstruction_mean_rgb_error": 0.10471156996250724,
+          "overlay_bbox": [
+            22,
+            17,
+            42,
+            227
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "66774774d1653b237e6839d14b106d8c7ea2e0502ff99a569a93eae885082611",
+        "processed_at": "2026-08-16T09:21:23Z"
+      }
+    },
+    "candidate-002": {
+      "status": "review",
+      "attempts": 2,
+      "raw_sha256": "936a1e224c18bd8c47999dac0f330938ccf5c6ac69b80a000592bc7db1dee662",
+      "api": {
+        "request_id": "req_f9f52cd6878a45ac80a652f494123ef8",
+        "attempt": 1,
+        "created": 1786869656,
+        "usage": {
+          "input_tokens": 914,
+          "input_tokens_details": {
+            "image_tokens": 672,
+            "text_tokens": 242
+          },
+          "output_tokens": 994,
+          "total_tokens": 1908,
+          "output_tokens_details": {
+            "image_tokens": 994,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "ee2924bab5e2a4e68982e8cf5fa6306207bf155e97ef928beefb579dd1c61747",
+      "qa": {
+        "status": "fail",
+        "score": 80.0,
+        "hard_failures": [
+          "missing_frame_coverage"
+        ],
+        "warnings": [],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              0
+            ],
+            "back": [
+              0
+            ],
+            "left": [
+              0
+            ],
+            "right": [
+              0
+            ]
+          },
+          "missing_frames": [
+            "front:1",
+            "back:1",
+            "left:1",
+            "right:1"
+          ],
+          "unique_colors": 0,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 0,
+          "reconstruction_mean_rgb_error": 0.0,
+          "overlay_bbox": null
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "66774774d1653b237e6839d14b106d8c7ea2e0502ff99a569a93eae885082611",
+        "processed_at": "2026-08-16T09:21:24Z"
+      }
+    },
+    "candidate-003": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "00e5f036bdced50dfa1b16ab7eb1e63907e88fcb7137a01780170206d202e6d8",
+      "api": {
+        "request_id": "req_0f01eb309a1e4ab09bec61fd37e60047",
+        "attempt": 1,
+        "created": 1786869686,
+        "usage": {
+          "input_tokens": 914,
+          "input_tokens_details": {
+            "image_tokens": 672,
+            "text_tokens": 242
+          },
+          "output_tokens": 994,
+          "total_tokens": 1908,
+          "output_tokens_details": {
+            "image_tokens": 994,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "451850fcfb2aac1d5b347804eae6e2ecbf77f6f94ee489df999311daa0234d90",
+      "qa": {
+        "status": "fail",
+        "score": 83.18,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              52
+            ],
+            "back": [
+              36
+            ],
+            "left": [
+              48
+            ],
+            "right": [
+              32
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 168,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 45,
+          "reconstruction_mean_rgb_error": 0.028539703198981792,
+          "overlay_bbox": [
+            24,
+            30,
+            49,
+            227
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "66774774d1653b237e6839d14b106d8c7ea2e0502ff99a569a93eae885082611",
+        "processed_at": "2026-08-16T09:21:24Z"
+      }
+    }
+  }
+}

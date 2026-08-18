@@ -1,0 +1,183 @@
+{
+  "job_id": "ankle_work_boots_01-run-20260816T081637Z-7aa08d39",
+  "candidates": {
+    "candidate-001": {
+      "status": "fail",
+      "score": 79.95,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [
+        "region_edge_contact"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 82,
+        "outside_drift_ratio": 0.004056995844053037,
+        "frame_coverage": {
+          "front": [
+            115,
+            114,
+            118,
+            127,
+            114,
+            108
+          ],
+          "back": [
+            129,
+            120,
+            144,
+            130,
+            137,
+            134
+          ],
+          "left": [
+            140,
+            178,
+            109,
+            119,
+            156,
+            161
+          ],
+          "right": [
+            178,
+            160,
+            105,
+            113,
+            178,
+            152
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 2991,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 1230,
+        "reconstruction_mean_rgb_error": 0.06398436665247434,
+        "overlay_bbox": [
+          12,
+          36,
+          380,
+          255
+        ]
+      }
+    },
+    "candidate-002": {
+      "status": "fail",
+      "score": 86.01,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [],
+      "metrics": {
+        "outside_changed_pixels": 82,
+        "outside_drift_ratio": 0.004056995844053037,
+        "frame_coverage": {
+          "front": [
+            110,
+            96,
+            114,
+            96,
+            95,
+            109
+          ],
+          "back": [
+            108,
+            109,
+            116,
+            109,
+            110,
+            104
+          ],
+          "left": [
+            128,
+            134,
+            149,
+            137,
+            128,
+            128
+          ],
+          "right": [
+            127,
+            143,
+            110,
+            132,
+            130,
+            130
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 2731,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 645,
+        "reconstruction_mean_rgb_error": 0.038054307280254045,
+        "overlay_bbox": [
+          19,
+          39,
+          366,
+          247
+        ]
+      }
+    },
+    "candidate-003": {
+      "status": "fail",
+      "score": 81.27,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [
+        "region_edge_contact"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 82,
+        "outside_drift_ratio": 0.004056995844053037,
+        "frame_coverage": {
+          "front": [
+            123,
+            119,
+            127,
+            128,
+            122,
+            124
+          ],
+          "back": [
+            128,
+            123,
+            119,
+            134,
+            116,
+            123
+          ],
+          "left": [
+            150,
+            154,
+            142,
+            132,
+            152,
+            150
+          ],
+          "right": [
+            149,
+            157,
+            137,
+            143,
+            157,
+            142
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 2634,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 599,
+        "reconstruction_mean_rgb_error": 0.05505516826173823,
+        "overlay_bbox": [
+          18,
+          36,
+          365,
+          244
+        ]
+      }
+    }
+  }
+}

@@ -7,7 +7,17 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 from PySide6.QtCore import QPoint, QRect, Qt, Signal, QSize, QTimer
-from PySide6.QtGui import QColor, QBrush, QImage, QKeyEvent, QMouseEvent, QPainter, QPen, QPixmap, QWheelEvent
+from PySide6.QtGui import (
+    QColor,
+    QBrush,
+    QImage,
+    QKeyEvent,
+    QMouseEvent,
+    QPainter,
+    QPen,
+    QPixmap,
+    QWheelEvent,
+)
 from PySide6.QtWidgets import QScrollArea, QWidget
 
 from src.core.pixel_document import (
@@ -40,6 +50,9 @@ class PixelGridCanvas(QWidget):
     zoom_changed = Signal(int)
     flood_erase_requested = Signal(int, int)
     isometric_guide_changed = Signal(str, int)
+    point_clicked = Signal(int, int, int)
+    edit_started = Signal()
+    edit_finished = Signal(object)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -49,8 +62,8 @@ class PixelGridCanvas(QWidget):
         self._last_image_size: tuple[int, int] | None = None
         self._mode = "paint"
         self._frame_grid: tuple[int, int] | None = None
-        self._onion_prev: 'Image.Image | None' = None
-        self._onion_next: 'Image.Image | None' = None
+        self._onion_prev: "Image.Image | None" = None
+        self._onion_next: "Image.Image | None" = None
         self._onion_opacity: float = 0.35
         self._anchor_points: list[tuple[int, int, str]] = []
         self._pivot_point: tuple[int, int] | None = None
@@ -69,6 +82,7 @@ class PixelGridCanvas(QWidget):
         self._paint_transparent_override = False
         self._clean_stroke_enabled = False
         self._clean_stroke_points: set[tuple[int, int]] = set()
+        self._edit_before_image: Image.Image | None = None
         self._fill_rect_start: tuple[int, int] | None = None
         self._fill_rect_current: tuple[int, int] | None = None
         self._line_key_down = False
@@ -83,9 +97,9 @@ class PixelGridCanvas(QWidget):
         self._measurement_end: tuple[int, int] | None = None
         self._mirror = False
         self._transparent_color: QColor | None = None
-        self._stamp: 'Image.Image | None' = None
+        self._stamp: "Image.Image | None" = None
         self._stamp_hover: tuple[int, int] | None = None
-        self._reference_image: 'QPixmap | None' = None
+        self._reference_image: "QPixmap | None" = None
         self._reference_opacity: float = 0.5
         self._isometric_guide: IsometricGuide | None = None
         self._isometric_guide_steps: int = _ISO_GUIDE_DEFAULT_STEPS
@@ -137,10 +151,11 @@ class PixelGridCanvas(QWidget):
             self.resize(target)
 
     def set_document(self, document: PixelDocument) -> None:
-        size_changed = (
-            self._last_image_size is None
-            or self._last_image_size != (document.image.width, document.image.height)
+        size_changed = self._last_image_size is None or self._last_image_size != (
+            document.image.width,
+            document.image.height,
         )
+        self._edit_before_image = None
         self._document = document
         self._reset_paint_gesture()
         self._cancel_line_preview()
@@ -155,6 +170,7 @@ class PixelGridCanvas(QWidget):
             QTimer.singleShot(0, self.center_view_on_image)
 
     def set_mode(self, mode: str) -> None:
+        self._finish_pixel_edit()
         self._mode = mode
         if mode != "paint":
             self._reset_paint_gesture()
@@ -262,13 +278,15 @@ class PixelGridCanvas(QWidget):
         if focus_image_xy is not None and scroll is not None:
             ix, iy = focus_image_xy
             target_x = int(self._view_margin + ix * self._zoom - viewport.width() / 2.0)
-            target_y = int(self._view_margin + iy * self._zoom - viewport.height() / 2.0)
+            target_y = int(
+                self._view_margin + iy * self._zoom - viewport.height() / 2.0
+            )
             QTimer.singleShot(0, lambda: self._set_scroll_position(target_x, target_y))
 
     def set_onion_skin(
         self,
-        prev_image: 'Image.Image | None' = None,
-        next_image: 'Image.Image | None' = None,
+        prev_image: "Image.Image | None" = None,
+        next_image: "Image.Image | None" = None,
         opacity: float = 0.35,
     ) -> None:
         self._onion_prev = prev_image
@@ -312,7 +330,7 @@ class PixelGridCanvas(QWidget):
         self._stamp = stamp
         return True
 
-    def set_stamp_image(self, stamp: 'Image.Image') -> None:
+    def set_stamp_image(self, stamp: "Image.Image") -> None:
         """Load a native-size image as a floating, not-yet-committed stamp."""
         self._stamp = stamp.convert("RGBA").copy()
         if self._document is not None:
@@ -322,7 +340,7 @@ class PixelGridCanvas(QWidget):
             )
         self.update()
 
-    def stamp_image(self) -> 'Image.Image | None':
+    def stamp_image(self) -> "Image.Image | None":
         return self._stamp
 
     def has_stamp(self) -> bool:
@@ -371,7 +389,9 @@ class PixelGridCanvas(QWidget):
         else:
             start, end = self._isometric_guide_endpoints(self._isometric_guide)
             center = ((start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0)
-            anchor = self._isometric_anchor_from_center(center, guide_direction, guide_steps)
+            anchor = self._isometric_anchor_from_center(
+                center, guide_direction, guide_steps
+            )
 
         self._isometric_guide = IsometricGuide(anchor, guide_direction, guide_steps)
         self._emit_isometric_guide_changed()
@@ -500,9 +520,13 @@ class PixelGridCanvas(QWidget):
 
     def _target_rect_for_source(self, source: QRect) -> QRect:
         z = self._zoom
-        return QRect(source.x() * z, source.y() * z, source.width() * z, source.height() * z)
+        return QRect(
+            source.x() * z, source.y() * z, source.width() * z, source.height() * z
+        )
 
-    def _scaled_source_rect(self, source: QRect, source_w: int, source_h: int, target_w: int, target_h: int) -> QRect:
+    def _scaled_source_rect(
+        self, source: QRect, source_w: int, source_h: int, target_w: int, target_h: int
+    ) -> QRect:
         left = int(round(source.x() * source_w / target_w))
         top = int(round(source.y() * source_h / target_h))
         right = int(round((source.x() + source.width()) * source_w / target_w))
@@ -515,7 +539,9 @@ class PixelGridCanvas(QWidget):
         painter.fillRect(event_rect, QColor("#1a1a1a"))
         if self._document is None:
             painter.setPen(QColor("#bdbdbd"))
-            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "No pixel document loaded")
+            painter.drawText(
+                self.rect(), Qt.AlignmentFlag.AlignCenter, "No pixel document loaded"
+            )
             return
 
         render_image = self._ensure_render_cache()
@@ -551,8 +577,12 @@ class PixelGridCanvas(QWidget):
             painter.setOpacity(1.0)
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
 
-        self._draw_onion_layer_fast(painter, self._onion_prev, visible_source, self._onion_opacity)
-        self._draw_onion_layer_fast(painter, self._onion_next, visible_source, self._onion_opacity * 0.6)
+        self._draw_onion_layer_fast(
+            painter, self._onion_prev, visible_source, self._onion_opacity
+        )
+        self._draw_onion_layer_fast(
+            painter, self._onion_next, visible_source, self._onion_opacity * 0.6
+        )
 
         has_ref = self._reference_image is not None
 
@@ -643,11 +673,15 @@ class PixelGridCanvas(QWidget):
         if (
             (
                 event.button() == Qt.MouseButton.LeftButton
-                or (self._mode == "paint" and is_paint_button)
+                or (
+                    self._mode in {"paint", "fill", "line", "ellipse"}
+                    and is_paint_button
+                )
             )
             and not self._document.active_layer.visible
             and (
-                self._mode in {"paint", "stamp", "flood_erase"}
+                self._mode
+                in {"paint", "fill", "line", "ellipse", "stamp", "flood_erase"}
                 or bool(event.modifiers() & Qt.KeyboardModifier.AltModifier)
             )
         ):
@@ -661,12 +695,17 @@ class PixelGridCanvas(QWidget):
         if point is None:
             return
 
+        self.point_clicked.emit(point[0], point[1], int(event.button().value))
+        if self._mode in {"anchor", "pivot", "picker"}:
+            return
+
         if (
             event.button() == Qt.MouseButton.LeftButton
             and event.modifiers() & Qt.KeyboardModifier.AltModifier
             and self._document.selection_rect is not None
             and self._point_in_rect(point, self._document.selection_rect)
         ):
+            self._begin_pixel_edit()
             self._moving_selection = True
             self._move_origin = point
             self.status_changed.emit("Moving selection rectangle")
@@ -683,7 +722,9 @@ class PixelGridCanvas(QWidget):
                 self._resizing_selection = True
                 self._resize_handle = handle
                 self._resize_anchor_rect = normalize_rect(self._document.selection_rect)
-                self.status_changed.emit(f"Resizing selection: {handle.replace('-', ' ')}")
+                self.status_changed.emit(
+                    f"Resizing selection: {handle.replace('-', ' ')}"
+                )
                 self._update_hover_cursor(point)
                 return
 
@@ -694,6 +735,7 @@ class PixelGridCanvas(QWidget):
 
         if self._mode == "paint":
             if is_paint_button:
+                self._begin_pixel_edit()
                 self._active_paint_button = event.button()
                 self._paint_transparent_override = (
                     event.button() == Qt.MouseButton.RightButton
@@ -725,9 +767,30 @@ class PixelGridCanvas(QWidget):
                     self._paint_stroke_point(point)
             return
 
+        if self._mode in {"fill", "line", "ellipse"}:
+            if is_paint_button:
+                self._begin_pixel_edit()
+                self._active_paint_button = event.button()
+                self._paint_transparent_override = (
+                    event.button() == Qt.MouseButton.RightButton
+                )
+                if self._mode == "fill":
+                    self._fill_rect_start = point
+                    self._fill_rect_current = point
+                elif self._mode == "line":
+                    self._line_start = point
+                    self._line_current = point
+                else:
+                    self._ellipse_start = point
+                    self._ellipse_current = point
+                self.update()
+            return
+
         if self._mode == "stamp":
             if event.button() == Qt.MouseButton.LeftButton and self._stamp is not None:
+                self._begin_pixel_edit()
                 self._place_stamp(point)
+                self._finish_pixel_edit()
             return
 
         if self._mode == "select" and self._draw_selection_enabled:
@@ -764,8 +827,12 @@ class PixelGridCanvas(QWidget):
             scroll = self._scroll_area()
             if scroll is not None:
                 delta = event.globalPosition().toPoint() - self._mid_drag_origin
-                scroll.horizontalScrollBar().setValue(scroll.horizontalScrollBar().value() - delta.x())
-                scroll.verticalScrollBar().setValue(scroll.verticalScrollBar().value() - delta.y())
+                scroll.horizontalScrollBar().setValue(
+                    scroll.horizontalScrollBar().value() - delta.x()
+                )
+                scroll.verticalScrollBar().setValue(
+                    scroll.verticalScrollBar().value() - delta.y()
+                )
                 self._mid_drag_origin = event.globalPosition().toPoint()
             return
 
@@ -786,9 +853,9 @@ class PixelGridCanvas(QWidget):
 
         point = self._event_to_pixel(event.position().toPoint())
         if point is None:
-            if not (event.buttons() & Qt.MouseButton.LeftButton) and not self._paint_drag_active(
-                event.buttons()
-            ):
+            if not (
+                event.buttons() & Qt.MouseButton.LeftButton
+            ) and not self._paint_drag_active(event.buttons()):
                 self._update_hover_cursor(None)
             return
 
@@ -798,12 +865,18 @@ class PixelGridCanvas(QWidget):
             if self._mode != "stamp":
                 return
 
-        if self._moving_selection and self._move_origin and event.buttons() & Qt.MouseButton.LeftButton:
+        if (
+            self._moving_selection
+            and self._move_origin
+            and event.buttons() & Qt.MouseButton.LeftButton
+        ):
             origin_x, origin_y = self._move_origin
             dx = point[0] - origin_x
             dy = point[1] - origin_y
             if dx or dy:
-                image, rect = move_rect_contents(self._document.image, self._document.selection_rect, dx, dy)
+                image, rect = move_rect_contents(
+                    self._document.image, self._document.selection_rect, dx, dy
+                )
                 self._document.image = image
                 self._document.selection_rect = rect
                 self._document.selected_pixels = rect_points(rect)
@@ -814,7 +887,11 @@ class PixelGridCanvas(QWidget):
                 self.update()
             return
 
-        if self._resizing_selection and self._resize_handle and self._resize_anchor_rect:
+        if (
+            self._resizing_selection
+            and self._resize_handle
+            and self._resize_anchor_rect
+        ):
             left, top, right, bottom = self._resized_selection_rect(point)
             self._document.selection_rect = (left, top, right, bottom)
             self._document.selected_pixels = rect_points(self._document.selection_rect)
@@ -827,7 +904,7 @@ class PixelGridCanvas(QWidget):
             self.update()
             return
 
-        if self._mode == "paint" and paint_drag_active:
+        if self._mode in {"paint", "fill", "line", "ellipse"} and paint_drag_active:
             if self._fill_rect_start is not None:
                 self._fill_rect_current = point
                 self.update()
@@ -867,19 +944,25 @@ class PixelGridCanvas(QWidget):
         if self._measurement_enabled and event.button() != Qt.MouseButton.MiddleButton:
             return
         if (
-            self._mode == "paint"
+            self._mode in {"paint", "fill", "line", "ellipse"}
             and self._active_paint_button is not None
             and event.button() == self._active_paint_button
         ):
-            if self._fill_rect_start is not None and self._fill_rect_current is not None:
+            if (
+                self._fill_rect_start is not None
+                and self._fill_rect_current is not None
+            ):
                 self._fill_rect(self._fill_rect_start, self._fill_rect_current)
             if self._line_start is not None and self._line_current is not None:
                 self._paint_line(self._line_start, self._line_current)
             if self._ellipse_start is not None and self._ellipse_current is not None:
                 self._paint_ellipse(self._ellipse_start, self._ellipse_current)
+            self._finish_pixel_edit()
             self._reset_paint_gesture()
             if self._document is not None:
-                self._update_hover_cursor(self._event_to_pixel(event.position().toPoint()))
+                self._update_hover_cursor(
+                    self._event_to_pixel(event.position().toPoint())
+                )
             self.update()
             return
         if event.button() == Qt.MouseButton.LeftButton:
@@ -892,7 +975,10 @@ class PixelGridCanvas(QWidget):
                         else Qt.CursorShape.CrossCursor
                     )
                 return
-            if self._fill_rect_start is not None and self._fill_rect_current is not None:
+            if (
+                self._fill_rect_start is not None
+                and self._fill_rect_current is not None
+            ):
                 self._fill_rect(self._fill_rect_start, self._fill_rect_current)
                 self._fill_rect_start = None
                 self._fill_rect_current = None
@@ -913,8 +999,11 @@ class PixelGridCanvas(QWidget):
             self._resize_anchor_rect = None
             self._last_paint_point = None
             self._clean_stroke_points.clear()
+            self._finish_pixel_edit()
             if self._document is not None:
-                self._update_hover_cursor(self._event_to_pixel(event.position().toPoint()))
+                self._update_hover_cursor(
+                    self._event_to_pixel(event.position().toPoint())
+                )
         if event.button() == Qt.MouseButton.MiddleButton:
             self._mid_drag = False
             self._mid_drag_origin = None
@@ -1038,7 +1127,11 @@ class PixelGridCanvas(QWidget):
             self._line_key_down = False
             event.accept()
             return
-        if event.key() == Qt.Key.Key_C and not event.isAutoRepeat() and self._ellipse_key_down:
+        if (
+            event.key() == Qt.Key.Key_C
+            and not event.isAutoRepeat()
+            and self._ellipse_key_down
+        ):
             self._ellipse_key_down = False
             event.accept()
             return
@@ -1047,6 +1140,7 @@ class PixelGridCanvas(QWidget):
     def focusOutEvent(self, event) -> None:
         self._line_key_down = False
         self._ellipse_key_down = False
+        self._finish_pixel_edit()
         self._reset_paint_gesture()
         self._cancel_isometric_guide_drag()
         super().focusOutEvent(event)
@@ -1073,6 +1167,24 @@ class PixelGridCanvas(QWidget):
         self._ellipse_current = None
         self._active_paint_button = None
         self._paint_transparent_override = False
+
+    def pixel_edit_in_progress(self) -> bool:
+        return self._edit_before_image is not None
+
+    def _begin_pixel_edit(self) -> None:
+        if self._document is None or self._edit_before_image is not None:
+            return
+        self._edit_before_image = self._document.image.convert("RGBA").copy()
+        self.edit_started.emit()
+
+    def _finish_pixel_edit(self) -> None:
+        before = self._edit_before_image
+        self._edit_before_image = None
+        if before is None or self._document is None:
+            return
+        current = self._document.image.convert("RGBA")
+        changed = before.size != current.size or before.tobytes() != current.tobytes()
+        self.edit_finished.emit(before if changed else None)
 
     def _active_paint_color(self) -> tuple[int, int, int, int]:
         if self._document is None:
@@ -1204,7 +1316,9 @@ class PixelGridCanvas(QWidget):
         painter.setPen(QPen(QColor(255, 100, 100, 90), 2, Qt.PenStyle.DashLine))
         painter.drawLine(int(x), 0, int(x), img_h * z)
 
-    def _draw_frame_grid_overlay(self, painter: QPainter, img_w: int, img_h: int) -> None:
+    def _draw_frame_grid_overlay(
+        self, painter: QPainter, img_w: int, img_h: int
+    ) -> None:
         if self._frame_grid is None:
             return
         fw, fh = self._frame_grid
@@ -1257,7 +1371,7 @@ class PixelGridCanvas(QWidget):
     def _draw_onion_layer_fast(
         self,
         painter: QPainter,
-        layer: 'Image.Image | None',
+        layer: "Image.Image | None",
         visible_source: QRect,
         opacity: float,
     ) -> None:
@@ -1268,7 +1382,9 @@ class PixelGridCanvas(QWidget):
         if image is None:
             image = self._pil_to_qimage(layer)
             self._onion_qimage_cache[cache_key] = image
-        visible_source = visible_source.intersected(QRect(0, 0, image.width(), image.height()))
+        visible_source = visible_source.intersected(
+            QRect(0, 0, image.width(), image.height())
+        )
         if visible_source.isNull():
             return
         visible_target = self._target_rect_for_source(visible_source)
@@ -1355,11 +1471,19 @@ class PixelGridCanvas(QWidget):
         painter.drawRect(rect)
 
     def _draw_fill_rect_preview(self, painter: QPainter) -> None:
-        if self._fill_rect_start is None or self._fill_rect_current is None or self._document is None:
+        if (
+            self._fill_rect_start is None
+            or self._fill_rect_current is None
+            or self._document is None
+        ):
             return
         left, top, right, bottom = normalize_rect(
-            (self._fill_rect_start[0], self._fill_rect_start[1],
-             self._fill_rect_current[0], self._fill_rect_current[1])
+            (
+                self._fill_rect_start[0],
+                self._fill_rect_start[1],
+                self._fill_rect_current[0],
+                self._fill_rect_current[1],
+            )
         )
         z = self._zoom
         if self._document.use_transparent_color:
@@ -1373,7 +1497,11 @@ class PixelGridCanvas(QWidget):
         painter.drawRect(rect)
 
     def _draw_line_preview(self, painter: QPainter) -> None:
-        if self._line_start is None or self._line_current is None or self._document is None:
+        if (
+            self._line_start is None
+            or self._line_current is None
+            or self._document is None
+        ):
             return
         z = self._zoom
         if self._document.use_transparent_color:
@@ -1424,8 +1552,12 @@ class PixelGridCanvas(QWidget):
         radius = max(4, min(8, z // 3))
         painter.setBrush(QColor(0, 20, 24, 220))
         painter.setPen(QPen(color, 2))
-        painter.drawEllipse(QRect(start_x - radius, start_y - radius, radius * 2, radius * 2))
-        painter.drawEllipse(QRect(end_x - radius, end_y - radius, radius * 2, radius * 2))
+        painter.drawEllipse(
+            QRect(start_x - radius, start_y - radius, radius * 2, radius * 2)
+        )
+        painter.drawEllipse(
+            QRect(end_x - radius, end_y - radius, radius * 2, radius * 2)
+        )
 
         distance = self._pixel_distance(self._measurement_start, endpoint)
         label = self._format_pixel_distance(distance)
@@ -1440,7 +1572,9 @@ class PixelGridCanvas(QWidget):
             label_y = midpoint_y + 8
         if self._document is not None:
             label_x = max(0, min(label_x, self._document.image.width * z - label_width))
-            label_y = max(0, min(label_y, self._document.image.height * z - label_height))
+            label_y = max(
+                0, min(label_y, self._document.image.height * z - label_height)
+            )
         label_rect = QRect(label_x, label_y, label_width, label_height)
         painter.setPen(QPen(color, 1))
         painter.setBrush(QColor(8, 18, 22, 225))
@@ -1448,7 +1582,11 @@ class PixelGridCanvas(QWidget):
         painter.drawText(label_rect, Qt.AlignmentFlag.AlignCenter, label)
 
     def _draw_ellipse_preview(self, painter: QPainter) -> None:
-        if self._ellipse_start is None or self._ellipse_current is None or self._document is None:
+        if (
+            self._ellipse_start is None
+            or self._ellipse_current is None
+            or self._document is None
+        ):
             return
         z = self._zoom
         if self._document.use_transparent_color:
@@ -1495,7 +1633,9 @@ class PixelGridCanvas(QWidget):
         painter.setPen(QPen(QColor("#0b1f26"), 1))
         painter.setBrush(QBrush(QColor("#00d0ff")))
         for hx, hy in self._selection_handle_widget_points(left, top, right, bottom):
-            painter.drawRect(QRect(hx - handle_half, hy - handle_half, handle_size, handle_size))
+            painter.drawRect(
+                QRect(hx - handle_half, hy - handle_half, handle_size, handle_size)
+            )
 
     def _handle_isometric_guide_press(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.RightButton:
@@ -1581,7 +1721,9 @@ class PixelGridCanvas(QWidget):
         )
         self.update()
 
-    def _resize_isometric_guide(self, image_point: tuple[float, float], handle: str) -> None:
+    def _resize_isometric_guide(
+        self, image_point: tuple[float, float], handle: str
+    ) -> None:
         if self._isometric_guide is None:
             return
         direction = self._isometric_guide.direction
@@ -1589,7 +1731,9 @@ class PixelGridCanvas(QWidget):
         if handle == "end":
             start = self._isometric_guide.anchor
             start_center = (start[0] + 0.5, start[1] + 0.5)
-            steps = self._isometric_steps_from_projection(start_center, image_point, direction)
+            steps = self._isometric_steps_from_projection(
+                start_center, image_point, direction
+            )
             anchor = start
         else:
             fixed_end = self._isometric_guide_drag_end_origin
@@ -1600,13 +1744,18 @@ class PixelGridCanvas(QWidget):
                 fixed_center[0] + (fixed_center[0] - image_point[0]),
                 fixed_center[1] + (fixed_center[1] - image_point[1]),
             )
-            steps = self._isometric_steps_from_projection(fixed_center, reverse_point, direction)
+            steps = self._isometric_steps_from_projection(
+                fixed_center, reverse_point, direction
+            )
             anchor = (
                 fixed_end[0] - _ISO_GUIDE_STEP_X * steps,
                 fixed_end[1] - direction * _ISO_GUIDE_STEP_Y * steps,
             )
 
-        if anchor == self._isometric_guide.anchor and steps == self._isometric_guide.steps:
+        if (
+            anchor == self._isometric_guide.anchor
+            and steps == self._isometric_guide.steps
+        ):
             return
         self._isometric_guide.anchor = anchor
         self._isometric_guide.steps = steps
@@ -1629,7 +1778,10 @@ class PixelGridCanvas(QWidget):
             return "start"
         if self._point_distance(image_point, end_center) <= tolerance:
             return "end"
-        if self._distance_to_segment(image_point, start_center, end_center) <= tolerance:
+        if (
+            self._distance_to_segment(image_point, start_center, end_center)
+            <= tolerance
+        ):
             return "move"
         return None
 
@@ -1644,7 +1796,12 @@ class PixelGridCanvas(QWidget):
             return None
         x = (point.x() - self._view_margin) // self._zoom
         y = (point.y() - self._view_margin) // self._zoom
-        if x < 0 or y < 0 or x >= self._document.image.width or y >= self._document.image.height:
+        if (
+            x < 0
+            or y < 0
+            or x >= self._document.image.width
+            or y >= self._document.image.height
+        ):
             return None
         return x, y
 
@@ -1700,7 +1857,9 @@ class PixelGridCanvas(QWidget):
             return "bottom"
         return None
 
-    def _resized_selection_rect(self, point: tuple[int, int]) -> tuple[int, int, int, int]:
+    def _resized_selection_rect(
+        self, point: tuple[int, int]
+    ) -> tuple[int, int, int, int]:
         if self._resize_anchor_rect is None or self._resize_handle is None:
             raise RuntimeError("Selection resize requested without an active handle")
         left, top, right, bottom = self._resize_anchor_rect
@@ -1718,7 +1877,15 @@ class PixelGridCanvas(QWidget):
     def _update_hover_cursor(self, point: tuple[int, int] | None) -> None:
         if self._mid_drag:
             return
-        if self._measurement_enabled or self._mode == "flood_erase":
+        if self._measurement_enabled or self._mode in {
+            "flood_erase",
+            "fill",
+            "line",
+            "ellipse",
+            "picker",
+            "anchor",
+            "pivot",
+        }:
             self.setCursor(Qt.CursorShape.CrossCursor)
             return
         if self._mode == "iso_guide":
@@ -1730,7 +1897,11 @@ class PixelGridCanvas(QWidget):
             return
         if self._resizing_selection and self._resize_handle is not None:
             handle = self._resize_handle
-        elif self._mode == "select" and point is not None and not self._draw_selection_enabled:
+        elif (
+            self._mode == "select"
+            and point is not None
+            and not self._draw_selection_enabled
+        ):
             handle = self._selection_resize_handle_at(point)
         else:
             handle = None
@@ -1763,7 +1934,15 @@ class PixelGridCanvas(QWidget):
         return had_measurement
 
     def _update_mode_cursor(self) -> None:
-        if self._measurement_enabled or self._mode == "flood_erase":
+        if self._measurement_enabled or self._mode in {
+            "flood_erase",
+            "fill",
+            "line",
+            "ellipse",
+            "picker",
+            "anchor",
+            "pivot",
+        }:
             self.setCursor(Qt.CursorShape.CrossCursor)
         elif self._mode == "iso_guide":
             self.setCursor(
@@ -1816,7 +1995,10 @@ class PixelGridCanvas(QWidget):
         if point == self._draw_selection_points[-1]:
             return
 
-        closes_on_start = len(self._draw_selection_points) >= 3 and point == self._draw_selection_points[0]
+        closes_on_start = (
+            len(self._draw_selection_points) >= 3
+            and point == self._draw_selection_points[0]
+        )
         closes_adjacent = (
             len(self._draw_selection_points) >= 4
             and point != self._draw_selection_points[0]
@@ -1880,7 +2062,7 @@ class PixelGridCanvas(QWidget):
         return max(abs(first[0] - second[0]), abs(first[1] - second[1])) <= 1
 
     @staticmethod
-    def _flip_stamp_image(stamp: 'Image.Image', orientation: str) -> 'Image.Image':
+    def _flip_stamp_image(stamp: "Image.Image", orientation: str) -> "Image.Image":
         if orientation == "horizontal":
             return stamp.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         return stamp.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
@@ -1906,7 +2088,9 @@ class PixelGridCanvas(QWidget):
         )
 
     @staticmethod
-    def _isometric_guide_endpoints(guide: IsometricGuide) -> tuple[tuple[int, int], tuple[int, int]]:
+    def _isometric_guide_endpoints(
+        guide: IsometricGuide,
+    ) -> tuple[tuple[int, int], tuple[int, int]]:
         return guide.anchor, PixelGridCanvas._isometric_guide_end(
             guide.anchor,
             guide.direction,
@@ -1961,7 +2145,9 @@ class PixelGridCanvas(QWidget):
         return "\\" if direction > 0 else "/"
 
     @staticmethod
-    def _point_distance(first: tuple[float, float], second: tuple[float, float]) -> float:
+    def _point_distance(
+        first: tuple[float, float], second: tuple[float, float]
+    ) -> float:
         return math.hypot(first[0] - second[0], first[1] - second[1])
 
     @staticmethod
@@ -2016,7 +2202,9 @@ class PixelGridCanvas(QWidget):
         return points
 
     @staticmethod
-    def _ellipse_outline(p0: tuple[int, int], p1: tuple[int, int]) -> list[tuple[int, int]]:
+    def _ellipse_outline(
+        p0: tuple[int, int], p1: tuple[int, int]
+    ) -> list[tuple[int, int]]:
         left, top, right, bottom = normalize_rect((p0[0], p0[1], p1[0], p1[1]))
         width = right - left + 1
         height = bottom - top + 1

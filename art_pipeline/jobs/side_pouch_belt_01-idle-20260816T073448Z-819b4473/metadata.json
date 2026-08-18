@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "side_pouch_belt_01-idle-20260816T073448Z-819b4473",
+  "component_id": "side_pouch_belt_01",
+  "animation_id": "idle",
+  "slot": "waist",
+  "layer": "waist",
+  "component": {
+    "concept": "Simple belt carrying one modest leather utility pouch at one hip; practical rather than overloaded.",
+    "tags": [
+      "artisan",
+      "traveler",
+      "utility"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "819b44734a89eff0f77ca0c9c0fa666c108c252ec1d163d8ea3441d5a0e8f506",
+  "created_at": "2026-08-16T07:34:48Z",
+  "updated_at": "2026-08-16T07:34:48Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "iron_sabatons_01-walk-20260816T073450Z-e5b496d3",
+  "component_id": "iron_sabatons_01",
+  "animation_id": "walk",
+  "slot": "feet",
+  "layer": "footwear",
+  "component": {
+    "concept": "Simple segmented iron armored footwear with minimal plates and dark leather connection points.",
+    "tags": [
+      "guard",
+      "mercenary",
+      "armor"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "e5b496d36700c353267fd0e1e2d17c0fb7836b8e4d61da9d863971d1826101d6",
+  "created_at": "2026-08-16T07:34:50Z",
+  "updated_at": "2026-08-16T07:34:50Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "job_id": "braided_cloth_sash_01-idle-20260816T135451Z-663482c3",
+  "component_id": "braided_cloth_sash_01",
+  "animation_id": "idle",
+  "slot": "waist",
+  "layer": "waist",
+  "component": {
+    "concept": "Woven cloth sash wrapped around the waist with a restrained side knot and short hanging end.",
+    "tags": [
+      "traveler",
+      "regional",
+      "cloth"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "663482c378857369094556440dd179f4dfa6aeed949e17d0d8bab6112e6be660",
+  "created_at": "2026-08-16T13:54:51Z",
+  "updated_at": "2026-08-16T14:26:49Z",
+  "status": "review",
+  "candidate_count": 1,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "review",
+      "attempts": 2,
+      "raw_sha256": "835af88d1e1d84f3932a5652e4a0236e63b305289b056e0e057b6849816c75e4",
+      "api": {
+        "request_id": "req_c6e88ae8561746b992440cabc5c664cc",
+        "attempt": 1,
+        "created": 1786890407,
+        "usage": {
+          "input_tokens": 1351,
+          "input_tokens_details": {
+            "image_tokens": 672,
+            "text_tokens": 679
+          },
+          "output_tokens": 994,
+          "total_tokens": 2345,
+          "output_tokens_details": {
+            "image_tokens": 994,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "66774774d1653b237e6839d14b106d8c7ea2e0502ff99a569a93eae885082611",
+        "processed_at": "2026-08-16T14:26:49Z"
+      },
+      "extracted_sha256": "b4ded10502f687e79b9f7531791921ced243072110af90662e1bf1869b867706",
+      "qa": {
+        "status": "fail",
+        "score": 82.88,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              142
+            ],
+            "back": [
+              78
+            ],
+            "left": [
+              81
+            ],
+            "right": [
+              77
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 378,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 119,
+          "reconstruction_mean_rgb_error": 0.019808410423008935,
+          "overlay_bbox": [
+            19,
+            26,
+            44,
+            239
+          ]
+        }
+      }
+    }
+  }
+}

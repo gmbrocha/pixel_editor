@@ -4,7 +4,7 @@
   "sourceName": "walk_hooded_cloak.png",
   "authoredSource": "authored-regions.png",
   "authoredSourceSha256": "60d7dbe9aa2dff9cc14ac68ae1be380801cbdb44f1ead68fe66327f763296e42",
-  "semanticRegionsSha256": "bb3fcf966c5b5fbc70bb1bdc5cdf562e0e5c4f20347f533f8670a4f303a89c18",
+  "semanticRegionsSha256": "aa82dd8fd94bb34fc4117f5ce44a8451f0788c211af01f3027c1e4e79aaf65e2",
   "sheetSize": [
     384,
     259
@@ -29,34 +29,34 @@
     1,
     2,
     3,
-    6,
+    4,
     5,
-    4
+    6
   ],
   "derivedDirections": {
     "right": {
-      "operation": "second-half-phase-reversal",
+      "operation": "preserved-authored-row",
       "sourceDirection": "right",
       "sourceFrameOrder": [
         1,
         2,
         3,
-        6,
+        4,
         5,
-        4
+        6
       ],
       "generator": "tools/complete_cloak_walk_regions.py",
-      "generatorVersion": 2
+      "generatorVersion": 3
     },
     "left": {
       "operation": "horizontal-frame-mirror",
-      "sourceDirection": "phase-corrected-right",
+      "sourceDirection": "right",
       "alignmentOffset": [
         -1,
         -1
       ],
       "generator": "tools/complete_cloak_walk_regions.py",
-      "generatorVersion": 2
+      "generatorVersion": 3
     }
   },
   "framesPerDirection": 6,
@@ -82,5 +82,5 @@
       "pixels": 347
     }
   },
-  "extraction": "Exact opaque semantic marker pixels are preserved. Left Walk frames are deterministic per-frame horizontal mirrors of the authored Right row."
+  "extraction": "Exact opaque semantic marker pixels and authored Front, Back, and Right frame order are preserved. Left Walk frames are deterministic per-frame horizontal mirrors of the authored Right row."
 }

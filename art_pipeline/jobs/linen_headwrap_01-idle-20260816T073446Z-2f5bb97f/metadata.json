@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "linen_headwrap_01-idle-20260816T073446Z-2f5bb97f",
+  "component_id": "linen_headwrap_01",
+  "animation_id": "idle",
+  "slot": "headwear",
+  "layer": "headwear",
+  "component": {
+    "concept": "Plain linen headwrap wound closely around the head; practical protection from sun, dust, or work conditions rather than decorative ceremonial wrapping.",
+    "tags": [
+      "worker",
+      "sailor",
+      "traveler"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "2f5bb97ffad14ed2329b4f2bb28f08c55fb492c5eb47486d2ad6c8c9d1e0f883",
+  "created_at": "2026-08-16T07:34:46Z",
+  "updated_at": "2026-08-16T07:34:46Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

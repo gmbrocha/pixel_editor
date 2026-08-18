@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "job_id": "guard_surcoat_01-idle-20260816T135451Z-ae34d1df",
+  "component_id": "guard_surcoat_01",
+  "animation_id": "idle",
+  "slot": "outerwear",
+  "layer": "outerwear",
+  "component": {
+    "concept": "Plain sleeveless guard surcoat or tabard with strong color blocking and no elaborate heraldry.",
+    "tags": [
+      "guard",
+      "military",
+      "town"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "ae34d1df688737b0a5d46a3f76b8b4fc356e5f7a240cb0d009a3329475895435",
+  "created_at": "2026-08-16T13:54:51Z",
+  "updated_at": "2026-08-16T14:29:23Z",
+  "status": "review",
+  "candidate_count": 1,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "review",
+      "attempts": 2,
+      "raw_sha256": "a8864cabad9f7eeb966c607dc53d870593902da578c4830af475dbf1b741d53a",
+      "api": {
+        "request_id": "req_e77dec2af5044702a26c72bcd9a1780e",
+        "attempt": 1,
+        "created": 1786890561,
+        "usage": {
+          "input_tokens": 1361,
+          "input_tokens_details": {
+            "image_tokens": 672,
+            "text_tokens": 689
+          },
+          "output_tokens": 994,
+          "total_tokens": 2355,
+          "output_tokens_details": {
+            "image_tokens": 994,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "66774774d1653b237e6839d14b106d8c7ea2e0502ff99a569a93eae885082611",
+        "processed_at": "2026-08-16T14:29:23Z"
+      },
+      "extracted_sha256": "61da7cc2ff79bd802f445aca65e132bf9fd231da6a4107afddb1ce16317b0963",
+      "qa": {
+        "status": "fail",
+        "score": 83.38,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              238
+            ],
+            "back": [
+              238
+            ],
+            "left": [
+              117
+            ],
+            "right": [
+              112
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 631,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 171,
+          "reconstruction_mean_rgb_error": 0.004273734455678566,
+          "overlay_bbox": [
+            7,
+            14,
+            40,
+            239
+          ]
+        }
+      }
+    }
+  }
+}

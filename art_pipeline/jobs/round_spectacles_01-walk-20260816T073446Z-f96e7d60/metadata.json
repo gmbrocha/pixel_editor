@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "job_id": "round_spectacles_01-walk-20260816T073446Z-f96e7d60",
+  "component_id": "round_spectacles_01",
+  "animation_id": "walk",
+  "slot": "face",
+  "layer": "face_accessory",
+  "component": {
+    "concept": "Small round iron-rim spectacles with thin restrained frames, readable at native sprite scale.",
+    "tags": [
+      "scholar",
+      "clerk",
+      "healer"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "f96e7d605a37bd464b5ec3ccb1b78b63c7a7ff14febb004b047f1f5ea1debb0f",
+  "created_at": "2026-08-16T07:34:46Z",
+  "updated_at": "2026-08-16T07:53:56Z",
+  "status": "review",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "failed",
+      "attempts": 1,
+      "error": {
+        "type": "permanent_api",
+        "code": "moderation_blocked",
+        "request_id": "req_0edbfe4471a54297a12a480360754d82",
+        "message": "OpenAI request failed (moderation_blocked, request req_0edbfe4471a54297a12a480360754d82): Error code: 400 - {'error': {'message': 'Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID req_0edbfe4471a54297a12a480360754d82. safety_violations=[sexual].', 'type': 'image_generation_user_error', 'param': None, 'code': 'moderation_blocked', 'moderation_details': {'moderation_stage': 'output', 'categories': ['sexual']}}}",
+        "at": "2026-08-16T07:52:23Z"
+      }
+    },
+    "candidate-002": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "7a521d3ea527832dc28b9c0b78ba0d906b680b0c85d33b28eda3e052450c4f98",
+      "api": {
+        "request_id": "req_8652a29c89304257842366f8af8c40fc",
+        "attempt": 1,
+        "created": 1786866796,
+        "usage": {
+          "input_tokens": 1688,
+          "input_tokens_details": {
+            "image_tokens": 1504,
+            "text_tokens": 184
+          },
+          "output_tokens": 1382,
+          "total_tokens": 3070,
+          "output_tokens_details": {
+            "image_tokens": 1382,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "c8009d19c834d1e0712cb741b969f3609adc61bb171df1a931eae1569bf04cc7",
+      "qa": {
+        "status": "fail",
+        "score": 41.88,
+        "hard_failures": [
+          "outside_region_drift",
+          "palette_complexity"
+        ],
+        "warnings": [
+          "reconstruction_error",
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 3391,
+          "outside_drift_ratio": 0.4784142212189616,
+          "frame_coverage": {
+            "front": [
+              144,
+              130,
+              123,
+              131,
+              122,
+              126
+            ],
+            "back": [
+              158,
+              165,
+              156,
+              166,
+              163,
+              155
+            ],
+            "left": [
+              217,
+              204,
+              207,
+              215,
+              208,
+              203
+            ],
+            "right": [
+              185,
+              182,
+              193,
+              194,
+              189,
+              211
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 3401,
+          "partial_alpha_colors": 0,
+          "silhouette_growth_pixels": 1843,
+          "reconstruction_mean_rgb_error": 8.125368467673987,
+          "overlay_bbox": [
+            23,
+            17,
+            359,
+            222
+          ]
+        }
+      }
+    },
+    "candidate-003": {
+      "status": "failed",
+      "attempts": 1,
+      "error": {
+        "type": "permanent_api",
+        "code": "moderation_blocked",
+        "request_id": "req_7ae920c6fbc44d81b146d9cac0a957ce",
+        "message": "OpenAI request failed (moderation_blocked, request req_7ae920c6fbc44d81b146d9cac0a957ce): Error code: 400 - {'error': {'message': 'Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID req_7ae920c6fbc44d81b146d9cac0a957ce. safety_violations=[sexual].', 'type': 'image_generation_user_error', 'param': None, 'code': 'moderation_blocked', 'moderation_details': {'moderation_stage': 'output', 'categories': ['sexual']}}}",
+        "at": "2026-08-16T07:53:52Z"
+      }
+    }
+  }
+}

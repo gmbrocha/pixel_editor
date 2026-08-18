@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import colorsys
 from collections import deque
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
-from typing import Callable, Iterable
 
 import numpy as np
 from PIL import Image
@@ -12,7 +12,7 @@ from PIL import Image
 Point = tuple[int, int]
 Rect = tuple[int, int, int, int]
 Color = tuple[int, int, int, int]
-RGB_DISTANCE_MAX = int(np.ceil(np.sqrt(3 * (255 ** 2))))
+RGB_DISTANCE_MAX = int(np.ceil(np.sqrt(3 * (255**2))))
 
 
 @dataclass
@@ -94,7 +94,9 @@ class PixelDocument:
             raise ValueError("PixelDocument requires at least one layer")
 
         self.layers: list[Layer] = list(layers)
-        self.active_layer_index: int = max(0, min(len(self.layers) - 1, active_layer_index))
+        self.active_layer_index: int = max(
+            0, min(len(self.layers) - 1, active_layer_index)
+        )
         self.name: str = name
         self.palette: list[Color] = list(palette or [])
         self.selected_pixels: set[Point] = set()
@@ -197,9 +199,7 @@ class PixelDocument:
         if self.selection_rect is not None:
             points.update(rect_points(self.selection_rect))
         return {
-            (x, y)
-            for x, y in points
-            if 0 <= x < self.width and 0 <= y < self.height
+            (x, y) for x, y in points if 0 <= x < self.width and 0 <= y < self.height
         }
 
     def copy_selection_image(self, *, compact: bool) -> Image.Image | None:
@@ -228,7 +228,9 @@ class PixelDocument:
             out_pixels[x - left, y - top] = source_pixels[x, y]
         return out
 
-    def copy_selection_to_new_layer(self, name: str | None = None) -> tuple[int, int] | None:
+    def copy_selection_to_new_layer(
+        self, name: str | None = None
+    ) -> tuple[int, int] | None:
         """Create a new layer above the active layer from the selected pixels.
 
         The active source layer is not modified. Returns the new active layer
@@ -364,9 +366,9 @@ class PixelDocument:
             return False
         expected_source = record.source_after if after else record.source_before
         expected_target = record.target_after if after else record.target_before
-        return self._images_equal(record.source_layer.image, expected_source) and self._images_equal(
-            record.target_layer.image, expected_target
-        )
+        return self._images_equal(
+            record.source_layer.image, expected_source
+        ) and self._images_equal(record.target_layer.image, expected_target)
 
     @staticmethod
     def _images_equal(first: Image.Image, second: Image.Image) -> bool:
@@ -447,12 +449,16 @@ class PixelDocument:
         self.layers[index].visible = bool(visible)
         return True
 
-    def apply_to_all_layers(self, transform: Callable[[Image.Image], Image.Image]) -> None:
+    def apply_to_all_layers(
+        self, transform: Callable[[Image.Image], Image.Image]
+    ) -> None:
         """Apply `transform` (must be size-consistent across calls) to every
         layer's image. Used by canvas-dim-changing operations like resize,
         trim, flip, and rotate so all layers stay aligned in the same
         coordinate system."""
-        new_layers: list[Image.Image] = [transform(layer.image) for layer in self.layers]
+        new_layers: list[Image.Image] = [
+            transform(layer.image) for layer in self.layers
+        ]
         sizes = {img.size for img in new_layers}
         if len(sizes) != 1:
             raise ValueError(
@@ -479,11 +485,7 @@ def create_blank_pixel_map(width: int, height: int) -> PixelDocument:
 
 def rect_points(rect: Rect) -> set[Point]:
     left, top, right, bottom = normalize_rect(rect)
-    return {
-        (x, y)
-        for y in range(top, bottom + 1)
-        for x in range(left, right + 1)
-    }
+    return {(x, y) for y in range(top, bottom + 1) for x in range(left, right + 1)}
 
 
 def selection_points_from_perimeter(
@@ -533,7 +535,9 @@ def selection_points_from_perimeter(
             neighbor = (nx, ny)
             if neighbor in exterior or neighbor in outline:
                 continue
-            if not (search_left <= nx <= search_right and search_top <= ny <= search_bottom):
+            if not (
+                search_left <= nx <= search_right and search_top <= ny <= search_bottom
+            ):
                 continue
             exterior.add(neighbor)
             queue.append(neighbor)
@@ -544,11 +548,7 @@ def selection_points_from_perimeter(
             point = (x, y)
             if point in outline or point not in exterior:
                 selected.add(point)
-    return {
-        (x, y)
-        for x, y in selected
-        if 0 <= x < width and 0 <= y < height
-    }
+    return {(x, y) for x, y in selected if 0 <= x < width and 0 <= y < height}
 
 
 def _line_points_inclusive(start: Point, end: Point) -> set[Point]:
@@ -583,7 +583,9 @@ def normalize_rect(rect: Rect) -> Rect:
     )
 
 
-def move_rect_contents(image: Image.Image, rect: Rect, dx: int, dy: int) -> tuple[Image.Image, Rect]:
+def move_rect_contents(
+    image: Image.Image, rect: Rect, dx: int, dy: int
+) -> tuple[Image.Image, Rect]:
     left, top, right, bottom = normalize_rect(rect)
     width = right - left + 1
     height = bottom - top + 1
@@ -689,7 +691,9 @@ def normalize_to_black_white(image: Image.Image, black_threshold: int) -> Image.
     return normalized
 
 
-def replace_color(image: Image.Image, color: Color, replacement: Color) -> tuple[Image.Image, int]:
+def replace_color(
+    image: Image.Image, color: Color, replacement: Color
+) -> tuple[Image.Image, int]:
     if color[3] == 0:
         return image.convert("RGBA").copy(), 0
 
@@ -707,7 +711,9 @@ def replace_color(image: Image.Image, color: Color, replacement: Color) -> tuple
     return replaced, replacements
 
 
-def replace_color_with_transparent(image: Image.Image, color: Color) -> tuple[Image.Image, int]:
+def replace_color_with_transparent(
+    image: Image.Image, color: Color
+) -> tuple[Image.Image, int]:
     return replace_color(image, color, (0, 0, 0, 0))
 
 
@@ -730,7 +736,9 @@ def replace_similar_color_with_transparent(
     target = np.array(color[:3], dtype=np.int32)
     delta = rgb - target
     tolerance = max(0, min(RGB_DISTANCE_MAX, int(tolerance)))
-    mask = (arr[..., 3] != 0) & (np.sum(delta * delta, axis=-1) <= tolerance * tolerance)
+    mask = (arr[..., 3] != 0) & (
+        np.sum(delta * delta, axis=-1) <= tolerance * tolerance
+    )
     replaced_count = int(mask.sum())
     if replaced_count == 0:
         return source.copy(), 0
@@ -756,9 +764,13 @@ def replace_light_background_with_transparent(
     channel_min = rgb.min(axis=-1)
     saturation = np.zeros_like(channel_max)
     nonzero = channel_max > 0
-    saturation[nonzero] = ((channel_max[nonzero] - channel_min[nonzero]) / channel_max[nonzero]) * 255
+    saturation[nonzero] = (
+        (channel_max[nonzero] - channel_min[nonzero]) / channel_max[nonzero]
+    ) * 255
 
-    mask = (arr[..., 3] != 0) & (luma >= min_brightness) & (saturation <= max_saturation)
+    mask = (
+        (arr[..., 3] != 0) & (luma >= min_brightness) & (saturation <= max_saturation)
+    )
     replaced_count = int(mask.sum())
     if replaced_count == 0:
         return source.copy(), 0
@@ -768,7 +780,9 @@ def replace_light_background_with_transparent(
     return Image.fromarray(replaced, mode="RGBA"), replaced_count
 
 
-def replace_colors(image: Image.Image, replacements: dict[Color, Color]) -> tuple[Image.Image, int]:
+def replace_colors(
+    image: Image.Image, replacements: dict[Color, Color]
+) -> tuple[Image.Image, int]:
     source = image.convert("RGBA")
     replaced = source.copy()
     replacements_applied = 0
@@ -1001,7 +1015,12 @@ def flood_erase_outside_color(
         for dx, dy in offsets:
             nx = x + dx
             ny = y + dy
-            if 0 <= nx < w_img and 0 <= ny < h_img and not vs[ny, nx] and not bm[ny, nx]:
+            if (
+                0 <= nx < w_img
+                and 0 <= ny < h_img
+                and not vs[ny, nx]
+                and not bm[ny, nx]
+            ):
                 vs[ny, nx] = True
                 push((nx, ny))
 
@@ -1056,11 +1075,15 @@ def apply_ramp_shifts(base: Color, shifts: list[ColorShift]) -> list[Color]:
 
 def _rgba_to_hsva(color: Color) -> tuple[float, float, float, int]:
     red, green, blue, alpha = color
-    hue, saturation, value = colorsys.rgb_to_hsv(red / 255.0, green / 255.0, blue / 255.0)
+    hue, saturation, value = colorsys.rgb_to_hsv(
+        red / 255.0, green / 255.0, blue / 255.0
+    )
     return (hue * 360.0, saturation, value, alpha)
 
 
-def _hsva_to_rgba(hue_degrees: float, saturation: float, value: float, alpha: int) -> Color:
+def _hsva_to_rgba(
+    hue_degrees: float, saturation: float, value: float, alpha: int
+) -> Color:
     red, green, blue = colorsys.hsv_to_rgb(
         (hue_degrees % 360.0) / 360.0,
         max(0.0, min(1.0, saturation)),
@@ -1078,9 +1101,15 @@ def _shortest_hue_delta(start_hue: float, end_hue: float) -> float:
     return ((end_hue - start_hue + 180.0) % 360.0) - 180.0
 
 
-def push_image_history(document: PixelDocument, max_entries: int = 20) -> None:
+def push_image_history(
+    document: PixelDocument,
+    max_entries: int = 20,
+    *,
+    before_image: Image.Image | None = None,
+) -> None:
     document.clear_transfer_history()
-    document.image_history.append(document.image.copy())
+    snapshot = document.image if before_image is None else before_image
+    document.image_history.append(snapshot.copy())
     document.image_redo_history.clear()
     if len(document.image_history) > max_entries:
         document.image_history = document.image_history[-max_entries:]

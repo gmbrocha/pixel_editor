@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "wrapped_travel_boots_01-walk-20260816T073450Z-ac90d3d3",
+  "component_id": "wrapped_travel_boots_01",
+  "animation_id": "walk",
+  "slot": "feet",
+  "layer": "footwear",
+  "component": {
+    "concept": "Rugged low boots with cloth wrapping around the ankles and lower shins.",
+    "tags": [
+      "traveler",
+      "hunter",
+      "wilderness"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "ac90d3d38988c59f44c67f426d2c0f7aa14e6753f69534fee0838ecae9765423",
+  "created_at": "2026-08-16T07:34:50Z",
+  "updated_at": "2026-08-16T07:34:50Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

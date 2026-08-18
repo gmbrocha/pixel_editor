@@ -1,0 +1,298 @@
+{
+  "schema_version": 1,
+  "job_id": "weathered_captains_cap_01-walk-20260816T081633Z-3e98b323",
+  "component_id": "weathered_captains_cap_01",
+  "animation_id": "walk",
+  "slot": "headwear",
+  "layer": "headwear",
+  "component": {
+    "concept": "Low-crowned weathered naval captain's cap with a short practical brim; muted wool and leather construction; authoritative but worn and grounded.",
+    "tags": [
+      "seafaring",
+      "coastal",
+      "authority"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "3e98b3236b98491268e4f5fbab0a394dfae3e4f5cc0594e5bf46b21be3558555",
+  "created_at": "2026-08-16T08:16:33Z",
+  "updated_at": "2026-08-16T09:20:00Z",
+  "status": "review",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "98c2466dfb1c2db76334c8246227e5c5fa89b660b2310ddd483a71278464b5ec",
+      "api": {
+        "request_id": "req_2ed73ebe695c441482d6bd299327a60f",
+        "attempt": 1,
+        "created": 1786868334,
+        "usage": {
+          "input_tokens": 1759,
+          "input_tokens_details": {
+            "image_tokens": 1504,
+            "text_tokens": 255
+          },
+          "output_tokens": 1382,
+          "total_tokens": 3141,
+          "output_tokens_details": {
+            "image_tokens": 1382,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "7d0ca844484dea29667f5ea0eba261d790402c3ee32f763ba62130a878881b52",
+      "qa": {
+        "status": "fail",
+        "score": 79.28,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact",
+          "silhouette_growth"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              253,
+              245,
+              265,
+              249,
+              255,
+              272
+            ],
+            "back": [
+              214,
+              214,
+              208,
+              207,
+              210,
+              195
+            ],
+            "left": [
+              160,
+              152,
+              163,
+              166,
+              140,
+              157
+            ],
+            "right": [
+              137,
+              170,
+              149,
+              142,
+              146,
+              153
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 4145,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 3964,
+          "reconstruction_mean_rgb_error": 0.00093355652093367,
+          "overlay_bbox": [
+            16,
+            5,
+            361,
+            219
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "7d79e0e38d61d6d61ed31ee943afc2b2f5cf6ba4555d8f7dc9df32c5fa7e94f7",
+        "processed_at": "2026-08-16T09:19:51Z"
+      }
+    },
+    "candidate-002": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "bea35273283f79c1b008c8376c04b7e27ab60fc2bd7f8b7bab86da766d267ad8",
+      "api": {
+        "request_id": "req_038d90a517664fbd8e1d0c7a297d7b5c",
+        "attempt": 1,
+        "created": 1786868367,
+        "usage": {
+          "input_tokens": 1759,
+          "input_tokens_details": {
+            "image_tokens": 1504,
+            "text_tokens": 255
+          },
+          "output_tokens": 1382,
+          "total_tokens": 3141,
+          "output_tokens_details": {
+            "image_tokens": 1382,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "3ee86f1d29e1f650a38f93e8d44ec560fbfb42856aa4f46dee32d70c071342d7",
+      "qa": {
+        "status": "fail",
+        "score": 78.82,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact",
+          "silhouette_growth"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              135,
+              146,
+              129,
+              115,
+              137,
+              191
+            ],
+            "back": [
+              137,
+              149,
+              129,
+              151,
+              140,
+              148
+            ],
+            "left": [
+              100,
+              177,
+              118,
+              141,
+              118,
+              122
+            ],
+            "right": [
+              129,
+              103,
+              116,
+              126,
+              132,
+              110
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 2897,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 2966,
+          "reconstruction_mean_rgb_error": 0.000875,
+          "overlay_bbox": [
+            21,
+            6,
+            360,
+            219
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "7d79e0e38d61d6d61ed31ee943afc2b2f5cf6ba4555d8f7dc9df32c5fa7e94f7",
+        "processed_at": "2026-08-16T09:19:55Z"
+      }
+    },
+    "candidate-003": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "a736bce5b6902ec9ba2ab30f9b5af8b1cfffa27d9c0542b705932054c99dac52",
+      "api": {
+        "request_id": "req_a22306ed5c63481b82d778a7af3ca84c",
+        "attempt": 1,
+        "created": 1786868404,
+        "usage": {
+          "input_tokens": 1759,
+          "input_tokens_details": {
+            "image_tokens": 1504,
+            "text_tokens": 255
+          },
+          "output_tokens": 1382,
+          "total_tokens": 3141,
+          "output_tokens_details": {
+            "image_tokens": 1382,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "4852ad1ed9074f63bf1fe715c4e953ff4edb824dd2780ebdb74d663a940b9997",
+      "qa": {
+        "status": "fail",
+        "score": 80.18,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              101,
+              142,
+              115,
+              110,
+              125,
+              109
+            ],
+            "back": [
+              143,
+              134,
+              174,
+              147,
+              163,
+              161
+            ],
+            "left": [
+              171,
+              123,
+              112,
+              127,
+              118,
+              120
+            ],
+            "right": [
+              121,
+              106,
+              126,
+              116,
+              157,
+              142
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 2959,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 2285,
+          "reconstruction_mean_rgb_error": 0.003963529786364532,
+          "overlay_bbox": [
+            21,
+            12,
+            360,
+            219
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "7d79e0e38d61d6d61ed31ee943afc2b2f5cf6ba4555d8f7dc9df32c5fa7e94f7",
+        "processed_at": "2026-08-16T09:19:59Z"
+      }
+    }
+  }
+}

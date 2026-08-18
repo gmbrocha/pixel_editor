@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "wool_scarf_01-idle-20260816T081635Z-4449e1fa",
+  "component_id": "wool_scarf_01",
+  "animation_id": "idle",
+  "slot": "neck",
+  "layer": "neck",
+  "component": {
+    "concept": "Short worn wool scarf wrapped once around the neck with restrained hanging ends.",
+    "tags": [
+      "cold_weather",
+      "common",
+      "traveler"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "4449e1fa22b4a73e5d165caa777da8958cc8910a25157119f9d3fd1fef6ee9ad",
+  "created_at": "2026-08-16T08:16:35Z",
+  "updated_at": "2026-08-16T08:16:35Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

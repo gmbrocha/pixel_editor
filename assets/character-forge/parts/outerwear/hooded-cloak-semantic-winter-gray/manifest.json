@@ -37,14 +37,14 @@
   "provenance": {
     "kind": "deterministic_semantic_finish",
     "generator": "tools/generate_cloak_walk_variants.py",
-    "generatorVersion": 1,
+    "generatorVersion": 2,
     "finisher": "tools/finish_component_regions.py",
     "preset": "winter-gray",
     "authoredSource": "semantic_sources/hooded-cloak-walk/authored-regions.png",
     "authoredSourceSha256": "60d7dbe9aa2dff9cc14ac68ae1be380801cbdb44f1ead68fe66327f763296e42",
     "semanticSource": "semantic_sources/hooded-cloak-walk/semantic-regions.png",
-    "semanticRegionsSha256": "bb3fcf966c5b5fbc70bb1bdc5cdf562e0e5c4f20347f533f8670a4f303a89c18",
-    "walkSha256": "d51a762360c62da1eeaf7ce6a9a7dc2907ebfca25d43c8a2bb2a48fc7ad9888a",
+    "semanticRegionsSha256": "aa82dd8fd94bb34fc4117f5ce44a8451f0788c211af01f3027c1e4e79aaf65e2",
+    "walkSha256": "20d8f87db8f99275a75318f691604eb154de14287f8cf94daedf39db82ce539f",
     "authoredDirections": [
       "front",
       "back",
@@ -54,9 +54,9 @@
       1,
       2,
       3,
-      6,
+      4,
       5,
-      4
+      6
     ],
     "derivedDirections": {
       "left": {

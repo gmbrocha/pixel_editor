@@ -20,8 +20,7 @@ FRAME_SIZE = 64
 FRAMES_PER_DIRECTION = 6
 SHEET_SIZE = (384, 259)
 DIRECTION_ROWS = {"front": 0, "back": 1, "right": 2, "left": 3}
-SIDE_FRAME_ORDER = (0, 1, 2, 5, 4, 3)
-LEFT_ALIGNMENT_OFFSET = (-1, -1)
+LEFT_FRAME_ORDER = (5, 4, 3, 2, 1, 0)
 
 
 def _png_bytes(image: Image.Image) -> bytes:
@@ -38,37 +37,29 @@ def _frame(image: Image.Image, direction: str, frame_index: int) -> Image.Image:
 
 
 def build_walk_sheet(source: Image.Image) -> Image.Image:
-    """Correct side-view phase order and rebuild Left from Right per frame."""
+    """Preserve rows 1-3 and reverse only the six frames in row 4."""
     authored = source.convert("RGBA")
     if authored.size != SHEET_SIZE:
         raise ValueError(f"Character Walk source must be {SHEET_SIZE}, got {authored.size}")
     if authored.crop((0, 256, 384, 259)).getbbox() is not None:
         raise ValueError("Character Walk source has pixels outside its 384x256 logical extent")
 
-    output = Image.new("RGBA", SHEET_SIZE, (0, 0, 0, 0))
-    output.paste(authored.crop((0, 0, 384, 128)), (0, 0))
-
-    for output_index, source_index in enumerate(SIDE_FRAME_ORDER):
-        right = _frame(authored, "right", source_index)
-        output.paste(right, (output_index * FRAME_SIZE, DIRECTION_ROWS["right"] * FRAME_SIZE))
-
-        left = right.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
-        left_aligned = Image.new("RGBA", (FRAME_SIZE, FRAME_SIZE), (0, 0, 0, 0))
-        left_aligned.paste(left, LEFT_ALIGNMENT_OFFSET)
+    output = authored.copy()
+    for output_index, source_index in enumerate(LEFT_FRAME_ORDER):
         output.paste(
-            left_aligned,
+            _frame(authored, "left", source_index),
             (output_index * FRAME_SIZE, DIRECTION_ROWS["left"] * FRAME_SIZE),
         )
 
-    for frame_index in range(FRAMES_PER_DIRECTION):
-        right = _frame(output, "right", frame_index)
-        expected = Image.new("RGBA", (FRAME_SIZE, FRAME_SIZE), (0, 0, 0, 0))
-        expected.paste(
-            right.transpose(Image.Transpose.FLIP_LEFT_RIGHT),
-            LEFT_ALIGNMENT_OFFSET,
-        )
-        if _frame(output, "left", frame_index).tobytes() != expected.tobytes():
-            raise RuntimeError(f"Left frame {frame_index + 1} is not the aligned Right mirror")
+    if output.crop((0, 0, 384, 192)).tobytes() != authored.crop(
+        (0, 0, 384, 192)
+    ).tobytes():
+        raise RuntimeError("Walk rows 1-3 changed while reversing row 4")
+    for output_index, source_index in enumerate(LEFT_FRAME_ORDER):
+        if _frame(output, "left", output_index).tobytes() != _frame(
+            authored, "left", source_index
+        ).tobytes():
+            raise RuntimeError(f"Left frame {output_index + 1} was not reversed exactly")
     return output
 
 
@@ -94,20 +85,18 @@ def _manifest(source_hash: str, runtime_hash: str) -> dict[str, object]:
         "frameSize": [64, 64],
         "framesPerDirection": 6,
         "directionRows": DIRECTION_ROWS,
-        "frontBackOperation": "preserved-byte-for-byte",
-        "sideFrameOrder": [index + 1 for index in SIDE_FRAME_ORDER],
+        "preservedRows": ["front", "back", "right"],
         "leftOperation": {
-            "operation": "horizontal-frame-mirror",
-            "sourceDirection": "right",
-            "alignmentOffset": list(LEFT_ALIGNMENT_OFFSET),
+            "operation": "reverse-frame-order",
+            "sourceDirection": "left",
+            "sourceFrameOrder": [index + 1 for index in LEFT_FRAME_ORDER],
         },
         "rationale": (
-            "The authored side strip stores its second half in reverse phase. "
-            "Order 1,2,3,6,5,4 gives both planted feet a front-to-rear contact arc. "
-            "Left is mirrored per cell so direction changes do not reverse time."
+            "The supplied final Walk sheet is authoritative for rows 1-3. "
+            "Only the Left row is reversed cell-for-cell so frame 6 becomes frame 1."
         ),
         "generator": "tools/build_character_forge_walk_sheet.py",
-        "generatorVersion": 1,
+        "generatorVersion": 2,
     }
 
 
