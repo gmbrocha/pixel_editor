@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "leather_gorget_01-walk-20260816T081635Z-9121e126",
+  "component_id": "leather_gorget_01",
+  "animation_id": "walk",
+  "slot": "neck",
+  "layer": "neck",
+  "component": {
+    "concept": "Plain brown leather throat guard with minimal fastening; practical light protection.",
+    "tags": [
+      "guard",
+      "hunter",
+      "martial"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "9121e126fc1f448297c42ae62e494083eb9c29bc97f18bcee0f91a50883a3988",
+  "created_at": "2026-08-16T08:16:35Z",
+  "updated_at": "2026-08-16T08:16:35Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

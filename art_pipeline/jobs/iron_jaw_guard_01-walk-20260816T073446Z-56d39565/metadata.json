@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "iron_jaw_guard_01-walk-20260816T073446Z-56d39565",
+  "component_id": "iron_jaw_guard_01",
+  "animation_id": "walk",
+  "slot": "face",
+  "layer": "face_accessory",
+  "component": {
+    "concept": "Small utilitarian iron guard covering part of the lower face and jaw; minimal martial protection without becoming a full fantasy mask.",
+    "tags": [
+      "guard",
+      "mercenary",
+      "armor"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "56d3956554667180b54b762ad37fc94d6e7d3000f9e82bb7958cb73aed721df8",
+  "created_at": "2026-08-16T07:34:46Z",
+  "updated_at": "2026-08-16T07:34:46Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

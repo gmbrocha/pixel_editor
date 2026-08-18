@@ -1,0 +1,43 @@
+{
+  "job_id": "quilted_coif_01-idle-20260816T135450Z-23eaa29c",
+  "candidates": {
+    "candidate-001": {
+      "status": "fail",
+      "score": 85.24,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [],
+      "metrics": {
+        "outside_changed_pixels": 0,
+        "outside_drift_ratio": 0.0,
+        "frame_coverage": {
+          "front": [
+            136
+          ],
+          "back": [
+            233
+          ],
+          "left": [
+            189
+          ],
+          "right": [
+            210
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 762,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 545,
+        "reconstruction_mean_rgb_error": 0.020681737258323403,
+        "overlay_bbox": [
+          23,
+          15,
+          40,
+          216
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "job_id": "weathered_captains_cap_01-idle-20260816T081414Z-4918dc99",
+  "component_id": "weathered_captains_cap_01",
+  "animation_id": "idle",
+  "slot": "headwear",
+  "layer": "headwear",
+  "component": {
+    "concept": "Low-crowned weathered naval captain's cap with a short practical brim; muted wool and leather construction; authoritative but worn and grounded.",
+    "tags": [
+      "seafaring",
+      "coastal",
+      "authority"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "4918dc99cc5c5d9280d90e5035c40ce5842cc5fa44f08fc4d3dfccb2aad0b4a8",
+  "created_at": "2026-08-16T08:14:14Z",
+  "updated_at": "2026-08-16T08:15:45Z",
+  "status": "review",
+  "candidate_count": 1,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "de1af4a6d4efef5a255e5e965889b12029260c904d8f02b8e35c8f9961c57582",
+      "api": {
+        "request_id": "req_8632b9b37eb24d9198871e03add61fd2",
+        "attempt": 1,
+        "created": 1786868081,
+        "usage": {
+          "input_tokens": 927,
+          "input_tokens_details": {
+            "image_tokens": 672,
+            "text_tokens": 255
+          },
+          "output_tokens": 994,
+          "total_tokens": 1921,
+          "output_tokens_details": {
+            "image_tokens": 994,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "35ec5e1392d58241c9efabfa54c7c8a3ed21ef73ee50462de264d09896c57763",
+      "qa": {
+        "status": "fail",
+        "score": 73.64,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              200
+            ],
+            "back": [
+              276
+            ],
+            "left": [
+              233
+            ],
+            "right": [
+              278
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 776,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 670,
+          "reconstruction_mean_rgb_error": 5.470659847504866,
+          "overlay_bbox": [
+            22,
+            12,
+            41,
+            219
+          ]
+        }
+      }
+    }
+  }
+}

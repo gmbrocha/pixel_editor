@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "dust_face_wrap_01-walk-20260816T073446Z-4ad00c26",
+  "component_id": "dust_face_wrap_01",
+  "animation_id": "walk",
+  "slot": "face",
+  "layer": "face_accessory",
+  "component": {
+    "concept": "Muted cloth wrapped across the lower face and tied behind the head for dust and weather protection.",
+    "tags": [
+      "miner",
+      "traveler",
+      "wilderness"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "4ad00c26a47655d9994e0566242d0c69f927fb97b74a27d7086905f69e3b8de8",
+  "created_at": "2026-08-16T07:34:46Z",
+  "updated_at": "2026-08-16T07:34:46Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

@@ -1,0 +1,237 @@
+{
+  "schema_version": 1,
+  "job_id": "weathered_captains_cap_01-idle-20260816T081633Z-b5ba3460",
+  "component_id": "weathered_captains_cap_01",
+  "animation_id": "idle",
+  "slot": "headwear",
+  "layer": "headwear",
+  "component": {
+    "concept": "Low-crowned weathered naval captain's cap with a short practical brim; muted wool and leather construction; authoritative but worn and grounded.",
+    "tags": [
+      "seafaring",
+      "coastal",
+      "authority"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "b5ba346094394519138ae0805eebbb88b7ba55daef3d87106ba7296c0383ff05",
+  "created_at": "2026-08-16T08:16:33Z",
+  "updated_at": "2026-08-16T09:19:47Z",
+  "status": "review",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "0b995f52352e1bfbbef791f5d7ff660ca62e2e82b0720e04a52e62153c39a96d",
+      "api": {
+        "request_id": "req_b3956b7ce6964eeebdc9df59c7219e41",
+        "attempt": 1,
+        "created": 1786868229,
+        "usage": {
+          "input_tokens": 927,
+          "input_tokens_details": {
+            "image_tokens": 672,
+            "text_tokens": 255
+          },
+          "output_tokens": 994,
+          "total_tokens": 1921,
+          "output_tokens_details": {
+            "image_tokens": 994,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "db1aa16bb438702276d9f383ecca7954db5e9ce2e8aea187634168ec80259987",
+      "qa": {
+        "status": "fail",
+        "score": 83.33,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "silhouette_growth"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              142
+            ],
+            "back": [
+              162
+            ],
+            "left": [
+              149
+            ],
+            "right": [
+              140
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 591,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 593,
+          "reconstruction_mean_rgb_error": 0.0,
+          "overlay_bbox": [
+            16,
+            4,
+            42,
+            211
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "66774774d1653b237e6839d14b106d8c7ea2e0502ff99a569a93eae885082611",
+        "processed_at": "2026-08-16T09:19:46Z"
+      }
+    },
+    "candidate-002": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "481a8ed2980a63f564485c9043688b0d77b0817ccf35b2435e9e252411832568",
+      "api": {
+        "request_id": "req_dfa8a6f0c5704cc2b51d7fa42b2ebccc",
+        "attempt": 1,
+        "created": 1786868264,
+        "usage": {
+          "input_tokens": 927,
+          "input_tokens_details": {
+            "image_tokens": 672,
+            "text_tokens": 255
+          },
+          "output_tokens": 994,
+          "total_tokens": 1921,
+          "output_tokens_details": {
+            "image_tokens": 994,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "607b0e867cef95ed2b5864825e6d6f85fc08f06a6d17c0d50983a70cf36ff6fa",
+      "qa": {
+        "status": "fail",
+        "score": 79.99,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact",
+          "silhouette_growth"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              131
+            ],
+            "back": [
+              150
+            ],
+            "left": [
+              152
+            ],
+            "right": [
+              168
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 600,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 451,
+          "reconstruction_mean_rgb_error": 0.004301162633521313,
+          "overlay_bbox": [
+            21,
+            11,
+            41,
+            219
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "66774774d1653b237e6839d14b106d8c7ea2e0502ff99a569a93eae885082611",
+        "processed_at": "2026-08-16T09:19:46Z"
+      }
+    },
+    "candidate-003": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "04422b73a00821c4c49c0377502b73fe3b8e4027acb27bcf36774da760cd34e9",
+      "api": {
+        "request_id": "req_09f35d2a98e54c60b16899fa00e60076",
+        "attempt": 1,
+        "created": 1786868293,
+        "usage": {
+          "input_tokens": 927,
+          "input_tokens_details": {
+            "image_tokens": 672,
+            "text_tokens": 255
+          },
+          "output_tokens": 994,
+          "total_tokens": 1921,
+          "output_tokens_details": {
+            "image_tokens": 994,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "b6e737a12025563c88ded824e3cf7761957034d5335343673da844279ef51eb6",
+      "qa": {
+        "status": "fail",
+        "score": 84.75,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "silhouette_growth"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              269
+            ],
+            "back": [
+              150
+            ],
+            "left": [
+              154
+            ],
+            "right": [
+              158
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 718,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 575,
+          "reconstruction_mean_rgb_error": 0.0048798053239857845,
+          "overlay_bbox": [
+            22,
+            4,
+            44,
+            217
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "66774774d1653b237e6839d14b106d8c7ea2e0502ff99a569a93eae885082611",
+        "processed_at": "2026-08-16T09:19:47Z"
+      }
+    }
+  }
+}

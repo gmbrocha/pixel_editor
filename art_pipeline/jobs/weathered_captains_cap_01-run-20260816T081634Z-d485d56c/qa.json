@@ -1,0 +1,185 @@
+{
+  "job_id": "weathered_captains_cap_01-run-20260816T081634Z-d485d56c",
+  "candidates": {
+    "candidate-001": {
+      "status": "fail",
+      "score": 78.72,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [
+        "region_edge_contact"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 109,
+        "outside_drift_ratio": 0.005392835939046111,
+        "frame_coverage": {
+          "front": [
+            307,
+            297,
+            291,
+            163,
+            170,
+            146
+          ],
+          "back": [
+            332,
+            332,
+            330,
+            323,
+            229,
+            196
+          ],
+          "left": [
+            251,
+            252,
+            259,
+            228,
+            93,
+            150
+          ],
+          "right": [
+            242,
+            212,
+            248,
+            252,
+            132,
+            162
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 4101,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 2547,
+        "reconstruction_mean_rgb_error": 0.00487005499707182,
+        "overlay_bbox": [
+          17,
+          4,
+          354,
+          219
+        ]
+      }
+    },
+    "candidate-002": {
+      "status": "fail",
+      "score": 79.39,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [
+        "region_edge_contact"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 109,
+        "outside_drift_ratio": 0.005392835939046111,
+        "frame_coverage": {
+          "front": [
+            201,
+            269,
+            208,
+            215,
+            249,
+            211
+          ],
+          "back": [
+            293,
+            297,
+            294,
+            299,
+            300,
+            294
+          ],
+          "left": [
+            254,
+            266,
+            256,
+            253,
+            238,
+            217
+          ],
+          "right": [
+            258,
+            258,
+            209,
+            199,
+            253,
+            257
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 4980,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 2133,
+        "reconstruction_mean_rgb_error": 0.01450272744253574,
+        "overlay_bbox": [
+          21,
+          7,
+          360,
+          219
+        ]
+      }
+    },
+    "candidate-003": {
+      "status": "fail",
+      "score": 79.17,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [
+        "region_edge_contact"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 109,
+        "outside_drift_ratio": 0.005392835939046111,
+        "frame_coverage": {
+          "front": [
+            314,
+            299,
+            294,
+            304,
+            296,
+            322
+          ],
+          "back": [
+            310,
+            326,
+            328,
+            312,
+            313,
+            308
+          ],
+          "left": [
+            230,
+            221,
+            235,
+            229,
+            230,
+            221
+          ],
+          "right": [
+            221,
+            224,
+            201,
+            223,
+            230,
+            232
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 5190,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 2486,
+        "reconstruction_mean_rgb_error": 0.010083879664879166,
+        "overlay_bbox": [
+          18,
+          4,
+          361,
+          219
+        ]
+      }
+    }
+  }
+}

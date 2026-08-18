@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "wide_leather_belt_01-run-20260816T073447Z-149064ac",
+  "component_id": "wide_leather_belt_01",
+  "animation_id": "run",
+  "slot": "waist",
+  "layer": "waist",
+  "component": {
+    "concept": "Broad worn leather belt with a simple metal buckle and strong readable shape.",
+    "tags": [
+      "worker",
+      "traveler",
+      "rugged"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "149064ac0171598ba88077ccfabfe56e9193b77b6a8c3890319c8ab1818b3813",
+  "created_at": "2026-08-16T07:34:47Z",
+  "updated_at": "2026-08-16T07:34:47Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

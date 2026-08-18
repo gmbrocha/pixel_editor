@@ -1,0 +1,294 @@
+{
+  "schema_version": 1,
+  "job_id": "leather_work_vest_01-walk-20260816T081636Z-d384d6e7",
+  "component_id": "leather_work_vest_01",
+  "animation_id": "walk",
+  "slot": "outerwear",
+  "layer": "outerwear",
+  "component": {
+    "concept": "Simple sleeveless worn leather work vest with broad front panels and minimal fastening.",
+    "tags": [
+      "artisan",
+      "dockworker",
+      "laborer"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "d384d6e7d847c1934f043c6bb6983fd6958dd3bd6f2ad045a86256c4a829172c",
+  "created_at": "2026-08-16T08:16:36Z",
+  "updated_at": "2026-08-16T09:23:17Z",
+  "status": "review",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "e940fb65ce0ff322a805d6316a5449025f4db9b8991a3c5f37e0bdd763c8a5c4",
+      "api": {
+        "request_id": "req_a08da725e2834011908fc69cdc4d6b78",
+        "attempt": 1,
+        "created": 1786870412,
+        "usage": {
+          "input_tokens": 1745,
+          "input_tokens_details": {
+            "image_tokens": 1504,
+            "text_tokens": 241
+          },
+          "output_tokens": 1382,
+          "total_tokens": 3127,
+          "output_tokens_details": {
+            "image_tokens": 1382,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "16d78f38162bb91ce4129543f778a80eedcce5f6a15fa7566aed07fb29932bc5",
+      "qa": {
+        "status": "fail",
+        "score": 86.84,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              331,
+              308,
+              323,
+              323,
+              318,
+              302
+            ],
+            "back": [
+              372,
+              369,
+              363,
+              370,
+              366,
+              323
+            ],
+            "left": [
+              89,
+              105,
+              124,
+              99,
+              86,
+              100
+            ],
+            "right": [
+              163,
+              148,
+              162,
+              162,
+              163,
+              153
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 4277,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 2660,
+          "reconstruction_mean_rgb_error": 0.0013934826514253186,
+          "overlay_bbox": [
+            16,
+            15,
+            365,
+            234
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "7d79e0e38d61d6d61ed31ee943afc2b2f5cf6ba4555d8f7dc9df32c5fa7e94f7",
+        "processed_at": "2026-08-16T09:23:03Z"
+      }
+    },
+    "candidate-002": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "3610d3d8d3195cc2b07511d0001403d0d21d46fe694e0943fd2a099985c5721b",
+      "api": {
+        "request_id": "req_207c8fa76daa4e1d81052f07a6ea38ba",
+        "attempt": 1,
+        "created": 1786870450,
+        "usage": {
+          "input_tokens": 1745,
+          "input_tokens_details": {
+            "image_tokens": 1504,
+            "text_tokens": 241
+          },
+          "output_tokens": 1382,
+          "total_tokens": 3127,
+          "output_tokens_details": {
+            "image_tokens": 1382,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "622a994b7acd5ab5e42795871068adaca4ff3fc3a6ef8667657d9b3c8f0666d6",
+      "qa": {
+        "status": "fail",
+        "score": 82.39,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              168,
+              181,
+              191,
+              194,
+              180,
+              170
+            ],
+            "back": [
+              223,
+              212,
+              207,
+              238,
+              190,
+              231
+            ],
+            "left": [
+              70,
+              122,
+              108,
+              42,
+              91,
+              75
+            ],
+            "right": [
+              105,
+              142,
+              146,
+              122,
+              176,
+              148
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 3198,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 1456,
+          "reconstruction_mean_rgb_error": 0.005364601286866878,
+          "overlay_bbox": [
+            22,
+            14,
+            360,
+            234
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "7d79e0e38d61d6d61ed31ee943afc2b2f5cf6ba4555d8f7dc9df32c5fa7e94f7",
+        "processed_at": "2026-08-16T09:23:08Z"
+      }
+    },
+    "candidate-003": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "ee93c5ef47971a8dd0002cfeab622d0f171ba81e20e82052c2c8df6e50f0c7ac",
+      "api": {
+        "request_id": "req_85d847e219b34348856af49810254a77",
+        "attempt": 1,
+        "created": 1786870488,
+        "usage": {
+          "input_tokens": 1745,
+          "input_tokens_details": {
+            "image_tokens": 1504,
+            "text_tokens": 241
+          },
+          "output_tokens": 1382,
+          "total_tokens": 3127,
+          "output_tokens_details": {
+            "image_tokens": 1382,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "5fc36e7ad5458282a099283a224d00fd2e59f8ecbd93136e001d1773c515dad8",
+      "qa": {
+        "status": "fail",
+        "score": 83.52,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              162,
+              155,
+              146,
+              143,
+              149,
+              145
+            ],
+            "back": [
+              165,
+              156,
+              158,
+              153,
+              164,
+              156
+            ],
+            "left": [
+              98,
+              89,
+              111,
+              95,
+              98,
+              108
+            ],
+            "right": [
+              78,
+              87,
+              116,
+              80,
+              71,
+              115
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 2673,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 652,
+          "reconstruction_mean_rgb_error": 0.021204957767549333,
+          "overlay_bbox": [
+            22,
+            17,
+            362,
+            244
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "7d79e0e38d61d6d61ed31ee943afc2b2f5cf6ba4555d8f7dc9df32c5fa7e94f7",
+        "processed_at": "2026-08-16T09:23:16Z"
+      }
+    }
+  }
+}

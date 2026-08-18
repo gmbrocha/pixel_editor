@@ -1,0 +1,187 @@
+{
+  "job_id": "weathered_captains_cap_01-walk-20260816T081633Z-3e98b323",
+  "candidates": {
+    "candidate-001": {
+      "status": "fail",
+      "score": 79.28,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [
+        "region_edge_contact",
+        "silhouette_growth"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 0,
+        "outside_drift_ratio": 0.0,
+        "frame_coverage": {
+          "front": [
+            253,
+            245,
+            265,
+            249,
+            255,
+            272
+          ],
+          "back": [
+            214,
+            214,
+            208,
+            207,
+            210,
+            195
+          ],
+          "left": [
+            160,
+            152,
+            163,
+            166,
+            140,
+            157
+          ],
+          "right": [
+            137,
+            170,
+            149,
+            142,
+            146,
+            153
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 4145,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 3964,
+        "reconstruction_mean_rgb_error": 0.00093355652093367,
+        "overlay_bbox": [
+          16,
+          5,
+          361,
+          219
+        ]
+      }
+    },
+    "candidate-002": {
+      "status": "fail",
+      "score": 78.82,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [
+        "region_edge_contact",
+        "silhouette_growth"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 0,
+        "outside_drift_ratio": 0.0,
+        "frame_coverage": {
+          "front": [
+            135,
+            146,
+            129,
+            115,
+            137,
+            191
+          ],
+          "back": [
+            137,
+            149,
+            129,
+            151,
+            140,
+            148
+          ],
+          "left": [
+            100,
+            177,
+            118,
+            141,
+            118,
+            122
+          ],
+          "right": [
+            129,
+            103,
+            116,
+            126,
+            132,
+            110
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 2897,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 2966,
+        "reconstruction_mean_rgb_error": 0.000875,
+        "overlay_bbox": [
+          21,
+          6,
+          360,
+          219
+        ]
+      }
+    },
+    "candidate-003": {
+      "status": "fail",
+      "score": 80.18,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [
+        "region_edge_contact"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 0,
+        "outside_drift_ratio": 0.0,
+        "frame_coverage": {
+          "front": [
+            101,
+            142,
+            115,
+            110,
+            125,
+            109
+          ],
+          "back": [
+            143,
+            134,
+            174,
+            147,
+            163,
+            161
+          ],
+          "left": [
+            171,
+            123,
+            112,
+            127,
+            118,
+            120
+          ],
+          "right": [
+            121,
+            106,
+            126,
+            116,
+            157,
+            142
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 2959,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 2285,
+        "reconstruction_mean_rgb_error": 0.003963529786364532,
+        "overlay_bbox": [
+          21,
+          12,
+          360,
+          219
+        ]
+      }
+    }
+  }
+}

@@ -8,9 +8,8 @@ from tools.build_character_forge_walk_sheet import (
     AUTHORED_SOURCE,
     DIRECTION_ROWS,
     FRAMES_PER_DIRECTION,
-    LEFT_ALIGNMENT_OFFSET,
+    LEFT_FRAME_ORDER,
     RUNTIME_OUTPUT,
-    SIDE_FRAME_ORDER,
     SOURCE_MANIFEST,
     generate,
 )
@@ -33,27 +32,35 @@ def test_character_walk_side_cycle_is_reproducible_and_source_grounded() -> None
 
     assert metadata["authoredSourceSha256"] == _digest(AUTHORED_SOURCE)
     assert metadata["runtimeSha256"] == _digest(RUNTIME_OUTPUT)
-    assert metadata["sideFrameOrder"] == [1, 2, 3, 6, 5, 4]
-    assert metadata["leftOperation"]["alignmentOffset"] == [-1, -1]
+    assert metadata["preservedRows"] == ["front", "back", "right"]
+    assert metadata["leftOperation"] == {
+        "operation": "reverse-frame-order",
+        "sourceDirection": "left",
+        "sourceFrameOrder": [6, 5, 4, 3, 2, 1],
+    }
 
 
-def test_character_walk_preserves_front_back_and_corrects_both_side_rows() -> None:
+def test_character_walk_preserves_rows_one_to_three_and_reverses_only_row_four() -> (
+    None
+):
     with Image.open(AUTHORED_SOURCE) as opened:
         authored = opened.convert("RGBA")
     with Image.open(RUNTIME_OUTPUT) as opened:
         runtime = opened.convert("RGBA")
 
-    assert runtime.crop((0, 0, 384, 128)).tobytes() == authored.crop(
-        (0, 0, 384, 128)
+    assert runtime.crop((0, 0, 384, 192)).tobytes() == authored.crop(
+        (0, 0, 384, 192)
     ).tobytes()
-    for output_index, source_index in enumerate(SIDE_FRAME_ORDER):
-        right = _frame(runtime, "right", output_index)
-        assert right.tobytes() == _frame(authored, "right", source_index).tobytes()
-
+    for output_index, source_index in enumerate(LEFT_FRAME_ORDER):
+        assert _frame(runtime, "left", output_index).tobytes() == _frame(
+            authored, "left", source_index
+        ).tobytes()
         expected_left = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
         expected_left.paste(
-            right.transpose(Image.Transpose.FLIP_LEFT_RIGHT),
-            LEFT_ALIGNMENT_OFFSET,
+            _frame(runtime, "right", output_index).transpose(
+                Image.Transpose.FLIP_LEFT_RIGHT
+            ),
+            (-1, -1),
         )
         assert _frame(runtime, "left", output_index).tobytes() == expected_left.tobytes()
 

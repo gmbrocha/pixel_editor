@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "job_id": "round_spectacles_01-idle-20260816T073446Z-99e2a92a",
+  "component_id": "round_spectacles_01",
+  "animation_id": "idle",
+  "slot": "face",
+  "layer": "face_accessory",
+  "component": {
+    "concept": "Small round iron-rim spectacles with thin restrained frames, readable at native sprite scale.",
+    "tags": [
+      "scholar",
+      "clerk",
+      "healer"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "99e2a92ad80555c7fc9e326ad44428cd406dc8c035799aba630737283b893087",
+  "created_at": "2026-08-16T07:34:46Z",
+  "updated_at": "2026-08-16T07:51:42Z",
+  "status": "review",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "failed",
+      "attempts": 1,
+      "error": {
+        "type": "permanent_api",
+        "code": "moderation_blocked",
+        "request_id": "req_51291fa0a462428e82528bea204c9e52",
+        "message": "OpenAI request failed (moderation_blocked, request req_51291fa0a462428e82528bea204c9e52): Error code: 400 - {'error': {'message': 'Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID req_51291fa0a462428e82528bea204c9e52. safety_violations=[sexual].', 'type': 'image_generation_user_error', 'param': None, 'code': 'moderation_blocked', 'moderation_details': {'moderation_stage': 'output', 'categories': ['sexual']}}}",
+        "at": "2026-08-16T07:50:26Z"
+      }
+    },
+    "candidate-002": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "fb1ddc3d8ba3eaf6188c227a865ba95f35b94dfd67026827f3682b0058eedcc1",
+      "api": {
+        "request_id": "req_4fcbf473ba784ace9dac15ad68ab1066",
+        "attempt": 1,
+        "created": 1786866661,
+        "usage": {
+          "input_tokens": 856,
+          "input_tokens_details": {
+            "image_tokens": 672,
+            "text_tokens": 184
+          },
+          "output_tokens": 994,
+          "total_tokens": 1850,
+          "output_tokens_details": {
+            "image_tokens": 994,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "3495f9e0e13a7b016548d1d54749998ad5ecae672e7a3ab73f2189a4f4f797e3",
+      "qa": {
+        "status": "fail",
+        "score": 49.5,
+        "hard_failures": [
+          "outside_region_drift",
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact",
+          "silhouette_growth"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 87,
+          "outside_drift_ratio": 0.07207953603976802,
+          "frame_coverage": {
+            "front": [
+              736
+            ],
+            "back": [
+              735
+            ],
+            "left": [
+              735
+            ],
+            "right": [
+              736
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 265,
+          "partial_alpha_colors": 0,
+          "silhouette_growth_pixels": 2419,
+          "reconstruction_mean_rgb_error": 0.012694021452698667,
+          "overlay_bbox": [
+            16,
+            7,
+            48,
+            222
+          ]
+        }
+      }
+    },
+    "candidate-003": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "e92dc3b1a8dc022f1551bc3a3b1c750ed7b11b05a177950ecba3efb1fddd1825",
+      "api": {
+        "request_id": "req_ae8fdab36d824dd9960d83f0838eee72",
+        "attempt": 1,
+        "created": 1786866700,
+        "usage": {
+          "input_tokens": 856,
+          "input_tokens_details": {
+            "image_tokens": 672,
+            "text_tokens": 184
+          },
+          "output_tokens": 994,
+          "total_tokens": 1850,
+          "output_tokens_details": {
+            "image_tokens": 994,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "313595c6a785b7ee56b192836240022ed12b6d2d038da38d7f6d8e04642dbc50",
+      "qa": {
+        "status": "fail",
+        "score": 49.21,
+        "hard_failures": [
+          "outside_region_drift",
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact",
+          "silhouette_growth"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 1133,
+          "outside_drift_ratio": 0.9386909693454847,
+          "frame_coverage": {
+            "front": [
+              736
+            ],
+            "back": [
+              696
+            ],
+            "left": [
+              734
+            ],
+            "right": [
+              704
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 94,
+          "partial_alpha_colors": 0,
+          "silhouette_growth_pixels": 2347,
+          "reconstruction_mean_rgb_error": 0.26961992142193164,
+          "overlay_bbox": [
+            16,
+            7,
+            48,
+            222
+          ]
+        }
+      }
+    }
+  }
+}

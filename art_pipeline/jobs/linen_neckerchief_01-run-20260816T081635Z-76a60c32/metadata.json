@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "job_id": "linen_neckerchief_01-run-20260816T081635Z-76a60c32",
+  "component_id": "linen_neckerchief_01",
+  "animation_id": "run",
+  "slot": "neck",
+  "layer": "neck",
+  "component": {
+    "concept": "Simple faded linen neckerchief tied slightly to one side with a small readable knot.",
+    "tags": [
+      "laborer",
+      "sailor",
+      "traveler"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "76a60c3218abd74e3e518a8b8772df246784571aebd6a0db033c2eaa71c02f0a",
+  "created_at": "2026-08-16T08:16:35Z",
+  "updated_at": "2026-08-16T09:22:05Z",
+  "status": "review",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "4e83103d507b408a70c84395a13e9a09fd4451b3bdd5175e8668a7cce4288d60",
+      "api": {
+        "request_id": "req_01cfc324afcb47a4add260966983cabe",
+        "attempt": 1,
+        "created": 1786869841,
+        "usage": {
+          "input_tokens": 1778,
+          "input_tokens_details": {
+            "image_tokens": 1536,
+            "text_tokens": 242
+          },
+          "output_tokens": 1372,
+          "total_tokens": 3150,
+          "output_tokens_details": {
+            "image_tokens": 1372,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "f20365631f7b9d74eb0c3d163b88579d31c94ba83e577334c399ef09dccb23d3",
+      "qa": {
+        "status": "fail",
+        "score": 81.2,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 103,
+          "outside_drift_ratio": 0.005095982584603206,
+          "frame_coverage": {
+            "front": [
+              75,
+              79,
+              81,
+              75,
+              76,
+              71
+            ],
+            "back": [
+              91,
+              95,
+              81,
+              90,
+              92,
+              88
+            ],
+            "left": [
+              59,
+              49,
+              78,
+              79,
+              87,
+              70
+            ],
+            "right": [
+              59,
+              83,
+              72,
+              54,
+              58,
+              45
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 1746,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 172,
+          "reconstruction_mean_rgb_error": 0.07716229259428799,
+          "overlay_bbox": [
+            20,
+            17,
+            367,
+            227
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "c3e4a203094177225551bb691d4ade3cd4954b44f37d6b094e89fa7571874a55",
+        "processed_at": "2026-08-16T09:21:45Z"
+      }
+    },
+    "candidate-002": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "5f144ab06833067911a8071bc57075afe348bf7a569f9f9df52fe516edb92b0a",
+      "api": {
+        "request_id": "req_12dcdd05fcba47cbae2448f4f3418d25",
+        "attempt": 1,
+        "created": 1786869879,
+        "usage": {
+          "input_tokens": 1778,
+          "input_tokens_details": {
+            "image_tokens": 1536,
+            "text_tokens": 242
+          },
+          "output_tokens": 1372,
+          "total_tokens": 3150,
+          "output_tokens_details": {
+            "image_tokens": 1372,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "e25eafd801d02715f7b9555675e1af14caa1f9d73fb5d1a96f2faf5f7bb416e6",
+      "qa": {
+        "status": "fail",
+        "score": 76.94,
+        "hard_failures": [
+          "missing_frame_coverage"
+        ],
+        "warnings": [],
+        "metrics": {
+          "outside_changed_pixels": 103,
+          "outside_drift_ratio": 0.005095982584603206,
+          "frame_coverage": {
+            "front": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "back": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "left": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "right": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "missing_frames": [
+            "front:1",
+            "front:2",
+            "front:3",
+            "front:4",
+            "front:5",
+            "front:6",
+            "back:1",
+            "back:2",
+            "back:3",
+            "back:4",
+            "back:5",
+            "back:6",
+            "left:1",
+            "left:2",
+            "left:3",
+            "left:4",
+            "left:5",
+            "left:6",
+            "right:1",
+            "right:2",
+            "right:3",
+            "right:4",
+            "right:5",
+            "right:6"
+          ],
+          "unique_colors": 0,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 0,
+          "reconstruction_mean_rgb_error": 0.0,
+          "overlay_bbox": null
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "c3e4a203094177225551bb691d4ade3cd4954b44f37d6b094e89fa7571874a55",
+        "processed_at": "2026-08-16T09:21:54Z"
+      }
+    },
+    "candidate-003": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "6b0b6ecb96772123f8f51bf8a294ae2c4b24bbd268b7ce775f1e2fb1468d8eb9",
+      "api": {
+        "request_id": "req_8b972005313e423b9eb987d11206d053",
+        "attempt": 1,
+        "created": 1786869916,
+        "usage": {
+          "input_tokens": 1778,
+          "input_tokens_details": {
+            "image_tokens": 1536,
+            "text_tokens": 242
+          },
+          "output_tokens": 1372,
+          "total_tokens": 3150,
+          "output_tokens_details": {
+            "image_tokens": 1372,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "243bbbd6f9e0efc7ad96054668434cdb220aedcd676b60fc5b34d19bf2ccaf8a",
+      "qa": {
+        "status": "fail",
+        "score": 81.04,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 103,
+          "outside_drift_ratio": 0.005095982584603206,
+          "frame_coverage": {
+            "front": [
+              63,
+              75,
+              76,
+              72,
+              66,
+              66
+            ],
+            "back": [
+              88,
+              88,
+              89,
+              86,
+              87,
+              84
+            ],
+            "left": [
+              52,
+              70,
+              88,
+              73,
+              73,
+              74
+            ],
+            "right": [
+              74,
+              77,
+              71,
+              75,
+              72,
+              48
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 1630,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 226,
+          "reconstruction_mean_rgb_error": 0.0483891302364163,
+          "overlay_bbox": [
+            20,
+            17,
+            365,
+            227
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "c3e4a203094177225551bb691d4ade3cd4954b44f37d6b094e89fa7571874a55",
+        "processed_at": "2026-08-16T09:22:04Z"
+      }
+    }
+  }
+}

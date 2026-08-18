@@ -1,0 +1,125 @@
+{
+  "job_id": "ankle_work_boots_01-idle-20260816T081637Z-8ce1b40a",
+  "candidates": {
+    "candidate-001": {
+      "status": "fail",
+      "score": 83.31,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [
+        "region_edge_contact"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 0,
+        "outside_drift_ratio": 0.0,
+        "frame_coverage": {
+          "front": [
+            51
+          ],
+          "back": [
+            45
+          ],
+          "left": [
+            55
+          ],
+          "right": [
+            38
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 189,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 48,
+        "reconstruction_mean_rgb_error": 0.0,
+        "overlay_bbox": [
+          26,
+          36,
+          39,
+          239
+        ]
+      }
+    },
+    "candidate-002": {
+      "status": "fail",
+      "score": 82.39,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [
+        "region_edge_contact"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 0,
+        "outside_drift_ratio": 0.0,
+        "frame_coverage": {
+          "front": [
+            57
+          ],
+          "back": [
+            75
+          ],
+          "left": [
+            51
+          ],
+          "right": [
+            53
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 234,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 92,
+        "reconstruction_mean_rgb_error": 0.007108692888039984,
+        "overlay_bbox": [
+          25,
+          36,
+          39,
+          240
+        ]
+      }
+    },
+    "candidate-003": {
+      "status": "fail",
+      "score": 81.3,
+      "hard_failures": [
+        "palette_complexity"
+      ],
+      "warnings": [
+        "region_edge_contact"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 0,
+        "outside_drift_ratio": 0.0,
+        "frame_coverage": {
+          "front": [
+            86
+          ],
+          "back": [
+            91
+          ],
+          "left": [
+            64
+          ],
+          "right": [
+            64
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 304,
+        "partial_alpha_colors": 0,
+        "reserved_mannequin_leak_pixels": 0,
+        "silhouette_growth_pixels": 169,
+        "reconstruction_mean_rgb_error": 0.0042797049831240904,
+        "overlay_bbox": [
+          7,
+          36,
+          57,
+          254
+        ]
+      }
+    }
+  }
+}

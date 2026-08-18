@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "plain_leather_gloves_01-walk-20260816T073449Z-5f67fcfc",
+  "component_id": "plain_leather_gloves_01",
+  "animation_id": "walk",
+  "slot": "hands",
+  "layer": "handwear",
+  "component": {
+    "concept": "Plain fitted brown leather gloves with minimal cuff.",
+    "tags": [
+      "traveler",
+      "rider",
+      "worker"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "5f67fcfc932da806449e767e9d01e5b0dcbff70c6ed7485226e0899125461a8b",
+  "created_at": "2026-08-16T07:34:49Z",
+  "updated_at": "2026-08-16T07:34:49Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

@@ -35,7 +35,7 @@
     "kind": "deterministic_semantic_silhouette_starter",
     "generator": "tools/generate_component_silhouette_starters.py",
     "generatorVersion": 1,
-    "baseWalkSha256": "90f886c15de51a3e6fbdb1a1280b50203aed38bb310016c3edb01fb6f8c76fce",
+    "baseWalkSha256": "7e148f5d0aa37d4493a681c2b1f63f13b79f4f62c28f308444608bb3da37c920",
     "regionsSha256": "824f9ff407f9d759fd7b71c0f90bef5af58ab07bad1ccee4a0d974d7ba3bfb7c",
     "walkSha256": "d1e5d4cbb0526e86593427f0c17930f4c24f865b0713089e7ca9a2e7474d709b",
     "authoredDirections": [

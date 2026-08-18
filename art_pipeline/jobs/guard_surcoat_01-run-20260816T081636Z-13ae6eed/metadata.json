@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "guard_surcoat_01-run-20260816T081636Z-13ae6eed",
+  "component_id": "guard_surcoat_01",
+  "animation_id": "run",
+  "slot": "outerwear",
+  "layer": "outerwear",
+  "component": {
+    "concept": "Plain sleeveless guard surcoat or tabard with strong color blocking and no elaborate heraldry.",
+    "tags": [
+      "guard",
+      "military",
+      "town"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "13ae6eed8a19c0d7fa4d954c9e64c7cfd14c2f87b56f0ba78ccaf4d4d4e7375f",
+  "created_at": "2026-08-16T08:16:36Z",
+  "updated_at": "2026-08-16T08:16:36Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

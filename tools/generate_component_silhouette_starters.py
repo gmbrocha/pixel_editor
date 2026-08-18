@@ -24,6 +24,7 @@ WORKBENCH_ROOT = ASSET_ROOT / "workbench"
 CONCEPT_BOARD = WORKBENCH_ROOT / "starter-component-concept-board.png"
 FRAME_SIZE = 64
 FRAMES = 6
+WALK_DIRECTION_ROWS = {"front": 0, "back": 1, "right": 2, "left": 3}
 
 TRANSPARENT = (0, 0, 0, 0)
 MAIN = (255, 64, 64, 255)
@@ -56,6 +57,7 @@ class Starter:
     tags: tuple[str, ...]
     reserved_slots: tuple[str, ...] = ()
     authored_walk: str | None = None
+    authored_directions: tuple[str, ...] = ("front",)
     alpha_occluded_by_tags: tuple[str, ...] = ()
 
 
@@ -300,7 +302,7 @@ STARTERS = (
     Starter("workbench-one-shoulder-pauldron", "Workbench — One-Shoulder Pauldron", "shoulder_chest", "foreground_accessory", _draw_one_pauldron, _color_set((91, 57, 36), (48, 61, 48), (151, 118, 65), (173, 181, 177), (60, 45, 36)), ("pauldron", "asymmetric", "leather")),
     Starter("workbench-leather-gloves", "Workbench — Leather Gloves", "hands", "handwear", _draw_gloves, _color_set((89, 50, 30), (54, 32, 23), (142, 99, 55), (164, 151, 122), (66, 39, 29)), ("gloves", "leather")),
     Starter("workbench-eye-patch", "Workbench — Eye Patch", "face", "face_accessory", _draw_eye_patch, _color_set((37, 28, 26), (63, 42, 33), (119, 80, 44), (156, 151, 137), (28, 24, 27)), ("eyepatch", "leather")),
-    Starter("workbench-double-leaf-pauldrons", "Workbench — Double Leaf Pauldrons", "shoulder_chest", "foreground_accessory", _draw_double_pauldrons, _color_set((48, 91, 54), (31, 61, 39), (188, 151, 57), (127, 91, 39), (70, 119, 69)), ("pauldrons", "double", "leaf", "armor"), authored_walk="../walk_double_pauldrons.png"),
+    Starter("workbench-double-leaf-pauldrons", "Workbench — Double Leaf Pauldrons", "shoulder_chest", "foreground_accessory", _draw_double_pauldrons, _color_set((48, 91, 54), (31, 61, 39), (188, 151, 57), (127, 91, 39), (70, 119, 69)), ("pauldrons", "double", "leaf", "armor"), authored_walk="../walk_double_pauldrons_working.png", authored_directions=("front", "back")),
     Starter("workbench-crooked-mage-vestments", "Workbench — Crooked Mage Hat + Vestments", "outerwear", "outerwear", _draw_mage_vestments, _color_set((89, 46, 111), (53, 31, 75), (207, 155, 53), (149, 92, 41), (39, 27, 64)), ("mage", "hat", "vestments"), ("headwear", "neck")),
     Starter("workbench-rugged-leather-armor", "Workbench — Rugged Leather Armor", "outerwear", "outerwear", _draw_leather_armor, _color_set((100, 59, 35), (59, 38, 29), (157, 112, 63), (178, 166, 137), (66, 45, 35)), ("armor", "leather", "body")),
     Starter("workbench-ratty-shawl", "Workbench — Ratty Shawl", "neck", "neck", _draw_ratty_shawl, _color_set((78, 78, 48), (46, 51, 36), (123, 111, 69), (81, 61, 39), (55, 61, 42)), ("shawl", "ratty", "cloth")),
@@ -350,18 +352,35 @@ def _authored_walk_for(starter: Starter, root: Path) -> tuple[Image.Image, bytes
         raise ValueError(
             f"{starter.component_id} authored Walk must be 384x259, got {walk.size}"
         )
-    if walk.crop((0, FRAME_SIZE, walk.width, walk.height)).getbbox() is not None:
+    unknown_directions = set(starter.authored_directions) - set(WALK_DIRECTION_ROWS)
+    if unknown_directions or not starter.authored_directions:
         raise ValueError(
-            f"{starter.component_id} authored Walk must contain Front-row pixels only"
+            f"{starter.component_id} has invalid authored Walk directions: "
+            f"{sorted(unknown_directions)}"
         )
-    for frame_index in range(FRAMES):
-        frame = walk.crop(
-            (frame_index * FRAME_SIZE, 0, (frame_index + 1) * FRAME_SIZE, FRAME_SIZE)
+    for direction, row in WALK_DIRECTION_ROWS.items():
+        row_image = walk.crop(
+            (0, row * FRAME_SIZE, walk.width, (row + 1) * FRAME_SIZE)
         )
-        if frame.getbbox() is None:
-            raise ValueError(
-                f"{starter.component_id} authored Walk frame {frame_index + 1} is empty"
+        if direction not in starter.authored_directions:
+            if row_image.getbbox() is not None:
+                raise ValueError(
+                    f"{starter.component_id} authored Walk contains unsupported "
+                    f"{direction.title()}-row pixels"
+                )
+            continue
+        for frame_index in range(FRAMES):
+            frame = row_image.crop(
+                (frame_index * FRAME_SIZE, 0, (frame_index + 1) * FRAME_SIZE, FRAME_SIZE)
             )
+            if frame.getbbox() is not None:
+                continue
+            raise ValueError(
+                f"{starter.component_id} authored Walk {direction.title()} frame "
+                f"{frame_index + 1} is empty"
+            )
+    if walk.crop((0, FRAME_SIZE * 4, walk.width, walk.height)).getbbox() is not None:
+        raise ValueError(f"{starter.component_id} authored Walk has unexpected tail pixels")
     return walk, content
 
 
@@ -375,12 +394,12 @@ def _manifest(
     authored = starter.authored_walk is not None
     provenance: dict[str, object] = {
         "kind": (
-            "human_authored_front_walk_overlay"
+            "human_authored_walk_overlay"
             if authored
             else "deterministic_semantic_silhouette_starter"
         ),
         "generator": "tools/generate_component_silhouette_starters.py",
-        "generatorVersion": 2 if authored else 1,
+        "generatorVersion": 3 if authored else 1,
         "baseWalkSha256": base_hash,
     }
     if authored:
@@ -391,11 +410,11 @@ def _manifest(
     provenance.update(
         {
             "walkSha256": walk_hash,
-            "authoredDirections": ["front"],
+            "authoredDirections": list(starter.authored_directions),
             "authoredFrameIndices": [0, 1, 2, 3, 4, 5],
             "conceptBoard": "workbench/starter-component-concept-board.png",
             "readiness": (
-                "authored-front-walk" if authored else "rough-editable-silhouette"
+                "authored-walk" if authored else "rough-editable-silhouette"
             ),
         }
     )
@@ -419,7 +438,7 @@ def _manifest(
         "status": "incomplete",
         "developmentVisible": True,
         "animations": {"walk": "walk.png"},
-        "coverage": {"walk": ["front"]},
+        "coverage": {"walk": list(starter.authored_directions)},
     }
     if starter.alpha_occluded_by_tags:
         manifest["alphaOccludedByTags"] = list(starter.alpha_occluded_by_tags)

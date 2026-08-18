@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "job_id": "linen_neckerchief_01-idle-20260816T073446Z-ccbd4001",
+  "component_id": "linen_neckerchief_01",
+  "animation_id": "idle",
+  "slot": "neck",
+  "layer": "neck",
+  "component": {
+    "concept": "Simple faded linen neckerchief tied slightly to one side with a small readable knot.",
+    "tags": [
+      "laborer",
+      "sailor",
+      "traveler"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "ccbd40017ea3c30764beb13529acb2bf0b282ab8071770b1f423b2a5e0b6517c",
+  "created_at": "2026-08-16T07:34:47Z",
+  "updated_at": "2026-08-16T07:57:24Z",
+  "status": "review",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "8332917b605eb93b2fe7920e47cfd77171754318ec73625171050b49601e1a55",
+      "api": {
+        "request_id": "req_d28f1e54b5ef4c0383336de214464f53",
+        "attempt": 1,
+        "created": 1786866983,
+        "usage": {
+          "input_tokens": 856,
+          "input_tokens_details": {
+            "image_tokens": 672,
+            "text_tokens": 184
+          },
+          "output_tokens": 994,
+          "total_tokens": 1850,
+          "output_tokens_details": {
+            "image_tokens": 994,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "e264398bcbe5c64e66647f4bc69b237f03f7f5a86fe92e330ec9be1fe2800ecd",
+      "qa": {
+        "status": "fail",
+        "score": 50.31,
+        "hard_failures": [
+          "outside_region_drift",
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 923,
+          "outside_drift_ratio": 0.7647058823529411,
+          "frame_coverage": {
+            "front": [
+              612
+            ],
+            "back": [
+              612
+            ],
+            "left": [
+              612
+            ],
+            "right": [
+              612
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 100,
+          "partial_alpha_colors": 0,
+          "silhouette_growth_pixels": 1722,
+          "reconstruction_mean_rgb_error": 0.0,
+          "overlay_bbox": [
+            15,
+            17,
+            49,
+            227
+          ]
+        }
+      }
+    },
+    "candidate-002": {
+      "status": "failed",
+      "attempts": 1,
+      "error": {
+        "type": "permanent_api",
+        "code": "moderation_blocked",
+        "request_id": "req_520584b8ef4e40119ad648f399997a7e",
+        "message": "OpenAI request failed (moderation_blocked, request req_520584b8ef4e40119ad648f399997a7e): Error code: 400 - {'error': {'message': 'Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID req_520584b8ef4e40119ad648f399997a7e. safety_violations=[sexual].', 'type': 'image_generation_user_error', 'param': None, 'code': 'moderation_blocked', 'moderation_details': {'moderation_stage': 'output', 'categories': ['sexual']}}}",
+        "at": "2026-08-16T07:56:55Z"
+      }
+    },
+    "candidate-003": {
+      "status": "failed",
+      "attempts": 1,
+      "error": {
+        "type": "permanent_api",
+        "code": "moderation_blocked",
+        "request_id": "req_e830ceddbb6d4a49b083cd8523f375b9",
+        "message": "OpenAI request failed (moderation_blocked, request req_e830ceddbb6d4a49b083cd8523f375b9): Error code: 400 - {'error': {'message': 'Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID req_e830ceddbb6d4a49b083cd8523f375b9. safety_violations=[sexual].', 'type': 'image_generation_user_error', 'param': None, 'code': 'moderation_blocked', 'moderation_details': {'moderation_stage': 'output', 'categories': ['sexual']}}}",
+        "at": "2026-08-16T07:57:24Z"
+      }
+    }
+  }
+}

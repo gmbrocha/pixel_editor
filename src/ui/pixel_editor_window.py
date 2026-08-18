@@ -2,8 +2,17 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from PIL import Image
 from PySide6.QtCore import QMimeData, QPoint, Qt, Signal
-from PySide6.QtGui import QAction, QColor, QDrag, QKeySequence, QMouseEvent, QPainter, QPixmap
+from PySide6.QtGui import (
+    QAction,
+    QColor,
+    QDrag,
+    QKeySequence,
+    QMouseEvent,
+    QPainter,
+    QPixmap,
+)
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -112,7 +121,9 @@ def _color_drag_pixmap(size, color: tuple[int, int, int, int]) -> QPixmap:
 class ClickableColorButton(QPushButton):
     clicked_color = Signal(tuple)
 
-    def __init__(self, color: tuple[int, int, int, int], parent: QWidget | None = None) -> None:
+    def __init__(
+        self, color: tuple[int, int, int, int], parent: QWidget | None = None
+    ) -> None:
         super().__init__(parent)
         self._color = color
         self._drag_start_pos: QPoint | None = None
@@ -158,7 +169,9 @@ class ClickableColorButton(QPushButton):
     def _apply_style(self) -> None:
         if self._color[3] == 0:
             self.setText("T")
-            self.setStyleSheet("background: #444; color: white; border: 1px solid #888;")
+            self.setStyleSheet(
+                "background: #444; color: white; border: 1px solid #888;"
+            )
         else:
             self.setText("")
             self.setStyleSheet(
@@ -303,12 +316,13 @@ class PaletteGridCell(QLabel):
             return
         if self._color[3] == 0:
             self.setText("T")
-            self.setStyleSheet("background: #444; color: white; border: 1px solid #888;")
+            self.setStyleSheet(
+                "background: #444; color: white; border: 1px solid #888;"
+            )
             return
         self.setText("")
         self.setStyleSheet(
-            "background: rgba(%d, %d, %d, %d); border: 1px solid #111;"
-            % self._color
+            "background: rgba(%d, %d, %d, %d); border: 1px solid #111;" % self._color
         )
 
     def _drag_pixmap(self) -> QPixmap:
@@ -320,11 +334,15 @@ class PaletteGridWidget(QWidget):
     cell_cleared = Signal(int)
     cell_clicked = Signal(object)
 
-    def __init__(self, columns: int = 4, rows: int = 4, parent: QWidget | None = None) -> None:
+    def __init__(
+        self, columns: int = 4, rows: int = 4, parent: QWidget | None = None
+    ) -> None:
         super().__init__(parent)
         self._columns = max(1, columns)
         self._rows = max(1, rows)
-        self._colors: list[tuple[int, int, int, int] | None] = [None] * (self._columns * self._rows)
+        self._colors: list[tuple[int, int, int, int] | None] = [None] * (
+            self._columns * self._rows
+        )
         self._layout = QGridLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(2)
@@ -374,7 +392,9 @@ class PaletteGridWidget(QWidget):
             for col in range(self._columns)
         ]
 
-    def ordered_colors(self, *, filled_only: bool = False) -> list[tuple[int, int, int, int] | None]:
+    def ordered_colors(
+        self, *, filled_only: bool = False
+    ) -> list[tuple[int, int, int, int] | None]:
         colors = [self._colors[index] for index in self.ordered_indices()]
         if filled_only:
             return [color for color in colors if color is not None]
@@ -437,8 +457,13 @@ class PixelEditorWindow(QMainWindow):
             if restore_reference is not None
             else None
         )
-        if self._restore_reference is not None and self._restore_reference.size != document.image.size:
-            raise ValueError("Cleanup restore reference must match the document geometry")
+        if (
+            self._restore_reference is not None
+            and self._restore_reference.size != document.image.size
+        ):
+            raise ValueError(
+                "Cleanup restore reference must match the document geometry"
+            )
         self.setWindowTitle(f"PixelForge - {document.name}")
         self.resize(1100, 820)
 
@@ -487,11 +512,15 @@ class PixelEditorWindow(QMainWindow):
         self.transparent_replace_preview = ColorDropLabel("No replace target")
         self.transparent_replace_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.transparent_replace_preview.setMinimumHeight(28)
-        self.transparent_replace_preview.setToolTip("Drag a palette color here to set the replace target")
+        self.transparent_replace_preview.setToolTip(
+            "Drag a palette color here to set the replace target"
+        )
         self.replace_with_preview = ColorDropLabel()
         self.replace_with_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.replace_with_preview.setMinimumHeight(28)
-        self.replace_with_preview.setToolTip("Drag a palette color here to set the replacement color")
+        self.replace_with_preview.setToolTip(
+            "Drag a palette color here to set the replacement color"
+        )
         self.pick_replace_target_button = QPushButton("Pick")
         self.transparent_replace_button = QPushButton("-> Transparent")
         self.replace_with_color_button = QPushButton("-> Color")
@@ -529,11 +558,17 @@ class PixelEditorWindow(QMainWindow):
         self.morph_thickness_spin.setRange(1, 32)
         self.morph_thickness_spin.setValue(1)
         self.morph_thickness_spin.setSuffix(" px")
-        self.morph_thickness_spin.setToolTip("How many pixels to thicken or thin in every direction")
+        self.morph_thickness_spin.setToolTip(
+            "How many pixels to thicken or thin in every direction"
+        )
         self.dilate_button = QPushButton("Dilate (+)")
-        self.dilate_button.setToolTip("Thicken: fill transparent pixels next to the source color")
+        self.dilate_button.setToolTip(
+            "Thicken: fill transparent pixels next to the source color"
+        )
         self.erode_button = QPushButton("Erode (-)")
-        self.erode_button.setToolTip("Thin: clear source-color pixels touching transparent or other colors")
+        self.erode_button.setToolTip(
+            "Thin: clear source-color pixels touching transparent or other colors"
+        )
 
         self.paint_radio = QRadioButton("Paint")
         self.select_radio = QRadioButton("Select")
@@ -565,6 +600,11 @@ class PixelEditorWindow(QMainWindow):
             "Move and resize the non-pixel isometric guide overlay"
         )
         self.paint_radio.setChecked(True)
+        self.undo_last_action_button = QPushButton("Undo Last Action")
+        self.undo_last_action_button.setToolTip(
+            "Undo one completed brush stroke, shape, stamp, selection move, "
+            "or other reversible pixel edit. Shortcut: Ctrl+Z"
+        )
 
         self._flood_boundary_color: tuple[int, int, int, int] | None = None
         self.flood_boundary_preview = ColorDropLabel("No boundary color")
@@ -593,10 +633,14 @@ class PixelEditorWindow(QMainWindow):
         )
         self.copy_stamp_button = QPushButton("Copy Selection as Stamp")
         self.flip_stamp_h_button = QPushButton("Flip Stamp H")
-        self.flip_stamp_h_button.setToolTip("Flip the copied stamp horizontally before placing it")
+        self.flip_stamp_h_button.setToolTip(
+            "Flip the copied stamp horizontally before placing it"
+        )
         self.flip_stamp_h_button.setEnabled(False)
         self.flip_stamp_v_button = QPushButton("Flip Stamp V")
-        self.flip_stamp_v_button.setToolTip("Flip the copied stamp vertically before placing it")
+        self.flip_stamp_v_button.setToolTip(
+            "Flip the copied stamp vertically before placing it"
+        )
         self.flip_stamp_v_button.setEnabled(False)
         self.copy_selection_layer_button = QPushButton("Copy Selection to New Layer")
         self.copy_selection_layer_button.setToolTip(
@@ -612,9 +656,13 @@ class PixelEditorWindow(QMainWindow):
             "Load a sprite at native resolution as a movable stamp; click the canvas to commit it"
         )
         self.iso_slash_button = QPushButton("Guide /")
-        self.iso_slash_button.setToolTip("Show a non-pixel / guide at classic 1/2 iso slope")
+        self.iso_slash_button.setToolTip(
+            "Show a non-pixel / guide at classic 1/2 iso slope"
+        )
         self.iso_backslash_button = QPushButton("Guide \\")
-        self.iso_backslash_button.setToolTip("Show a non-pixel \\ guide at classic -1/2 iso slope")
+        self.iso_backslash_button.setToolTip(
+            "Show a non-pixel \\ guide at classic -1/2 iso slope"
+        )
         self.iso_clear_button = QPushButton("Clear")
         self.iso_clear_button.setEnabled(False)
         self.iso_guide_steps_spin = QSpinBox()
@@ -625,8 +673,12 @@ class PixelEditorWindow(QMainWindow):
             "One guide step is 2 pixels across by 1 pixel up or down"
         )
         self.transparent_display_button = QPushButton("Transparent Color: Checker")
-        self.transparent_display_button.setToolTip("Click to pick a solid color for transparent pixels.\nRight-click to reset to checkerboard.")
-        self.transparent_display_button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.transparent_display_button.setToolTip(
+            "Click to pick a solid color for transparent pixels.\nRight-click to reset to checkerboard."
+        )
+        self.transparent_display_button.setContextMenuPolicy(
+            Qt.ContextMenuPolicy.CustomContextMenu
+        )
         self.transparent_display_button.customContextMenuRequested.connect(
             lambda _pos: self._reset_transparent_display()
         )
@@ -678,7 +730,9 @@ class PixelEditorWindow(QMainWindow):
         self.shading_angle_spin = QSpinBox()
         self.shading_angle_spin.setRange(0, 359)
         self.shading_angle_spin.setSuffix(" deg")
-        self.shading_angle_spin.setValue(int(round(DIRECTIONAL_SHADING_DEFAULT_ANGLE_DEG)))
+        self.shading_angle_spin.setValue(
+            int(round(DIRECTIONAL_SHADING_DEFAULT_ANGLE_DEG))
+        )
         self.shading_angle_spin.setToolTip(
             "Light angle for Directional shading.\n"
             "0 = light from the right, 90 = from above, 135 = from the top-left "
@@ -758,12 +812,12 @@ class PixelEditorWindow(QMainWindow):
         normalize_action.triggered.connect(self.normalize_current_image)
         toolbar.addAction(normalize_action)
 
-        self.undo_action = QAction("Undo", self)
+        self.undo_action = QAction("Undo Last Action", self)
         self.undo_action.setShortcut(QKeySequence.StandardKey.Undo)
         self.undo_action.setShortcutContext(Qt.ShortcutContext.WindowShortcut)
         self.undo_action.setToolTip(
-            "Undo the last reversible edit (darken, lighten, normalize, dilate, "
-            "erode, flood erase, or replace). Shortcut: Ctrl+Z"
+            "Undo one completed brush stroke, shape, stamp, selection move, "
+            "or other reversible pixel edit. Shortcut: Ctrl+Z"
         )
         self.undo_action.triggered.connect(self.undo_last_edit)
         toolbar.addAction(self.undo_action)
@@ -772,7 +826,9 @@ class PixelEditorWindow(QMainWindow):
         self.redo_action = QAction("Redo", self)
         self.redo_action.setShortcut(QKeySequence.StandardKey.Redo)
         self.redo_action.setShortcutContext(Qt.ShortcutContext.WindowShortcut)
-        self.redo_action.setToolTip("Redo the last undone reversible edit. Shortcut: Ctrl+Y")
+        self.redo_action.setToolTip(
+            "Redo the last undone reversible edit. Shortcut: Ctrl+Y"
+        )
         self.redo_action.triggered.connect(self.redo_last_edit)
         toolbar.addAction(self.redo_action)
         self.addAction(self.redo_action)
@@ -825,6 +881,7 @@ class PixelEditorWindow(QMainWindow):
         mode_option_row.addWidget(self.clean_stroke_checkbox)
         mode_option_row.addWidget(self.right_click_transparent_checkbox)
         mode_option_row.addWidget(self.draw_selection_checkbox)
+        mode_option_row.addWidget(self.undo_last_action_button)
         mode_option_row.addStretch(1)
         controls_layout.addLayout(mode_option_row)
 
@@ -1039,11 +1096,19 @@ class PixelEditorWindow(QMainWindow):
         self.resize_h_spin.setValue(self.document.image.height)
         resize_layout.addWidget(self.resize_h_spin)
         self.resize_anchor_combo = QComboBox()
-        self.resize_anchor_combo.addItems([
-            "Top-Left", "Top-Center", "Top-Right",
-            "Center-Left", "Center", "Center-Right",
-            "Bottom-Left", "Bottom-Center", "Bottom-Right",
-        ])
+        self.resize_anchor_combo.addItems(
+            [
+                "Top-Left",
+                "Top-Center",
+                "Top-Right",
+                "Center-Left",
+                "Center",
+                "Center-Right",
+                "Bottom-Left",
+                "Bottom-Center",
+                "Bottom-Right",
+            ]
+        )
         self.resize_anchor_combo.setCurrentIndex(0)
         resize_layout.addWidget(self.resize_anchor_combo)
         resize_layout.addWidget(self.resize_canvas_button)
@@ -1059,7 +1124,9 @@ class PixelEditorWindow(QMainWindow):
         controls_scroll = QScrollArea()
         controls_scroll.setWidgetResizable(True)
         controls_scroll.setWidget(controls_panel)
-        controls_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        controls_scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
         controls_scroll.setMinimumWidth(220)
 
         if self._headless:
@@ -1070,7 +1137,9 @@ class PixelEditorWindow(QMainWindow):
             )
             canvas_host.setAlignment(Qt.AlignmentFlag.AlignCenter)
             canvas_host.setMinimumSize(360, 360)
-            canvas_host.setStyleSheet("border: 1px solid #444; color: #bbb; padding: 24px;")
+            canvas_host.setStyleSheet(
+                "border: 1px solid #444; color: #bbb; padding: 24px;"
+            )
         else:
             scroll = QScrollArea()
             # Keep widgetResizable off so the canvas's sizeHint (image + pan margin)
@@ -1108,52 +1177,82 @@ class PixelEditorWindow(QMainWindow):
         self.copy_stamp_button.clicked.connect(self._copy_as_stamp)
         self.flip_stamp_h_button.clicked.connect(self._flip_stamp_horizontal)
         self.flip_stamp_v_button.clicked.connect(self._flip_stamp_vertical)
-        self.copy_selection_layer_button.clicked.connect(self._copy_selection_to_new_layer)
+        self.copy_selection_layer_button.clicked.connect(
+            self._copy_selection_to_new_layer
+        )
         self.restore_source_button.clicked.connect(self._restore_source_selection)
         self.import_sprite_button.clicked.connect(self._import_sprite_as_stamp)
         self.iso_slash_button.clicked.connect(lambda: self._show_isometric_guide("/"))
-        self.iso_backslash_button.clicked.connect(lambda: self._show_isometric_guide("\\"))
+        self.iso_backslash_button.clicked.connect(
+            lambda: self._show_isometric_guide("\\")
+        )
         self.iso_clear_button.clicked.connect(self.canvas.clear_isometric_guide)
-        self.iso_guide_steps_spin.valueChanged.connect(self.canvas.set_isometric_guide_steps)
+        self.iso_guide_steps_spin.valueChanged.connect(
+            self.canvas.set_isometric_guide_steps
+        )
         self.canvas.isometric_guide_changed.connect(self._on_isometric_guide_changed)
         self.opacity_slider.valueChanged.connect(self.opacity_spin.setValue)
         self.opacity_spin.valueChanged.connect(self.opacity_slider.setValue)
         self.opacity_slider.valueChanged.connect(self._on_opacity_changed)
         self.custom_color_button.clicked.connect(self.pick_color)
         self.transparent_button.clicked.connect(self.use_transparent_color)
-        self.transparent_display_button.clicked.connect(self._pick_transparent_display_color)
+        self.transparent_display_button.clicked.connect(
+            self._pick_transparent_display_color
+        )
         self.load_palette_button.clicked.connect(self.load_palette)
         self.add_palette_from_file_button.clicked.connect(self.add_palette_from_file)
-        self.palette_from_current_button.clicked.connect(self.palette_from_current_image)
-        self.add_palette_from_current_button.clicked.connect(self.add_palette_from_current_image)
+        self.palette_from_current_button.clicked.connect(
+            self.palette_from_current_image
+        )
+        self.add_palette_from_current_button.clicked.connect(
+            self.add_palette_from_current_image
+        )
         self.export_palette_button.clicked.connect(self.export_palette)
         self.sort_palette_button.clicked.connect(self.organize_palette)
         self.palette_grid_cols_spin.valueChanged.connect(self._resize_palette_grid)
         self.palette_grid_rows_spin.valueChanged.connect(self._resize_palette_grid)
         self.add_palette_to_grid_button.clicked.connect(self._add_palette_to_grid)
         self.calculate_ramp_button.clicked.connect(self._calculate_ramp_from_grid)
-        self.apply_ramp_replace_button.clicked.connect(self._apply_grid_ramp_replacement)
+        self.apply_ramp_replace_button.clicked.connect(
+            self._apply_grid_ramp_replacement
+        )
         self.export_palette_grid_button.clicked.connect(self.export_palette_grid)
         self.clear_palette_grid_button.clicked.connect(self._clear_palette_grid)
-        self.palette_grid_widget.cell_color_dropped.connect(self._on_palette_grid_color_dropped)
-        self.palette_grid_widget.cell_cleared.connect(self._on_palette_grid_cell_cleared)
+        self.palette_grid_widget.cell_color_dropped.connect(
+            self._on_palette_grid_color_dropped
+        )
+        self.palette_grid_widget.cell_cleared.connect(
+            self._on_palette_grid_cell_cleared
+        )
         self.palette_grid_widget.cell_clicked.connect(self._set_current_color)
         self.pick_replace_target_button.clicked.connect(self._pick_replace_target_color)
-        self.transparent_replace_button.clicked.connect(self._replace_target_with_transparent)
+        self.transparent_replace_button.clicked.connect(
+            self._replace_target_with_transparent
+        )
         self.replace_with_color_button.clicked.connect(self._replace_target_with_color)
         self.replace_with_button.clicked.connect(self._pick_replace_with_color)
-        self.add_replace_with_to_palette_button.clicked.connect(self._add_replace_with_to_palette)
-        self.transparent_replace_clear_button.clicked.connect(self._clear_transparent_replace_target)
-        self.white_to_transparency_button.clicked.connect(self._replace_near_white_with_transparent)
+        self.add_replace_with_to_palette_button.clicked.connect(
+            self._add_replace_with_to_palette
+        )
+        self.transparent_replace_clear_button.clicked.connect(
+            self._clear_transparent_replace_target
+        )
+        self.white_to_transparency_button.clicked.connect(
+            self._replace_near_white_with_transparent
+        )
         self.calculate_change_button.clicked.connect(self._calculate_color_shift)
         self.change_target_button.clicked.connect(self._apply_color_shift_to_target)
-        self.transparent_replace_preview.color_dropped.connect(self._drop_replace_target_color)
+        self.transparent_replace_preview.color_dropped.connect(
+            self._drop_replace_target_color
+        )
         self.replace_with_preview.color_dropped.connect(self._drop_replace_with_color)
         self.save_asset_button.clicked.connect(self.save_to_asset_tray)
         self.shade_ramp_button.clicked.connect(self._generate_shade_ramp)
         self.shade_add_all_button.clicked.connect(self._add_ramp_to_palette)
         self.apply_shading_button.clicked.connect(self._apply_shading_from_ramp)
-        self.shading_mode_combo.currentIndexChanged.connect(self._update_shading_mode_controls)
+        self.shading_mode_combo.currentIndexChanged.connect(
+            self._update_shading_mode_controls
+        )
         self._update_shading_mode_controls()
         self.resize_canvas_button.clicked.connect(self._resize_canvas)
         self.trim_transparent_button.clicked.connect(self._trim_transparent)
@@ -1162,14 +1261,20 @@ class PixelEditorWindow(QMainWindow):
         self.dilate_button.clicked.connect(self._dilate_morph_color)
         self.erode_button.clicked.connect(self._erode_morph_color)
         self.flood_boundary_pick_button.clicked.connect(self._pick_flood_boundary_color)
-        self.flood_boundary_preview.color_dropped.connect(self._drop_flood_boundary_color)
+        self.flood_boundary_preview.color_dropped.connect(
+            self._drop_flood_boundary_color
+        )
         self.canvas.flood_erase_requested.connect(self._flood_erase_at)
         self.canvas.image_changed.connect(self._on_canvas_image_changed)
+        self.canvas.edit_finished.connect(self._on_canvas_edit_finished)
         self.canvas.selection_changed.connect(self._on_selection_changed)
         self.canvas.status_changed.connect(self.statusBar().showMessage)
         self.layer_panel.layers_changed.connect(self._on_layers_changed)
-        self.layer_panel.selection_transfer_requested.connect(self._transfer_selection_to_layer)
+        self.layer_panel.selection_transfer_requested.connect(
+            self._transfer_selection_to_layer
+        )
         self.layer_panel.status_message.connect(self.statusBar().showMessage)
+        self.undo_last_action_button.clicked.connect(self.undo_last_edit)
         self._update_transparent_replace_preview()
         self._update_replace_with_preview()
         self._update_color_shift_summary()
@@ -1196,6 +1301,7 @@ class PixelEditorWindow(QMainWindow):
         # fresh layer so the document's canvas dimensions match the loaded
         # image and the user starts with a clean slate.
         from src.core.pixel_document import Layer
+
         self.document.layers = [Layer(name="Layer 1", image=image)]
         self.document.active_layer_index = 0
         self.document.name = Path(path).stem
@@ -1221,7 +1327,9 @@ class PixelEditorWindow(QMainWindow):
         try:
             self.document.palette = load_palette_from_image(
                 path,
-                max_colors=64 if self.reduce_palette_import_checkbox.isChecked() else None,
+                max_colors=64
+                if self.reduce_palette_import_checkbox.isChecked()
+                else None,
             )
         except Exception as exc:  # pragma: no cover - GUI feedback
             QMessageBox.critical(self, "Palette load failed", str(exc))
@@ -1261,7 +1369,9 @@ class PixelEditorWindow(QMainWindow):
         try:
             incoming = load_palette_from_image(
                 path,
-                max_colors=64 if self.reduce_palette_import_checkbox.isChecked() else None,
+                max_colors=64
+                if self.reduce_palette_import_checkbox.isChecked()
+                else None,
             )
         except Exception as exc:
             QMessageBox.critical(self, "Palette load failed", str(exc))
@@ -1314,7 +1424,11 @@ class PixelEditorWindow(QMainWindow):
         if not self.document.palette:
             self.statusBar().showMessage("No palette to organize")
             return
-        mode = "brightness" if self.sort_palette_combo.currentText() == "Brightness" else "hue"
+        mode = (
+            "brightness"
+            if self.sort_palette_combo.currentText() == "Brightness"
+            else "hue"
+        )
         self.document.palette = sort_palette(self.document.palette, mode)
         self._refresh_palette_buttons()
         self.statusBar().showMessage(f"Palette organized by {mode}")
@@ -1444,7 +1558,9 @@ class PixelEditorWindow(QMainWindow):
     def save_to_asset_tray(self) -> None:
         # Asset tray receives the flattened composite of all visible layers,
         # mirroring the save-to-PNG flow.
-        self.asset_save_requested.emit(self.document.name, self.document.composite_visible())
+        self.asset_save_requested.emit(
+            self.document.name, self.document.composite_visible()
+        )
         self.statusBar().showMessage("Sent pixel map to asset tray")
 
     def pick_color(self) -> None:
@@ -1456,10 +1572,16 @@ class PixelEditorWindow(QMainWindow):
         if dialog.exec() != QColorDialog.DialogCode.Accepted:
             return
         color = dialog.selectedColor()
-        self._set_current_color((color.red(), color.green(), color.blue(), color.alpha()))
-        self.document.palette = add_color_to_palette(self.document.palette, self.document.current_color)
+        self._set_current_color(
+            (color.red(), color.green(), color.blue(), color.alpha())
+        )
+        self.document.palette = add_color_to_palette(
+            self.document.palette, self.document.current_color
+        )
         self._refresh_palette_buttons()
-        self.statusBar().showMessage("Updated current paint color and saved it to the palette")
+        self.statusBar().showMessage(
+            "Updated current paint color and saved it to the palette"
+        )
 
     def use_transparent_color(self) -> None:
         red, green, blue, _alpha = self.document.current_color
@@ -1468,6 +1590,11 @@ class PixelEditorWindow(QMainWindow):
 
     def _on_canvas_image_changed(self) -> None:
         pass
+
+    def _on_canvas_edit_finished(self, before_image: object) -> None:
+        if not isinstance(before_image, Image.Image):
+            return
+        push_image_history(self.document, before_image=before_image)
 
     def _on_layers_changed(self) -> None:
         """Active layer or layer stack changed in the panel: redraw the
@@ -1559,7 +1686,9 @@ class PixelEditorWindow(QMainWindow):
         if placed == 0:
             self.statusBar().showMessage("Palette grid is full")
             return
-        self.statusBar().showMessage(f"Added {placed} palette color{'s' if placed != 1 else ''} to grid")
+        self.statusBar().showMessage(
+            f"Added {placed} palette color{'s' if placed != 1 else ''} to grid"
+        )
 
     def _calculate_ramp_from_grid(self) -> None:
         source_ramp = self.palette_grid_widget.ordered_colors(filled_only=True)
@@ -1641,7 +1770,9 @@ class PixelEditorWindow(QMainWindow):
             return
         self._transparent_replace_target = color
         self._update_transparent_replace_preview()
-        self.statusBar().showMessage("Selected palette color and armed transparent replace target")
+        self.statusBar().showMessage(
+            "Selected palette color and armed transparent replace target"
+        )
 
     def _set_current_color(self, color: tuple[int, int, int, int]) -> None:
         self.document.current_color = color
@@ -1659,7 +1790,9 @@ class PixelEditorWindow(QMainWindow):
     def _update_color_preview(self) -> None:
         if self.document.use_transparent_color:
             self.color_preview.setText("T")
-            self.color_preview.setStyleSheet("background: #444; color: white; border: 1px solid #888;")
+            self.color_preview.setStyleSheet(
+                "background: #444; color: white; border: 1px solid #888;"
+            )
             return
 
         r, g, b, a = self.document.current_color
@@ -1690,7 +1823,9 @@ class PixelEditorWindow(QMainWindow):
                 f"background: rgba({r},{g},{b},{a}); color: {text_color}; border: 1px solid #555;"
             )
             btn.setToolTip(f"#{r:02X}{g:02X}{b:02X}  RGBA({r},{g},{b},{a})")
-            btn.clicked.connect(lambda _checked=False, c=rgba: self._set_current_color(c))
+            btn.clicked.connect(
+                lambda _checked=False, c=rgba: self._set_current_color(c)
+            )
             self.shade_ramp_layout.addWidget(btn)
         self.shade_add_all_button.setEnabled(True)
         self.apply_shading_button.setEnabled(True)
@@ -1768,7 +1903,9 @@ class PixelEditorWindow(QMainWindow):
             self.stamp_radio.setChecked(True)
             self.statusBar().showMessage(f"Stamp copied ({w}x{h}px) — click to place")
         else:
-            self.statusBar().showMessage("Select pixels first (use Select mode to drag or Ctrl+click)")
+            self.statusBar().showMessage(
+                "Select pixels first (use Select mode to drag or Ctrl+click)"
+            )
 
     def _flip_stamp_horizontal(self) -> None:
         if not self.canvas.flip_stamp_horizontal():
@@ -1799,7 +1936,9 @@ class PixelEditorWindow(QMainWindow):
     def _copy_selection_to_new_layer(self) -> None:
         result = self.document.copy_selection_to_new_layer()
         if result is None:
-            self.statusBar().showMessage("Select pixels first (use Select mode to drag or Ctrl+click)")
+            self.statusBar().showMessage(
+                "Select pixels first (use Select mode to drag or Ctrl+click)"
+            )
             return
         new_index, count = result
         self.layer_panel.refresh()
@@ -1832,7 +1971,9 @@ class PixelEditorWindow(QMainWindow):
         )
 
     def _pick_transparent_display_color(self) -> None:
-        c = QColorDialog.getColor(QColor("#ff00ff"), self, "Transparent pixel display color")
+        c = QColorDialog.getColor(
+            QColor("#ff00ff"), self, "Transparent pixel display color"
+        )
         if not c.isValid():
             return
         self.canvas.set_transparent_display_color(c)
@@ -1840,7 +1981,9 @@ class PixelEditorWindow(QMainWindow):
         self.transparent_display_button.setStyleSheet(
             f"background: {c.name()}; color: {'#000' if c.lightness() > 128 else '#fff'}; border: 1px solid #888;"
         )
-        self.statusBar().showMessage(f"Transparent pixels shown as {c.name()} — right-click to reset")
+        self.statusBar().showMessage(
+            f"Transparent pixels shown as {c.name()} — right-click to reset"
+        )
 
     def _reset_transparent_display(self) -> None:
         self.canvas.set_transparent_display_color(None)
@@ -1862,7 +2005,9 @@ class PixelEditorWindow(QMainWindow):
         push_image_history(self.document)
         self.document.image = replaced
         self.canvas.invalidate_render_cache()
-        self.statusBar().showMessage(f"Replaced {count} pixel{'s' if count != 1 else ''} with transparent")
+        self.statusBar().showMessage(
+            f"Replaced {count} pixel{'s' if count != 1 else ''} with transparent"
+        )
 
     def _replace_near_white_with_transparent(self) -> None:
         percent = self.white_transparency_percent_spin.value()
@@ -1895,13 +2040,24 @@ class PixelEditorWindow(QMainWindow):
         if dialog.exec() != QColorDialog.DialogCode.Accepted:
             return
         color = dialog.selectedColor()
-        self._replace_with_color = (color.red(), color.green(), color.blue(), color.alpha())
+        self._replace_with_color = (
+            color.red(),
+            color.green(),
+            color.blue(),
+            color.alpha(),
+        )
         self._update_replace_with_preview()
         r, g, b, a = self._replace_with_color
-        self.statusBar().showMessage(f"Selected replace-with color #{r:02X}{g:02X}{b:02X} / {a}")
+        self.statusBar().showMessage(
+            f"Selected replace-with color #{r:02X}{g:02X}{b:02X} / {a}"
+        )
 
     def _pick_replace_target_color(self) -> None:
-        initial = QColor(*self._transparent_replace_target) if self._transparent_replace_target else QColor("#ff00ff")
+        initial = (
+            QColor(*self._transparent_replace_target)
+            if self._transparent_replace_target
+            else QColor("#ff00ff")
+        )
         dialog = QColorDialog(initial, self)
         dialog.setWindowTitle("Pick Replace Target Color")
         dialog.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel, True)
@@ -1909,29 +2065,44 @@ class PixelEditorWindow(QMainWindow):
         if dialog.exec() != QColorDialog.DialogCode.Accepted:
             return
         color = dialog.selectedColor()
-        self._transparent_replace_target = (color.red(), color.green(), color.blue(), color.alpha())
+        self._transparent_replace_target = (
+            color.red(),
+            color.green(),
+            color.blue(),
+            color.alpha(),
+        )
         self._update_transparent_replace_preview()
         r, g, b, a = self._transparent_replace_target
-        self.statusBar().showMessage(f"Selected replace target #{r:02X}{g:02X}{b:02X} / {a}")
+        self.statusBar().showMessage(
+            f"Selected replace target #{r:02X}{g:02X}{b:02X} / {a}"
+        )
 
     def _drop_replace_target_color(self, color: tuple[int, int, int, int]) -> None:
         if color[3] == 0:
             self._clear_transparent_replace_target(show_message=False)
-            self.statusBar().showMessage("Transparent palette color cannot be used as a replace target")
+            self.statusBar().showMessage(
+                "Transparent palette color cannot be used as a replace target"
+            )
             return
         self._transparent_replace_target = color
         self._update_transparent_replace_preview()
         r, g, b, a = color
-        self.statusBar().showMessage(f"Dropped replace target #{r:02X}{g:02X}{b:02X} / {a}")
+        self.statusBar().showMessage(
+            f"Dropped replace target #{r:02X}{g:02X}{b:02X} / {a}"
+        )
 
     def _drop_replace_with_color(self, color: tuple[int, int, int, int]) -> None:
         self._replace_with_color = color
         self._update_replace_with_preview()
         r, g, b, a = color
-        self.statusBar().showMessage(f"Dropped replace-with color #{r:02X}{g:02X}{b:02X} / {a}")
+        self.statusBar().showMessage(
+            f"Dropped replace-with color #{r:02X}{g:02X}{b:02X} / {a}"
+        )
 
     def _add_replace_with_to_palette(self) -> None:
-        self.document.palette = add_color_to_palette(self.document.palette, self._replace_with_color)
+        self.document.palette = add_color_to_palette(
+            self.document.palette, self._replace_with_color
+        )
         self._refresh_palette_buttons()
         r, g, b, a = self._replace_with_color
         self.statusBar().showMessage(
@@ -1947,7 +2118,9 @@ class PixelEditorWindow(QMainWindow):
             self._replace_with_color,
         )
         self._update_color_shift_summary()
-        self.statusBar().showMessage("Stored HSVA color change from target to replace-with color")
+        self.statusBar().showMessage(
+            "Stored HSVA color change from target to replace-with color"
+        )
 
     def _apply_color_shift_to_target(self) -> None:
         if self._stored_color_shift is None:
@@ -2000,13 +2173,17 @@ class PixelEditorWindow(QMainWindow):
         if color is None:
             self.transparent_replace_preview.set_color(None)
             self.transparent_replace_preview.setText("No replace target")
-            self.transparent_replace_preview.setStyleSheet("border: 1px solid #555; color: #bbb;")
+            self.transparent_replace_preview.setStyleSheet(
+                "border: 1px solid #555; color: #bbb;"
+            )
             return
         self.transparent_replace_preview.set_color(color)
         red, green, blue, alpha = color
         luma = 0.299 * red + 0.587 * green + 0.114 * blue
         text_color = "#000" if luma > 128 else "#fff"
-        self.transparent_replace_preview.setText(f"Target: #{red:02X}{green:02X}{blue:02X} / {alpha}")
+        self.transparent_replace_preview.setText(
+            f"Target: #{red:02X}{green:02X}{blue:02X} / {alpha}"
+        )
         self.transparent_replace_preview.setStyleSheet(
             f"background: rgba({red}, {green}, {blue}, {alpha});"
             f"color: {text_color}; border: 1px solid #555;"
@@ -2017,14 +2194,20 @@ class PixelEditorWindow(QMainWindow):
         red, green, blue, alpha = self._replace_with_color
         luma = 0.299 * red + 0.587 * green + 0.114 * blue
         text_color = "#000" if luma > 128 else "#fff"
-        self.replace_with_preview.setText(f"Replace With: #{red:02X}{green:02X}{blue:02X} / {alpha}")
+        self.replace_with_preview.setText(
+            f"Replace With: #{red:02X}{green:02X}{blue:02X} / {alpha}"
+        )
         self.replace_with_preview.setStyleSheet(
             f"background: rgba({red}, {green}, {blue}, {alpha});"
             f"color: {text_color}; border: 1px solid #555;"
         )
 
     def _pick_morph_color(self) -> None:
-        initial = QColor(*self._morph_color) if self._morph_color else QColor(*self.document.current_color)
+        initial = (
+            QColor(*self._morph_color)
+            if self._morph_color
+            else QColor(*self.document.current_color)
+        )
         dialog = QColorDialog(initial, self)
         dialog.setWindowTitle("Pick Source Color for Dilate/Erode")
         dialog.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel, True)
@@ -2035,16 +2218,22 @@ class PixelEditorWindow(QMainWindow):
         self._morph_color = (color.red(), color.green(), color.blue(), color.alpha())
         self._update_morph_color_preview()
         r, g, b, a = self._morph_color
-        self.statusBar().showMessage(f"Dilate/Erode source #{r:02X}{g:02X}{b:02X} / {a}")
+        self.statusBar().showMessage(
+            f"Dilate/Erode source #{r:02X}{g:02X}{b:02X} / {a}"
+        )
 
     def _drop_morph_color(self, color: tuple[int, int, int, int]) -> None:
         if color[3] < 50:
-            self.statusBar().showMessage("Transparent palette color cannot be the dilate/erode source")
+            self.statusBar().showMessage(
+                "Transparent palette color cannot be the dilate/erode source"
+            )
             return
         self._morph_color = color
         self._update_morph_color_preview()
         r, g, b, a = color
-        self.statusBar().showMessage(f"Dropped dilate/erode source #{r:02X}{g:02X}{b:02X} / {a}")
+        self.statusBar().showMessage(
+            f"Dropped dilate/erode source #{r:02X}{g:02X}{b:02X} / {a}"
+        )
 
     def _update_morph_color_preview(self) -> None:
         color = self._morph_color
@@ -2054,13 +2243,17 @@ class PixelEditorWindow(QMainWindow):
         if not has_color:
             self.morph_color_preview.set_color(None)
             self.morph_color_preview.setText("No source color")
-            self.morph_color_preview.setStyleSheet("border: 1px solid #555; color: #bbb;")
+            self.morph_color_preview.setStyleSheet(
+                "border: 1px solid #555; color: #bbb;"
+            )
             return
         self.morph_color_preview.set_color(color)
         red, green, blue, alpha = color
         luma = 0.299 * red + 0.587 * green + 0.114 * blue
         text_color = "#000" if luma > 128 else "#fff"
-        self.morph_color_preview.setText(f"Source: #{red:02X}{green:02X}{blue:02X} / {alpha}")
+        self.morph_color_preview.setText(
+            f"Source: #{red:02X}{green:02X}{blue:02X} / {alpha}"
+        )
         self.morph_color_preview.setStyleSheet(
             f"background: rgba({red}, {green}, {blue}, {alpha});"
             f"color: {text_color}; border: 1px solid #555;"
@@ -2073,7 +2266,9 @@ class PixelEditorWindow(QMainWindow):
         thickness = self.morph_thickness_spin.value()
         result, filled = dilate_color(self.document.image, self._morph_color, thickness)
         if filled == 0:
-            self.statusBar().showMessage("Dilate: no transparent pixels were adjacent to the source color")
+            self.statusBar().showMessage(
+                "Dilate: no transparent pixels were adjacent to the source color"
+            )
             return
         push_image_history(self.document)
         self.document.image = result
@@ -2090,7 +2285,9 @@ class PixelEditorWindow(QMainWindow):
         thickness = self.morph_thickness_spin.value()
         result, cleared = erode_color(self.document.image, self._morph_color, thickness)
         if cleared == 0:
-            self.statusBar().showMessage("Erode: no source pixels were adjacent to non-source neighbors")
+            self.statusBar().showMessage(
+                "Erode: no source pixels were adjacent to non-source neighbors"
+            )
             return
         push_image_history(self.document)
         self.document.image = result
@@ -2113,26 +2310,39 @@ class PixelEditorWindow(QMainWindow):
         if dialog.exec() != QColorDialog.DialogCode.Accepted:
             return
         color = dialog.selectedColor()
-        self._flood_boundary_color = (color.red(), color.green(), color.blue(), color.alpha())
+        self._flood_boundary_color = (
+            color.red(),
+            color.green(),
+            color.blue(),
+            color.alpha(),
+        )
         self._update_flood_boundary_preview()
         r, g, b, a = self._flood_boundary_color
-        self.statusBar().showMessage(f"Flood-erase boundary #{r:02X}{g:02X}{b:02X} / {a}")
+        self.statusBar().showMessage(
+            f"Flood-erase boundary #{r:02X}{g:02X}{b:02X} / {a}"
+        )
 
     def _drop_flood_boundary_color(self, color: tuple[int, int, int, int]) -> None:
         if color[3] < 50:
-            self.statusBar().showMessage("Transparent palette color cannot be a flood-erase boundary")
+            self.statusBar().showMessage(
+                "Transparent palette color cannot be a flood-erase boundary"
+            )
             return
         self._flood_boundary_color = color
         self._update_flood_boundary_preview()
         r, g, b, a = color
-        self.statusBar().showMessage(f"Dropped flood-erase boundary #{r:02X}{g:02X}{b:02X} / {a}")
+        self.statusBar().showMessage(
+            f"Dropped flood-erase boundary #{r:02X}{g:02X}{b:02X} / {a}"
+        )
 
     def _update_flood_boundary_preview(self) -> None:
         color = self._flood_boundary_color
         if color is None:
             self.flood_boundary_preview.set_color(None)
             self.flood_boundary_preview.setText("No boundary color")
-            self.flood_boundary_preview.setStyleSheet("border: 1px solid #555; color: #bbb;")
+            self.flood_boundary_preview.setStyleSheet(
+                "border: 1px solid #555; color: #bbb;"
+            )
             return
         self.flood_boundary_preview.set_color(color)
         red, green, blue, alpha = color
@@ -2174,13 +2384,18 @@ class PixelEditorWindow(QMainWindow):
         )
 
     def _update_color_shift_summary(self) -> None:
-        self.calculate_change_button.setEnabled(self._transparent_replace_target is not None)
+        self.calculate_change_button.setEnabled(
+            self._transparent_replace_target is not None
+        )
         self.change_target_button.setEnabled(
-            self._transparent_replace_target is not None and self._stored_color_shift is not None
+            self._transparent_replace_target is not None
+            and self._stored_color_shift is not None
         )
         if self._stored_color_shift is None:
             self.color_shift_summary.setText("Delta: none")
-            self.color_shift_summary.setStyleSheet("border: 1px solid #555; color: #bbb; padding: 4px;")
+            self.color_shift_summary.setStyleSheet(
+                "border: 1px solid #555; color: #bbb; padding: 4px;"
+            )
             return
         shift = self._stored_color_shift
         self.color_shift_summary.setText(
@@ -2201,8 +2416,11 @@ class PixelEditorWindow(QMainWindow):
             self.statusBar().showMessage("Canvas size unchanged")
             return
 
-        from PIL import Image
-        anchor = self.resize_anchor_combo.currentText() if self.resize_anchor_combo else "Top-Left"
+        anchor = (
+            self.resize_anchor_combo.currentText()
+            if self.resize_anchor_combo
+            else "Top-Left"
+        )
         anchor_map = {
             "Top-Left": (0.0, 0.0),
             "Top-Center": (0.5, 0.0),
@@ -2241,7 +2459,12 @@ class PixelEditorWindow(QMainWindow):
             self.statusBar().showMessage("Canvas is fully transparent, nothing to trim")
             return
         left, top, right, bottom = bbox
-        if left == 0 and top == 0 and right == self.document.width and bottom == self.document.height:
+        if (
+            left == 0
+            and top == 0
+            and right == self.document.width
+            and bottom == self.document.height
+        ):
             self.statusBar().showMessage("No transparent border to trim")
             return
         self.document.apply_to_all_layers(lambda img: img.crop(bbox).copy())

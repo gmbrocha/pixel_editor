@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "job_id": "wide_leather_belt_01-walk-20260816T081635Z-990dc16a",
+  "component_id": "wide_leather_belt_01",
+  "animation_id": "walk",
+  "slot": "waist",
+  "layer": "waist",
+  "component": {
+    "concept": "Broad worn leather belt with a simple metal buckle and strong readable shape.",
+    "tags": [
+      "worker",
+      "traveler",
+      "rugged"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "990dc16a7f84323942f060756b6915fa13b18beaeef1ffa9b7d534c90bf1307f",
+  "created_at": "2026-08-16T08:16:35Z",
+  "updated_at": "2026-08-16T09:22:20Z",
+  "status": "review",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "82573bb91aba4d5b9a16eda1bd58c0f8a86ae702103cb8bbcbad1368f4b9bf1d",
+      "api": {
+        "request_id": "req_95b877e4b14b4d9c9de225d4784ea619",
+        "attempt": 1,
+        "created": 1786870072,
+        "usage": {
+          "input_tokens": 1746,
+          "input_tokens_details": {
+            "image_tokens": 1504,
+            "text_tokens": 242
+          },
+          "output_tokens": 1382,
+          "total_tokens": 3128,
+          "output_tokens_details": {
+            "image_tokens": 1382,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "448a42746ce448d7e0727bc86bcc33ce94ea4b80a18b1d522b9c56a8fdda6925",
+      "qa": {
+        "status": "fail",
+        "score": 83.4,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              63,
+              70,
+              70,
+              66,
+              71,
+              66
+            ],
+            "back": [
+              76,
+              70,
+              68,
+              76,
+              70,
+              73
+            ],
+            "left": [
+              52,
+              54,
+              40,
+              63,
+              59,
+              44
+            ],
+            "right": [
+              50,
+              50,
+              39,
+              58,
+              49,
+              43
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 1435,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 340,
+          "reconstruction_mean_rgb_error": 0.01924562743882567,
+          "overlay_bbox": [
+            21,
+            25,
+            361,
+            237
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "7d79e0e38d61d6d61ed31ee943afc2b2f5cf6ba4555d8f7dc9df32c5fa7e94f7",
+        "processed_at": "2026-08-16T09:22:11Z"
+      }
+    },
+    "candidate-002": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "f1d503c99cd67276f54bedfaf55f3bd1ad9212b20360669bccd822f650f54c4f",
+      "api": {
+        "request_id": "req_d7f3f6c2063c4b4a9a40a00eb0ed1f6f",
+        "attempt": 1,
+        "created": 1786870105,
+        "usage": {
+          "input_tokens": 1746,
+          "input_tokens_details": {
+            "image_tokens": 1504,
+            "text_tokens": 242
+          },
+          "output_tokens": 1382,
+          "total_tokens": 3128,
+          "output_tokens_details": {
+            "image_tokens": 1382,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "d7a8d40aade41f19bcb754bb26f0f0fa3206a35a618e13d72a9267697fa1c92d",
+      "qa": {
+        "status": "fail",
+        "score": 83.1,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              104,
+              88,
+              79,
+              105,
+              100,
+              112
+            ],
+            "back": [
+              113,
+              106,
+              101,
+              107,
+              98,
+              104
+            ],
+            "left": [
+              23,
+              38,
+              35,
+              57,
+              34,
+              46
+            ],
+            "right": [
+              45,
+              45,
+              37,
+              57,
+              51,
+              38
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 1592,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 486,
+          "reconstruction_mean_rgb_error": 0.015720210360778437,
+          "overlay_bbox": [
+            19,
+            25,
+            364,
+            239
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "7d79e0e38d61d6d61ed31ee943afc2b2f5cf6ba4555d8f7dc9df32c5fa7e94f7",
+        "processed_at": "2026-08-16T09:22:15Z"
+      }
+    },
+    "candidate-003": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "276730d05e89aed17b293fe3acfaa3d7875d2f9d5ad0db702c04be67e80417b5",
+      "api": {
+        "request_id": "req_5d3d1603c8604b73aea6450e7533daf0",
+        "attempt": 1,
+        "created": 1786870139,
+        "usage": {
+          "input_tokens": 1746,
+          "input_tokens_details": {
+            "image_tokens": 1504,
+            "text_tokens": 242
+          },
+          "output_tokens": 1382,
+          "total_tokens": 3128,
+          "output_tokens_details": {
+            "image_tokens": 1382,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "ee2243aef0f6bea08466b3b7ca3f6705d0efb96876600084f080aadc83ec49ec",
+      "qa": {
+        "status": "fail",
+        "score": 82.83,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              71,
+              71,
+              82,
+              87,
+              76,
+              81
+            ],
+            "back": [
+              66,
+              75,
+              78,
+              69,
+              68,
+              79
+            ],
+            "left": [
+              30,
+              36,
+              35,
+              39,
+              47,
+              44
+            ],
+            "right": [
+              41,
+              39,
+              43,
+              39,
+              49,
+              46
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 1380,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 453,
+          "reconstruction_mean_rgb_error": 0.0029040072645795906,
+          "overlay_bbox": [
+            20,
+            25,
+            362,
+            239
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "7d79e0e38d61d6d61ed31ee943afc2b2f5cf6ba4555d8f7dc9df32c5fa7e94f7",
+        "processed_at": "2026-08-16T09:22:19Z"
+      }
+    }
+  }
+}

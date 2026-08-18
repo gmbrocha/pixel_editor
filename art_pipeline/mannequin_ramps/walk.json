@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "animation_id": "walk",
+  "name": "reserved-blue-v1",
+  "processing_version": "reserved-blue-v2-position-aware",
+  "canonical_sha256": "a1841bea06359c85edbe95a4b65b48848a19d2e07e4e4991f526f6402605f7a7",
+  "mannequin_sha256": "8ea59449f69c1e32d76d7f30b81e899226434a5e6e9744558247a0cad0cac8ff",
+  "reverse_threshold": 64,
+  "leak_threshold": 64,
+  "matte_restore_threshold": 64,
+  "border_background_tolerance": 48,
+  "border_dark_ceiling": 96,
+  "border_matte_threshold": 96,
+  "entries": [
+    {
+      "source": "#875848",
+      "target": "#0060D2"
+    },
+    {
+      "source": "#885848",
+      "target": "#086CD6"
+    },
+    {
+      "source": "#885849",
+      "target": "#1079DA"
+    },
+    {
+      "source": "#885948",
+      "target": "#1885DD"
+    },
+    {
+      "source": "#885949",
+      "target": "#2092E1"
+    },
+    {
+      "source": "#895949",
+      "target": "#289EE5"
+    },
+    {
+      "source": "#D79777",
+      "target": "#30AAE8"
+    },
+    {
+      "source": "#D79878",
+      "target": "#38B7EC"
+    },
+    {
+      "source": "#D89878",
+      "target": "#40C3F0"
+    },
+    {
+      "source": "#D89879",
+      "target": "#48D0F4"
+    },
+    {
+      "source": "#D89979",
+      "target": "#50DCF8"
+    },
+    {
+      "source": "#F7D7B7",
+      "target": "#58E9FB"
+    },
+    {
+      "source": "#F8D8B8",
+      "target": "#60F5FF"
+    }
+  ]
+}

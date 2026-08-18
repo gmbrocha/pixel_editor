@@ -58,6 +58,7 @@ def test_silhouette_starters_are_reproducible_catalogued_and_indexed() -> None:
 
 def test_silhouette_starter_regions_are_exact_and_preserved_by_previews() -> None:
     catalog = create_default_catalog()
+    walk = catalog.base("human-01").animations["walk"]
     for starter in STARTERS:
         part = catalog.part(starter.component_id)
         root = part.manifest_path.parent
@@ -66,12 +67,23 @@ def test_silhouette_starter_regions_are_exact_and_preserved_by_previews() -> Non
             preview = opened.convert("RGBA")
 
         assert preview.size == (384, 259)
-        assert preview.crop((0, 64, 384, 259)).getbbox() is None
-        assert all(
-            preview.crop((index * 64, 0, (index + 1) * 64, 64)).getbbox() is not None
-            for index in range(6)
+        supported_directions = (
+            starter.authored_directions
+            if starter.authored_walk is not None
+            else ("front",)
         )
-        assert part.coverage == {"walk": ("front",)}
+        for direction, row in walk.direction_rows.items():
+            row_image = preview.crop((0, row * 64, 384, row * 64 + 64))
+            if direction in supported_directions:
+                assert all(
+                    row_image.crop((index * 64, 0, (index + 1) * 64, 64)).getbbox()
+                    is not None
+                    for index in range(6)
+                )
+            else:
+                assert row_image.getbbox() is None
+        assert preview.crop((0, 256, 384, 259)).getbbox() is None
+        assert part.coverage == {"walk": supported_directions}
         assert manifest["provenance"]["walkSha256"] == _digest(root / "walk.png")
         if starter.authored_walk is not None:
             source = root / starter.authored_walk
@@ -99,28 +111,33 @@ def test_silhouette_starter_regions_are_exact_and_preserved_by_previews() -> Non
             )
 
 
-def test_silhouette_starters_change_front_walk_only() -> None:
+def test_silhouette_starters_change_only_their_authored_walk_directions() -> None:
     catalog = create_default_catalog()
     base_id = "human-01"
     walk = catalog.base(base_id).animations["walk"]
     base_walk = load_base_animation(catalog, base_id, "walk")
 
     for starter in STARTERS:
+        supported_directions = (
+            starter.authored_directions
+            if starter.authored_walk is not None
+            else ("front",)
+        )
         recipe = CharacterRecipe()
         recipe.parts[starter.slot] = starter.component_id
         composed = composite_character_animation(catalog, recipe, "walk")
         for frame_index in range(6):
-            assert extract_character_frame(
-                composed, walk, "front", frame_index
-            ).tobytes() != extract_character_frame(
-                base_walk, walk, "front", frame_index
-            ).tobytes()
-            for direction in ("back", "right", "left"):
-                assert extract_character_frame(
+            for direction in ("front", "back", "right", "left"):
+                composed_frame = extract_character_frame(
                     composed, walk, direction, frame_index
-                ).tobytes() == extract_character_frame(
+                ).tobytes()
+                base_frame = extract_character_frame(
                     base_walk, walk, direction, frame_index
                 ).tobytes()
+                if direction in supported_directions:
+                    assert composed_frame != base_frame
+                else:
+                    assert composed_frame == base_frame
         for animation_id in ("idle", "run"):
             assert composite_character_animation(
                 catalog, recipe, animation_id

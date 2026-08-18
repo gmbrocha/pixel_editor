@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "single_leather_gauntlet_01-idle-20260816T081637Z-d1cde4ce",
+  "component_id": "single_leather_gauntlet_01",
+  "animation_id": "idle",
+  "slot": "hands",
+  "layer": "handwear",
+  "component": {
+    "concept": "One heavier leather gauntlet worn on a single hand and wrist, deliberately asymmetric but practical.",
+    "tags": [
+      "fighter",
+      "asymmetric",
+      "rugged"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "d1cde4ceb0c4ce0d44b3664707a65dfc0141a1343d9fadb20fc9b69d86da97b0",
+  "created_at": "2026-08-16T08:16:37Z",
+  "updated_at": "2026-08-16T08:16:37Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

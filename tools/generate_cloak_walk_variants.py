@@ -161,18 +161,18 @@ def _source_manifest(authored_hash: str, semantic_hash: str) -> dict[str, object
         "sideFrameOrder": [index + 1 for index in SIDE_FRAME_ORDER],
         "derivedDirections": {
             "right": {
-                "operation": "second-half-phase-reversal",
+                "operation": "preserved-authored-row",
                 "sourceDirection": "right",
                 "sourceFrameOrder": [index + 1 for index in SIDE_FRAME_ORDER],
                 "generator": "tools/complete_cloak_walk_regions.py",
-                "generatorVersion": 2,
+                "generatorVersion": 3,
             },
             "left": {
                 "operation": "horizontal-frame-mirror",
-                "sourceDirection": "phase-corrected-right",
+                "sourceDirection": "right",
                 "alignmentOffset": list(LEFT_ALIGNMENT_OFFSET),
                 "generator": "tools/complete_cloak_walk_regions.py",
-                "generatorVersion": 2,
+                "generatorVersion": 3,
             }
         },
         "framesPerDirection": 6,
@@ -184,8 +184,9 @@ def _source_manifest(authored_hash: str, semantic_hash: str) -> dict[str, object
             for name, (red, green, blue, _alpha) in colors.items()
         },
         "extraction": (
-            "Exact opaque semantic marker pixels are preserved. Left Walk frames "
-            "are deterministic per-frame horizontal mirrors of the authored Right row."
+            "Exact opaque semantic marker pixels and authored Front, Back, and Right "
+            "frame order are preserved. Left Walk frames are deterministic per-frame "
+            "horizontal mirrors of the authored Right row."
         ),
     }
 
@@ -199,7 +200,7 @@ def _component_manifest(
     provenance: dict[str, object] = {
         "kind": "deterministic_semantic_finish",
         "generator": "tools/generate_cloak_walk_variants.py",
-        "generatorVersion": 1,
+        "generatorVersion": 2,
         "finisher": "tools/finish_component_regions.py",
         "preset": variant.preset,
         "authoredSource": "semantic_sources/hooded-cloak-walk/authored-regions.png",

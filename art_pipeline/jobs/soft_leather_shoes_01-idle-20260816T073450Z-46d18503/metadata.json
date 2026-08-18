@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "soft_leather_shoes_01-idle-20260816T073450Z-46d18503",
+  "component_id": "soft_leather_shoes_01",
+  "animation_id": "idle",
+  "slot": "feet",
+  "layer": "footwear",
+  "component": {
+    "concept": "Low soft leather shoes with a narrow silhouette suitable for indoor or town wear.",
+    "tags": [
+      "scholar",
+      "merchant",
+      "town"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "46d1850369b454ffb723b9bd605159ef3a9e9e5c053c1355d8d61da2bc2dab68",
+  "created_at": "2026-08-16T07:34:50Z",
+  "updated_at": "2026-08-16T07:34:50Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

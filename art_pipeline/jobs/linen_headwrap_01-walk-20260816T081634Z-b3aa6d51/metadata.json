@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "linen_headwrap_01-walk-20260816T081634Z-b3aa6d51",
+  "component_id": "linen_headwrap_01",
+  "animation_id": "walk",
+  "slot": "headwear",
+  "layer": "headwear",
+  "component": {
+    "concept": "Plain linen headwrap wound closely around the head; practical protection from sun, dust, or work conditions rather than decorative ceremonial wrapping.",
+    "tags": [
+      "worker",
+      "sailor",
+      "traveler"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "b3aa6d51d6aa80c4b9d777052206029115aa083ad8ce0121775670f146938a68",
+  "created_at": "2026-08-16T08:16:34Z",
+  "updated_at": "2026-08-16T08:16:34Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

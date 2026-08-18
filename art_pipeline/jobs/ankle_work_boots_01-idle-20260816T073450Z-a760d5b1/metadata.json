@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "ankle_work_boots_01-idle-20260816T073450Z-a760d5b1",
+  "component_id": "ankle_work_boots_01",
+  "animation_id": "idle",
+  "slot": "feet",
+  "layer": "footwear",
+  "component": {
+    "concept": "Sturdy low leather work boots with thick soles and simple cuffs.",
+    "tags": [
+      "worker",
+      "common",
+      "practical"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "a760d5b1495748753a81fc3561994678fdd3f97364744a75811b672267b09be7",
+  "created_at": "2026-08-16T07:34:50Z",
+  "updated_at": "2026-08-16T07:34:50Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

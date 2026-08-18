@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "cloth_hand_wraps_01-run-20260816T073449Z-b40c6936",
+  "component_id": "cloth_hand_wraps_01",
+  "animation_id": "run",
+  "slot": "hands",
+  "layer": "handwear",
+  "component": {
+    "concept": "Rough cloth wraps around palms, hands, and wrists using simple light-and-dark banding.",
+    "tags": [
+      "laborer",
+      "fighter",
+      "rough"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "b40c6936dc8408b7e6148fe53eb31c00a51e95dc76e59ae50367726c951f2c73",
+  "created_at": "2026-08-16T07:34:49Z",
+  "updated_at": "2026-08-16T07:34:49Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

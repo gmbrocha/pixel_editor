@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "job_id": "fur_collar_01-idle-20260816T135451Z-67f4cd83",
+  "component_id": "fur_collar_01",
+  "animation_id": "idle",
+  "slot": "neck",
+  "layer": "neck",
+  "component": {
+    "concept": "Small rough fur collar framing the neck and upper shoulders without becoming an oversized mantle.",
+    "tags": [
+      "hunter",
+      "northern",
+      "prosperous"
+    ],
+    "fit": "standard",
+    "priority": "medium"
+  },
+  "fingerprint": "67f4cd83597f9f7ff8d88232d4790bf5fcc196303d9e71441c1ba3adcf29d0bb",
+  "created_at": "2026-08-16T13:54:51Z",
+  "updated_at": "2026-08-16T14:26:15Z",
+  "status": "review",
+  "candidate_count": 1,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "review",
+      "attempts": 2,
+      "raw_sha256": "377fef6d251dedd10a0e4520af75021e2940b8ade8ca61fd90a838d70cbef38e",
+      "api": {
+        "request_id": "req_82a583e7af2942499e4aa69b0c4f9ef1",
+        "attempt": 1,
+        "created": 1786890374,
+        "usage": {
+          "input_tokens": 1349,
+          "input_tokens_details": {
+            "image_tokens": 672,
+            "text_tokens": 677
+          },
+          "output_tokens": 994,
+          "total_tokens": 2343,
+          "output_tokens_details": {
+            "image_tokens": 994,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "66774774d1653b237e6839d14b106d8c7ea2e0502ff99a569a93eae885082611",
+        "processed_at": "2026-08-16T14:26:15Z"
+      },
+      "extracted_sha256": "5e227e5e0ebde62e9ac73e4df5c73806e5c14335a1bb23c238c75738f8d09910",
+      "qa": {
+        "status": "fail",
+        "score": 82.95,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              25
+            ],
+            "back": [
+              63
+            ],
+            "left": [
+              21
+            ],
+            "right": [
+              36
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 145,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 44,
+          "reconstruction_mean_rgb_error": 0.017824377642038997,
+          "overlay_bbox": [
+            22,
+            32,
+            41,
+            227
+          ]
+        }
+      }
+    }
+  }
+}

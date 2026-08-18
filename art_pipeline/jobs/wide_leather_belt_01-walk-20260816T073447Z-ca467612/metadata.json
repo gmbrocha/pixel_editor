@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "job_id": "wide_leather_belt_01-walk-20260816T073447Z-ca467612",
+  "component_id": "wide_leather_belt_01",
+  "animation_id": "walk",
+  "slot": "waist",
+  "layer": "waist",
+  "component": {
+    "concept": "Broad worn leather belt with a simple metal buckle and strong readable shape.",
+    "tags": [
+      "worker",
+      "traveler",
+      "rugged"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "ca4676120bf67233dc6c1d9967fd5e5a5e3b7a9ddd3b46e8316c0df635904841",
+  "created_at": "2026-08-16T07:34:47Z",
+  "updated_at": "2026-08-16T08:04:04Z",
+  "status": "generated",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "generated",
+      "attempts": 1,
+      "raw_sha256": "e1612656330cfe557046186cf8f919e2aefc4db2857b0d7fb9a9ab5d9e1ccae1",
+      "api": {
+        "request_id": "req_4e2a9ffb55bb42e7aea07e4006775ccf",
+        "attempt": 1,
+        "created": 1786867404,
+        "usage": {
+          "input_tokens": 1688,
+          "input_tokens_details": {
+            "image_tokens": 1504,
+            "text_tokens": 184
+          },
+          "output_tokens": 1382,
+          "total_tokens": 3070,
+          "output_tokens_details": {
+            "image_tokens": 1382,
+            "text_tokens": 0
+          }
+        }
+      }
+    },
+    "candidate-002": {
+      "status": "generated",
+      "attempts": 1,
+      "raw_sha256": "8f4f4e4a49011882bc3232fa8851451c477b4d85971aa871f8480dcf33e76f10",
+      "api": {
+        "request_id": "req_8914752d62fc40f089c7cc15d5d79919",
+        "attempt": 1,
+        "created": 1786867444,
+        "usage": {
+          "input_tokens": 1688,
+          "input_tokens_details": {
+            "image_tokens": 1504,
+            "text_tokens": 184
+          },
+          "output_tokens": 1382,
+          "total_tokens": 3070,
+          "output_tokens_details": {
+            "image_tokens": 1382,
+            "text_tokens": 0
+          }
+        }
+      }
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 1
+    }
+  }
+}

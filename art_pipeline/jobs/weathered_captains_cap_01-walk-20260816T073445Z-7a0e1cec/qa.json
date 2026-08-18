@@ -1,0 +1,65 @@
+{
+  "job_id": "weathered_captains_cap_01-walk-20260816T073445Z-7a0e1cec",
+  "candidates": {
+    "candidate-003": {
+      "status": "fail",
+      "score": 40.8,
+      "hard_failures": [
+        "outside_region_drift",
+        "palette_complexity"
+      ],
+      "warnings": [
+        "region_edge_contact"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 5343,
+        "outside_drift_ratio": 0.7538092550790068,
+        "frame_coverage": {
+          "front": [
+            305,
+            305,
+            322,
+            310,
+            321,
+            323
+          ],
+          "back": [
+            291,
+            284,
+            295,
+            283,
+            295,
+            296
+          ],
+          "left": [
+            267,
+            281,
+            267,
+            272,
+            270,
+            266
+          ],
+          "right": [
+            272,
+            275,
+            272,
+            256,
+            268,
+            278
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 6138,
+        "partial_alpha_colors": 0,
+        "silhouette_growth_pixels": 4809,
+        "reconstruction_mean_rgb_error": 7.626248589003194,
+        "overlay_bbox": [
+          22,
+          5,
+          359,
+          219
+        ]
+      }
+    }
+  }
+}

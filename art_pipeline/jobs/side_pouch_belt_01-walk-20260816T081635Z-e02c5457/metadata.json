@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "side_pouch_belt_01-walk-20260816T081635Z-e02c5457",
+  "component_id": "side_pouch_belt_01",
+  "animation_id": "walk",
+  "slot": "waist",
+  "layer": "waist",
+  "component": {
+    "concept": "Simple belt carrying one modest leather utility pouch at one hip; practical rather than overloaded.",
+    "tags": [
+      "artisan",
+      "traveler",
+      "utility"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "e02c54578275337bc4755fb4d05d1b7d66d87908e14ce870e37b31564a79fa7a",
+  "created_at": "2026-08-16T08:16:35Z",
+  "updated_at": "2026-08-16T08:16:35Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

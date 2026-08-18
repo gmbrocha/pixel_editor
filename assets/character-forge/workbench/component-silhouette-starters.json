@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "generator": "tools/generate_component_silhouette_starters.py",
   "generatorVersion": 1,
-  "baseWalkSha256": "90f886c15de51a3e6fbdb1a1280b50203aed38bb310016c3edb01fb6f8c76fce",
+  "baseWalkSha256": "7e148f5d0aa37d4493a681c2b1f63f13b79f4f62c28f308444608bb3da37c920",
   "conceptBoard": "starter-component-concept-board.png",
   "starters": [
     {
@@ -41,7 +41,7 @@
       "id": "workbench-double-leaf-pauldrons",
       "displayName": "Workbench \u2014 Double Leaf Pauldrons",
       "slot": "shoulder_chest",
-      "source": "parts/shoulder_chest/walk_double_pauldrons.png",
+      "source": "parts/shoulder_chest/walk_double_pauldrons_working.png",
       "preview": "parts/shoulder_chest/workbench-double-leaf-pauldrons/walk.png",
       "status": "authored-front-walk"
     },

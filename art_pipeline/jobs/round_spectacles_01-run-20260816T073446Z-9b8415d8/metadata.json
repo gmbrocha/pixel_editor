@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "job_id": "round_spectacles_01-run-20260816T073446Z-9b8415d8",
+  "component_id": "round_spectacles_01",
+  "animation_id": "run",
+  "slot": "face",
+  "layer": "face_accessory",
+  "component": {
+    "concept": "Small round iron-rim spectacles with thin restrained frames, readable at native sprite scale.",
+    "tags": [
+      "scholar",
+      "clerk",
+      "healer"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "9b8415d814f775f8fc62b326ee727667bbf09d453134400e90304fab5bc9bc2e",
+  "created_at": "2026-08-16T07:34:46Z",
+  "updated_at": "2026-08-16T07:55:54Z",
+  "status": "failed",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "failed",
+      "attempts": 1,
+      "error": {
+        "type": "permanent_api",
+        "code": "moderation_blocked",
+        "request_id": "req_84424064bc5a44cdaf35ee1d10d807ef",
+        "message": "OpenAI request failed (moderation_blocked, request req_84424064bc5a44cdaf35ee1d10d807ef): Error code: 400 - {'error': {'message': 'Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID req_84424064bc5a44cdaf35ee1d10d807ef. safety_violations=[sexual].', 'type': 'image_generation_user_error', 'param': None, 'code': 'moderation_blocked', 'moderation_details': {'moderation_stage': 'output', 'categories': ['sexual']}}}",
+        "at": "2026-08-16T07:54:43Z"
+      }
+    },
+    "candidate-002": {
+      "status": "failed",
+      "attempts": 1,
+      "error": {
+        "type": "permanent_api",
+        "code": "moderation_blocked",
+        "request_id": "req_97de821b7dd74f47b1aa680e2977392c",
+        "message": "OpenAI request failed (moderation_blocked, request req_97de821b7dd74f47b1aa680e2977392c): Error code: 400 - {'error': {'message': 'Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID req_97de821b7dd74f47b1aa680e2977392c. safety_violations=[sexual].', 'type': 'image_generation_user_error', 'param': None, 'code': 'moderation_blocked', 'moderation_details': {'moderation_stage': 'output', 'categories': ['sexual']}}}",
+        "at": "2026-08-16T07:55:19Z"
+      }
+    },
+    "candidate-003": {
+      "status": "failed",
+      "attempts": 1,
+      "error": {
+        "type": "permanent_api",
+        "code": "moderation_blocked",
+        "request_id": "req_7b44845df5704e34a06cc25cfad5291f",
+        "message": "OpenAI request failed (moderation_blocked, request req_7b44845df5704e34a06cc25cfad5291f): Error code: 400 - {'error': {'message': 'Your request was rejected by the safety system. If you believe this is an error, contact us at help.openai.com and include the request ID req_7b44845df5704e34a06cc25cfad5291f.', 'type': 'image_generation_user_error', 'param': None, 'code': 'moderation_blocked', 'moderation_details': {'moderation_stage': 'output', 'categories': ['other']}}}",
+        "at": "2026-08-16T07:55:54Z"
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "iron_kettle_helm_01-idle-20260816T073446Z-0b4c37bd",
+  "component_id": "iron_kettle_helm_01",
+  "animation_id": "idle",
+  "slot": "headwear",
+  "layer": "headwear",
+  "component": {
+    "concept": "Simple worn iron kettle helmet with a shallow crown and readable brim; utilitarian town-guard equipment with no ornament.",
+    "tags": [
+      "guard",
+      "militia",
+      "armor"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "0b4c37bdb3c9f7c9c63238ba98e473fc27d73d2f1dbcf9b5af1e6bb42b17fc1f",
+  "created_at": "2026-08-16T07:34:46Z",
+  "updated_at": "2026-08-16T07:34:46Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

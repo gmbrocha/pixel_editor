@@ -13,10 +13,10 @@ runtime sheets are never recolored.
   preserved.
 - `walk.png`: 384x259 RGBA; six frames in Front, Back, Right, Left rows. Its three
   extra transparent bottom pixels are preserved. The corrected authored sheet is
-  retained at `base_sources/human-01/walk-authored.png`; the runtime side cycle is
-  built as frames `1, 2, 3, 6, 5, 4`, and Left is a per-frame Right mirror with
-  the authored `-1, -1` alignment offset. This gives each planted foot the same
-  front-to-rear travel and prevents reversed-time moonwalking.
+  retained at `base_sources/human-01/walk-authored.png`. Runtime rows 1–3 are
+  preserved exactly, and only the Left row is reversed as frames
+  `6, 5, 4, 3, 2, 1`. The resulting Left frames are the authored `-1, -1` aligned
+  mirrors of the corresponding Right frames.
 - `run-front.png`, `run-back.png`, `run-right.png`, and `run-left.png`: authoritative
   384x64 six-frame strips.
 - `run.png`: derived 384x256 sheet assembled pixel-identically in Front, Back,
@@ -124,8 +124,8 @@ pauldrons, mage hat/vestments, leather armor, ratty shawl, headband, orcish armo
 and a horned cult mask. Each is registered in Character Forge, has all six Front
 Walk frames, and falls back to the base outside Walk/Front. Frost Hair now uses
 the directly authored `walk_frost_blue_hair.png`, and Double Leaf Pauldrons use
-the directly authored `walk_double_pauldrons.png`; the other nine starters retain
-directly editable exact-color `regions.png` masks.
+the directly authored Front + Back `walk_double_pauldrons_working.png`; the other
+nine starters retain directly editable exact-color `regions.png` masks.
 
 Component manifests can declare `alphaOccludedByTags` to hide their pixels behind
 the animation alpha of matching selected components. Frost Hair uses

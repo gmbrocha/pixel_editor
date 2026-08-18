@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "job_id": "plain_leather_gloves_01-walk-20260816T081636Z-ca1d7f4d",
+  "component_id": "plain_leather_gloves_01",
+  "animation_id": "walk",
+  "slot": "hands",
+  "layer": "handwear",
+  "component": {
+    "concept": "Plain fitted brown leather gloves with minimal cuff.",
+    "tags": [
+      "traveler",
+      "rider",
+      "worker"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "ca1d7f4ddb56869d67767363865a05b817cae39ac0a2068f5a008e927fe404dd",
+  "created_at": "2026-08-16T08:16:36Z",
+  "updated_at": "2026-08-16T09:24:19Z",
+  "status": "review",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "bf012e2e401e589fc6fe5bd24a71fe6efade8b5695868108dca6697248fbddba",
+      "api": {
+        "request_id": "req_035f046d71fd48d3869c9b9668c7deb0",
+        "attempt": 1,
+        "created": 1786870775,
+        "usage": {
+          "input_tokens": 1738,
+          "input_tokens_details": {
+            "image_tokens": 1504,
+            "text_tokens": 234
+          },
+          "output_tokens": 1382,
+          "total_tokens": 3120,
+          "output_tokens_details": {
+            "image_tokens": 1382,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "28dfd4b386f90353fece7507c528ef60572dea9d9b9627fd986a3751dc4bac0e",
+      "qa": {
+        "status": "fail",
+        "score": 80.32,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              104,
+              113,
+              122,
+              108,
+              103,
+              100
+            ],
+            "back": [
+              65,
+              73,
+              75,
+              80,
+              75,
+              79
+            ],
+            "left": [
+              70,
+              74,
+              76,
+              89,
+              73,
+              90
+            ],
+            "right": [
+              71,
+              80,
+              77,
+              69,
+              90,
+              73
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 1849,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 1424,
+          "reconstruction_mean_rgb_error": 0.0027511202988997332,
+          "overlay_bbox": [
+            20,
+            20,
+            364,
+            246
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "7d79e0e38d61d6d61ed31ee943afc2b2f5cf6ba4555d8f7dc9df32c5fa7e94f7",
+        "processed_at": "2026-08-16T09:24:05Z"
+      }
+    },
+    "candidate-002": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "7572f45635657377e3364a33f0ba4dbca7254fdcecc74a929a6e8abb32aa62f6",
+      "api": {
+        "request_id": "req_3b4201cb758a4b09801db52399cee974",
+        "attempt": 1,
+        "created": 1786870814,
+        "usage": {
+          "input_tokens": 1738,
+          "input_tokens_details": {
+            "image_tokens": 1504,
+            "text_tokens": 234
+          },
+          "output_tokens": 1382,
+          "total_tokens": 3120,
+          "output_tokens_details": {
+            "image_tokens": 1382,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "788e4ac031fb383345c789aaeffdd8bd1dbf2312cd9116b361cab889831bc06a",
+      "qa": {
+        "status": "fail",
+        "score": 81.03,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              91,
+              74,
+              108,
+              72,
+              105,
+              98
+            ],
+            "back": [
+              90,
+              72,
+              80,
+              94,
+              80,
+              94
+            ],
+            "left": [
+              61,
+              67,
+              82,
+              50,
+              46,
+              67
+            ],
+            "right": [
+              63,
+              69,
+              65,
+              40,
+              70,
+              78
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 1688,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 1081,
+          "reconstruction_mean_rgb_error": 0.0030310374250717693,
+          "overlay_bbox": [
+            21,
+            18,
+            362,
+            246
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "7d79e0e38d61d6d61ed31ee943afc2b2f5cf6ba4555d8f7dc9df32c5fa7e94f7",
+        "processed_at": "2026-08-16T09:24:12Z"
+      }
+    },
+    "candidate-003": {
+      "status": "review",
+      "attempts": 1,
+      "raw_sha256": "16d2697b196e880bbc6e8d3825e875675aac40bc24d23ba9f217f6ba4f71ca90",
+      "api": {
+        "request_id": "req_14d889f54f67461dace00f841a409829",
+        "attempt": 1,
+        "created": 1786870849,
+        "usage": {
+          "input_tokens": 1738,
+          "input_tokens_details": {
+            "image_tokens": 1504,
+            "text_tokens": 234
+          },
+          "output_tokens": 1382,
+          "total_tokens": 3120,
+          "output_tokens_details": {
+            "image_tokens": 1382,
+            "text_tokens": 0
+          }
+        }
+      },
+      "normalization": "dominant",
+      "extracted_sha256": "48452c36f071c7db2dea7510171cf6690e73764fc698f781286777fb967f2718",
+      "qa": {
+        "status": "fail",
+        "score": 81.07,
+        "hard_failures": [
+          "palette_complexity"
+        ],
+        "warnings": [
+          "region_edge_contact"
+        ],
+        "metrics": {
+          "outside_changed_pixels": 0,
+          "outside_drift_ratio": 0.0,
+          "frame_coverage": {
+            "front": [
+              50,
+              64,
+              39,
+              66,
+              52,
+              55
+            ],
+            "back": [
+              56,
+              78,
+              69,
+              57,
+              46,
+              53
+            ],
+            "left": [
+              36,
+              38,
+              54,
+              45,
+              37,
+              28
+            ],
+            "right": [
+              33,
+              44,
+              33,
+              39,
+              36,
+              43
+            ]
+          },
+          "missing_frames": [],
+          "unique_colors": 1078,
+          "partial_alpha_colors": 0,
+          "reserved_mannequin_leak_pixels": 0,
+          "silhouette_growth_pixels": 678,
+          "reconstruction_mean_rgb_error": 0.005308123090814732,
+          "overlay_bbox": [
+            13,
+            19,
+            374,
+            246
+          ]
+        }
+      },
+      "processing": {
+        "version": "reserved-blue-v2-position-aware",
+        "mannequin_ramp_sha256": "7d79e0e38d61d6d61ed31ee943afc2b2f5cf6ba4555d8f7dc9df32c5fa7e94f7",
+        "processed_at": "2026-08-16T09:24:18Z"
+      }
+    }
+  }
+}

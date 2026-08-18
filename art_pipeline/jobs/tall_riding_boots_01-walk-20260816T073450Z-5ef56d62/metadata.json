@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "job_id": "tall_riding_boots_01-walk-20260816T073450Z-5ef56d62",
+  "component_id": "tall_riding_boots_01",
+  "animation_id": "walk",
+  "slot": "feet",
+  "layer": "footwear",
+  "component": {
+    "concept": "Tall fitted leather riding boots reaching below the knee with restrained top cuffs.",
+    "tags": [
+      "rider",
+      "messenger",
+      "officer"
+    ],
+    "fit": "standard",
+    "priority": "high"
+  },
+  "fingerprint": "5ef56d621527cd78857d0a12276c26768c3f06cd46d39d039ec86f8b18563d09",
+  "created_at": "2026-08-16T07:34:50Z",
+  "updated_at": "2026-08-16T07:34:50Z",
+  "status": "queued",
+  "candidate_count": 3,
+  "design_reference": null,
+  "candidates": {
+    "candidate-001": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-002": {
+      "status": "queued",
+      "attempts": 0
+    },
+    "candidate-003": {
+      "status": "queued",
+      "attempts": 0
+    }
+  }
+}

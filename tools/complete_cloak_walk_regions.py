@@ -19,7 +19,7 @@ RUNTIME_HEIGHT = 259
 FRAME_SIZE = 64
 FRAMES_PER_DIRECTION = 6
 DIRECTION_ROWS = {"front": 0, "back": 1, "right": 2, "left": 3}
-SIDE_FRAME_ORDER = (0, 1, 2, 5, 4, 3)
+SIDE_FRAME_ORDER = (0, 1, 2, 3, 4, 5)
 LEFT_ALIGNMENT_OFFSET = (-1, -1)
 
 
@@ -43,7 +43,7 @@ def _frame(image: Image.Image, direction: str, frame_index: int) -> Image.Image:
 
 
 def complete_cloak_walk_regions(source: Image.Image) -> Image.Image:
-    """Correct the Right phase order and mirror it per frame into Left."""
+    """Preserve authored rows and mirror Right per frame into blank Left."""
     rgba = source.convert("RGBA")
     if rgba.size not in {(SHEET_WIDTH, SOURCE_HEIGHT), (SHEET_WIDTH, RUNTIME_HEIGHT)}:
         raise ValueError(
@@ -137,8 +137,8 @@ def generate_completed_walk_source(
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Preserve a semantic cloak Walk source, correct its side-view phase "
-            "order, and mirror Right pixel-exactly into the missing Left row."
+            "Preserve a semantic cloak Walk source and mirror Right "
+            "pixel-exactly into the missing Left row."
         )
     )
     parser.add_argument("source", type=Path)

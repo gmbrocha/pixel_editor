@@ -1,0 +1,66 @@
+{
+  "job_id": "round_spectacles_01-walk-20260816T073446Z-f96e7d60",
+  "candidates": {
+    "candidate-002": {
+      "status": "fail",
+      "score": 41.88,
+      "hard_failures": [
+        "outside_region_drift",
+        "palette_complexity"
+      ],
+      "warnings": [
+        "reconstruction_error",
+        "region_edge_contact"
+      ],
+      "metrics": {
+        "outside_changed_pixels": 3391,
+        "outside_drift_ratio": 0.4784142212189616,
+        "frame_coverage": {
+          "front": [
+            144,
+            130,
+            123,
+            131,
+            122,
+            126
+          ],
+          "back": [
+            158,
+            165,
+            156,
+            166,
+            163,
+            155
+          ],
+          "left": [
+            217,
+            204,
+            207,
+            215,
+            208,
+            203
+          ],
+          "right": [
+            185,
+            182,
+            193,
+            194,
+            189,
+            211
+          ]
+        },
+        "missing_frames": [],
+        "unique_colors": 3401,
+        "partial_alpha_colors": 0,
+        "silhouette_growth_pixels": 1843,
+        "reconstruction_mean_rgb_error": 8.125368467673987,
+        "overlay_bbox": [
+          23,
+          17,
+          359,
+          222
+        ]
+      }
+    }
+  }
+}

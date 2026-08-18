@@ -1,8 +1,9 @@
 # Component silhouette starter workbench
 
-These are deliberately rough, editable **Front Walk** starting points—not finished
-production art. Each starter is aligned to all six authoritative 64x64 Front Walk
-frames and is already selectable in Character Forge.
+These are deliberately rough, editable Walk starting points—not finished production
+art. Each starter is aligned to the authoritative 64x64 Walk grid and is already
+selectable in Character Forge. Most cover Front only; Double Leaf Pauldrons now
+cover both Front and Back.
 
 ## Start here tomorrow
 
@@ -23,7 +24,7 @@ For semantic masks, the marker colors are main `#FF4040`, lining/secondary `#40F
 | 2 | One-Shoulder Pauldron | Shoulder / Chest | `parts/shoulder_chest/workbench-one-shoulder-pauldron/regions.png` |
 | 3 | Leather Gloves | Hands | `parts/hands/workbench-leather-gloves/regions.png` |
 | 4 | Eye Patch | Face | `parts/face/workbench-eye-patch/regions.png` |
-| 5 | Double Leaf Pauldrons | Shoulder / Chest | `parts/shoulder_chest/walk_double_pauldrons.png` (authored pixels) |
+| 5 | Double Leaf Pauldrons | Shoulder / Chest | `parts/shoulder_chest/walk_double_pauldrons_working.png` (authored Front + Back pixels) |
 | 6 | Crooked Mage Hat + Vestments | Outerwear | `parts/outerwear/workbench-crooked-mage-vestments/regions.png` |
 | 7 | Rugged Leather Armor | Outerwear | `parts/outerwear/workbench-rugged-leather-armor/regions.png` |
 | 8 | Ratty Shawl | Neck | `parts/neck/workbench-ratty-shawl/regions.png` |
@@ -36,7 +37,7 @@ For semantic masks, the marker colors are main `#FF4040`, lining/secondary `#40F
 - The Frost Hair is now the authored six-frame Front Walk overlay; the older `regions.png` is retained only as the superseded rough semantic starter. Its manifest declares `alphaOccludedByTags: ["hooded_cloak"]`, so any selected hooded-cloak animation masks the hair with its own alpha while leaving hair visible through the hood opening. Future hair components can opt into the same durable rule. It is currently one Front layer. Longer hairstyles will eventually
   need separate rear-hair and fringe/crown layers.
 - Gloves trace the moving hand silhouettes closely; refine their cuffs first.
-- Double Leaf Pauldrons now use the authored six-frame `walk_double_pauldrons.png`; the component's older `regions.png` remains only as the superseded rough semantic starter.
+- Double Leaf Pauldrons now use the authored twelve-frame `walk_double_pauldrons_working.png`, covering all six Front and all six Back frames. Right and Left remain transparent fallbacks; the older `walk_double_pauldrons.png` and component `regions.png` remain tracked as superseded source iterations.
 - The combined Mage starter reserves Headwear and Neck. It can later be split into
   independent hat and vestment components.
 - Orcish Armor reserves Shoulder / Chest so it cannot collide with the pauldron
