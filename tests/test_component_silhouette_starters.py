@@ -62,27 +62,41 @@ def test_silhouette_starter_regions_are_exact_and_preserved_by_previews() -> Non
         part = catalog.part(starter.component_id)
         root = part.manifest_path.parent
         manifest = json.loads(part.manifest_path.read_text(encoding="utf-8"))
-        with Image.open(root / "regions.png") as opened:
-            regions = opened.convert("RGBA")
         with Image.open(root / "walk.png") as opened:
             preview = opened.convert("RGBA")
 
-        assert regions.size == preview.size == (384, 259)
-        assert set(_pixels(regions)) <= {(0, 0, 0, 0), *MARKERS}
-        assert regions.getchannel("A").tobytes() == preview.getchannel("A").tobytes()
-        assert regions.crop((0, 64, 384, 259)).getbbox() is None
+        assert preview.size == (384, 259)
         assert preview.crop((0, 64, 384, 259)).getbbox() is None
         assert all(
-            regions.crop((index * 64, 0, (index + 1) * 64, 64)).getbbox()
-            is not None
+            preview.crop((index * 64, 0, (index + 1) * 64, 64)).getbbox() is not None
             for index in range(6)
         )
         assert part.coverage == {"walk": ("front",)}
-        assert manifest["semanticRegions"] == {"walk": "regions.png"}
-        assert manifest["provenance"]["regionsSha256"] == _digest(
-            root / "regions.png"
-        )
         assert manifest["provenance"]["walkSha256"] == _digest(root / "walk.png")
+        if starter.authored_walk is not None:
+            source = root / starter.authored_walk
+            assert "semanticRegions" not in manifest
+            assert (root / "walk.png").read_bytes() == source.read_bytes()
+            assert part.alpha_occluded_by_tags == starter.alpha_occluded_by_tags
+            if starter.alpha_occluded_by_tags:
+                assert manifest["alphaOccludedByTags"] == list(
+                    starter.alpha_occluded_by_tags
+                )
+            else:
+                assert "alphaOccludedByTags" not in manifest
+            assert manifest["provenance"]["authoredSource"] == starter.authored_walk
+            assert manifest["provenance"]["authoredSourceSha256"] == _digest(source)
+        else:
+            with Image.open(root / "regions.png") as opened:
+                regions = opened.convert("RGBA")
+            assert regions.size == preview.size
+            assert set(_pixels(regions)) <= {(0, 0, 0, 0), *MARKERS}
+            assert regions.getchannel("A").tobytes() == preview.getchannel("A").tobytes()
+            assert regions.crop((0, 64, 384, 259)).getbbox() is None
+            assert manifest["semanticRegions"] == {"walk": "regions.png"}
+            assert manifest["provenance"]["regionsSha256"] == _digest(
+                root / "regions.png"
+            )
 
 
 def test_silhouette_starters_change_front_walk_only() -> None:

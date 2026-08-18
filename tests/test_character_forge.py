@@ -271,6 +271,60 @@ def test_semantic_pointed_hood_cloak_covers_every_walk_direction() -> None:
         ).tobytes()
 
 
+def test_frost_hair_uses_selected_hooded_cloak_alpha_as_an_occlusion_mask() -> None:
+    catalog = create_default_catalog()
+    hair = catalog.part("workbench-messy-frost-hair")
+    hair_overlay = load_part_animation(catalog, hair.id, "walk")
+    assert hair.alpha_occluded_by_tags == ("hooded_cloak",)
+
+    hooded_cloaks = tuple(part for part in catalog.parts if "hooded_cloak" in part.tags)
+    assert len(hooded_cloaks) == 10
+    for cloak in hooded_cloaks:
+        cloak_overlay = load_part_animation(catalog, cloak.id, "walk")
+        recipe = CharacterRecipe()
+        recipe.parts["hair"] = hair.id
+        recipe.parts["outerwear"] = cloak.id
+        composed = composite_character_animation(catalog, recipe, "walk")
+
+        cloak_only_recipe = CharacterRecipe()
+        cloak_only_recipe.parts["outerwear"] = cloak.id
+        cloak_only = composite_character_animation(catalog, cloak_only_recipe, "walk")
+
+        hair_alpha = hair_overlay.getchannel("A").tobytes()
+        cloak_alpha = cloak_overlay.getchannel("A").tobytes()
+        composed_bytes = composed.tobytes()
+        cloak_only_bytes = cloak_only.tobytes()
+        overlap = [
+            index
+            for index, (hair_value, cloak_value) in enumerate(
+                zip(hair_alpha, cloak_alpha)
+            )
+            if hair_value and cloak_value
+        ]
+        visible_opening = [
+            index
+            for index, (hair_value, cloak_value) in enumerate(
+                zip(hair_alpha, cloak_alpha)
+            )
+            if hair_value and not cloak_value
+        ]
+        assert overlap
+        assert visible_opening
+        assert all(
+            composed_bytes[index * 4 : index * 4 + 4]
+            == cloak_only_bytes[index * 4 : index * 4 + 4]
+            for index in overlap
+        )
+        assert any(
+            composed_bytes[index * 4 : index * 4 + 4]
+            != cloak_only_bytes[index * 4 : index * 4 + 4]
+            for index in visible_opening
+        )
+        assert composed.crop((0, 64, 384, 259)).tobytes() == cloak_only.crop(
+            (0, 64, 384, 259)
+        ).tobytes()
+
+
 def test_shirt_main_color_remaps_only_its_authored_ramp() -> None:
     catalog = create_default_catalog()
     shirt = catalog.part("walking-shirt-test")

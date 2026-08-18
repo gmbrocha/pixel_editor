@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-08-17
+Last updated: 2026-08-18
 
 ## Summary
 PixelForge is a PySide6 desktop pixel-art and tileset utility. Source-grounded tools include image import and preview extraction, palette handling, pixel editing, animation editing, modular Character Forge assembly/export, tile layout, tileset processing, tileset template generation, and procedural texture generation.
@@ -38,6 +38,18 @@ Update this document after commits or other git state changes made during agent 
 Review `assets/character-forge/workbench/component-silhouette-starters-all-frames.png`, choose the strongest starter, and edit its linked `regions.png` using the exact semantic markers. The pickup guide recommends beginning with Hair, either Pauldron set, Ratty Shawl, Orcish Armor, or Cult Mask. Pivot component production toward reusable hand-authored topology families with authoritative-base underlays, animation-aware editing, linked ramps, and deterministic variants. Retain generated candidates as optional concept/reference material. Clean and palette-reduce the short wool travel coat and quilted gambeson Idle candidates against the authoritative base before deciding whether either design warrants controlled Walk and Run follow-up jobs. Do not run the full remaining bootstrap queue yet.
 
 ## Recent Activity
+2026-08-18: Prepared the complete authored Character Forge component update for publication, including the Frost Blue Hair and revised Double Pauldrons source art, regenerated runtime/workbench assets, reusable hood-driven hair alpha occlusion, documentation, and regression coverage; the full suite passes with 155 tests.
+
+2026-08-17: Refreshed the authored Double Pauldrons Front Walk overlay from the user's revised `walk_double_pauldrons.png`, updating the runtime sheet, provenance hash, and workbench previews while preserving exact source bytes and front-only coverage.
+
+2026-08-17: Integrated the user's authored six-frame Double Pauldrons sheet as the durable `workbench-double-leaf-pauldrons` Front Walk overlay. Character Forge uses the supplied pixels exactly, preserves base-only fallback outside Front Walk, records source provenance, and protects the artwork from semantic-starter regeneration.
+
+2026-08-17: Added reusable, manifest-driven component alpha occlusion through `alphaOccludedByTags`. The authored Frost Hair now opts into the `hooded_cloak` tag, causing every selected hooded cloak's actual animation alpha to mask the hair behind hood fabric while preserving visible bangs through transparent face openings.
+
+2026-08-17: Integrated the user's authored six-frame Frost Blue Hair sheet as the durable `workbench-messy-frost-hair` Front Walk overlay. Character Forge now renders the supplied pixels exactly in all six Front frames, retains base-only fallback for other directions and animations, records authored-source provenance, and protects the artwork from semantic-starter regeneration.
+
+2026-08-17: Fast-forwarded local `main` from `cb41d6f` to `7131c7a`, bringing it fully in sync with `origin/main`; refreshed the local virtual environment from `requirements.txt`, regenerated deterministic metadata after Windows checkout line-ending conversion, and verified the full suite passes with 154 tests.
+
 2026-08-17: Prepared and staged the complete verified Pixel Forge worktree for repository publication, including editor workflow improvements, corrected character Walk timing, deterministic component tooling, all current generated and authored art plus source archives, and the eleven-item silhouette workbench. The root `.env` and local virtual environment remain ignored; the full suite passes with 154 tests and the component pipeline validates 30 registered components.
 
 2026-08-17: Built an overnight component-silhouette workbench from the user's eleven requested concepts: messy hair, one pauldron, gloves, eyepatch, double pauldrons, mage hat/vestments, leather armor, ratty shawl, headband, orcish armor, and a horned cult mask. Each starter has six aligned Front Walk frames, an exact-color editable `regions.png`, a stable preview, manifest provenance, Character Forge wiring, fallback behavior, visual indexes, and a pickup guide; the AI-generated board is retained as reference only and contributes no pixels to production overlays, and the full suite passes with 154 tests.

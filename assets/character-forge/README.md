@@ -122,8 +122,17 @@ python tools/generate_warlock_robe_variants.py --check
 the next manual-art pass: messy hair, one pauldron, gloves, eyepatch, double
 pauldrons, mage hat/vestments, leather armor, ratty shawl, headband, orcish armor,
 and a horned cult mask. Each is registered in Character Forge, has all six Front
-Walk frames, includes a directly editable exact-color `regions.png`, and falls
-back to the base outside Walk/Front.
+Walk frames, and falls back to the base outside Walk/Front. Frost Hair now uses
+the directly authored `walk_frost_blue_hair.png`, and Double Leaf Pauldrons use
+the directly authored `walk_double_pauldrons.png`; the other nine starters retain
+directly editable exact-color `regions.png` masks.
+
+Component manifests can declare `alphaOccludedByTags` to hide their pixels behind
+the animation alpha of matching selected components. Frost Hair uses
+`["hooded_cloak"]`, so all ten tagged hooded cloaks cover the hair fabric area while
+the bangs remain visible through each transparent face opening. This rule is
+tag-driven rather than tied to specific component IDs and can be reused by future
+hair or accessory components.
 
 Open `workbench/component-silhouette-starters-all-frames.png` for the visual
 index and `workbench/README.md` for the direct mask paths and component-specific

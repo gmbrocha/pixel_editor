@@ -9,7 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Mapping
 
-from PIL import Image
+from PIL import Image, ImageChops
 
 
 CHARACTER_SLOTS = (
@@ -151,6 +151,7 @@ class CharacterPart:
     manifest_path: Path | None = None
     color_ramp: tuple[tuple[int, int, int], ...] = ()
     ramp_main_color: tuple[int, int, int] | None = None
+    alpha_occluded_by_tags: tuple[str, ...] = ()
 
     @property
     def claimed_slots(self) -> frozenset[str]:
@@ -341,6 +342,9 @@ def load_component_manifest(path: str | Path) -> CharacterPart:
         if ramp_main not in ramp:
             raise CharacterForgeError(f"Component {part_id!r} ramp main must be in its colors")
     tags = _string_list(data.get("tags", []), "tags")
+    alpha_occluded_by_tags = _string_list(
+        data.get("alphaOccludedByTags", []), "alphaOccludedByTags"
+    )
     version = data.get("version", 1)
     if not isinstance(version, int) or isinstance(version, bool) or version < 1:
         raise CharacterForgeError(f"Component {part_id!r} version must be positive")
@@ -360,6 +364,7 @@ def load_component_manifest(path: str | Path) -> CharacterPart:
         manifest_path=manifest_path,
         color_ramp=ramp,
         ramp_main_color=ramp_main,
+        alpha_occluded_by_tags=alpha_occluded_by_tags,
     )
 
 
@@ -610,6 +615,38 @@ def load_part_animation(
     return _load_rgba(str(path), None).copy()
 
 
+def _apply_selected_part_alpha_occlusion(
+    overlay: Image.Image,
+    part: CharacterPart,
+    selected: list[CharacterPart],
+    catalog: CharacterCatalog,
+    animation_id: str,
+) -> Image.Image:
+    """Hide a part wherever matching selected component pixels are opaque."""
+    if not part.alpha_occluded_by_tags:
+        return overlay
+    occluding_tags = set(part.alpha_occluded_by_tags)
+    result = overlay
+    for occluder in selected:
+        if (
+            occluder.id == part.id
+            or animation_id not in occluder.animations
+            or not (occluding_tags & set(occluder.tags))
+        ):
+            continue
+        mask_source = load_part_animation(catalog, occluder.id, animation_id)
+        if mask_source.size != result.size:
+            raise CharacterForgeError(
+                f"Occlusion source {occluder.id!r} {animation_id!r} sheet is "
+                f"{mask_source.size}; target {part.id!r} sheet is {result.size}"
+            )
+        keep_mask = ImageChops.invert(mask_source.getchannel("A"))
+        masked_alpha = ImageChops.multiply(result.getchannel("A"), keep_mask)
+        result = result.copy()
+        result.putalpha(masked_alpha)
+    return result
+
+
 def composite_character_animation(
     catalog: CharacterCatalog,
     recipe: CharacterRecipe,
@@ -640,6 +677,9 @@ def composite_character_animation(
             selected_color = recipe.part_colors.get(part.id)
             if selected_color is not None:
                 overlay = recolor_part_ramp(overlay, part, selected_color)
+            overlay = _apply_selected_part_alpha_occlusion(
+                overlay, part, selected, catalog, animation_id
+            )
             if overlay.size != result.size:
                 raise CharacterForgeError(
                     f"Part {part.id!r} {animation_id!r} sheet is {overlay.size}; base sheet is {result.size}"

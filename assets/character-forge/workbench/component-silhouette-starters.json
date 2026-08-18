@@ -9,9 +9,9 @@
       "id": "workbench-messy-frost-hair",
       "displayName": "Workbench \u2014 Messy Frost Hair",
       "slot": "hair",
-      "regions": "parts/hair/workbench-messy-frost-hair/regions.png",
+      "source": "parts/hair/workbench-messy-frost-hair/walk_frost_blue_hair.png",
       "preview": "parts/hair/workbench-messy-frost-hair/walk.png",
-      "status": "rough-editable-silhouette"
+      "status": "authored-front-walk"
     },
     {
       "id": "workbench-one-shoulder-pauldron",
@@ -41,9 +41,9 @@
       "id": "workbench-double-leaf-pauldrons",
       "displayName": "Workbench \u2014 Double Leaf Pauldrons",
       "slot": "shoulder_chest",
-      "regions": "parts/shoulder_chest/workbench-double-leaf-pauldrons/regions.png",
+      "source": "parts/shoulder_chest/walk_double_pauldrons.png",
       "preview": "parts/shoulder_chest/workbench-double-leaf-pauldrons/walk.png",
-      "status": "rough-editable-silhouette"
+      "status": "authored-front-walk"
     },
     {
       "id": "workbench-crooked-mage-vestments",

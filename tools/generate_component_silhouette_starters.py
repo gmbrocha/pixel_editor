@@ -55,6 +55,8 @@ class Starter:
     colors: dict[str, tuple[int, int, int]]
     tags: tuple[str, ...]
     reserved_slots: tuple[str, ...] = ()
+    authored_walk: str | None = None
+    alpha_occluded_by_tags: tuple[str, ...] = ()
 
 
 def _png_bytes(image: Image.Image) -> bytes:
@@ -294,11 +296,11 @@ def _color_set(
 
 
 STARTERS = (
-    Starter("workbench-messy-frost-hair", "Workbench — Messy Frost Hair", "hair", "hair_front", _draw_hair, _color_set((92, 168, 196), (52, 102, 139), (189, 232, 236), (34, 58, 82), (104, 192, 215)), ("hair", "messy", "male", "frost")),
+    Starter("workbench-messy-frost-hair", "Workbench — Messy Frost Hair", "hair", "hair_front", _draw_hair, _color_set((92, 168, 196), (52, 102, 139), (189, 232, 236), (34, 58, 82), (104, 192, 215)), ("hair", "messy", "male", "frost"), authored_walk="walk_frost_blue_hair.png", alpha_occluded_by_tags=("hooded_cloak",)),
     Starter("workbench-one-shoulder-pauldron", "Workbench — One-Shoulder Pauldron", "shoulder_chest", "foreground_accessory", _draw_one_pauldron, _color_set((91, 57, 36), (48, 61, 48), (151, 118, 65), (173, 181, 177), (60, 45, 36)), ("pauldron", "asymmetric", "leather")),
     Starter("workbench-leather-gloves", "Workbench — Leather Gloves", "hands", "handwear", _draw_gloves, _color_set((89, 50, 30), (54, 32, 23), (142, 99, 55), (164, 151, 122), (66, 39, 29)), ("gloves", "leather")),
     Starter("workbench-eye-patch", "Workbench — Eye Patch", "face", "face_accessory", _draw_eye_patch, _color_set((37, 28, 26), (63, 42, 33), (119, 80, 44), (156, 151, 137), (28, 24, 27)), ("eyepatch", "leather")),
-    Starter("workbench-double-leaf-pauldrons", "Workbench — Double Leaf Pauldrons", "shoulder_chest", "foreground_accessory", _draw_double_pauldrons, _color_set((48, 91, 54), (31, 61, 39), (188, 151, 57), (127, 91, 39), (70, 119, 69)), ("pauldrons", "double", "leaf", "armor")),
+    Starter("workbench-double-leaf-pauldrons", "Workbench — Double Leaf Pauldrons", "shoulder_chest", "foreground_accessory", _draw_double_pauldrons, _color_set((48, 91, 54), (31, 61, 39), (188, 151, 57), (127, 91, 39), (70, 119, 69)), ("pauldrons", "double", "leaf", "armor"), authored_walk="../walk_double_pauldrons.png"),
     Starter("workbench-crooked-mage-vestments", "Workbench — Crooked Mage Hat + Vestments", "outerwear", "outerwear", _draw_mage_vestments, _color_set((89, 46, 111), (53, 31, 75), (207, 155, 53), (149, 92, 41), (39, 27, 64)), ("mage", "hat", "vestments"), ("headwear", "neck")),
     Starter("workbench-rugged-leather-armor", "Workbench — Rugged Leather Armor", "outerwear", "outerwear", _draw_leather_armor, _color_set((100, 59, 35), (59, 38, 29), (157, 112, 63), (178, 166, 137), (66, 45, 35)), ("armor", "leather", "body")),
     Starter("workbench-ratty-shawl", "Workbench — Ratty Shawl", "neck", "neck", _draw_ratty_shawl, _color_set((78, 78, 48), (46, 51, 36), (123, 111, 69), (81, 61, 39), (55, 61, 42)), ("shawl", "ratty", "cloth")),
@@ -335,13 +337,70 @@ def _regions_for(starter: Starter, base_walk: Image.Image) -> Image.Image:
     return regions
 
 
+def _authored_walk_for(starter: Starter, root: Path) -> tuple[Image.Image, bytes]:
+    if starter.authored_walk is None:
+        raise ValueError(f"{starter.component_id} has no authored Walk source")
+    path = root / starter.authored_walk
+    if not path.is_file():
+        raise FileNotFoundError(f"Authored Walk source is missing: {path}")
+    content = path.read_bytes()
+    with Image.open(path) as opened:
+        walk = opened.convert("RGBA")
+    if walk.size != (384, 259):
+        raise ValueError(
+            f"{starter.component_id} authored Walk must be 384x259, got {walk.size}"
+        )
+    if walk.crop((0, FRAME_SIZE, walk.width, walk.height)).getbbox() is not None:
+        raise ValueError(
+            f"{starter.component_id} authored Walk must contain Front-row pixels only"
+        )
+    for frame_index in range(FRAMES):
+        frame = walk.crop(
+            (frame_index * FRAME_SIZE, 0, (frame_index + 1) * FRAME_SIZE, FRAME_SIZE)
+        )
+        if frame.getbbox() is None:
+            raise ValueError(
+                f"{starter.component_id} authored Walk frame {frame_index + 1} is empty"
+            )
+    return walk, content
+
+
 def _manifest(
     starter: Starter,
-    regions_hash: str,
+    regions_hash: str | None,
     walk_hash: str,
     base_hash: str,
+    authored_hash: str | None = None,
 ) -> dict[str, object]:
-    return {
+    authored = starter.authored_walk is not None
+    provenance: dict[str, object] = {
+        "kind": (
+            "human_authored_front_walk_overlay"
+            if authored
+            else "deterministic_semantic_silhouette_starter"
+        ),
+        "generator": "tools/generate_component_silhouette_starters.py",
+        "generatorVersion": 2 if authored else 1,
+        "baseWalkSha256": base_hash,
+    }
+    if authored:
+        provenance["authoredSource"] = starter.authored_walk
+        provenance["authoredSourceSha256"] = authored_hash
+    else:
+        provenance["regionsSha256"] = regions_hash
+    provenance.update(
+        {
+            "walkSha256": walk_hash,
+            "authoredDirections": ["front"],
+            "authoredFrameIndices": [0, 1, 2, 3, 4, 5],
+            "conceptBoard": "workbench/starter-component-concept-board.png",
+            "readiness": (
+                "authored-front-walk" if authored else "rough-editable-silhouette"
+            ),
+        }
+    )
+
+    manifest: dict[str, object] = {
         "schemaVersion": 1,
         "id": starter.component_id,
         "displayName": starter.display_name,
@@ -349,27 +408,25 @@ def _manifest(
         "occupiesSlots": [starter.slot],
         "reservedSlots": list(starter.reserved_slots),
         "layer": starter.layer,
-        "tags": ["workbench", "silhouette_starter", "semantic_regions", *starter.tags],
+        "tags": [
+            "workbench",
+            "authored_pixels" if authored else "silhouette_starter",
+            *([] if authored else ["semantic_regions"]),
+            *starter.tags,
+        ],
         "fit": "standard",
-        "version": 1,
+        "version": 2 if authored else 1,
         "status": "incomplete",
         "developmentVisible": True,
         "animations": {"walk": "walk.png"},
         "coverage": {"walk": ["front"]},
-        "semanticRegions": {"walk": "regions.png"},
-        "provenance": {
-            "kind": "deterministic_semantic_silhouette_starter",
-            "generator": "tools/generate_component_silhouette_starters.py",
-            "generatorVersion": 1,
-            "baseWalkSha256": base_hash,
-            "regionsSha256": regions_hash,
-            "walkSha256": walk_hash,
-            "authoredDirections": ["front"],
-            "authoredFrameIndices": [0, 1, 2, 3, 4, 5],
-            "conceptBoard": "workbench/starter-component-concept-board.png",
-            "readiness": "rough-editable-silhouette",
-        },
     }
+    if starter.alpha_occluded_by_tags:
+        manifest["alphaOccludedByTags"] = list(starter.alpha_occluded_by_tags)
+    if not authored:
+        manifest["semanticRegions"] = {"walk": "regions.png"}
+    manifest["provenance"] = provenance
+    return manifest
 
 
 def _contact_sheet(
@@ -426,36 +483,57 @@ def generate_all(*, check: bool = False) -> None:
     index_entries: list[dict[str, object]] = []
 
     for starter in STARTERS:
-        regions = _regions_for(starter, base_walk)
-        walk = finish_semantic_regions(regions, _palettes(starter))
-        regions_bytes = _png_bytes(regions)
-        walk_bytes = _png_bytes(walk)
         root = PARTS_ROOT / starter.slot / starter.component_id
-        _write_or_check(root / "regions.png", regions_bytes, check)
+        authored_hash: str | None = None
+        if starter.authored_walk is not None:
+            walk, walk_bytes = _authored_walk_for(starter, root)
+            regions_bytes = None
+            authored_hash = _digest_bytes(walk_bytes)
+        else:
+            regions = _regions_for(starter, base_walk)
+            walk = finish_semantic_regions(regions, _palettes(starter))
+            regions_bytes = _png_bytes(regions)
+            walk_bytes = _png_bytes(walk)
+            _write_or_check(root / "regions.png", regions_bytes, check)
         _write_or_check(root / "walk.png", walk_bytes, check)
         _write_or_check(
             root / "manifest.json",
             _json_bytes(
                 _manifest(
                     starter,
-                    _digest_bytes(regions_bytes),
+                    _digest_bytes(regions_bytes) if regions_bytes is not None else None,
                     _digest_bytes(walk_bytes),
                     base_hash,
+                    authored_hash,
                 )
             ),
             check,
         )
         generated.append((starter, walk))
-        index_entries.append(
-            {
-                "id": starter.component_id,
-                "displayName": starter.display_name,
-                "slot": starter.slot,
-                "regions": str((root / "regions.png").relative_to(ASSET_ROOT)).replace("\\", "/"),
-                "preview": str((root / "walk.png").relative_to(ASSET_ROOT)).replace("\\", "/"),
-                "status": "rough-editable-silhouette",
-            }
+        entry = {
+            "id": starter.component_id,
+            "displayName": starter.display_name,
+            "slot": starter.slot,
+        }
+        if starter.authored_walk is not None:
+            entry["source"] = str(
+                (root / starter.authored_walk)
+                .resolve()
+                .relative_to(ASSET_ROOT.resolve())
+            ).replace("\\", "/")
+        else:
+            entry["regions"] = str(
+                (root / "regions.png").relative_to(ASSET_ROOT)
+            ).replace("\\", "/")
+        entry["preview"] = str((root / "walk.png").relative_to(ASSET_ROOT)).replace(
+            "\\", "/"
         )
+        entry["status"] = (
+            "authored-front-walk"
+            if starter.authored_walk is not None
+            else "rough-editable-silhouette"
+        )
+        index_entries.append(entry)
 
     _write_or_check(
         WORKBENCH_ROOT / "component-silhouette-starters.json",
@@ -485,7 +563,7 @@ def generate_all(*, check: bool = False) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Generate editable Front Walk semantic silhouette starters."
+        description="Generate editable Front Walk component starters."
     )
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
@@ -493,7 +571,7 @@ def main() -> int:
         raise FileNotFoundError(f"Workbench concept board is missing: {CONCEPT_BOARD}")
     generate_all(check=args.check)
     action = "Verified" if args.check else "Generated"
-    print(f"{action} {len(STARTERS)} semantic silhouette starters")
+    print(f"{action} {len(STARTERS)} component starters")
     return 0
 
 
