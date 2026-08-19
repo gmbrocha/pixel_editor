@@ -2,9 +2,13 @@ from __future__ import annotations
 
 import math
 from collections import deque
+from dataclasses import dataclass
 
 import numpy as np
 from PIL import Image
+from skimage.measure import label as connected_component_labels
+
+from src.core.palette import lab_distance, rgb_to_lab
 
 
 _PIL_RESAMPLING = {
@@ -120,6 +124,138 @@ def edge_preserving_denoise(
     filtered = weighted / np.maximum(weight_sum, 1e-12)
     result = premultiplied * (1.0 - blend) + filtered * blend
     return _from_premultiplied(result)
+
+
+@dataclass(slots=True)
+class _ComponentGraph:
+    labels: np.ndarray
+    colors: np.ndarray
+    areas: np.ndarray
+    bounds: np.ndarray
+    boundary_pairs: np.ndarray
+    boundary_counts: np.ndarray
+
+
+def cluster_cleanup(image: Image.Image, *, threshold: int = 3) -> Image.Image:
+    """Merge tiny exact-color components into structurally adjacent regions.
+
+    Components use four-way connectivity. All merge choices are derived from
+    the original component graph and rendered together, so output does not
+    depend on component traversal or mutation order.
+    """
+    source = image.convert("RGBA")
+    width, height = source.size
+    if width == 0 or height == 0:
+        return source.copy()
+    threshold = max(1, int(threshold))
+    raw = np.asarray(source, dtype=np.uint8)
+    graph = _build_component_graph(raw)
+    resolved_colors = graph.colors.copy()
+    lab_cache: dict[tuple[int, int, int], tuple[float, float, float]] = {}
+
+    def color_lab(color: tuple[int, int, int, int]) -> tuple[float, float, float]:
+        rgb = color[:3]
+        if rgb not in lab_cache:
+            lab_cache[rgb] = rgb_to_lab(*rgb)
+        return lab_cache[rgb]
+
+    best_targets = np.full(len(graph.colors), -1, dtype=np.int32)
+    best_scores: list[tuple[int, float, int, int] | None] = [None] * len(
+        graph.colors
+    )
+
+    def consider_target(
+        component_id: int, neighbor_id: int, shared_boundary: int
+    ) -> None:
+        color = tuple(int(value) for value in graph.colors[component_id])
+        neighbor_color = tuple(int(value) for value in graph.colors[neighbor_id])
+        if graph.areas[component_id] > threshold or color[3] == 0:
+            return
+        if neighbor_color[3] == 0 or neighbor_color[3] != color[3]:
+            return
+        score = (
+            -shared_boundary,
+            lab_distance(color_lab(color), color_lab(neighbor_color)),
+            -int(graph.areas[neighbor_id]),
+            neighbor_id,
+        )
+        current = best_scores[component_id]
+        if current is None or score < current:
+            best_scores[component_id] = score
+            best_targets[component_id] = neighbor_id
+
+    for pair, boundary_count in zip(
+        graph.boundary_pairs, graph.boundary_counts, strict=True
+    ):
+        first, second = int(pair[0]), int(pair[1])
+        count = int(boundary_count)
+        consider_target(first, second, count)
+        consider_target(second, first, count)
+
+    selected = np.flatnonzero(best_targets >= 0)
+    resolved_colors[selected] = graph.colors[best_targets[selected]]
+    output = resolved_colors[graph.labels]
+    return Image.fromarray(output.astype(np.uint8, copy=False), mode="RGBA")
+
+
+def _build_component_graph(raw: np.ndarray) -> _ComponentGraph:
+    height, width = raw.shape[:2]
+    encoded = (
+        (raw[..., 0].astype(np.uint32) << 24)
+        | (raw[..., 1].astype(np.uint32) << 16)
+        | (raw[..., 2].astype(np.uint32) << 8)
+        | raw[..., 3].astype(np.uint32)
+    )
+    labels = connected_component_labels(
+        encoded, background=-1, connectivity=1
+    ).astype(np.int32) - 1
+    flat_labels = labels.reshape(-1)
+    component_count = int(flat_labels.max()) + 1
+    areas = np.bincount(flat_labels, minlength=component_count)
+
+    pixel_indices = np.arange(flat_labels.size, dtype=np.int64)
+    first_indices = np.full(component_count, flat_labels.size, dtype=np.int64)
+    np.minimum.at(first_indices, flat_labels, pixel_indices)
+    colors = raw.reshape(-1, 4)[first_indices].copy()
+
+    x_coordinates = np.tile(np.arange(width, dtype=np.int32), height)
+    y_coordinates = np.repeat(np.arange(height, dtype=np.int32), width)
+    left = np.full(component_count, width, dtype=np.int32)
+    top = np.full(component_count, height, dtype=np.int32)
+    right = np.full(component_count, -1, dtype=np.int32)
+    bottom = np.full(component_count, -1, dtype=np.int32)
+    np.minimum.at(left, flat_labels, x_coordinates)
+    np.minimum.at(top, flat_labels, y_coordinates)
+    np.maximum.at(right, flat_labels, x_coordinates)
+    np.maximum.at(bottom, flat_labels, y_coordinates)
+    bounds = np.column_stack((left, top, right + 1, bottom + 1))
+
+    boundaries: list[np.ndarray] = []
+    for first, second in (
+        (labels[:, :-1], labels[:, 1:]),
+        (labels[:-1, :], labels[1:, :]),
+    ):
+        different = first != second
+        if np.any(different):
+            pairs = np.column_stack((first[different], second[different]))
+            pairs.sort(axis=1)
+            boundaries.append(pairs)
+    if boundaries:
+        boundary_pairs, boundary_counts = np.unique(
+            np.concatenate(boundaries), axis=0, return_counts=True
+        )
+    else:
+        boundary_pairs = np.empty((0, 2), dtype=np.int32)
+        boundary_counts = np.empty(0, dtype=np.int64)
+
+    return _ComponentGraph(
+        labels=labels,
+        colors=colors,
+        areas=areas,
+        bounds=bounds,
+        boundary_pairs=boundary_pairs,
+        boundary_counts=boundary_counts,
+    )
 
 
 def despeckle(

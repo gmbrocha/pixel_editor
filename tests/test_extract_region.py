@@ -88,6 +88,23 @@ def test_preview_and_direct_cleanup_use_same_processing_path() -> None:
     ).tobytes()
 
 
+def test_preview_cluster_cleanup_matches_direct_processing() -> None:
+    background = (40, 50, 60, 255)
+    image = Image.new("RGBA", (5, 5), background)
+    image.putpixel((2, 2), (210, 200, 190, 255))
+    settings = ExtractSettings(
+        fit_mode="Actual",
+        post_process_mode="Cluster Cleanup",
+        cluster_cleanup_threshold=1,
+    )
+
+    preview = extract_to_preview(image, _full_selection(5, 5), settings)
+
+    from src.core.image_processing import cluster_cleanup
+
+    assert preview.tobytes() == cluster_cleanup(image, threshold=1).tobytes()
+
+
 def test_extract_preview_never_runs_an_automatic_palette_quantization_pass() -> None:
     image = Image.new("RGBA", (16, 16))
     image.putdata(

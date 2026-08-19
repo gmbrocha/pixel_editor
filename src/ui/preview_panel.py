@@ -163,6 +163,7 @@ class PreviewPanel(QWidget):
                 "Small Gaussian Blur",
                 "Edge-Preserving Denoise",
                 "Despeckle",
+                "Cluster Cleanup",
             ]
         )
         self.post_process_combo.setToolTip(
@@ -197,6 +198,13 @@ class PreviewPanel(QWidget):
         self.despeckle_tolerance_spin.setValue(24)
         self.despeckle_tolerance_spin.setToolTip(
             "Maximum RGBA distance used to group a speck or coherent surroundings"
+        )
+        self.cluster_cleanup_threshold_spin = QSpinBox()
+        self.cluster_cleanup_threshold_spin.setRange(1, 32)
+        self.cluster_cleanup_threshold_spin.setValue(3)
+        self.cluster_cleanup_threshold_spin.setSuffix(" px")
+        self.cluster_cleanup_threshold_spin.setToolTip(
+            "Exact-color components at or below this area are candidates for merging"
         )
         self.reset_processing_button = QPushButton("Reset Processing")
         self.reset_processing_button.setToolTip(
@@ -244,6 +252,7 @@ class PreviewPanel(QWidget):
         self.denoise_strength_label = QLabel("Strength")
         self.despeckle_size_label = QLabel("Maximum speck size")
         self.despeckle_tolerance_label = QLabel("Color tolerance")
+        self.cluster_cleanup_threshold_label = QLabel("Cleanup threshold")
         process_controls_layout.addWidget(self.denoise_radius_label, 0, 0)
         process_controls_layout.addWidget(self.denoise_radius_spin, 0, 1)
         process_controls_layout.addWidget(self.denoise_strength_label, 0, 2)
@@ -252,7 +261,9 @@ class PreviewPanel(QWidget):
         process_controls_layout.addWidget(self.despeckle_max_size_spin, 1, 1)
         process_controls_layout.addWidget(self.despeckle_tolerance_label, 1, 2)
         process_controls_layout.addWidget(self.despeckle_tolerance_spin, 1, 3)
-        process_controls_layout.addWidget(self.reset_processing_button, 2, 0, 1, 4)
+        process_controls_layout.addWidget(self.cluster_cleanup_threshold_label, 2, 0)
+        process_controls_layout.addWidget(self.cluster_cleanup_threshold_spin, 2, 1)
+        process_controls_layout.addWidget(self.reset_processing_button, 3, 0, 1, 4)
         output_layout.addWidget(self.process_controls_widget)
 
         layout = QVBoxLayout(self)
@@ -271,6 +282,7 @@ class PreviewPanel(QWidget):
         self.denoise_strength_spin.valueChanged.connect(self._emit_settings)
         self.despeckle_max_size_spin.valueChanged.connect(self._emit_settings)
         self.despeckle_tolerance_spin.valueChanged.connect(self._emit_settings)
+        self.cluster_cleanup_threshold_spin.valueChanged.connect(self._emit_settings)
         self.reset_processing_button.clicked.connect(self._reset_processing)
         self._update_resample_tooltip()
         self._update_process_controls()
@@ -334,6 +346,7 @@ class PreviewPanel(QWidget):
             denoise_strength=self.denoise_strength_spin.value(),
             despeckle_max_size=self.despeckle_max_size_spin.value(),
             despeckle_tolerance=self.despeckle_tolerance_spin.value(),
+            cluster_cleanup_threshold=self.cluster_cleanup_threshold_spin.value(),
         )
 
     def _emit_settings(self) -> None:
@@ -380,6 +393,7 @@ class PreviewPanel(QWidget):
         mode = self.post_process_combo.currentText()
         denoise = mode == "Edge-Preserving Denoise"
         despeckle_mode = mode == "Despeckle"
+        cluster_cleanup_mode = mode == "Cluster Cleanup"
         for widget in (
             self.denoise_radius_label,
             self.denoise_radius_spin,
@@ -394,13 +408,21 @@ class PreviewPanel(QWidget):
             self.despeckle_tolerance_spin,
         ):
             widget.setVisible(despeckle_mode)
-        self.reset_processing_button.setVisible(denoise or despeckle_mode)
+        for widget in (
+            self.cluster_cleanup_threshold_label,
+            self.cluster_cleanup_threshold_spin,
+        ):
+            widget.setVisible(cluster_cleanup_mode)
+        self.reset_processing_button.setVisible(
+            denoise or despeckle_mode or cluster_cleanup_mode
+        )
 
     def _reset_processing(self) -> None:
         self.denoise_radius_spin.setValue(1)
         self.denoise_strength_spin.setValue(35)
         self.despeckle_max_size_spin.setValue(1)
         self.despeckle_tolerance_spin.setValue(24)
+        self.cluster_cleanup_threshold_spin.setValue(3)
         self.post_process_combo.setCurrentText("None")
         self._update_process_controls()
         self._emit_settings()

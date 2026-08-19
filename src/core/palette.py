@@ -450,7 +450,7 @@ def _build_perceptual_clusters(
 ) -> list[_ColorCluster]:
     bins: dict[tuple[int, int, int], dict[str, object]] = {}
     for (red, green, blue), count in rgb_counts.items():
-        lab = _rgb_to_lab(red, green, blue)
+        lab = rgb_to_lab(red, green, blue)
         key = (
             int(math.floor(lab[0] / bin_size)),
             int(math.floor((lab[1] + 128.0) / bin_size)),
@@ -610,7 +610,7 @@ def _select_spread_clusters(
                 family_rejections_this_pass += 1
                 continue
             nearest_distance = min(
-                _lab_distance(cluster.lab, chosen.lab)
+                lab_distance(cluster.lab, chosen.lab)
                 for chosen in selected
             )
             if nearest_distance < stats.final_min_lab_distance:
@@ -939,7 +939,7 @@ def _posterize_lab_lightness(
     blue: int,
     settings: PaletteExtractionSettings,
 ) -> tuple[int, int, int]:
-    lab_l, lab_a, lab_b = _rgb_to_lab(red, green, blue)
+    lab_l, lab_a, lab_b = rgb_to_lab(red, green, blue)
     levels = _effective_levels(
         settings.posterize_lab_lightness_levels,
         settings.posterize_strength,
@@ -955,7 +955,7 @@ def _posterize_perceptual(
     blue: int,
     settings: PaletteExtractionSettings,
 ) -> tuple[int, int, int]:
-    lab_l, lab_a, lab_b = _rgb_to_lab(red, green, blue)
+    lab_l, lab_a, lab_b = rgb_to_lab(red, green, blue)
     lightness_levels = _effective_levels(
         settings.posterize_lab_lightness_levels,
         settings.posterize_strength,
@@ -982,10 +982,10 @@ def _far_enough(
     selected: list[_ColorCluster],
     min_distance: float,
 ) -> bool:
-    return all(_lab_distance(cluster.lab, chosen.lab) >= min_distance for chosen in selected)
+    return all(lab_distance(cluster.lab, chosen.lab) >= min_distance for chosen in selected)
 
 
-def _lab_distance(
+def lab_distance(
     a: tuple[float, float, float],
     b: tuple[float, float, float],
 ) -> float:
@@ -1003,7 +1003,7 @@ def _average_lab_distance(labs: list[tuple[float, float, float]]) -> float:
     pairs = 0
     for i, lab in enumerate(labs):
         for other in labs[i + 1:]:
-            total += _lab_distance(lab, other)
+            total += lab_distance(lab, other)
             pairs += 1
     return total / pairs if pairs else 0.0
 
@@ -1018,7 +1018,7 @@ def _clear_fully_transparent_pixels(image: Image.Image) -> Image.Image:
     return output
 
 
-def _rgb_to_lab(r: int, g: int, b: int) -> tuple[float, float, float]:
+def rgb_to_lab(r: int, g: int, b: int) -> tuple[float, float, float]:
     """Convert an sRGB triplet (0-255) to CIELAB (D65 illuminant).
 
     LAB separates lightness from chroma and places the red/green axis on `a`
@@ -1073,7 +1073,7 @@ def _nearest_palette_color_lab(
     palette_lab: list[tuple[float, float, float]],
     palette: list[Color],
 ) -> Color:
-    plab = _rgb_to_lab(rgb[0], rgb[1], rgb[2])
+    plab = rgb_to_lab(rgb[0], rgb[1], rgb[2])
     best = min(
         range(len(palette_lab)),
         key=lambda i: (
@@ -1102,7 +1102,7 @@ def quantize_to_palette(
     # Perceptual (CIELAB) nearest-neighbor for non-dithered output.
     # Pre-compute LAB for every palette entry, then build a unique-color
     # lookup table so each distinct pixel color is only converted once.
-    palette_lab = [_rgb_to_lab(c[0], c[1], c[2]) for c in palette]
+    palette_lab = [rgb_to_lab(c[0], c[1], c[2]) for c in palette]
 
     raw_pixels: list[tuple[int, int, int, int]] = list(source.getdata())  # type: ignore[arg-type]
     unique_rgb: set[tuple[int, int, int]] = {p[:3] for p in raw_pixels if p[3] > 0}

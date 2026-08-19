@@ -3,6 +3,7 @@ from PIL import Image
 
 from src.core.image_processing import (
     area_resize,
+    cluster_cleanup,
     despeckle,
     edge_preserving_denoise,
     lanczos3_resize,
@@ -186,3 +187,118 @@ def test_despeckle_clears_hidden_rgb_in_transparent_regions() -> None:
     image.putpixel((1, 1), (255, 0, 0, 255))
     result = despeckle(image, max_speck_size=1)
     assert all(pixel[:3] == (0, 0, 0) for pixel in result.getdata() if pixel[3] == 0)
+
+
+def test_cluster_cleanup_merges_an_isolated_pixel() -> None:
+    background = (20, 30, 40, 255)
+    image = Image.new("RGBA", (3, 3), background)
+    image.putpixel((1, 1), (200, 190, 180, 255))
+
+    result = cluster_cleanup(image, threshold=1)
+
+    assert result.getpixel((1, 1)) == background
+
+
+def test_cluster_cleanup_prioritizes_shared_boundary_over_color_distance() -> None:
+    surrounding = (10, 10, 10, 255)
+    candidate = (102, 102, 102, 255)
+    close_neighbor = (100, 100, 100, 255)
+    image = Image.new("RGBA", (3, 3), surrounding)
+    image.putpixel((1, 1), candidate)
+    image.putpixel((2, 1), close_neighbor)
+    image.putpixel((2, 2), close_neighbor)
+
+    result = cluster_cleanup(image, threshold=1)
+
+    assert result.getpixel((1, 1)) == surrounding
+
+
+def test_cluster_cleanup_uses_neighbor_area_after_a_distance_tie(monkeypatch) -> None:
+    small = (220, 40, 40, 255)
+    candidate = (100, 100, 100, 255)
+    large = (40, 40, 220, 255)
+    transparent = (0, 0, 0, 0)
+    image = Image.new("RGBA", (3, 3), transparent)
+    image.putdata(
+        [
+            large,
+            candidate,
+            small,
+            large,
+            transparent,
+            small,
+            large,
+            large,
+            small,
+        ]
+    )
+    monkeypatch.setattr("src.core.image_processing.lab_distance", lambda *_args: 0.0)
+
+    result = cluster_cleanup(image, threshold=1)
+
+    assert result.getpixel((1, 0)) == large
+
+
+def test_cluster_cleanup_uses_row_major_id_for_a_complete_tie(monkeypatch) -> None:
+    first = (220, 40, 40, 255)
+    candidate = (100, 100, 100, 255)
+    last = (40, 40, 220, 255)
+    image = Image.new("RGBA", (3, 1))
+    image.putdata([first, candidate, last])
+    monkeypatch.setattr("src.core.image_processing.lab_distance", lambda *_args: 0.0)
+
+    result = cluster_cleanup(image, threshold=1)
+
+    assert result.getpixel((1, 0)) == first
+
+
+def test_cluster_cleanup_preserves_large_and_diagonally_separate_components() -> None:
+    background = (15, 25, 35, 255)
+    accent = (210, 180, 50, 255)
+    large = Image.new("RGBA", (4, 4), background)
+    large.putpixel((1, 1), accent)
+    large.putpixel((1, 2), accent)
+    assert cluster_cleanup(large, threshold=1).tobytes() == large.tobytes()
+
+    diagonal = Image.new("RGBA", (4, 4), background)
+    diagonal.putpixel((1, 1), accent)
+    diagonal.putpixel((2, 2), accent)
+    result = cluster_cleanup(diagonal, threshold=1)
+    assert result.getpixel((1, 1)) == background
+    assert result.getpixel((2, 2)) == background
+
+
+def test_cluster_cleanup_preserves_transparency_and_opaque_edge_islands() -> None:
+    transparent = (90, 80, 70, 0)
+    opaque = (200, 30, 20, 255)
+    image = Image.new("RGBA", (3, 3), transparent)
+    image.putpixel((1, 1), opaque)
+
+    result = cluster_cleanup(image, threshold=1)
+
+    assert result.getpixel((1, 1)) == opaque
+    assert result.getpixel((0, 0)) == transparent
+
+    hole = Image.new("RGBA", (3, 3), opaque)
+    hole.putpixel((1, 1), transparent)
+    assert cluster_cleanup(hole, threshold=1).getpixel((1, 1)) == transparent
+
+
+def test_cluster_cleanup_preserves_palette_dimensions_and_determinism() -> None:
+    colors = [
+        (10, 20, 30, 255),
+        (40, 50, 60, 255),
+        (70, 80, 90, 128),
+        (0, 0, 0, 0),
+    ]
+    image = Image.new("RGBA", (5, 4))
+    image.putdata([colors[(x + y * 2) % len(colors)] for y in range(4) for x in range(5)])
+
+    first = cluster_cleanup(image, threshold=3)
+    second = cluster_cleanup(image, threshold=3)
+
+    input_colors = {image.getpixel((x, y)) for y in range(4) for x in range(5)}
+    output_colors = {first.getpixel((x, y)) for y in range(4) for x in range(5)}
+    assert first.size == image.size
+    assert output_colors <= input_colors
+    assert first.tobytes() == second.tobytes()

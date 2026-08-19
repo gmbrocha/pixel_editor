@@ -14,6 +14,8 @@ Animation Studio now imports animated GIFs directly. It composites each frame on
 
 Character Forge now uses the latest supplied authoritative Walk and Run artwork. Walk is preserved byte-for-byte and every direction uses a normal six-frame forward loop. Run uses six Front frames, eight Back frames, six Right frames, and six Left frames in a padded 512x256 linked sheet; Front and Back loop forward, Right starts at frame 6 and ping-pongs backward, and Left starts at frame 1 and ping-pongs forward. Per-direction frame counts and playback sequences are catalog metadata, so source pixels are never duplicated or reordered.
 
+The main Preview Process workflow now includes Cluster Cleanup, a deterministic four-connected component pass that absorbs exact-color islands at or below a configurable threshold into structurally adjacent same-alpha regions. It preserves dimensions, transparency boundaries, hard pixel edges, and the input RGBA palette while using shared boundary, Lab similarity, neighbor area, and row-major order for stable merge selection.
+
 ## Blockers
 None. The ten immutable-prompt Idle candidates are available for human review and cleanup; the broader bootstrap queue remains intentionally held.
 
@@ -44,6 +46,8 @@ Update this document after commits or other git state changes made during agent 
 Review `assets/character-forge/workbench/component-silhouette-starters-all-frames.png`, choose the strongest starter, and edit its linked `regions.png` using the exact semantic markers. The pickup guide recommends beginning with Hair, either Pauldron set, Ratty Shawl, Orcish Armor, or Cult Mask. Pivot component production toward reusable hand-authored topology families with authoritative-base underlays, animation-aware editing, linked ramps, and deterministic variants. Retain generated candidates as optional concept/reference material. Clean and palette-reduce the short wool travel coat and quilted gambeson Idle candidates against the authoritative base before deciding whether either design warrants controlled Walk and Run follow-up jobs. Do not run the full remaining bootstrap queue yet.
 
 ## Recent Activity
+2026-08-19: Added Cluster Cleanup to the live Preview Process workflow with a 1–32 pixel threshold, array-backed exact-RGBA component labeling, deterministic boundary-first merging, conservative same-alpha transparency handling, reusable public Lab color helpers, focused processing documentation, and regression coverage; a 1448x1086 quantized-style benchmark completes in about 0.23 seconds and the full suite passes with 198 tests.
+
 2026-08-19: Fixed Animation Studio onion-skin compositing so neighboring frames render above the transparency checker, added a one-shot Drag Select Colors palette workflow that restores the prior tool, and lifted Preview output controls to each selected region's native dimensions for resize-free filtering; the full suite passes with 189 tests.
 
 2026-08-19: Fast-forwarded `main` from `37512c8` to `beb9fe5`, integrating and publishing `agent/upgrade-animation-and-editor-workflows`.

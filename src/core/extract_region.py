@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
 from src.core.image_processing import (
+    cluster_cleanup,
     despeckle,
     edge_preserving_denoise,
     resize_image,
@@ -31,6 +32,7 @@ class ExtractSettings:
     denoise_strength: int = 35
     despeckle_max_size: int = 1
     despeckle_tolerance: int = 24
+    cluster_cleanup_threshold: int = 3
 
 
 def build_selection_mask(
@@ -132,5 +134,10 @@ def _apply_post_process(image: Image.Image, settings: ExtractSettings) -> Image.
             image,
             max_speck_size=settings.despeckle_max_size,
             color_tolerance=settings.despeckle_tolerance,
+        )
+    if mode == "Cluster Cleanup":
+        return cluster_cleanup(
+            image,
+            threshold=settings.cluster_cleanup_threshold,
         )
     return image

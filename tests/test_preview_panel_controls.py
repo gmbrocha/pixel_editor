@@ -21,9 +21,11 @@ def test_new_resize_and_cleanup_controls_have_expected_names_and_defaults() -> N
     ]
     assert panel.post_process_combo.findText("Edge-Preserving Denoise") >= 0
     assert panel.post_process_combo.findText("Despeckle") >= 0
+    assert panel.post_process_combo.findText("Cluster Cleanup") >= 0
     assert panel.denoise_radius_spin.value() == 1
     assert panel.denoise_strength_spin.value() == 35
     assert panel.despeckle_max_size_spin.value() == 1
+    assert panel.cluster_cleanup_threshold_spin.value() == 3
     assert not hasattr(panel, "quantize_checkbox")
     assert not hasattr(panel, "reference_palette_label")
     assert not hasattr(panel, "size_label")
@@ -86,5 +88,35 @@ def test_large_source_dimensions_are_available_for_processing_without_resize() -
     assert settings.height == 3000
     assert settings.post_process_mode == "Small Gaussian Blur"
 
+    panel.deleteLater()
+    application.processEvents()
+
+
+def test_cluster_cleanup_control_is_live_visible_and_resettable() -> None:
+    application = QApplication.instance() or QApplication([])
+    panel = PreviewPanel()
+    emitted = []
+    panel.settings_changed.connect(emitted.append)
+
+    panel.post_process_combo.setCurrentText("Cluster Cleanup")
+
+    assert panel.cluster_cleanup_threshold_label.isVisible() is False
+    panel.show()
+    application.processEvents()
+    assert panel.cluster_cleanup_threshold_label.isVisible() is True
+    assert panel.cluster_cleanup_threshold_spin.isVisible() is True
+    assert panel.denoise_radius_spin.isVisible() is False
+    assert panel.despeckle_max_size_spin.isVisible() is False
+
+    panel.cluster_cleanup_threshold_spin.setValue(7)
+    assert emitted[-1].post_process_mode == "Cluster Cleanup"
+    assert emitted[-1].cluster_cleanup_threshold == 7
+
+    panel.reset_processing_button.click()
+    assert panel.post_process_combo.currentText() == "None"
+    assert panel.cluster_cleanup_threshold_spin.value() == 3
+    assert panel.cluster_cleanup_threshold_spin.isVisible() is False
+
+    panel.close()
     panel.deleteLater()
     application.processEvents()
