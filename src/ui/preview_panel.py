@@ -292,6 +292,8 @@ class PreviewPanel(QWidget):
                 "Select a source region before applying an integer downscale"
             )
             return
+        self.width_spin.setMaximum(max(self.width_spin.maximum(), size[0]))
+        self.height_spin.setMaximum(max(self.height_spin.maximum(), size[1]))
         self.downscale_combo.setToolTip(
             f"Selected source: {size[0]}×{size[1]} px. Choose a divisor to set W and H."
         )

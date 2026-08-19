@@ -421,6 +421,59 @@ def test_animation_editor_constructs_and_syncs_linked_frame_edits() -> None:
     application.processEvents()
 
 
+def test_animation_editor_drag_select_colors_is_one_shot_and_restores_tool() -> None:
+    application = QApplication.instance() or QApplication([])
+    window = AnimationEditorWindow()
+    red = (220, 20, 30, 255)
+    green = (20, 200, 40, 255)
+    blue = (30, 40, 220, 180)
+    window._frame_doc.image.putpixel((0, 0), red)
+    window._frame_doc.image.putpixel((1, 0), green)
+    window._frame_doc.image.putpixel((0, 1), (0, 0, 0, 0))
+    window._frame_doc.image.putpixel((1, 1), blue)
+    window._project.palette = [(1, 2, 3, 255)]
+    window._line_radio.setChecked(True)
+    window._draw_selection_check.setChecked(True)
+    window._frame_canvas.show()
+    application.processEvents()
+
+    assert window._color_button.text() == "Pick Color"
+    assert window._drag_palette_button.text() == "Drag Select Colors"
+    window._drag_palette_button.click()
+
+    assert window._drag_palette_active is True
+    assert window._drag_palette_button.isEnabled() is False
+    assert window._select_radio.isChecked() is True
+    assert window._draw_selection_check.isChecked() is False
+
+    margin = window._frame_canvas._view_margin
+    zoom = window._frame_canvas._zoom
+
+    def pixel_center(x: int, y: int) -> QPoint:
+        return QPoint(margin + x * zoom + zoom // 2, margin + y * zoom + zoom // 2)
+
+    QTest.mousePress(
+        window._frame_canvas, Qt.MouseButton.LeftButton, pos=pixel_center(0, 0)
+    )
+    QTest.mouseMove(window._frame_canvas, pixel_center(1, 1))
+    QTest.mouseRelease(
+        window._frame_canvas, Qt.MouseButton.LeftButton, pos=pixel_center(1, 1)
+    )
+    application.processEvents()
+
+    assert window._project.palette == [red, green, blue]
+    assert window._frame_doc.palette == [red, green, blue]
+    assert window._drag_palette_active is False
+    assert window._drag_palette_button.isEnabled() is True
+    assert window._line_radio.isChecked() is True
+    assert window._draw_selection_check.isChecked() is True
+    assert window._frame_doc.selection_rect is None
+    assert "Loaded 3 colors" in window.statusBar().currentMessage()
+    window._dirty = False
+    window.close()
+    application.processEvents()
+
+
 def test_animation_frame_editor_undoes_one_completed_brush_action_at_a_time() -> None:
     application = QApplication.instance() or QApplication([])
     window = AnimationEditorWindow()

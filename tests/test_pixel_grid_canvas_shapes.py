@@ -101,6 +101,29 @@ def test_pixel_measurement_uses_euclidean_center_distance() -> None:
     assert PixelGridCanvas._format_pixel_distance(math.sqrt(13)) == "3.606 px"
 
 
+def test_onion_skin_renders_above_transparency_checker() -> None:
+    application = QApplication.instance() or QApplication([])
+    canvas = PixelGridCanvas()
+    canvas.set_document(PixelDocument(image=Image.new("RGBA", (1, 1))))
+    canvas.set_onion_skin(
+        prev_image=Image.new("RGBA", (1, 1), (255, 0, 0, 255)),
+        opacity=0.5,
+    )
+    canvas.show()
+    application.processEvents()
+
+    rendered = canvas.grab().toImage()
+    color = rendered.pixelColor(
+        canvas._view_margin + canvas._zoom // 2,
+        canvas._view_margin + canvas._zoom // 2,
+    )
+
+    assert color.red() > color.green() * 3
+    assert color.red() > color.blue() * 3
+    canvas.close()
+    application.processEvents()
+
+
 def test_measurement_click_move_click_and_right_click_clear() -> None:
     application = QApplication.instance() or QApplication([])
     canvas = PixelGridCanvas()

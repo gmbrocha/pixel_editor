@@ -52,7 +52,7 @@ from src.core.animation_document import (
     track_to_sheet,
 )
 from src.core.image_io import load_image, save_image
-from src.core.palette import add_color_to_palette
+from src.core.palette import add_color_to_palette, all_colors_from_image
 from src.core.pixel_document import PixelDocument
 from src.ui.animation_source_canvas import AnimationSourceCanvas
 from src.ui.frame_strip_widget import FrameStripWidget
@@ -86,6 +86,9 @@ class AnimationEditorWindow(QMainWindow):
         self._updating_controls = False
         self._pending_frame_edit = False
         self._frame_image_cache: dict[tuple[str, int], Image.Image] = {}
+        self._drag_palette_active = False
+        self._drag_palette_previous_radio: QRadioButton | None = None
+        self._drag_palette_previous_draw_selection = False
 
         self._play_timer = QTimer(self)
         self._play_timer.setSingleShot(True)
@@ -175,7 +178,8 @@ class AnimationEditorWindow(QMainWindow):
         self._undo_last_action_button.setToolTip(
             "Undo one completed frame-editing action. Shortcut: Ctrl+Z"
         )
-        self._color_button = QPushButton("Paint Color")
+        self._color_button = QPushButton("Pick Color")
+        self._drag_palette_button = QPushButton("Drag Select Colors")
         self._transparent_button = QPushButton("Transparent")
 
         self._onion_check = QCheckBox("Onion skin")
@@ -348,6 +352,10 @@ class AnimationEditorWindow(QMainWindow):
 
         paint_row = QHBoxLayout()
         paint_row.addWidget(self._color_button)
+        palette_choice_label = QLabel("or")
+        palette_choice_label.setStyleSheet("color: #999;")
+        paint_row.addWidget(palette_choice_label)
+        paint_row.addWidget(self._drag_palette_button)
         paint_row.addWidget(self._transparent_button)
         paint_row.addWidget(self._copy_stamp_button)
         paint_row.addWidget(self._flip_stamp_h_button)
@@ -512,6 +520,9 @@ class AnimationEditorWindow(QMainWindow):
         self._frame_canvas.edit_started.connect(self._on_frame_edit_started)
         self._frame_canvas.edit_finished.connect(self._on_frame_edit_finished)
         self._frame_canvas.selection_changed.connect(self.statusBar().showMessage)
+        self._frame_canvas.selection_finished.connect(
+            self._finish_drag_palette_selection
+        )
         self._frame_canvas.status_changed.connect(self.statusBar().showMessage)
         self._frame_canvas.point_clicked.connect(self._on_frame_point_clicked)
         self._clean_stroke_check.toggled.connect(
@@ -533,6 +544,7 @@ class AnimationEditorWindow(QMainWindow):
         )
         self._undo_last_action_button.clicked.connect(self._undo)
         self._color_button.clicked.connect(self._pick_color)
+        self._drag_palette_button.clicked.connect(self._begin_drag_palette_selection)
         self._transparent_button.clicked.connect(
             lambda: self._erase_radio.setChecked(True)
         )
@@ -1173,6 +1185,74 @@ class AnimationEditorWindow(QMainWindow):
             )
             self._refresh_palette()
             self._set_dirty(True)
+
+    def _begin_drag_palette_selection(self) -> None:
+        if self._drag_palette_active:
+            return
+        self._drag_palette_previous_radio = next(
+            (
+                radio
+                for radio in (
+                    self._paint_radio,
+                    self._erase_radio,
+                    self._picker_radio,
+                    self._fill_radio,
+                    self._line_radio,
+                    self._ellipse_radio,
+                    self._select_radio,
+                    self._stamp_radio,
+                    self._anchor_radio,
+                    self._pivot_radio,
+                )
+                if radio.isChecked()
+            ),
+            self._paint_radio,
+        )
+        self._drag_palette_previous_draw_selection = (
+            self._draw_selection_check.isChecked()
+        )
+        self._drag_palette_active = True
+        self._drag_palette_button.setEnabled(False)
+        self._frame_doc.clear_selection()
+        self._frame_canvas.update()
+        self._draw_selection_check.setChecked(False)
+        self._select_radio.setChecked(True)
+        self.statusBar().showMessage(
+            "Drag a rectangle on the current frame to load its visible colors"
+        )
+
+    def _finish_drag_palette_selection(
+        self, left: int, top: int, right: int, bottom: int
+    ) -> None:
+        if not self._drag_palette_active:
+            return
+        region = self._frame_doc.image.crop((left, top, right + 1, bottom + 1))
+        extracted = all_colors_from_image(region)
+        palette = extracted[:64]
+        self._project.palette = palette
+        self._frame_doc.palette = list(palette)
+        self._refresh_palette()
+        self._set_dirty(True)
+
+        previous_radio = self._drag_palette_previous_radio
+        restore_draw_selection = self._drag_palette_previous_draw_selection
+        self._drag_palette_active = False
+        self._drag_palette_previous_radio = None
+        self._drag_palette_button.setEnabled(True)
+        self._frame_doc.clear_selection()
+        self._frame_canvas.update()
+        if previous_radio is not None:
+            previous_radio.setChecked(True)
+        self._draw_selection_check.setChecked(restore_draw_selection)
+
+        width = right - left + 1
+        height = bottom - top + 1
+        detail = (
+            f"Loaded {len(palette)} colors from the selected {width}x{height} region"
+        )
+        if len(extracted) > len(palette):
+            detail += f" ({len(extracted)} found; palette limited to 64)"
+        self.statusBar().showMessage(detail)
 
     def _set_color(self, color: tuple[int, int, int, int]) -> None:
         self._selected_color = tuple(color)

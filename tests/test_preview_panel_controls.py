@@ -68,3 +68,23 @@ def test_integer_downscale_preset_sets_both_dimensions_from_source() -> None:
 
     panel.deleteLater()
     application.processEvents()
+
+
+def test_large_source_dimensions_are_available_for_processing_without_resize() -> None:
+    application = QApplication.instance() or QApplication([])
+    panel = PreviewPanel()
+
+    panel.set_source_size((5000, 3000))
+    panel.width_spin.setValue(5000)
+    panel.height_spin.setValue(3000)
+    panel.post_process_combo.setCurrentText("Small Gaussian Blur")
+
+    settings = panel.settings()
+    assert panel.width_spin.maximum() >= 5000
+    assert panel.height_spin.maximum() >= 3000
+    assert settings.width == 5000
+    assert settings.height == 3000
+    assert settings.post_process_mode == "Small Gaussian Blur"
+
+    panel.deleteLater()
+    application.processEvents()

@@ -46,6 +46,7 @@ class IsometricGuide:
 class PixelGridCanvas(QWidget):
     image_changed = Signal()
     selection_changed = Signal(str)
+    selection_finished = Signal(int, int, int, int)
     status_changed = Signal(str)
     zoom_changed = Signal(int)
     flood_erase_requested = Signal(int, int)
@@ -577,13 +578,6 @@ class PixelGridCanvas(QWidget):
             painter.setOpacity(1.0)
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
 
-        self._draw_onion_layer_fast(
-            painter, self._onion_prev, visible_source, self._onion_opacity
-        )
-        self._draw_onion_layer_fast(
-            painter, self._onion_next, visible_source, self._onion_opacity * 0.6
-        )
-
         has_ref = self._reference_image is not None
 
         if not has_ref:
@@ -591,6 +585,13 @@ class PixelGridCanvas(QWidget):
                 painter.fillRect(visible_target, self._transparent_color)
             else:
                 self._draw_checker(painter, visible_target)
+
+        self._draw_onion_layer_fast(
+            painter, self._onion_prev, visible_source, self._onion_opacity
+        )
+        self._draw_onion_layer_fast(
+            painter, self._onion_next, visible_source, self._onion_opacity * 0.6
+        )
 
         painter.drawImage(visible_target, render_image, visible_source)
 
@@ -943,6 +944,15 @@ class PixelGridCanvas(QWidget):
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         if self._measurement_enabled and event.button() != Qt.MouseButton.MiddleButton:
             return
+        completed_selection: tuple[int, int, int, int] | None = None
+        if (
+            event.button() == Qt.MouseButton.LeftButton
+            and self._mode == "select"
+            and self._drag_rect_start is not None
+            and self._document is not None
+            and self._document.selection_rect is not None
+        ):
+            completed_selection = normalize_rect(self._document.selection_rect)
         if (
             self._mode in {"paint", "fill", "line", "ellipse"}
             and self._active_paint_button is not None
@@ -1004,6 +1014,8 @@ class PixelGridCanvas(QWidget):
                 self._update_hover_cursor(
                     self._event_to_pixel(event.position().toPoint())
                 )
+            if completed_selection is not None:
+                self.selection_finished.emit(*completed_selection)
         if event.button() == Qt.MouseButton.MiddleButton:
             self._mid_drag = False
             self._mid_drag_origin = None
