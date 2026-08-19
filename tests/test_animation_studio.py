@@ -10,12 +10,13 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PIL import Image
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QFileDialog
 
 from src.core.animation_document import (
     AnchorPoint,
     AnimationProjectError,
     FrameSequenceSpec,
+    create_animation_project_from_gif,
     create_animation_project_from_sheet,
     export_project_gif,
     export_project_metadata,
@@ -36,6 +37,130 @@ def _coordinate_sheet(width: int = 16, height: int = 16) -> Image.Image:
         for x in range(width):
             image.putpixel((x, y), (x, y, (x + y) % 256, 255))
     return image
+
+
+def _write_test_gif(path: Path, *, loop: int | None = 0) -> list[Image.Image]:
+    frames = [
+        Image.new("RGBA", (3, 2), color)
+        for color in (
+            (220, 20, 30, 255),
+            (20, 200, 40, 255),
+            (30, 40, 220, 255),
+        )
+    ]
+    save_options = {
+        "save_all": True,
+        "append_images": frames[1:],
+        "duration": [100, 200, 300],
+        "disposal": 2,
+    }
+    if loop is not None:
+        save_options["loop"] = loop
+    frames[0].save(path, **save_options)
+    return frames
+
+
+def test_gif_import_builds_an_editable_horizontal_sheet_and_preserves_timing(
+    tmp_path,
+) -> None:
+    path = tmp_path / "spell.gif"
+    expected_frames = _write_test_gif(path)
+
+    project = create_animation_project_from_gif(path, palette=[(12, 34, 56, 255)])
+
+    assert project.name == "spell"
+    assert project.source_path == str(path)
+    assert project.sheet_size == (9, 2)
+    assert (project.frame_width, project.frame_height) == (3, 2)
+    assert project.fps == 10
+    assert project.playback_mode == "loop"
+    assert project.palette == [(12, 34, 56, 255)]
+    assert len(project.tracks) == 1
+    track = project.tracks[0]
+    assert track.name == "Animation"
+    assert track.spec == FrameSequenceSpec(0, 0, 3, 2, 3, 3, 0)
+    assert [frame.duration_ticks for frame in track.frames] == [1, 2, 3]
+    for index, expected in enumerate(expected_frames):
+        assert project.frame_image(track.id, index).tobytes() == expected.tobytes()
+    assert project.original_sheet.tobytes() == project.working_sheet.tobytes()
+
+    edited = project.frame_image(track.id, 1)
+    edited.putpixel((1, 1), (1, 2, 3, 4))
+    project.commit_frame_image(track.id, 1, edited)
+    assert project.frame_image(track.id, 1).getpixel((1, 1)) == (1, 2, 3, 4)
+    assert project.frame_image(track.id, 1, original=True).getpixel((1, 1)) != (
+        1,
+        2,
+        3,
+        4,
+    )
+
+    archive = tmp_path / "spell.pfa"
+    save_animation_project(project, archive)
+    reopened = load_animation_project(archive)
+    assert reopened.original_sheet.tobytes() == project.original_sheet.tobytes()
+    assert reopened.working_sheet.tobytes() == project.working_sheet.tobytes()
+    assert reopened.fps == 10
+    assert reopened.playback_mode == "loop"
+    assert [frame.duration_ticks for frame in reopened.tracks[0].frames] == [1, 2, 3]
+
+
+def test_gif_import_without_loop_metadata_uses_once_playback(tmp_path) -> None:
+    path = tmp_path / "once.gif"
+    _write_test_gif(path, loop=None)
+
+    project = create_animation_project_from_gif(path)
+
+    assert project.playback_mode == "once"
+
+
+def test_gif_import_fits_long_delays_without_sluggish_timing_distortion(
+    tmp_path,
+) -> None:
+    path = tmp_path / "slow.gif"
+    frames = [
+        Image.new("RGBA", (2, 2), (180, 30, 20, 255)),
+        Image.new("RGBA", (2, 2), (20, 40, 180, 255)),
+    ]
+    frames[0].save(
+        path,
+        save_all=True,
+        append_images=frames[1:],
+        duration=[1500, 3000],
+        loop=0,
+    )
+
+    project = create_animation_project_from_gif(path)
+
+    assert project.fps == 2
+    assert [frame.duration_ticks for frame in project.tracks[0].frames] == [3, 6]
+
+
+def test_animation_editor_import_gif_loads_track_source_and_frame_editor(
+    tmp_path, monkeypatch
+) -> None:
+    application = QApplication.instance() or QApplication([])
+    path = tmp_path / "walk.gif"
+    _write_test_gif(path)
+    window = AnimationEditorWindow()
+    monkeypatch.setattr(
+        QFileDialog,
+        "getOpenFileName",
+        lambda *_args, **_kwargs: (str(path), "GIF Images (*.gif)"),
+    )
+
+    window._open_gif()
+
+    assert window._project.sheet_size == (9, 2)
+    assert len(window._project.tracks[0].frames) == 3
+    assert window._current_track_id == window._project.tracks[0].id
+    assert window._frame_doc.image.size == (3, 2)
+    assert window._frame_count_spin.value() == 3
+    assert window._dirty
+    assert "Imported 3 GIF frames" in window.statusBar().currentMessage()
+    window._dirty = False
+    window.close()
+    application.processEvents()
 
 
 def test_sequence_specs_extract_horizontal_vertical_reverse_gapped_and_diagonal() -> (

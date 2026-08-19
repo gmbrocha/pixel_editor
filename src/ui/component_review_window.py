@@ -307,7 +307,7 @@ class ComponentReviewWindow(QMainWindow):
             name=f"{job_dir.name}-{candidate_id}-cleanup",
             palette=all_colors_from_image(source),
         )
-        window = PixelEditorWindow(document, self, restore_reference=source)
+        window = PixelEditorWindow(document, None, restore_reference=source)
         window.asset_save_requested.connect(
             lambda _name, image, selected_job=job_dir, selected_candidate=candidate_id: (
                 save_cleaned_candidate(selected_job, selected_candidate, image),

@@ -1009,7 +1009,7 @@ class MainWindow(QMainWindow):
         self._open_pixel_editor(document)
 
     def _open_pixel_editor(self, document: PixelDocument, *, headless: bool = False) -> None:
-        window = PixelEditorWindow(document, self, headless=headless)
+        window = PixelEditorWindow(document, None, headless=headless)
         window.asset_save_requested.connect(self._on_pixel_editor_asset_saved)
         window.destroyed.connect(lambda *_args, target=window: self._remove_pixel_window(target))
         self._pixel_windows.append(window)
@@ -1024,7 +1024,7 @@ class MainWindow(QMainWindow):
 
     def open_character_forge(self) -> None:
         try:
-            window = CharacterForgeWindow(self)
+            window = CharacterForgeWindow(None)
         except CharacterForgeError as exc:
             QMessageBox.critical(self, "Character Forge unavailable", str(exc))
             return
@@ -1034,7 +1034,7 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("Opened Character Forge")
 
     def open_component_review(self) -> None:
-        window = ComponentReviewWindow(parent=self)
+        window = ComponentReviewWindow(parent=None)
         window.component_promoted.connect(self._on_component_promoted)
         window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
         self._tool_windows.append(window)
@@ -1051,14 +1051,18 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(f"Promoted component {path}{suffix}")
 
     def open_animation_editor(self) -> None:
-        window = AnimationEditorWindow(self, initial_palette=list(self.document.palette))
+        window = AnimationEditorWindow(
+            None, initial_palette=list(self.document.palette)
+        )
         window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
         self._tool_windows.append(window)
         window.show()
         self.statusBar().showMessage("Opened animation editor")
 
     def open_reference_mapper(self) -> None:
-        window = ReferenceMapperWindow(self, initial_palette=list(self.document.palette))
+        window = ReferenceMapperWindow(
+            None, initial_palette=list(self.document.palette)
+        )
         window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
         self._tool_windows.append(window)
         window.show()
@@ -1072,7 +1076,7 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("Opened tile layout")
 
     def open_tileset_processor(self) -> None:
-        window = TilesetProcessorWindow(self)
+        window = TilesetProcessorWindow(None)
         window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
         self._tool_windows.append(window)
         window.show()
@@ -1082,7 +1086,7 @@ class MainWindow(QMainWindow):
         # Independent, non-modal window. Keep a strong ref in
         # `_tool_windows` so it isn't GC'd while open, and drop it on
         # destroy so multiple instances are allowed.
-        window = TilesetTemplateWindow(self)
+        window = TilesetTemplateWindow(None)
         window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
         self._tool_windows.append(window)
         window.show()
@@ -1090,7 +1094,7 @@ class MainWindow(QMainWindow):
 
     def open_texture_generator(self) -> None:
         # Same lifecycle pattern as the other tool windows.
-        window = TextureGeneratorWindow(self)
+        window = TextureGeneratorWindow(None)
         window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
         self._tool_windows.append(window)
         window.show()

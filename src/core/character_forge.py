@@ -4,13 +4,12 @@ import colorsys
 import json
 import random
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import Mapping
 
 from PIL import Image, ImageChops
-
 
 CHARACTER_SLOTS = (
     "headwear",
@@ -93,6 +92,8 @@ class CharacterAnimation:
     direction_rows: Mapping[str, int]
     fps: int
     matte_rgb: tuple[int, int, int] | None
+    direction_frame_counts: Mapping[str, int] = field(default_factory=dict)
+    direction_playback: Mapping[str, tuple[int, ...]] = field(default_factory=dict)
 
     @property
     def directions(self) -> tuple[str, ...]:
@@ -107,7 +108,7 @@ class CharacterAnimation:
             raise CharacterForgeError(
                 f"Animation {self.id!r} does not have direction {direction!r}"
             )
-        if not 0 <= frame_index < self.frames_per_direction:
+        if not 0 <= frame_index < self.frame_count(direction):
             raise CharacterForgeError(
                 f"Frame {frame_index} is outside animation {self.id!r}"
             )
@@ -115,6 +116,17 @@ class CharacterAnimation:
         left = frame_index * frame_width
         top = self.direction_rows[direction] * frame_height
         return left, top, left + frame_width, top + frame_height
+
+    def frame_count(self, direction: str) -> int:
+        if direction not in self.direction_rows:
+            raise CharacterForgeError(
+                f"Animation {self.id!r} does not have direction {direction!r}"
+            )
+        return self.direction_frame_counts.get(direction, self.frames_per_direction)
+
+    def playback_frames(self, direction: str) -> tuple[int, ...]:
+        count = self.frame_count(direction)
+        return self.direction_playback.get(direction, tuple(range(count)))
 
 
 @dataclass(frozen=True, slots=True)
@@ -202,10 +214,12 @@ class CharacterRecipe:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, object]) -> "CharacterRecipe":
+    def from_dict(cls, data: Mapping[str, object]) -> CharacterRecipe:
         version = data.get("schema_version", 1)
         if version not in (1, RECIPE_SCHEMA_VERSION):
-            raise CharacterForgeError(f"Unsupported character recipe version {version!r}")
+            raise CharacterForgeError(
+                f"Unsupported character recipe version {version!r}"
+            )
         base_id = data.get("base")
         if not isinstance(base_id, str) or not base_id:
             raise CharacterForgeError("Character recipe must contain a base id")
@@ -226,12 +240,16 @@ class CharacterRecipe:
         for slot in CHARACTER_SLOTS:
             value = migrated.get(slot, data.get(slot))
             if value is not None and not isinstance(value, str):
-                raise CharacterForgeError(f"Part selection for {slot!r} must be text or null")
+                raise CharacterForgeError(
+                    f"Part selection for {slot!r} must be text or null"
+                )
             parts[slot] = value
 
         seed = data.get("seed")
         if seed is not None and (not isinstance(seed, int) or isinstance(seed, bool)):
-            raise CharacterForgeError("Character recipe seed must be an integer or null")
+            raise CharacterForgeError(
+                "Character recipe seed must be an integer or null"
+            )
         raw_colors = data.get("part_colors", {})
         if not isinstance(raw_colors, Mapping):
             raise CharacterForgeError("Character recipe part_colors must be an object")
@@ -274,15 +292,21 @@ def load_character_sheet_specs(
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise CharacterForgeError(f"Could not load character sheet specs: {exc}") from exc
+        raise CharacterForgeError(
+            f"Could not load character sheet specs: {exc}"
+        ) from exc
     if not isinstance(data, dict) or data.get("schema_version") != 1:
-        raise CharacterForgeError("Unsupported or invalid character sheet specification")
+        raise CharacterForgeError(
+            "Unsupported or invalid character sheet specification"
+        )
     return data
 
 
 def _string_list(value: object, field_name: str) -> tuple[str, ...]:
     if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
-        raise CharacterForgeError(f"Component manifest {field_name} must be a string list")
+        raise CharacterForgeError(
+            f"Component manifest {field_name} must be a string list"
+        )
     return tuple(value)
 
 
@@ -291,13 +315,20 @@ def load_component_manifest(path: str | Path) -> CharacterPart:
     try:
         data = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise CharacterForgeError(f"Could not load component manifest {manifest_path}: {exc}") from exc
-    if not isinstance(data, dict) or data.get("schemaVersion") != MANIFEST_SCHEMA_VERSION:
+        raise CharacterForgeError(
+            f"Could not load component manifest {manifest_path}: {exc}"
+        ) from exc
+    if (
+        not isinstance(data, dict)
+        or data.get("schemaVersion") != MANIFEST_SCHEMA_VERSION
+    ):
         raise CharacterForgeError(f"Unsupported component manifest: {manifest_path}")
     required_text = ("id", "displayName", "slot", "layer", "status", "fit")
     for key in required_text:
         if not isinstance(data.get(key), str) or not data[key]:
-            raise CharacterForgeError(f"Component manifest {manifest_path} requires {key}")
+            raise CharacterForgeError(
+                f"Component manifest {manifest_path} requires {key}"
+            )
     part_id = data["id"]
     slot = data["slot"]
     layer = data["layer"]
@@ -307,7 +338,9 @@ def load_component_manifest(path: str | Path) -> CharacterPart:
         raise CharacterForgeError(f"Component {part_id!r} uses unknown layer {layer!r}")
     status = data["status"]
     if status not in VALID_COMPONENT_STATUSES:
-        raise CharacterForgeError(f"Production component {part_id!r} has invalid status {status!r}")
+        raise CharacterForgeError(
+            f"Production component {part_id!r} has invalid status {status!r}"
+        )
     occupies = _string_list(data.get("occupiesSlots", [slot]), "occupiesSlots")
     reserved = _string_list(data.get("reservedSlots", []), "reservedSlots")
     if slot not in occupies:
@@ -320,7 +353,9 @@ def load_component_manifest(path: str | Path) -> CharacterPart:
     animations: dict[str, Path] = {}
     for animation_id, filename in raw_animations.items():
         if not isinstance(animation_id, str) or not isinstance(filename, str):
-            raise CharacterForgeError(f"Component {part_id!r} animation entries must be text")
+            raise CharacterForgeError(
+                f"Component {part_id!r} animation entries must be text"
+            )
         animations[animation_id] = manifest_path.parent / filename
     raw_coverage = data.get("coverage", {})
     if not isinstance(raw_coverage, Mapping):
@@ -334,13 +369,17 @@ def load_component_manifest(path: str | Path) -> CharacterPart:
     ramp_main: tuple[int, int, int] | None = None
     raw_ramp = data.get("colorRamp")
     if raw_ramp is not None:
-        if not isinstance(raw_ramp, Mapping) or not isinstance(raw_ramp.get("main"), str):
+        if not isinstance(raw_ramp, Mapping) or not isinstance(
+            raw_ramp.get("main"), str
+        ):
             raise CharacterForgeError(f"Component {part_id!r} colorRamp is invalid")
         raw_colors = _string_list(raw_ramp.get("colors", []), "colorRamp.colors")
         ramp = tuple(color_hex_to_rgb(color) for color in raw_colors)
         ramp_main = color_hex_to_rgb(raw_ramp["main"])
         if ramp_main not in ramp:
-            raise CharacterForgeError(f"Component {part_id!r} ramp main must be in its colors")
+            raise CharacterForgeError(
+                f"Component {part_id!r} ramp main must be in its colors"
+            )
     tags = _string_list(data.get("tags", []), "tags")
     alpha_occluded_by_tags = _string_list(
         data.get("alphaOccludedByTags", []), "alphaOccludedByTags"
@@ -388,9 +427,29 @@ def create_default_catalog(
             raise CharacterForgeError("Character animation entry is invalid")
         sheet_size = tuple(int(value) for value in raw["sheet_size"])
         direction_rows = {
-            str(direction): int(row)
-            for direction, row in raw["direction_rows"].items()
+            str(direction): int(row) for direction, row in raw["direction_rows"].items()
         }
+        raw_frame_counts = raw.get("direction_frame_counts", {})
+        if not isinstance(raw_frame_counts, Mapping):
+            raise CharacterForgeError(
+                f"Character animation {animation_id!r} direction_frame_counts is invalid"
+            )
+        direction_frame_counts = {
+            str(direction): int(count) for direction, count in raw_frame_counts.items()
+        }
+        raw_playback = raw.get("direction_playback", {})
+        if not isinstance(raw_playback, Mapping):
+            raise CharacterForgeError(
+                f"Character animation {animation_id!r} direction_playback is invalid"
+            )
+        direction_playback: dict[str, tuple[int, ...]] = {}
+        for direction, indices in raw_playback.items():
+            if not isinstance(indices, list):
+                raise CharacterForgeError(
+                    f"Character animation {animation_id!r} playback for "
+                    f"{direction!r} must be a list"
+                )
+            direction_playback[str(direction)] = tuple(int(index) for index in indices)
         matte = raw.get("source_matte")
         animations[animation_id] = CharacterAnimation(
             id=animation_id,
@@ -402,6 +461,8 @@ def create_default_catalog(
             direction_rows=direction_rows,
             fps=int(raw["fps"]),
             matte_rgb=color_hex_to_rgb(matte) if isinstance(matte, str) else None,
+            direction_frame_counts=direction_frame_counts,
+            direction_playback=direction_playback,
         )
     parts: list[CharacterPart] = []
     parts_root = root / "parts"
@@ -430,13 +491,50 @@ def validate_catalog(catalog: CharacterCatalog) -> None:
     ids: set[str] = set()
     for base in catalog.bases:
         for animation in base.animations.values():
-            _validate_image_size(base.animation_path(animation.id), animation.sheet_size)
+            _validate_image_size(
+                base.animation_path(animation.id), animation.sheet_size
+            )
+            columns = animation.sheet_size[0] // animation.frame_size[0]
+            unknown_counts = set(animation.direction_frame_counts) - set(
+                animation.direction_rows
+            )
+            unknown_playback = set(animation.direction_playback) - set(
+                animation.direction_rows
+            )
+            if unknown_counts or unknown_playback:
+                raise CharacterForgeError(
+                    f"Animation {animation.id!r} has metadata for unknown directions"
+                )
+            for direction in animation.directions:
+                count = animation.frame_count(direction)
+                row = animation.direction_rows[direction]
+                rows = animation.sheet_size[1] // animation.frame_size[1]
+                if count < 1 or count > columns or row < 0 or row >= rows:
+                    raise CharacterForgeError(
+                        f"Animation {animation.id!r} direction {direction!r} has "
+                        "invalid sheet geometry"
+                    )
+                playback = animation.playback_frames(direction)
+                if not playback or any(
+                    index < 0 or index >= count for index in playback
+                ):
+                    raise CharacterForgeError(
+                        f"Animation {animation.id!r} direction {direction!r} has "
+                        "invalid playback frames"
+                    )
         for part in catalog.parts:
             if part.id in ids:
-                raise CharacterForgeError(f"Duplicate character component id {part.id!r}")
+                raise CharacterForgeError(
+                    f"Duplicate character component id {part.id!r}"
+                )
             ids.add(part.id)
-            if part.slot not in CHARACTER_SLOTS or part.layer not in CHARACTER_LAYER_ORDER:
-                raise CharacterForgeError(f"Component {part.id!r} has an invalid slot or layer")
+            if (
+                part.slot not in CHARACTER_SLOTS
+                or part.layer not in CHARACTER_LAYER_ORDER
+            ):
+                raise CharacterForgeError(
+                    f"Component {part.id!r} has an invalid slot or layer"
+                )
             for animation_id, path in part.animations.items():
                 if animation_id not in base.animations:
                     raise CharacterForgeError(
@@ -445,8 +543,12 @@ def validate_catalog(catalog: CharacterCatalog) -> None:
                 _validate_image_size(path, base.animations[animation_id].sheet_size)
             for animation_id, directions in part.coverage.items():
                 if animation_id not in base.animations:
-                    raise CharacterForgeError(f"Component {part.id!r} coverage is invalid")
-                unknown = set(directions) - set(base.animations[animation_id].direction_rows)
+                    raise CharacterForgeError(
+                        f"Component {part.id!r} coverage is invalid"
+                    )
+                unknown = set(directions) - set(
+                    base.animations[animation_id].direction_rows
+                )
                 if unknown:
                     raise CharacterForgeError(
                         f"Component {part.id!r} has unknown coverage directions {sorted(unknown)}"
@@ -479,7 +581,9 @@ def validate_recipe(catalog: CharacterCatalog, recipe: CharacterRecipe) -> None:
     for part_id, color in recipe.part_colors.items():
         part = catalog.part(part_id)
         if part_id not in selected_ids:
-            raise CharacterForgeError(f"Part color refers to unselected part {part_id!r}")
+            raise CharacterForgeError(
+                f"Part color refers to unselected part {part_id!r}"
+            )
         if not part.color_ramp or part.ramp_main_color is None:
             raise CharacterForgeError(f"Part {part_id!r} does not support recoloring")
         normalize_color_hex(color)
@@ -539,7 +643,9 @@ def recolor_part_ramp(
     pixels = []
     for red, green, blue, alpha in _pixels(image):
         replacement = replacements.get((red, green, blue))
-        pixels.append((red, green, blue, alpha) if replacement is None else (*replacement, alpha))
+        pixels.append(
+            (red, green, blue, alpha) if replacement is None else (*replacement, alpha)
+        )
     result = Image.new("RGBA", image.size, (0, 0, 0, 0))
     result.putdata(pixels)
     return result
@@ -560,9 +666,13 @@ def _validate_image_size(path: Path, expected: tuple[int, int]) -> None:
         actual = image.size
         mode = image.mode
     if actual != expected:
-        raise CharacterForgeError(f"Character asset {path.name!r} is {actual}, expected {expected}")
+        raise CharacterForgeError(
+            f"Character asset {path.name!r} is {actual}, expected {expected}"
+        )
     if mode != "RGBA":
-        raise CharacterForgeError(f"Character asset {path.name!r} must be RGBA, not {mode}")
+        raise CharacterForgeError(
+            f"Character asset {path.name!r} must be RGBA, not {mode}"
+        )
 
 
 @lru_cache(maxsize=256)
@@ -595,7 +705,9 @@ def load_base_animation(
     animation = base.animations.get(animation_id)
     if animation is None:
         raise CharacterForgeError(f"Unknown character animation {animation_id!r}")
-    image = _load_rgba(str(base.animation_path(animation_id)), animation.matte_rgb).copy()
+    image = _load_rgba(
+        str(base.animation_path(animation_id)), animation.matte_rgb
+    ).copy()
     if image.size != animation.sheet_size:
         raise CharacterForgeError(
             f"Base animation {animation_id!r} is {image.size}, expected {animation.sheet_size}"
@@ -695,7 +807,9 @@ def extract_character_frame(
     frame_index: int,
 ) -> Image.Image:
     if sheet.size != animation.sheet_size:
-        raise CharacterForgeError(f"Animation sheet is {sheet.size}, expected {animation.sheet_size}")
+        raise CharacterForgeError(
+            f"Animation sheet is {sheet.size}, expected {animation.sheet_size}"
+        )
     return sheet.crop(animation.frame_box(direction, frame_index)).copy()
 
 
@@ -718,7 +832,9 @@ def randomize_recipe(
         if choice is not None and not (choice.claimed_slots & claimed):
             selections[slot] = choice.id
             claimed.update(choice.claimed_slots)
-    return CharacterRecipe(base_id=base_id, name=name, parts=selections, random_seed=seed)
+    return CharacterRecipe(
+        base_id=base_id, name=name, parts=selections, random_seed=seed
+    )
 
 
 def recipe_json(recipe: CharacterRecipe) -> str:

@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QMenu,
     QMessageBox,
     QPushButton,
     QRadioButton,
@@ -120,20 +121,54 @@ def _color_drag_pixmap(size, color: tuple[int, int, int, int]) -> QPixmap:
 
 class ClickableColorButton(QPushButton):
     clicked_color = Signal(tuple)
+    send_to_floating_requested = Signal(tuple)
+    remove_requested = Signal(tuple)
 
     def __init__(
-        self, color: tuple[int, int, int, int], parent: QWidget | None = None
+        self,
+        color: tuple[int, int, int, int],
+        parent: QWidget | None = None,
+        *,
+        allow_send_to_floating: bool = False,
+        allow_remove: bool = False,
     ) -> None:
         super().__init__(parent)
         self._color = color
+        self._allow_send_to_floating = allow_send_to_floating
+        self._allow_remove = allow_remove
         self._drag_start_pos: QPoint | None = None
         self.setFixedSize(24, 24)
         self._apply_style()
         self.clicked.connect(self._emit_color)
-        self.setToolTip("Click to select or drag onto a replace color bar")
+        tooltip = "Click to select or drag onto a replace color bar"
+        if allow_send_to_floating:
+            tooltip += ". Right-click to send to the Floating Palette"
+        elif allow_remove:
+            tooltip += ". Right-click to remove from the Floating Palette"
+        self.setToolTip(tooltip)
+        if allow_send_to_floating or allow_remove:
+            self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            self.customContextMenuRequested.connect(self._show_context_menu)
 
     def _emit_color(self) -> None:
         self.clicked_color.emit(self._color)
+
+    def _show_context_menu(self, position: QPoint) -> None:
+        self._create_context_menu().exec(self.mapToGlobal(position))
+
+    def _create_context_menu(self) -> QMenu:
+        menu = QMenu(self)
+        if self._allow_send_to_floating:
+            send_action = menu.addAction("Send to Floating Palette")
+            send_action.triggered.connect(
+                lambda _checked=False: self.send_to_floating_requested.emit(self._color)
+            )
+        if self._allow_remove:
+            remove_action = menu.addAction("Remove from Floating Palette")
+            remove_action.triggered.connect(
+                lambda _checked=False: self.remove_requested.emit(self._color)
+            )
+        return menu
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
@@ -427,6 +462,95 @@ class PaletteGridWidget(QWidget):
             self._layout.addWidget(cell, row, col)
 
 
+class FloatingPaletteWindow(QWidget):
+    """Small editor-owned tool window containing an intentionally local palette."""
+
+    color_selected = Signal(tuple)
+    add_color_requested = Signal()
+
+    TRANSPARENT = (0, 0, 0, 0)
+
+    def __init__(
+        self,
+        parent: QWidget,
+        initial_color: tuple[int, int, int, int],
+    ) -> None:
+        flags = (
+            Qt.WindowType.Tool
+            | Qt.WindowType.WindowTitleHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        super().__init__(parent, flags)
+        self.setWindowTitle("Floating Palette")
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)
+
+        self._colors: list[tuple[int, int, int, int]] = []
+        self._layout = QGridLayout(self)
+        self._layout.setContentsMargins(6, 6, 6, 6)
+        self._layout.setSpacing(3)
+        self._columns = 6
+        self._add_button = QPushButton("+")
+        self._add_button.setFixedSize(24, 24)
+        self._add_button.setToolTip("Add a custom color to the Floating Palette")
+        self._add_button.clicked.connect(self.add_color_requested.emit)
+
+        self.add_color(initial_color)
+        self.add_color(self.TRANSPARENT)
+
+    def colors(self) -> list[tuple[int, int, int, int]]:
+        return list(self._colors)
+
+    def add_color(self, color: tuple[int, int, int, int]) -> bool:
+        normalized = (
+            self.TRANSPARENT
+            if int(color[3]) == 0
+            else (
+                int(color[0]),
+                int(color[1]),
+                int(color[2]),
+                int(color[3]),
+            )
+        )
+        if normalized in self._colors:
+            return False
+        self._colors.append(normalized)
+        self._refresh_swatches()
+        return True
+
+    def remove_color(self, color: tuple[int, int, int, int]) -> bool:
+        if color[3] == 0 or color not in self._colors:
+            return False
+        self._colors.remove(color)
+        self._refresh_swatches()
+        return True
+
+    def _refresh_swatches(self) -> None:
+        while self._layout.count():
+            item = self._layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None and widget is not self._add_button:
+                widget.deleteLater()
+
+        for index, color in enumerate(self._colors):
+            button = ClickableColorButton(
+                color,
+                allow_remove=color[3] != 0,
+            )
+            button.clicked_color.connect(self.color_selected.emit)
+            button.remove_requested.connect(self.remove_color)
+            self._layout.addWidget(
+                button, index // self._columns, index % self._columns
+            )
+
+        add_index = len(self._colors)
+        self._layout.addWidget(
+            self._add_button,
+            add_index // self._columns,
+            add_index % self._columns,
+        )
+        self.adjustSize()
+
+
 class PixelEditorWindow(QMainWindow):
     asset_save_requested = Signal(str, object)
 
@@ -495,6 +619,11 @@ class PixelEditorWindow(QMainWindow):
         self.palette_layout.setContentsMargins(0, 0, 0, 0)
         self.palette_layout.setSpacing(2)
         self._palette_cols = 8
+        self._floating_palette: FloatingPaletteWindow | None = None
+        self.floating_palette_button = QPushButton("Floating Palette…")
+        self.floating_palette_button.setToolTip(
+            "Open a small draggable palette that stays with this Pixel Editor"
+        )
         self.palette_grid_cols_spin = QSpinBox()
         self.palette_grid_cols_spin.setRange(1, 16)
         self.palette_grid_cols_spin.setValue(4)
@@ -929,6 +1058,7 @@ class PixelEditorWindow(QMainWindow):
         palette_header = QHBoxLayout()
         palette_header.addWidget(QLabel("Palette"))
         palette_header.addStretch(1)
+        palette_header.addWidget(self.floating_palette_button)
         palette_header.addWidget(self.reduce_palette_import_checkbox)
         controls_layout.addLayout(palette_header)
         controls_layout.addWidget(self.palette_container)
@@ -1196,6 +1326,9 @@ class PixelEditorWindow(QMainWindow):
         self.opacity_slider.valueChanged.connect(self._on_opacity_changed)
         self.custom_color_button.clicked.connect(self.pick_color)
         self.transparent_button.clicked.connect(self.use_transparent_color)
+        self.floating_palette_button.clicked.connect(
+            lambda _checked=False: self.show_floating_palette()
+        )
         self.transparent_display_button.clicked.connect(
             self._pick_transparent_display_color
         )
@@ -1564,17 +1697,10 @@ class PixelEditorWindow(QMainWindow):
         self.statusBar().showMessage("Sent pixel map to asset tray")
 
     def pick_color(self) -> None:
-        initial = QColor(*self.document.current_color)
-        dialog = QColorDialog(initial, self)
-        dialog.setWindowTitle("Pick Pixel Color")
-        dialog.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel, True)
-        dialog.setOption(QColorDialog.ColorDialogOption.DontUseNativeDialog, True)
-        if dialog.exec() != QColorDialog.DialogCode.Accepted:
+        color = self._choose_rgba_color("Pick Pixel Color")
+        if color is None:
             return
-        color = dialog.selectedColor()
-        self._set_current_color(
-            (color.red(), color.green(), color.blue(), color.alpha())
-        )
+        self._set_current_color(color)
         self.document.palette = add_color_to_palette(
             self.document.palette, self.document.current_color
         )
@@ -1582,6 +1708,82 @@ class PixelEditorWindow(QMainWindow):
         self.statusBar().showMessage(
             "Updated current paint color and saved it to the palette"
         )
+
+    def _choose_rgba_color(
+        self,
+        title: str,
+        *,
+        parent: QWidget | None = None,
+    ) -> tuple[int, int, int, int] | None:
+        dialog_parent = parent if parent is not None else self
+        dialog = QColorDialog(QColor(*self.document.current_color), dialog_parent)
+        dialog.setWindowTitle(title)
+        dialog.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel, True)
+        dialog.setOption(QColorDialog.ColorDialogOption.DontUseNativeDialog, True)
+        if dialog.exec() != QColorDialog.DialogCode.Accepted:
+            return None
+        color = dialog.selectedColor()
+        return (color.red(), color.green(), color.blue(), color.alpha())
+
+    def _ensure_floating_palette(self) -> tuple[FloatingPaletteWindow, bool]:
+        if self._floating_palette is not None:
+            return self._floating_palette, False
+        palette = FloatingPaletteWindow(self, self.document.current_color)
+        palette.color_selected.connect(self._select_palette_color)
+        palette.add_color_requested.connect(self._add_custom_floating_color)
+        self._floating_palette = palette
+        return palette, True
+
+    def show_floating_palette(
+        self,
+        color: tuple[int, int, int, int] | None = None,
+    ) -> None:
+        palette, created = self._ensure_floating_palette()
+        if color is not None:
+            palette.add_color(color)
+        palette.show()
+        if created:
+            palette.adjustSize()
+            anchor = self.floating_palette_button.mapToGlobal(
+                QPoint(-palette.width() - 8, 0)
+            )
+            screen = self.screen() or QApplication.primaryScreen()
+            if screen is not None:
+                available = screen.availableGeometry()
+                anchor.setX(
+                    max(
+                        available.left(),
+                        min(anchor.x(), available.right() - palette.width() + 1),
+                    )
+                )
+                anchor.setY(
+                    max(
+                        available.top(),
+                        min(anchor.y(), available.bottom() - palette.height() + 1),
+                    )
+                )
+            palette.move(anchor)
+        palette.raise_()
+        palette.activateWindow()
+
+    def _send_color_to_floating_palette(
+        self,
+        color: tuple[int, int, int, int],
+    ) -> None:
+        self.show_floating_palette(color)
+        self.statusBar().showMessage("Sent color to the Floating Palette")
+
+    def _add_custom_floating_color(self) -> None:
+        palette, _created = self._ensure_floating_palette()
+        color = self._choose_rgba_color(
+            "Add Floating Palette Color",
+            parent=palette,
+        )
+        if color is None:
+            return
+        palette.add_color(color)
+        self._select_palette_color(color)
+        self.statusBar().showMessage("Added and selected a Floating Palette color")
 
     def use_transparent_color(self) -> None:
         red, green, blue, _alpha = self.document.current_color
@@ -1757,8 +1959,11 @@ class PixelEditorWindow(QMainWindow):
             return
 
         for i, color in enumerate(self.document.palette):
-            button = ClickableColorButton(color)
+            button = ClickableColorButton(color, allow_send_to_floating=True)
             button.clicked_color.connect(self._select_palette_color)
+            button.send_to_floating_requested.connect(
+                self._send_color_to_floating_palette
+            )
             row = i // self._palette_cols
             col = i % self._palette_cols
             self.palette_layout.addWidget(button, row, col)

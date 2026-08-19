@@ -8,7 +8,6 @@ from pathlib import Path
 
 from PIL import Image
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ASSET_ROOT = PROJECT_ROOT / "assets" / "character-forge"
 SOURCE_ROOT = ASSET_ROOT / "base_sources" / "human-01"
@@ -20,7 +19,6 @@ FRAME_SIZE = 64
 FRAMES_PER_DIRECTION = 6
 SHEET_SIZE = (384, 259)
 DIRECTION_ROWS = {"front": 0, "back": 1, "right": 2, "left": 3}
-LEFT_FRAME_ORDER = (5, 4, 3, 2, 1, 0)
 
 
 def _png_bytes(image: Image.Image) -> bytes:
@@ -29,44 +27,27 @@ def _png_bytes(image: Image.Image) -> bytes:
     return buffer.getvalue()
 
 
-def _frame(image: Image.Image, direction: str, frame_index: int) -> Image.Image:
-    row = DIRECTION_ROWS[direction]
-    left = frame_index * FRAME_SIZE
-    top = row * FRAME_SIZE
-    return image.crop((left, top, left + FRAME_SIZE, top + FRAME_SIZE))
-
-
 def build_walk_sheet(source: Image.Image) -> Image.Image:
-    """Preserve rows 1-3 and reverse only the six frames in row 4."""
+    """Preserve the supplied final authoritative Walk sheet exactly."""
     authored = source.convert("RGBA")
     if authored.size != SHEET_SIZE:
-        raise ValueError(f"Character Walk source must be {SHEET_SIZE}, got {authored.size}")
+        raise ValueError(
+            f"Character Walk source must be {SHEET_SIZE}, got {authored.size}"
+        )
     if authored.crop((0, 256, 384, 259)).getbbox() is not None:
-        raise ValueError("Character Walk source has pixels outside its 384x256 logical extent")
-
-    output = authored.copy()
-    for output_index, source_index in enumerate(LEFT_FRAME_ORDER):
-        output.paste(
-            _frame(authored, "left", source_index),
-            (output_index * FRAME_SIZE, DIRECTION_ROWS["left"] * FRAME_SIZE),
+        raise ValueError(
+            "Character Walk source has pixels outside its 384x256 logical extent"
         )
 
-    if output.crop((0, 0, 384, 192)).tobytes() != authored.crop(
-        (0, 0, 384, 192)
-    ).tobytes():
-        raise RuntimeError("Walk rows 1-3 changed while reversing row 4")
-    for output_index, source_index in enumerate(LEFT_FRAME_ORDER):
-        if _frame(output, "left", output_index).tobytes() != _frame(
-            authored, "left", source_index
-        ).tobytes():
-            raise RuntimeError(f"Left frame {output_index + 1} was not reversed exactly")
-    return output
+    return authored.copy()
 
 
 def _write_or_check(path: Path, content: bytes, check: bool) -> None:
     if check:
         if not path.is_file() or path.read_bytes() != content:
-            raise ValueError(f"Generated Character Walk asset is stale or missing: {path}")
+            raise ValueError(
+                f"Generated Character Walk asset is stale or missing: {path}"
+            )
         return
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(content)
@@ -85,18 +66,14 @@ def _manifest(source_hash: str, runtime_hash: str) -> dict[str, object]:
         "frameSize": [64, 64],
         "framesPerDirection": 6,
         "directionRows": DIRECTION_ROWS,
-        "preservedRows": ["front", "back", "right"],
-        "leftOperation": {
-            "operation": "reverse-frame-order",
-            "sourceDirection": "left",
-            "sourceFrameOrder": [index + 1 for index in LEFT_FRAME_ORDER],
-        },
+        "playback": "normal-loop",
+        "preservedRows": ["front", "back", "right", "left"],
         "rationale": (
-            "The supplied final Walk sheet is authoritative for rows 1-3. "
-            "Only the Left row is reversed cell-for-cell so frame 6 becomes frame 1."
+            "The supplied final Walk sheet is authoritative for all four direction "
+            "rows, and every direction plays as a normal forward loop."
         ),
         "generator": "tools/build_character_forge_walk_sheet.py",
-        "generatorVersion": 2,
+        "generatorVersion": 3,
     }
 
 
@@ -110,7 +87,9 @@ def generate(*, check: bool = False) -> tuple[str, str]:
     _write_or_check(RUNTIME_OUTPUT, runtime_bytes, check)
     _write_or_check(
         SOURCE_MANIFEST,
-        (json.dumps(_manifest(source_hash, runtime_hash), indent=2) + "\n").encode("utf-8"),
+        (json.dumps(_manifest(source_hash, runtime_hash), indent=2) + "\n").encode(
+            "utf-8"
+        ),
         check,
     )
     return source_hash, runtime_hash
@@ -118,7 +97,7 @@ def generate(*, check: bool = False) -> tuple[str, str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Build the canonical Character Forge Walk sheet with corrected side cycles."
+        description="Build the canonical Character Forge Walk sheet from the final authored source."
     )
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()

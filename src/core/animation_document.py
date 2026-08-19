@@ -16,6 +16,8 @@ Color = tuple[int, int, int, int]
 FrameRect = tuple[int, int, int, int]  # x, y, width, height
 PROJECT_SCHEMA_VERSION = 1
 PLAYBACK_MODES = frozenset({"once", "loop", "ping_pong"})
+MAX_IMPORTED_GIF_FRAMES = 1024
+DEFAULT_GIF_FRAME_DURATION_MS = 100
 
 
 class AnimationProjectError(ValueError):
@@ -388,6 +390,118 @@ def create_animation_project_from_sheet(
         palette=list(palette or []),
         source_path=source_path,
     )
+
+
+def create_animation_project_from_gif(
+    path: str | Path,
+    *,
+    name: str | None = None,
+    palette: list[Color] | None = None,
+) -> AnimationProject:
+    """Import a GIF as one editable horizontal linked-sheet track.
+
+    Pillow exposes each seeked GIF frame as the complete logical canvas, so
+    partial update rectangles and GIF disposal rules are resolved before the
+    frames are joined into the project's source sheet.
+    """
+
+    source_path = Path(path)
+    try:
+        opened = Image.open(source_path)
+    except (OSError, ValueError) as exc:
+        raise AnimationProjectError(f"Could not open GIF: {exc}") from exc
+
+    with opened:
+        if opened.format != "GIF":
+            raise AnimationProjectError("The selected file is not a GIF image.")
+        frame_count = int(getattr(opened, "n_frames", 1))
+        if frame_count < 1:
+            raise AnimationProjectError("The GIF does not contain any frames.")
+        if frame_count > MAX_IMPORTED_GIF_FRAMES:
+            raise AnimationProjectError(
+                f"GIFs are limited to {MAX_IMPORTED_GIF_FRAMES} frames; "
+                f"this file contains {frame_count}."
+            )
+
+        frame_width, frame_height = opened.size
+        if frame_width < 1 or frame_height < 1:
+            raise AnimationProjectError("The GIF has invalid frame dimensions.")
+
+        loop_metadata_present = "loop" in opened.info
+        frames: list[Image.Image] = []
+        durations_ms: list[int] = []
+        for index in range(frame_count):
+            opened.seek(index)
+            frame = opened.convert("RGBA").copy()
+            if frame.size != (frame_width, frame_height):
+                raise AnimationProjectError(
+                    "The GIF contains frames with inconsistent canvas dimensions."
+                )
+            frames.append(frame)
+            try:
+                duration = int(opened.info.get("duration", 0))
+            except (TypeError, ValueError):
+                duration = 0
+            durations_ms.append(
+                duration if duration > 0 else DEFAULT_GIF_FRAME_DURATION_MS
+            )
+
+    fps, duration_ticks = _gif_timing(durations_ms)
+    sheet = Image.new("RGBA", (frame_width * frame_count, frame_height), (0, 0, 0, 0))
+    for index, frame in enumerate(frames):
+        sheet.paste(frame, (index * frame_width, 0))
+
+    project = create_animation_project_from_sheet(
+        sheet,
+        name=name or source_path.stem,
+        frame_size=(frame_width, frame_height),
+        fps=fps,
+        playback_mode="loop" if loop_metadata_present else "once",
+        palette=palette,
+        source_path=str(source_path),
+    )
+    track = project.add_track(
+        "Animation",
+        FrameSequenceSpec(
+            origin_x=0,
+            origin_y=0,
+            frame_width=frame_width,
+            frame_height=frame_height,
+            count=frame_count,
+            step_x=frame_width,
+            step_y=0,
+        ),
+    )
+    for frame, ticks in zip(track.frames, duration_ticks, strict=True):
+        frame.duration_ticks = ticks
+    return project
+
+
+def _gif_timing(durations_ms: list[int]) -> tuple[int, list[int]]:
+    """Fit GIF millisecond delays to the editor's FPS and integer tick model."""
+
+    if not durations_ms:
+        raise AnimationProjectError("The GIF does not contain timing data.")
+    normalized = [max(1, int(duration)) for duration in durations_ms]
+
+    def fit_for_fps(fps: int) -> tuple[float, float, int, int]:
+        tick_duration_ms = 1000 / fps
+        ticks = [
+            max(1, min(60, round(duration / tick_duration_ms)))
+            for duration in normalized
+        ]
+        errors = [
+            abs(ticks[index] * tick_duration_ms - duration)
+            for index, duration in enumerate(normalized)
+        ]
+        return sum(errors), max(errors), sum(ticks), fps
+
+    fps = min(range(1, 61), key=fit_for_fps)
+    tick_duration_ms = 1000 / fps
+    ticks = [
+        max(1, min(60, round(duration / tick_duration_ms))) for duration in normalized
+    ]
+    return fps, ticks
 
 
 def create_blank_project(

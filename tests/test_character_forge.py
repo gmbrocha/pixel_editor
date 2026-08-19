@@ -27,12 +27,11 @@ from src.ui.character_forge_window import CharacterForgeWindow
 from src.ui.component_review_window import ComponentReviewWindow
 from src.ui.main_window import MainWindow
 
-
 BASE_HASHES = {
     "idle.png": "80326212e8a23301f9d2d5309ae3f2edb269251dbeeee5b6f2325dcfc497eeee",
-    "run.png": "89d33142892d0d6d8095875e0aac33448fa1353138db004399ba1f66d7acc947",
-    "run-back.png": "0cc0486c27824dc5eb07d68d106d452f8153e2c16355635f1fe4b5c8f89c2e2c",
-    "run-front.png": "d642400d860c197e8bdf9f62434275154250c286212693fa8ff018fceeca7e74",
+    "run.png": "0bd012f9801b0c3ebb44223661e88e28d24c7cf5b5d91a95c42cd438daee015d",
+    "run-back.png": "c723499a8273c0442d517f564721f0a4229abc1997c83a3e3563bf0f14b5b1dc",
+    "run-front.png": "2a876ca822ded59f06f43e78dfc46ddbe7edced9017a1250d2bbe61c535d31b0",
     "run-left.png": "32566d95b52b00a3eb21e2a2db0710f58e1256c042e1f8741a26c75ae4e2f9eb",
     "run-right.png": "f5c4ae57e7cb6ca039a1b7bf52b27ff165d42d2f43bdb74d5f1bde39bd9f1d9b",
     "walk.png": "7e148f5d0aa37d4493a681c2b1f63f13b79f4f62c28f308444608bb3da37c920",
@@ -60,15 +59,51 @@ def test_static_catalog_preserves_supplied_sheet_geometry_and_bytes() -> None:
         "right": 2,
         "left": 3,
     }
-    assert base.animations["run"].sheet_size == (384, 256)
-    assert base.animations["run"].frames_per_direction == 6
+    assert all(
+        base.animations["walk"].playback_frames(direction) == tuple(range(6))
+        for direction in base.animations["walk"].directions
+    )
+    assert base.animations["run"].sheet_size == (512, 256)
+    assert base.animations["run"].frames_per_direction == 8
     assert base.animations["run"].direction_rows == {
         "front": 0,
         "back": 1,
         "right": 2,
         "left": 3,
     }
-    assert all(animation.frame_size == (64, 64) for animation in base.animations.values())
+    assert {
+        direction: base.animations["run"].frame_count(direction)
+        for direction in base.animations["run"].directions
+    } == {"front": 6, "back": 8, "left": 6, "right": 6}
+    assert base.animations["run"].playback_frames("front") == tuple(range(6))
+    assert base.animations["run"].playback_frames("back") == tuple(range(8))
+    assert base.animations["run"].playback_frames("right") == (
+        5,
+        4,
+        3,
+        2,
+        1,
+        0,
+        1,
+        2,
+        3,
+        4,
+    )
+    assert base.animations["run"].playback_frames("left") == (
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        4,
+        3,
+        2,
+        1,
+    )
+    assert all(
+        animation.frame_size == (64, 64) for animation in base.animations.values()
+    )
 
     for filename, expected_hash in BASE_HASHES.items():
         digest = hashlib.sha256((base.directory / filename).read_bytes()).hexdigest()
@@ -102,26 +137,34 @@ def test_matte_normalization_only_changes_exact_white_alpha() -> None:
 def test_corrected_walk_preserves_native_white_eye_pixels() -> None:
     catalog = create_default_catalog()
     base = catalog.base("human-01")
+    source_path = (
+        base.directory.parents[1] / "base_sources" / "human-01" / "walk-authored.png"
+    )
     with Image.open(base.animation_path("walk")) as source_image:
         source = source_image.convert("RGBA")
     loaded = load_base_animation(catalog, base.id, "walk")
 
+    assert base.animation_path("walk").read_bytes() == source_path.read_bytes()
     assert loaded.tobytes() == source.tobytes()
-    assert sum(
-        pixel == (255, 255, 255, 255)
-        for pixel in (
-            loaded.get_flattened_data()
-            if hasattr(loaded, "get_flattened_data")
-            else loaded.getdata()
+    assert (
+        sum(
+            pixel == (255, 255, 255, 255)
+            for pixel in (
+                loaded.get_flattened_data()
+                if hasattr(loaded, "get_flattened_data")
+                else loaded.getdata()
+            )
         )
-    ) == 48
+        == 48
+    )
 
 
 def test_authoritative_run_rows_are_assembled_pixel_exactly() -> None:
     catalog = create_default_catalog()
     base = catalog.base("human-01")
+    source_root = base.directory.parents[1] / "base_sources" / "human-01"
     run = load_base_animation(catalog, base.id, "run")
-    assert run.size == (384, 256)
+    assert run.size == (512, 256)
 
     for filename, row in (
         ("run-front.png", 0),
@@ -129,9 +172,20 @@ def test_authoritative_run_rows_are_assembled_pixel_exactly() -> None:
         ("run-right.png", 2),
         ("run-left.png", 3),
     ):
-        with Image.open(base.directory / filename) as source_image:
+        assert (base.directory / filename).read_bytes() == (
+            source_root / filename
+        ).read_bytes()
+        with Image.open(source_root / filename) as source_image:
             source = source_image.convert("RGBA")
-        assert run.crop((0, row * 64, 384, row * 64 + 64)).tobytes() == source.tobytes()
+        assert (
+            run.crop((0, row * 64, source.width, row * 64 + 64)).tobytes()
+            == source.tobytes()
+        )
+        if source.width < run.width:
+            assert (
+                run.crop((source.width, row * 64, run.width, row * 64 + 64)).getbbox()
+                is None
+            )
 
 
 def test_partial_walking_shirt_is_registered_only_for_its_authored_sheet() -> None:
@@ -169,8 +223,7 @@ def test_partial_walking_shirt_is_registered_only_for_its_authored_sheet() -> No
     assert overlay.size == (384, 259)
     assert overlay.getchannel("A").getextrema() == (0, 255)
     assert all(
-        overlay.crop((column * 64, 0, column * 64 + 64, 64)).getbbox()
-        is not None
+        overlay.crop((column * 64, 0, column * 64 + 64, 64)).getbbox() is not None
         for column in range(6)
     )
     assert all(
@@ -195,8 +248,7 @@ def test_partial_leather_boots_are_front_walk_only_and_fall_back_to_base() -> No
     overlay = load_part_animation(catalog, boots.id, "walk")
     assert overlay.size == (384, 259)
     assert all(
-        overlay.crop((column * 64, 0, column * 64 + 64, 64)).getbbox()
-        is not None
+        overlay.crop((column * 64, 0, column * 64 + 64, 64)).getbbox() is not None
         for column in range(6)
     )
     assert overlay.crop((0, 64, 384, 259)).getbbox() is None
@@ -205,24 +257,25 @@ def test_partial_leather_boots_are_front_walk_only_and_fall_back_to_base() -> No
     base_walk = load_base_animation(catalog, recipe.base_id, "walk")
     composed_walk = composite_character_animation(catalog, recipe, "walk")
     for frame_index in range(walk.frames_per_direction):
-        assert extract_character_frame(
-            composed_walk, walk, "front", frame_index
-        ).tobytes() != extract_character_frame(
-            base_walk, walk, "front", frame_index
-        ).tobytes()
+        assert (
+            extract_character_frame(composed_walk, walk, "front", frame_index).tobytes()
+            != extract_character_frame(base_walk, walk, "front", frame_index).tobytes()
+        )
         for direction in ("back", "right", "left"):
-            assert extract_character_frame(
-                composed_walk, walk, direction, frame_index
-            ).tobytes() == extract_character_frame(
-                base_walk, walk, direction, frame_index
-            ).tobytes()
+            assert (
+                extract_character_frame(
+                    composed_walk, walk, direction, frame_index
+                ).tobytes()
+                == extract_character_frame(
+                    base_walk, walk, direction, frame_index
+                ).tobytes()
+            )
 
     for animation_id in ("idle", "run"):
-        assert composite_character_animation(
-            catalog, recipe, animation_id
-        ).tobytes() == load_base_animation(
-            catalog, recipe.base_id, animation_id
-        ).tobytes()
+        assert (
+            composite_character_animation(catalog, recipe, animation_id).tobytes()
+            == load_base_animation(catalog, recipe.base_id, animation_id).tobytes()
+        )
 
 
 def test_semantic_pointed_hood_cloak_covers_every_walk_direction() -> None:
@@ -243,9 +296,7 @@ def test_semantic_pointed_hood_cloak_covers_every_walk_direction() -> None:
     overlay = load_part_animation(catalog, cloak.id, "walk")
     assert overlay.size == (384, 259)
     assert all(
-        overlay.crop(
-            (column * 64, row * 64, column * 64 + 64, row * 64 + 64)
-        ).getbbox()
+        overlay.crop((column * 64, row * 64, column * 64 + 64, row * 64 + 64)).getbbox()
         is not None
         for row in range(4)
         for column in range(6)
@@ -257,18 +308,20 @@ def test_semantic_pointed_hood_cloak_covers_every_walk_direction() -> None:
     composed_walk = composite_character_animation(catalog, recipe, "walk")
     for frame_index in range(walk.frames_per_direction):
         for direction in ("front", "back", "right", "left"):
-            assert extract_character_frame(
-                composed_walk, walk, direction, frame_index
-            ).tobytes() != extract_character_frame(
-                base_walk, walk, direction, frame_index
-            ).tobytes()
+            assert (
+                extract_character_frame(
+                    composed_walk, walk, direction, frame_index
+                ).tobytes()
+                != extract_character_frame(
+                    base_walk, walk, direction, frame_index
+                ).tobytes()
+            )
 
     for animation_id in ("idle", "run"):
-        assert composite_character_animation(
-            catalog, recipe, animation_id
-        ).tobytes() == load_base_animation(
-            catalog, recipe.base_id, animation_id
-        ).tobytes()
+        assert (
+            composite_character_animation(catalog, recipe, animation_id).tobytes()
+            == load_base_animation(catalog, recipe.base_id, animation_id).tobytes()
+        )
 
 
 def test_frost_hair_uses_selected_hooded_cloak_alpha_as_an_occlusion_mask() -> None:
@@ -320,9 +373,10 @@ def test_frost_hair_uses_selected_hooded_cloak_alpha_as_an_occlusion_mask() -> N
             != cloak_only_bytes[index * 4 : index * 4 + 4]
             for index in visible_opening
         )
-        assert composed.crop((0, 64, 384, 259)).tobytes() == cloak_only.crop(
-            (0, 64, 384, 259)
-        ).tobytes()
+        assert (
+            composed.crop((0, 64, 384, 259)).tobytes()
+            == cloak_only.crop((0, 64, 384, 259)).tobytes()
+        )
 
 
 def test_shirt_main_color_remaps_only_its_authored_ramp() -> None:
@@ -376,7 +430,9 @@ def test_recipe_round_trip_and_seeded_randomization_are_deterministic(tmp_path) 
     assert load_recipe(colored_path).to_dict() == colored.to_dict()
 
 
-def test_partial_shirt_composition_and_export_preserve_supported_fallbacks(tmp_path) -> None:
+def test_partial_shirt_composition_and_export_preserve_supported_fallbacks(
+    tmp_path,
+) -> None:
     catalog = create_default_catalog()
     recipe = create_default_recipe("forge-test")
     recipe.part_colors["walking-shirt-test"] = "#B43A46"
@@ -411,11 +467,14 @@ def test_partial_shirt_composition_and_export_preserve_supported_fallbacks(tmp_p
                 assert clothed.tobytes() != naked.tobytes()
             for direction in ("back", "left", "right"):
                 for frame_index in range(animation.frames_per_direction):
-                    assert extract_character_frame(
-                        composed, animation, direction, frame_index
-                    ).tobytes() == extract_character_frame(
-                        base_sheet, animation, direction, frame_index
-                    ).tobytes()
+                    assert (
+                        extract_character_frame(
+                            composed, animation, direction, frame_index
+                        ).tobytes()
+                        == extract_character_frame(
+                            base_sheet, animation, direction, frame_index
+                        ).tobytes()
+                    )
         else:
             assert composed.tobytes() == base_sheet.tobytes()
 
@@ -423,7 +482,7 @@ def test_partial_shirt_composition_and_export_preserve_supported_fallbacks(tmp_p
             composed,
             animation,
             animation.directions[-1],
-            animation.frames_per_direction - 1,
+            animation.frame_count(animation.directions[-1]) - 1,
         )
         assert last_frame.size == (64, 64)
 
@@ -458,9 +517,7 @@ def test_character_forge_window_exposes_animation_direction_zoom_parts_and_color
         >= 1
     )
     assert (
-        window.part_combos["outerwear"].findData(
-            "warlock-robe-semantic-void-amethyst"
-        )
+        window.part_combos["outerwear"].findData("warlock-robe-semantic-void-amethyst")
         >= 1
     )
     assert window.part_combos["outerwear"].currentData() is None
@@ -526,7 +583,7 @@ def test_character_forge_window_exposes_animation_direction_zoom_parts_and_color
 
     window.animation_combo.setCurrentIndex(window.animation_combo.findData("run"))
     assert "Frame 1/6" in window.frame_label.text()
-    assert "384x256 sheet" in window.frame_label.text()
+    assert "512x256 sheet" in window.frame_label.text()
 
     window.seed_spin.setValue(17)
     window.randomize_button.click()
@@ -566,11 +623,46 @@ def test_main_window_has_character_tools_and_refreshes_forge_after_promotion(
     assert len(review_windows) == 1
 
     reloads = []
-    monkeypatch.setattr(forge_windows[0], "_reload_catalog", lambda: reloads.append(True))
+    monkeypatch.setattr(
+        forge_windows[0], "_reload_catalog", lambda: reloads.append(True)
+    )
     review_windows[0].component_promoted.emit("test-component")
     assert reloads == [True]
 
     review_windows[0].close()
     forge_windows[0].close()
+    window.close()
+    application.processEvents()
+
+
+def test_character_forge_preview_honors_direction_specific_run_cycles() -> None:
+    application = QApplication.instance() or QApplication([])
+    window = CharacterForgeWindow()
+    window._timer.stop()
+    window.animation_combo.setCurrentIndex(window.animation_combo.findData("run"))
+
+    window.direction_combo.setCurrentIndex(window.direction_combo.findData("right"))
+    right_frames = [window._frame_index]
+    for _ in range(9):
+        window._advance_frame()
+        right_frames.append(window._frame_index)
+    assert right_frames == [5, 4, 3, 2, 1, 0, 1, 2, 3, 4]
+    assert "Frame 5/6" in window.frame_label.text()
+    assert "Cycle 10/10" in window.frame_label.text()
+    window._advance_frame()
+    assert window._frame_index == 5
+
+    window.direction_combo.setCurrentIndex(window.direction_combo.findData("left"))
+    left_frames = [window._frame_index]
+    for _ in range(9):
+        window._advance_frame()
+        left_frames.append(window._frame_index)
+    assert left_frames == [0, 1, 2, 3, 4, 5, 4, 3, 2, 1]
+
+    window.direction_combo.setCurrentIndex(window.direction_combo.findData("back"))
+    assert window._frame_index == 0
+    assert "Frame 1/8" in window.frame_label.text()
+    assert "Cycle" not in window.frame_label.text()
+
     window.close()
     application.processEvents()

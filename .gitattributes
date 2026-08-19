@@ -1,0 +1,2 @@
+# Character Forge generators compare canonical JSON bytes across platforms.
+assets/character-forge/**/*.json text eol=lf

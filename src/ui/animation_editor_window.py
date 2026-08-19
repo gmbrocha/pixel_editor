@@ -40,6 +40,7 @@ from src.core.animation_document import (
     AnimationProjectError,
     FrameRect,
     FrameSequenceSpec,
+    create_animation_project_from_gif,
     create_animation_project_from_sheet,
     create_blank_project,
     export_project_gif,
@@ -238,6 +239,7 @@ class AnimationEditorWindow(QMainWindow):
         toolbar.addAction("Save As", self._save_project_as)
         toolbar.addSeparator()
         toolbar.addAction("Open Sheet", self._open_sheet)
+        toolbar.addAction("Import GIF", self._open_gif)
         toolbar.addAction("Save Edited Sheet As", self._save_edited_sheet)
         toolbar.addSeparator()
         toolbar.addAction("Export Track PNG", self._export_track_png)
@@ -643,7 +645,7 @@ class AnimationEditorWindow(QMainWindow):
             self,
             "Open Sprite Sheet",
             "",
-            "Images (*.png *.bmp *.gif *.jpg *.jpeg *.webp)",
+            "Images (*.png *.bmp *.jpg *.jpeg *.webp)",
         )
         if not path:
             return
@@ -663,6 +665,31 @@ class AnimationEditorWindow(QMainWindow):
             source_path=path,
         )
         self._set_project(project, path=None, dirty=True)
+
+    def _open_gif(self) -> None:
+        if not self._maybe_close_project():
+            return
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Import Animated GIF",
+            "",
+            "GIF Images (*.gif)",
+        )
+        if not path:
+            return
+        try:
+            project = create_animation_project_from_gif(
+                path,
+                palette=list(self._project.palette),
+            )
+        except (AnimationProjectError, OSError, ValueError) as exc:
+            QMessageBox.critical(self, "GIF import failed", str(exc))
+            return
+        self._set_project(project, path=None, dirty=True)
+        self.statusBar().showMessage(
+            f"Imported {len(project.tracks[0].frames)} GIF frames from "
+            f"{Path(path).name}"
+        )
 
     def _open_project(self) -> None:
         if not self._maybe_close_project():

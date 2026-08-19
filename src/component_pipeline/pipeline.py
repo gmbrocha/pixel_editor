@@ -93,7 +93,12 @@ class ComponentIdea:
 
 
 def utc_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def sha256_bytes(value: bytes) -> str:
@@ -144,7 +149,9 @@ def load_component_ideas(path: str | Path | None = None) -> tuple[ComponentIdea,
             raise PipelineError(f"Component record {index + 1} is not an object")
         required = ("id", "slot", "layer", "concept", "fit", "priority", "status")
         if any(not isinstance(item.get(key), str) or not item[key] for key in required):
-            raise PipelineError(f"Component record {index + 1} is missing required text")
+            raise PipelineError(
+                f"Component record {index + 1} is missing required text"
+            )
         component_id = str(item["id"])
         if component_id in ids:
             raise PipelineError(f"Duplicate component id {component_id!r}")
@@ -155,12 +162,18 @@ def load_component_ideas(path: str | Path | None = None) -> tuple[ComponentIdea,
         slot = str(item["slot"])
         layer = str(item["layer"])
         if slot not in CHARACTER_SLOTS:
-            raise PipelineError(f"Component {component_id!r} uses unknown slot {slot!r}")
+            raise PipelineError(
+                f"Component {component_id!r} uses unknown slot {slot!r}"
+            )
         if layer not in CHARACTER_LAYER_ORDER:
-            raise PipelineError(f"Component {component_id!r} uses unknown layer {layer!r}")
+            raise PipelineError(
+                f"Component {component_id!r} uses unknown layer {layer!r}"
+            )
         status = str(item["status"])
         if status not in COMPONENT_STATUSES:
-            raise PipelineError(f"Component {component_id!r} has invalid status {status!r}")
+            raise PipelineError(
+                f"Component {component_id!r} has invalid status {status!r}"
+            )
         ideas.append(
             ComponentIdea(
                 id=component_id,
@@ -183,9 +196,13 @@ def component_idea(component_id: str) -> ComponentIdea:
     raise PipelineError(f"Unknown component idea {component_id!r}")
 
 
-def _animation_spec(specs: Mapping[str, object], animation_id: str) -> Mapping[str, object]:
+def _animation_spec(
+    specs: Mapping[str, object], animation_id: str
+) -> Mapping[str, object]:
     animations = specs.get("animations")
-    if not isinstance(animations, Mapping) or not isinstance(animations.get(animation_id), Mapping):
+    if not isinstance(animations, Mapping) or not isinstance(
+        animations.get(animation_id), Mapping
+    ):
         raise PipelineError(f"Unknown animation specification {animation_id!r}")
     return animations[animation_id]
 
@@ -205,8 +222,15 @@ def assemble_authoritative_run() -> Image.Image:
     sources = run.get("sources")
     if not isinstance(sources, list):
         raise PipelineError("Run sources are missing")
-    rows = {"front": 0, "back": 1, "right": 2, "left": 3}
-    result = Image.new("RGBA", (384, 256), (0, 0, 0, 0))
+    raw_rows = run.get("direction_rows")
+    raw_counts = run.get("direction_frame_counts")
+    if not isinstance(raw_rows, Mapping) or not isinstance(raw_counts, Mapping):
+        raise PipelineError("Run direction geometry is missing")
+    rows = {str(direction): int(row) for direction, row in raw_rows.items()}
+    counts = {str(direction): int(count) for direction, count in raw_counts.items()}
+    frame_width, frame_height = (int(value) for value in specs["frame_size"])
+    sheet_size = tuple(int(value) for value in run["sheet_size"])
+    result = Image.new("RGBA", sheet_size, (0, 0, 0, 0))
     found: set[str] = set()
     for source in sources:
         if not isinstance(source, Mapping) or source.get("row") not in rows:
@@ -215,9 +239,12 @@ def assemble_authoritative_run() -> Image.Image:
         path = _asset_path(source.get("file"))
         with Image.open(path) as opened:
             strip = opened.convert("RGBA")
-        if strip.size != (384, 64):
-            raise PipelineError(f"Run source {path.name} is {strip.size}, expected (384, 64)")
-        result.paste(strip, (0, rows[row] * 64))
+        expected_size = (counts[row] * frame_width, frame_height)
+        if strip.size != expected_size:
+            raise PipelineError(
+                f"Run source {path.name} is {strip.size}, expected {expected_size}"
+            )
+        result.paste(strip, (0, rows[row] * frame_height))
         found.add(row)
     if found != set(rows):
         raise PipelineError(f"Run sources are incomplete: {sorted(set(rows) - found)}")
@@ -258,7 +285,9 @@ def validate_canonical_checksums() -> None:
     run_path = _asset_path(_animation_spec(specs, "run").get("runtime_file"))
     with Image.open(run_path) as current:
         if current.convert("RGBA").tobytes() != expected_run.tobytes():
-            raise PipelineError("Derived run.png does not match its authoritative strips")
+            raise PipelineError(
+                "Derived run.png does not match its authoritative strips"
+            )
 
 
 def validate_pipeline() -> dict[str, int]:
@@ -296,7 +325,9 @@ def rebaseline_canonical(base_id: str, *, confirmed: bool) -> dict[str, str]:
         expected_size = tuple(int(value) for value in raw["sheet_size"])
         with Image.open(runtime_path) as image:
             if image.size != expected_size or image.mode != "RGBA":
-                raise PipelineError(f"Cannot rebaseline changed geometry for {animation_id}")
+                raise PipelineError(
+                    f"Cannot rebaseline changed geometry for {animation_id}"
+                )
         raw["runtime_sha256"] = sha256_file(runtime_path)
         hashes[str(animation_id)] = str(raw["runtime_sha256"])
         for source in raw.get("sources", []):
@@ -308,7 +339,9 @@ def rebaseline_canonical(base_id: str, *, confirmed: bool) -> dict[str, str]:
 
 def _matte_rgb(specs: Mapping[str, object]) -> tuple[int, int, int]:
     generation = specs.get("generation")
-    if not isinstance(generation, Mapping) or not isinstance(generation.get("matte"), str):
+    if not isinstance(generation, Mapping) or not isinstance(
+        generation.get("matte"), str
+    ):
         raise PipelineError("Generation matte is missing")
     return color_hex_to_rgb(generation["matte"])
 
@@ -401,7 +434,10 @@ def apply_mannequin_ramp(
     source = image.convert("RGBA")
     result = Image.new("RGBA", source.size, (0, 0, 0, 0))
     result.putdata(
-        [(*mapping.get(pixel[:3], pixel[:3]), pixel[3]) for pixel in _image_data(source)]
+        [
+            (*mapping.get(pixel[:3], pixel[:3]), pixel[3])
+            for pixel in _image_data(source)
+        ]
     )
     return result
 
@@ -433,13 +469,18 @@ def reverse_mannequin_ramp(
         nearest = min(
             targets,
             key=lambda target: sum(
-                (int(pixel[channel]) - int(target[channel])) ** 2 for channel in range(3)
+                (int(pixel[channel]) - int(target[channel])) ** 2
+                for channel in range(3)
             ),
         )
         distance_squared = sum(
             (int(pixel[channel]) - int(nearest[channel])) ** 2 for channel in range(3)
         )
-        lookup[pixel] = (*reverse[nearest[:3]], pixel[3]) if distance_squared <= threshold_squared else pixel
+        lookup[pixel] = (
+            (*reverse[nearest[:3]], pixel[3])
+            if distance_squared <= threshold_squared
+            else pixel
+        )
     restored: list[tuple[int, int, int, int]] = []
     for index, pixel in enumerate(pixels):
         x = index % result.width
@@ -474,22 +515,16 @@ def restore_generation_background(
     result = image.convert("RGBA")
     pixels = result.load()
     left, top, right, bottom = region
-    for row in animation.direction_rows.values():
-        for frame_index in range(animation.frames_per_direction):
+    for direction, row in animation.direction_rows.items():
+        for frame_index in range(animation.frame_count(direction)):
             x0 = frame_index * animation.frame_size[0] + left
             y0 = row * animation.frame_size[1] + top
             x1 = min(result.width, frame_index * animation.frame_size[0] + right)
             y1 = min(result.height, row * animation.frame_size[1] + bottom)
             if x0 >= x1 or y0 >= y1:
                 continue
-            perimeter = [
-                (x, y)
-                for x in range(x0, x1)
-                for y in (y0, y1 - 1)
-            ] + [
-                (x, y)
-                for y in range(y0 + 1, y1 - 1)
-                for x in (x0, x1 - 1)
+            perimeter = [(x, y) for x in range(x0, x1) for y in (y0, y1 - 1)] + [
+                (x, y) for y in range(y0 + 1, y1 - 1) for x in (x0, x1 - 1)
             ]
             border_colors = Counter(pixels[x, y][:3] for x, y in perimeter)
             background_colors = tuple(
@@ -501,14 +536,15 @@ def restore_generation_background(
             if not background_colors:
                 background_colors = (border_colors.most_common(1)[0][0],)
 
-            def is_background(color: tuple[int, int, int, int] | tuple[int, int, int]) -> bool:
-                return min(rgb_distance(color, target) for target in background_colors) <= tolerance
+            def is_background(
+                color: tuple[int, int, int, int] | tuple[int, int, int],
+            ) -> bool:
+                return (
+                    min(rgb_distance(color, target) for target in background_colors)
+                    <= tolerance
+                )
 
-            queue = deque(
-                (x, y)
-                for x, y in perimeter
-                if is_background(pixels[x, y])
-            )
+            queue = deque((x, y) for x, y in perimeter if is_background(pixels[x, y]))
             visited = set(queue)
             while queue:
                 x, y = queue.popleft()
@@ -531,7 +567,9 @@ def clamp_outside_generation_region(
     matte_rgb: tuple[int, int, int],
 ) -> Image.Image:
     if len({generated.size, canonical.size, allowed_region.size}) != 1:
-        raise PipelineError("Generated, canonical, and region images must share geometry")
+        raise PipelineError(
+            "Generated, canonical, and region images must share geometry"
+        )
     result = generated.convert("RGBA")
     base = canonical.convert("RGBA")
     allowed = allowed_region.convert("L")
@@ -583,8 +621,8 @@ def create_allowed_region_mask(
 ) -> Image.Image:
     mask = Image.new("L", animation.sheet_size, 0)
     draw = ImageDraw.Draw(mask)
-    for row in animation.direction_rows.values():
-        for frame_index in range(animation.frames_per_direction):
+    for direction, row in animation.direction_rows.items():
+        for frame_index in range(animation.frame_count(direction)):
             frame_left = frame_index * animation.frame_size[0]
             frame_top = row * animation.frame_size[1]
             left, top, right, bottom = region
@@ -682,7 +720,9 @@ def prepare_pipeline() -> dict[str, list[Path]]:
             "reverse_threshold": mannequin_config["reverse_threshold"],
             "leak_threshold": mannequin_config["leak_threshold"],
             "matte_restore_threshold": mannequin_config["matte_restore_threshold"],
-            "border_background_tolerance": mannequin_config["border_background_tolerance"],
+            "border_background_tolerance": mannequin_config[
+                "border_background_tolerance"
+            ],
             "border_dark_ceiling": mannequin_config["border_dark_ceiling"],
             "border_matte_threshold": mannequin_config["border_matte_threshold"],
             "entries": [
@@ -698,7 +738,11 @@ def prepare_pipeline() -> dict[str, list[Path]]:
         master.save(master_path)
         outputs["masters"].append(master_path)
         for slot, raw_region in regions.items():
-            if not isinstance(slot, str) or not isinstance(raw_region, list) or len(raw_region) != 4:
+            if (
+                not isinstance(slot, str)
+                or not isinstance(raw_region, list)
+                or len(raw_region) != 4
+            ):
                 raise PipelineError("Slot region metadata is invalid")
             region = tuple(int(value) for value in raw_region)
             native_mask = create_native_region_mask(animation, region)
@@ -706,7 +750,9 @@ def prepare_pipeline() -> dict[str, list[Path]]:
                 (native_mask.width * 4, native_mask.height * 4),
                 Image.Resampling.NEAREST,
             )
-            left, top, right, bottom = (int(value) for value in animation_spec["padding"])
+            left, top, right, bottom = (
+                int(value) for value in animation_spec["padding"]
+            )
             api_mask = Image.new(
                 "RGBA",
                 tuple(int(value) for value in animation_spec["generation_size"]),
@@ -737,13 +783,17 @@ def prepare_pipeline() -> dict[str, list[Path]]:
     return outputs
 
 
-def _block_representative(block: list[tuple[int, int, int, int]]) -> tuple[int, int, int, int]:
+def _block_representative(
+    block: list[tuple[int, int, int, int]],
+) -> tuple[int, int, int, int]:
     counts = Counter(block)
     highest = max(counts.values())
     tied = [color for color, count in counts.items() if count == highest]
     if len(tied) == 1:
         return tied[0]
-    medians = tuple(statistics.median(color[channel] for color in block) for channel in range(4))
+    medians = tuple(
+        statistics.median(color[channel] for color in block) for channel in range(4)
+    )
     return min(
         tied,
         key=lambda color: (
@@ -771,9 +821,7 @@ def _snap_image_to_palette(
     if not palette:
         return result
     pixels = list(_image_data(result))
-    lookup = {
-        color: _nearest_color(color, palette, threshold) for color in set(pixels)
-    }
+    lookup = {color: _nearest_color(color, palette, threshold) for color in set(pixels)}
     result.putdata([lookup[color] for color in pixels])
     return result
 
@@ -789,10 +837,15 @@ def normalize_generated_image(
     if method not in NORMALIZATION_METHODS:
         raise PipelineError(f"Unknown normalization method {method!r}")
     left, top, right, bottom = padding
-    expected_size = (native_size[0] * 4 + left + right, native_size[1] * 4 + top + bottom)
+    expected_size = (
+        native_size[0] * 4 + left + right,
+        native_size[1] * 4 + top + bottom,
+    )
     source = generated.convert("RGBA")
     if source.size != expected_size:
-        raise PipelineError(f"Generated image is {source.size}, expected {expected_size}")
+        raise PipelineError(
+            f"Generated image is {source.size}, expected {expected_size}"
+        )
     cropped = source.crop((left, top, source.width - right, source.height - bottom))
     if method == "center":
         return cropped.resize(native_size, Image.Resampling.NEAREST)
@@ -804,7 +857,9 @@ def normalize_generated_image(
             block = [src[x * 4 + dx, y * 4 + dy] for dy in range(4) for dx in range(4)]
             out[x, y] = _block_representative(block)
     if method == "palette":
-        frequent = [color for color, _count in Counter(_image_data(result)).most_common(16)]
+        frequent = [
+            color for color, _count in Counter(_image_data(result)).most_common(16)
+        ]
         canonical = tuple(canonical_palette)
         palette = tuple(dict.fromkeys(canonical if canonical else tuple(frequent)))
         result = _snap_image_to_palette(result, palette, 32.0)
@@ -815,7 +870,9 @@ def rgb_distance(
     first: tuple[int, int, int, int] | tuple[int, int, int],
     second: tuple[int, int, int, int] | tuple[int, int, int],
 ) -> float:
-    return math.sqrt(sum((int(first[index]) - int(second[index])) ** 2 for index in range(3)))
+    return math.sqrt(
+        sum((int(first[index]) - int(second[index])) ** 2 for index in range(3))
+    )
 
 
 def extract_component_overlay(
@@ -831,7 +888,9 @@ def extract_component_overlay(
     generated_rgba = generated_native.convert("RGBA")
     mask = allowed_region.convert("L")
     if base_rgba.size != generated_rgba.size or base_rgba.size != mask.size:
-        raise PipelineError("Base, generated image, and region mask must have identical geometry")
+        raise PipelineError(
+            "Base, generated image, and region mask must have identical geometry"
+        )
     output = Image.new("RGBA", base_rgba.size, (0, 0, 0, 0))
     out = output.load()
     base_pixels = base_rgba.load()
@@ -846,7 +905,10 @@ def extract_component_overlay(
             if source[3] == 0:
                 changed = rgb_distance(candidate, matte_rgb) > matte_threshold
             else:
-                changed = rgb_distance(candidate, source) > difference_threshold or candidate[3] != source[3]
+                changed = (
+                    rgb_distance(candidate, source) > difference_threshold
+                    or candidate[3] != source[3]
+                )
             if changed:
                 out[x, y] = candidate
     return output
@@ -877,7 +939,12 @@ def analyze_candidate(
     reserved_color_threshold: float = 0.0,
 ) -> dict[str, object]:
     if len({base.size, generated_native.size, overlay.size, allowed_region.size}) != 1:
-        return {"status": "fail", "score": 0.0, "hard_failures": ["geometry"], "warnings": []}
+        return {
+            "status": "fail",
+            "score": 0.0,
+            "hard_failures": ["geometry"],
+            "warnings": [],
+        }
     base_rgba = base.convert("RGBA")
     generated = generated_native.convert("RGBA")
     extracted = overlay.convert("RGBA")
@@ -909,7 +976,9 @@ def analyze_candidate(
                     changed = rgb_distance(candidate, source) > difference_threshold
                 outside_changed += int(changed)
             else:
-                reconstruction_errors.append(rgb_distance(recon_pixels[x, y], candidate))
+                reconstruction_errors.append(
+                    rgb_distance(recon_pixels[x, y], candidate)
+                )
             if overlay_pixels[x, y][3] > 0 and source[3] == 0:
                 silhouette_growth += 1
             if overlay_pixels[x, y][3] > 0 and region_bbox is not None:
@@ -920,10 +989,12 @@ def analyze_candidate(
     alpha = extracted.getchannel("A")
     for direction in animation.directions:
         counts = []
-        for frame_index in range(animation.frames_per_direction):
+        for frame_index in range(animation.frame_count(direction)):
             count = sum(
                 1
-                for value in _image_data(alpha.crop(animation.frame_box(direction, frame_index)))
+                for value in _image_data(
+                    alpha.crop(animation.frame_box(direction, frame_index))
+                )
                 if value
             )
             counts.append(count)
@@ -941,7 +1012,9 @@ def analyze_candidate(
     )
     partial_alpha = sum(1 for color in colors if 0 < color[3] < 255)
     outside_ratio = outside_changed / max(1, visible_base)
-    mean_reconstruction = statistics.fmean(reconstruction_errors) if reconstruction_errors else 0.0
+    mean_reconstruction = (
+        statistics.fmean(reconstruction_errors) if reconstruction_errors else 0.0
+    )
     hard_failures: list[str] = []
     warnings: list[str] = []
     if reserved_leak_pixels:
@@ -968,9 +1041,10 @@ def analyze_candidate(
     if silhouette_growth > max(32, int(overlay_count * 0.75)):
         warnings.append("silhouette_growth")
     outside_score = max(0.0, 1.0 - outside_ratio / 0.05)
-    coverage_score = 1.0 - len(missing_frames) / max(
-        1, len(animation.directions) * animation.frames_per_direction
+    total_frames = sum(
+        animation.frame_count(direction) for direction in animation.directions
     )
+    coverage_score = 1.0 - len(missing_frames) / max(1, total_frames)
     reconstruction_score = max(0.0, 1.0 - mean_reconstruction / 16.0)
     bounds_score = 0.5 if edge_contact else 1.0
     silhouette_score = max(0.0, 1.0 - silhouette_growth / max(1, overlay_count * 1.5))
@@ -1010,7 +1084,9 @@ def _checkerboard(size: tuple[int, int], cell: int = 4) -> Image.Image:
     for y in range(0, size[1], cell):
         for x in range(0, size[0], cell):
             if (x // cell + y // cell) % 2:
-                draw.rectangle((x, y, x + cell - 1, y + cell - 1), fill=(150, 150, 150, 255))
+                draw.rectangle(
+                    (x, y, x + cell - 1, y + cell - 1), fill=(150, 150, 150, 255)
+                )
     return image
 
 
@@ -1038,7 +1114,7 @@ def write_candidate_previews(
             reconstruction.crop(animation.frame_box(direction, index)).resize(
                 (512, 512), Image.Resampling.NEAREST
             )
-            for index in range(animation.frames_per_direction)
+            for index in range(animation.frame_count(direction))
         ]
         path = directory / f"{direction}.webp"
         frames[0].save(
@@ -1098,7 +1174,9 @@ def build_generation_prompt(idea: ComponentIdea, animation: CharacterAnimation) 
             "contact point, pose, and facing direction unchanged."
         ),
     }
-    ordered_directions = sorted(animation.direction_rows.items(), key=lambda item: item[1])
+    ordered_directions = sorted(
+        animation.direction_rows.items(), key=lambda item: item[1]
+    )
     row_map = ", ".join(
         f"row {row + 1} = {direction.title()}" for direction, row in ordered_directions
     )
@@ -1127,8 +1205,15 @@ def build_generation_prompt(idea: ComponentIdea, animation: CharacterAnimation) 
             "of the component.",
             "",
             "ANIMATION AND DESIGN LOCK",
-            f"The sheet has {animation.frames_per_direction} frame(s) per direction. Exact direction layout: {row_map}. "
-            "Frames progress left to right. Do not reverse, reorder, omit, duplicate, or invent frames.",
+            (
+                "Frame counts by direction: "
+                + ", ".join(
+                    f"{direction}={animation.frame_count(direction)}"
+                    for direction in animation.directions
+                )
+                + f". Exact direction layout: {row_map}. Frames progress left to "
+                "right. Do not reverse, reorder, omit, duplicate, or invent frames."
+            ),
             "Use one identical component design in every frame: the same construction, material, palette, proportions, "
             "fastenings, trim, and recognizable landmarks. Change only its perspective, occlusion, and folds as required "
             "by the existing pose. If a detail cannot be represented consistently, omit that detail everywhere.",
@@ -1265,8 +1350,12 @@ def create_job(
         "background": "opaque",
         "output_format": "png",
         "size": "x".join(str(value) for value in animation_spec["generation_size"]),
-        "image_sha256": sha256_file(PIPELINE_ROOT / "generation_masters" / f"{animation_id}.png"),
-        "mask_sha256": sha256_file(PIPELINE_ROOT / "masks" / idea.slot / f"{animation_id}.png"),
+        "image_sha256": sha256_file(
+            PIPELINE_ROOT / "generation_masters" / f"{animation_id}.png"
+        ),
+        "mask_sha256": sha256_file(
+            PIPELINE_ROOT / "masks" / idea.slot / f"{animation_id}.png"
+        ),
         "mannequin_ramp_sha256": sha256_file(_mannequin_ramp_path(animation_id)),
         "prompt_sha256": sha256_bytes(prompt.encode("utf-8")),
         "design_reference": design_reference,
@@ -1333,7 +1422,9 @@ def queue_bootstrap_jobs(*, candidates: int = 3) -> tuple[Path, ...]:
     prepare_pipeline()
     jobs: list[Path] = []
     for idea in load_component_ideas():
-        jobs.extend(queue_component_jobs(idea.id, candidates=candidates, _prepared=True))
+        jobs.extend(
+            queue_component_jobs(idea.id, candidates=candidates, _prepared=True)
+        )
     return tuple(jobs)
 
 
@@ -1371,7 +1462,9 @@ def openai_api_available() -> bool:
     return bool(_load_api_key())
 
 
-def _openai_edit_candidate(job_dir: Path, metadata: Mapping[str, object]) -> tuple[bytes, dict[str, object]]:
+def _openai_edit_candidate(
+    job_dir: Path, metadata: Mapping[str, object]
+) -> tuple[bytes, dict[str, object]]:
     api_key = _load_api_key()
     if not api_key:
         raise PipelineError(
@@ -1381,7 +1474,9 @@ def _openai_edit_candidate(job_dir: Path, metadata: Mapping[str, object]) -> tup
         import openai
         from openai import OpenAI
     except ImportError as exc:
-        raise PipelineError("Install project requirements before generating components") from exc
+        raise PipelineError(
+            "Install project requirements before generating components"
+        ) from exc
     request = _read_json(job_dir / "request.json")
     animation_id = str(metadata["animation_id"])
     slot = str(metadata["slot"])
@@ -1402,7 +1497,9 @@ def _openai_edit_candidate(job_dir: Path, metadata: Mapping[str, object]) -> tup
                 if isinstance(design_reference, str) and design_reference:
                     reference_path = Path(design_reference)
                     if not reference_path.is_file():
-                        raise PipelineError(f"Design reference is missing: {reference_path}")
+                        raise PipelineError(
+                            f"Design reference is missing: {reference_path}"
+                        )
                     inputs.append(stack.enter_context(reference_path.open("rb")))
                 mask_file = stack.enter_context(mask_path.open("rb"))
                 raw_response = client.images.with_raw_response.edit(
@@ -1432,9 +1529,15 @@ def _openai_edit_candidate(job_dir: Path, metadata: Mapping[str, object]) -> tup
             return base64.b64decode(parsed.data[0].b64_json), response_metadata
         except retry_types as exc:
             if attempt == 3:
-                raise PipelineError(f"Transient OpenAI failure after 3 attempts: {exc}") from exc
-            retry_after = getattr(getattr(exc, "response", None), "headers", {}).get("retry-after")
-            delay = float(retry_after) if retry_after else (2 ** attempt + random.random())
+                raise PipelineError(
+                    f"Transient OpenAI failure after 3 attempts: {exc}"
+                ) from exc
+            retry_after = getattr(getattr(exc, "response", None), "headers", {}).get(
+                "retry-after"
+            )
+            delay = (
+                float(retry_after) if retry_after else (2**attempt + random.random())
+            )
             time.sleep(min(delay, 10.0))
         except openai.APIError as exc:
             code = getattr(exc, "code", None)
@@ -1460,7 +1563,7 @@ def normalize_job(job_id: str | Path) -> dict[str, object]:
         animation,
         tuple(int(value) for value in specs["regions"][str(metadata["slot"])]),
     )
-    region = tuple(int(value) for value in specs["regions"][str(metadata["slot"])] )
+    region = tuple(int(value) for value in specs["regions"][str(metadata["slot"])])
     matte = _matte_rgb(specs)
     mannequin_ramp, mannequin_document = load_mannequin_ramp(animation_id)
     reverse_threshold = float(mannequin_document["reverse_threshold"])
@@ -1657,7 +1760,9 @@ def generate_job(job_id: str | Path) -> dict[str, object]:
             with Image.open(BytesIO(image_bytes)) as opened:
                 opened.verify()
         except Exception as exc:
-            raise PipelineError(f"OpenAI candidate {candidate_id} is not a valid image") from exc
+            raise PipelineError(
+                f"OpenAI candidate {candidate_id} is not a valid image"
+            ) from exc
         candidate["status"] = "generated"
         candidate["raw_sha256"] = sha256_bytes(image_bytes)
         candidate["api"] = response_metadata
@@ -1677,7 +1782,9 @@ def set_candidate_review(
         raise PipelineError("Review decision must be approved or rejected")
     job_dir, metadata = load_job(job_id)
     candidates = metadata.get("candidates")
-    if not isinstance(candidates, dict) or not isinstance(candidates.get(candidate_id), dict):
+    if not isinstance(candidates, dict) or not isinstance(
+        candidates.get(candidate_id), dict
+    ):
         raise PipelineError(f"Unknown candidate {candidate_id!r}")
     candidate = candidates[candidate_id]
     if candidate.get("status") != "review":
@@ -1689,14 +1796,22 @@ def set_candidate_review(
     return metadata
 
 
-def save_cleaned_candidate(job_id: str | Path, candidate_id: str, image: Image.Image) -> Path:
+def save_cleaned_candidate(
+    job_id: str | Path, candidate_id: str, image: Image.Image
+) -> Path:
     job_dir, metadata = load_job(job_id)
     candidates = metadata.get("candidates")
-    if not isinstance(candidates, dict) or not isinstance(candidates.get(candidate_id), dict):
+    if not isinstance(candidates, dict) or not isinstance(
+        candidates.get(candidate_id), dict
+    ):
         raise PipelineError(f"Unknown candidate {candidate_id!r}")
     path = job_dir / "extracted" / f"{candidate_id}.png"
     if path.is_file():
-        backup = job_dir / "extracted" / f"{candidate_id}-before-cleanup-{datetime.now().strftime('%Y%m%d%H%M%S')}.png"
+        backup = (
+            job_dir
+            / "extracted"
+            / f"{candidate_id}-before-cleanup-{datetime.now().strftime('%Y%m%d%H%M%S')}.png"
+        )
         shutil.copy2(path, backup)
     image.convert("RGBA").save(path)
     candidate = candidates[candidate_id]
@@ -1733,7 +1848,9 @@ def promote_candidate(
     validate_canonical_checksums()
     job_dir, metadata = load_job(job_id)
     candidates = metadata.get("candidates")
-    if not isinstance(candidates, dict) or not isinstance(candidates.get(candidate_id), dict):
+    if not isinstance(candidates, dict) or not isinstance(
+        candidates.get(candidate_id), dict
+    ):
         raise PipelineError(f"Unknown candidate {candidate_id!r}")
     candidate = candidates[candidate_id]
     review = candidate.get("review")
@@ -1752,13 +1869,17 @@ def promote_candidate(
     expected_size = catalog.base("human-01").animations[animation_id].sheet_size
     with Image.open(source) as opened:
         if opened.size != expected_size or opened.mode != "RGBA":
-            raise PipelineError("Promotion candidate geometry or alpha format is invalid")
+            raise PipelineError(
+                "Promotion candidate geometry or alpha format is invalid"
+            )
     idea = component_idea(component_id)
     target_dir = ASSET_ROOT / "parts" / slot / component_id
     target_dir.mkdir(parents=True, exist_ok=True)
     target = target_dir / f"{animation_id}.png"
     if target.exists() and not replace:
-        raise PipelineError(f"Production asset already exists: {target}; pass --replace explicitly")
+        raise PipelineError(
+            f"Production asset already exists: {target}; pass --replace explicitly"
+        )
     shutil.copy2(source, target)
     manifest_path = target_dir / "manifest.json"
     if manifest_path.is_file():

@@ -36,7 +36,9 @@ def isolated_pipeline(tmp_path, monkeypatch) -> Path:
     pipeline_root = tmp_path / "art_pipeline"
     monkeypatch.setattr(pipeline, "ASSET_ROOT", asset_root)
     monkeypatch.setattr(pipeline, "PIPELINE_ROOT", pipeline_root)
-    monkeypatch.setattr(pipeline, "CATALOG_PATH", asset_root / "custom_parts" / "components.yaml")
+    monkeypatch.setattr(
+        pipeline, "CATALOG_PATH", asset_root / "custom_parts" / "components.yaml"
+    )
     monkeypatch.setattr(pipeline, "SPEC_PATH", asset_root / "sheet_specs.json")
     return asset_root
 
@@ -71,7 +73,11 @@ def test_bootstrap_catalog_has_all_35_compact_records() -> None:
 
 
 def test_generation_prompt_locks_base_and_component_identity() -> None:
-    idea = next(idea for idea in load_component_ideas() if idea.id == "short_wool_travel_coat_01")
+    idea = next(
+        idea
+        for idea in load_component_ideas()
+        if idea.id == "short_wool_travel_coat_01"
+    )
     animation = CharacterAnimation(
         id="walk",
         name="Walk",
@@ -91,7 +97,9 @@ def test_generation_prompt_locks_base_and_component_identity() -> None:
     assert "Every original pixel that remains visible must be identical" in prompt
     assert "row 1 = Front, row 2 = Back, row 3 = Right, row 4 = Left" in prompt
     assert "same construction, material, palette, proportions" in prompt
-    assert "When uncertain about a pixel, preserve the original pixel unchanged" in prompt
+    assert (
+        "When uncertain about a pixel, preserve the original pixel unchanged" in prompt
+    )
     assert idea.concept in prompt
 
 
@@ -106,12 +114,14 @@ def test_checksum_validation_refuses_silent_master_change(isolated_pipeline) -> 
         validate_canonical_checksums()
 
 
-def test_prepare_builds_exact_generation_geometry_and_api_masks(isolated_pipeline) -> None:
+def test_prepare_builds_exact_generation_geometry_and_api_masks(
+    isolated_pipeline,
+) -> None:
     outputs = prepare_pipeline()
     expected = {
         "idle": (656, 1024),
         "walk": (1536, 1040),
-        "run": (1536, 1024),
+        "run": (2048, 1024),
     }
     for path in outputs["masters"]:
         assert Image.open(path).size == expected[path.stem]
@@ -129,8 +139,12 @@ def test_reserved_blue_mannequin_ramp_is_reversible_and_preserves_neutral_pixels
     isolated_pipeline,
 ) -> None:
     prepare_pipeline()
-    canonical = Image.open(pipeline.PIPELINE_ROOT / "canonical" / "idle.png").convert("RGBA")
-    mannequin = Image.open(pipeline.PIPELINE_ROOT / "mannequins" / "idle.png").convert("RGBA")
+    canonical = Image.open(pipeline.PIPELINE_ROOT / "canonical" / "idle.png").convert(
+        "RGBA"
+    )
+    mannequin = Image.open(pipeline.PIPELINE_ROOT / "mannequins" / "idle.png").convert(
+        "RGBA"
+    )
     mapping, document = pipeline.load_mannequin_ramp("idle")
     assert len(mapping) == 3
     assert document["reverse_threshold"] == document["leak_threshold"]
@@ -237,7 +251,9 @@ def test_normalization_methods_preserve_geometry_and_choose_dominant_block() -> 
         for x in range(4):
             pixels[x + 4, y + 2] = (200, 10, 20, 255)
     pixels[4, 2] = (2, 2, 2, 255)
-    dominant = normalize_generated_image(source, (2, 1), (4, 2, 4, 2), method="dominant")
+    dominant = normalize_generated_image(
+        source, (2, 1), (4, 2, 4, 2), method="dominant"
+    )
     center = normalize_generated_image(source, (2, 1), (4, 2, 4, 2), method="center")
     palette = normalize_generated_image(
         source,
@@ -326,7 +342,14 @@ def test_promotion_writes_incomplete_manifest_and_keeps_normal_catalog_clean(
     target = promote_candidate(job_dir, "candidate-001")
     manifest_path = target.parent / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    assert target == isolated_pipeline / "parts" / "headwear" / "weathered_captains_cap_01" / "idle.png"
+    assert (
+        target
+        == isolated_pipeline
+        / "parts"
+        / "headwear"
+        / "weathered_captains_cap_01"
+        / "idle.png"
+    )
     assert manifest["status"] == "incomplete"
     assert manifest["animations"] == {"idle": "idle.png"}
     development = create_default_catalog(isolated_pipeline, include_incomplete=True)
@@ -403,9 +426,9 @@ def test_permanent_api_rejection_is_recorded_once_per_candidate_and_queue_contin
     metadata = pipeline.generate_job(jobs[0])
     assert len(calls) == 2
     assert metadata["status"] == "failed"
-    assert {
-        candidate["status"] for candidate in metadata["candidates"].values()
-    } == {"failed"}
+    assert {candidate["status"] for candidate in metadata["candidates"].values()} == {
+        "failed"
+    }
     assert metadata["candidates"]["candidate-001"]["attempts"] == 1
     assert metadata["candidates"]["candidate-001"]["error"]["request_id"] == "req_1"
 

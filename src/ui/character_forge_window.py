@@ -25,12 +25,12 @@ from PySide6.QtWidgets import (
 )
 
 from src.core.character_forge import (
-    CHARACTER_SLOTS,
     CHARACTER_SLOT_LABELS,
+    CHARACTER_SLOTS,
     DIRECTION_LABELS,
+    CharacterAnimation,
     CharacterCatalog,
     CharacterForgeError,
-    CharacterRecipe,
     clear_character_image_cache,
     composite_character_animation,
     create_default_catalog,
@@ -41,8 +41,8 @@ from src.core.character_forge import (
     load_recipe,
     local_recipe_directory,
     local_recipe_path,
-    randomize_recipe,
     part_default_main_color,
+    randomize_recipe,
     save_recipe,
     validate_catalog,
     validate_recipe,
@@ -51,7 +51,6 @@ from src.core.image_io import save_image
 from src.core.pixel_document import PixelDocument
 from src.core.qt_image import pil_image_to_qpixmap
 from src.ui.pixel_editor_window import PixelEditorWindow
-
 
 SLOT_LABELS = CHARACTER_SLOT_LABELS
 
@@ -78,6 +77,7 @@ class CharacterForgeWindow(QMainWindow):
                 self.recipe.parts[slot] = None
         self._sheet = None
         self._frame_index = 0
+        self._playback_step = 0
         self._updating_controls = False
         self._pixel_windows: list[PixelEditorWindow] = []
 
@@ -252,7 +252,7 @@ class CharacterForgeWindow(QMainWindow):
     def _connect_signals(self) -> None:
         self.base_combo.currentIndexChanged.connect(self._on_base_changed)
         self.animation_combo.currentIndexChanged.connect(self._on_animation_changed)
-        self.direction_combo.currentIndexChanged.connect(self._render_frame)
+        self.direction_combo.currentIndexChanged.connect(self._on_direction_changed)
         self.zoom_combo.currentIndexChanged.connect(self._render_frame)
         self.play_button.clicked.connect(self._toggle_playback)
         self.name_edit.textChanged.connect(self._on_name_changed)
@@ -262,7 +262,9 @@ class CharacterForgeWindow(QMainWindow):
             )
         for slot, button in self.edit_part_buttons.items():
             button.clicked.connect(
-                lambda _checked=False, selected_slot=slot: self._edit_part(selected_slot)
+                lambda _checked=False, selected_slot=slot: self._edit_part(
+                    selected_slot
+                )
             )
         self.part_color_button.clicked.connect(self._choose_part_color)
         self.reset_part_color_button.clicked.connect(self._reset_part_color)
@@ -303,11 +305,22 @@ class CharacterForgeWindow(QMainWindow):
         direction_index = self.direction_combo.findData(previous_direction)
         self.direction_combo.setCurrentIndex(max(0, direction_index))
         self.direction_combo.blockSignals(False)
-        self._frame_index = 0
+        self._reset_direction_playback(animation)
         self._timer.setInterval(max(10, int(1000 / animation.fps)))
         for slot in CHARACTER_SLOTS:
             self._update_edit_button_state(slot)
         self._refresh_composite()
+
+    def _on_direction_changed(self, _index: int = 0) -> None:
+        base = self.catalog.base(self.recipe.base_id)
+        animation = base.animations[self.current_animation_id]
+        self._reset_direction_playback(animation)
+        self._render_frame()
+
+    def _reset_direction_playback(self, animation: CharacterAnimation) -> None:
+        playback = animation.playback_frames(self.current_direction)
+        self._playback_step = 0
+        self._frame_index = playback[0]
 
     def _on_part_changed(self, slot: str) -> None:
         if self._updating_controls:
@@ -357,7 +370,11 @@ class CharacterForgeWindow(QMainWindow):
             return
         base = self.catalog.base(self.recipe.base_id)
         animation = base.animations[self.current_animation_id]
-        self._frame_index %= animation.frames_per_direction
+        frame_count = animation.frame_count(self.current_direction)
+        playback = animation.playback_frames(self.current_direction)
+        if self._frame_index >= frame_count:
+            self._playback_step = 0
+            self._frame_index = playback[0]
         frame = extract_character_frame(
             self._sheet,
             animation,
@@ -375,15 +392,22 @@ class CharacterForgeWindow(QMainWindow):
                 Qt.TransformationMode.FastTransformation,
             )
         self.preview_label.setPixmap(pixmap)
+        cycle_note = (
+            f"  |  Cycle {self._playback_step + 1}/{len(playback)}"
+            if tuple(playback) != tuple(range(frame_count))
+            else ""
+        )
         self.frame_label.setText(
-            f"Frame {self._frame_index + 1}/{animation.frames_per_direction}  |  "
+            f"Frame {self._frame_index + 1}/{frame_count}{cycle_note}  |  "
             f"64x64 frame  |  {self._sheet.width}x{self._sheet.height} sheet"
         )
 
     def _advance_frame(self) -> None:
         base = self.catalog.base(self.recipe.base_id)
         animation = base.animations[self.current_animation_id]
-        self._frame_index = (self._frame_index + 1) % animation.frames_per_direction
+        playback = animation.playback_frames(self.current_direction)
+        self._playback_step = (self._playback_step + 1) % len(playback)
+        self._frame_index = playback[self._playback_step]
         self._render_frame()
 
     def _toggle_playback(self) -> None:
@@ -453,7 +477,7 @@ class CharacterForgeWindow(QMainWindow):
             for slot, combo in self.part_combos.items():
                 part_id = self.recipe.parts.get(slot)
                 index = combo.findData(part_id)
-                combo.setCurrentIndex(index if index >= 0 else 0)
+                combo.setCurrentIndex(max(index, 0))
                 self._update_edit_button_state(slot)
             self._update_part_color_controls()
         finally:
@@ -610,7 +634,9 @@ class CharacterForgeWindow(QMainWindow):
     def _edit_part(self, slot: str) -> None:
         part_id = self.recipe.parts.get(slot)
         if part_id is None:
-            self.statusBar().showMessage(f"Select a {SLOT_LABELS[slot].lower()} part first")
+            self.statusBar().showMessage(
+                f"Select a {SLOT_LABELS[slot].lower()} part first"
+            )
             return
         part = self.catalog.part(part_id)
         animation_id = self.current_animation_id
@@ -624,7 +650,7 @@ class CharacterForgeWindow(QMainWindow):
             image=sheet,
             name=f"{part.id}-{animation_id}",
         )
-        window = PixelEditorWindow(document, self)
+        window = PixelEditorWindow(document, None)
         window.asset_save_requested.connect(
             lambda name, image, selected_part=part, selected_animation=animation_id: (
                 self._save_edited_part_copy(
@@ -654,7 +680,9 @@ class CharacterForgeWindow(QMainWindow):
         name: str,
         image,
     ) -> None:
-        directory = Path.home() / ".pixelforge" / "character-parts-edited" / slot / part_id
+        directory = (
+            Path.home() / ".pixelforge" / "character-parts-edited" / slot / part_id
+        )
         directory.mkdir(parents=True, exist_ok=True)
         path, _ = QFileDialog.getSaveFileName(
             self,
@@ -668,4 +696,6 @@ class CharacterForgeWindow(QMainWindow):
         self.statusBar().showMessage(f"Saved edited part copy to {path}")
 
     def _remove_pixel_window(self, target: PixelEditorWindow) -> None:
-        self._pixel_windows = [window for window in self._pixel_windows if window is not target]
+        self._pixel_windows = [
+            window for window in self._pixel_windows if window is not target
+        ]
