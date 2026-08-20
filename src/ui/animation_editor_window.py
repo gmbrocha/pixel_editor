@@ -51,6 +51,12 @@ from src.core.animation_document import (
     save_animation_project,
     track_to_sheet,
 )
+from src.core.animation_3d_package import (
+    Animation3DPackageError,
+    create_animation_project_from_3d_package,
+    load_animation_3d_package,
+    package_summary,
+)
 from src.core.image_io import load_image, save_image
 from src.core.palette import add_color_to_palette, all_colors_from_image
 from src.core.pixel_document import PixelDocument
@@ -244,6 +250,7 @@ class AnimationEditorWindow(QMainWindow):
         toolbar.addSeparator()
         toolbar.addAction("Open Sheet", self._open_sheet)
         toolbar.addAction("Import GIF", self._open_gif)
+        toolbar.addAction("Import 3D Package", self._open_3d_package)
         toolbar.addAction("Save Edited Sheet As", self._save_edited_sheet)
         toolbar.addSeparator()
         toolbar.addAction("Export Track PNG", self._export_track_png)
@@ -702,6 +709,28 @@ class AnimationEditorWindow(QMainWindow):
             f"Imported {len(project.tracks[0].frames)} GIF frames from "
             f"{Path(path).name}"
         )
+
+    def _open_3d_package(self) -> None:
+        if not self._maybe_close_project():
+            return
+        path = QFileDialog.getExistingDirectory(
+            self,
+            "Import Blender/3D Animation Package",
+            "",
+        )
+        if not path:
+            return
+        try:
+            package = load_animation_3d_package(path)
+            project = create_animation_project_from_3d_package(
+                package,
+                palette=list(self._project.palette),
+            )
+        except (Animation3DPackageError, OSError, ValueError) as exc:
+            QMessageBox.critical(self, "3D package import failed", str(exc))
+            return
+        self._set_project(project, path=None, dirty=True)
+        self.statusBar().showMessage(f"Imported {package_summary(package)}")
 
     def _open_project(self) -> None:
         if not self._maybe_close_project():

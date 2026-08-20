@@ -20,6 +20,8 @@ The Preview Process workflow also includes 2x2 Macro Pixels, which treats each c
 
 Palette files now use one validated import/export layer across the main active preview palette, persistent saved colors, and Pixel Editor. JSON, hex/text, JASC, GIMP, and palette-image inputs are supported; saved colors can explicitly replace the preview quantization palette; persistent swatches are wired to selection and editor handoff; palette changes invalidate stale quantized previews; and PNG, JSON, hex, JASC, and GIMP exports are available where applicable.
 
+The foundation for a 3D-guided animation factory is now implemented. A versioned `pixel-forge-3d-animation` directory package carries synchronized visible frames, exact semantic region maps, silhouettes, optional depth passes, and floating-point projected anchors. Core loading validates path containment, frame geometry, exact region colors, silhouette occupancy, anchors, and optional SHA-256 checksums; Animation Studio can import a valid package as direction tracks with frame anchors. A command-line validator and an experimental Blender FBX exporter are present. Blender is not installed on this machine, so the exporter has not yet been executed against a real rigged FBX and remains explicitly unverified.
+
 ## Blockers
 None. The ten immutable-prompt Idle candidates are available for human review and cleanup; the broader bootstrap queue remains intentionally held.
 
@@ -36,6 +38,8 @@ The project is an active personal/lab project unless the owner reclassifies it.
 ## Known Gaps
 Command Center's final manifest schema is not implemented yet, so `.project-command/project.json` is provisional.
 
+The experimental Blender FBX exporter compiles but has not been executed inside Blender. Camera orientation, Meshy bone-name matching, Workbench exact region colors, FBX action discovery, and real-model deformation remain unverified until the first pilot model is available.
+
 No formal task-source file was found during this setup pass.
 
 Palette PNG assets are now tracked under `palettes/`; their color contents were not reviewed during this setup pass.
@@ -49,7 +53,11 @@ Update this document after commits or other git state changes made during agent 
 
 Review `assets/character-forge/workbench/component-silhouette-starters-all-frames.png`, choose the strongest starter, and edit its linked `regions.png` using the exact semantic markers. The pickup guide recommends beginning with Hair, either Pauldron set, Ratty Shawl, Orcish Armor, or Cult Mask. Pivot component production toward reusable hand-authored topology families with authoritative-base underlays, animation-aware editing, linked ramps, and deterministic variants. Retain generated candidates as optional concept/reference material. Clean and palette-reduce the short wool travel coat and quilted gambeson Idle candidates against the authoritative base before deciding whether either design warrants controlled Walk and Run follow-up jobs. Do not run the full remaining bootstrap queue yet.
 
+Install Blender, obtain one simple in-place rigged humanoid Run FBX, and execute only the Phase 0/Phase 1 pilot documented in `3D_ANIMATION_FACTORY_PLAN.md`. Validate the exported package and visually review its four-direction contact sheets before generalizing the exporter or collecting a large model library.
+
 ## Recent Activity
+2026-08-20: Committed the no-Blender foundation for the 3D-guided animation factory: strict synchronized-package loading and validation, exact region/silhouette safety, optional checksums and depth, floating-point anchors, Animation Studio direction-track import, a standalone validator, an experimental Blender FBX exporter, and comprehensive root/package documentation; focused coverage passes and the full suite passes with 233 tests. Real-FBX Blender execution remains unverified.
+
 2026-08-20: Published `agent/publish-processing-palette-assets` from the synchronized `main` tip with the verified 2x2 Macro Pixels process, complete palette lifecycle repair, 40-file animation-testing reference set plus matching ZIP archive, and the validated 64-color `blacksmith_new.json` palette.
 
 2026-08-20: Audited and repaired the complete palette lifecycle. The user's `colors`-array JSON schema now loads unchanged, malformed or empty palettes report actionable errors, main and Pixel Editor imports/exports share validated JSON/text/JASC/GIMP/image handling, persistent saved colors are explained and can become the active preview palette, saved swatches and eyedropper handoff work without silently truncating colors, palette mutations clear stale quantized previews, and dithering honors palettes beyond 256 entries; the full suite passes with 228 tests.
