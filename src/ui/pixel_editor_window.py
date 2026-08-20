@@ -40,11 +40,13 @@ from PySide6.QtWidgets import (
 
 from src.core.image_io import load_image, save_image
 from src.core.palette import (
+    PALETTE_EXPORT_FILTER,
+    PALETTE_SOURCE_FILTER,
     add_color_to_palette,
     all_colors_from_image,
+    export_palette_file,
     export_palette_grid,
-    export_palette_strip,
-    load_palette_from_image,
+    load_palette_from_source,
     palette_from_image,
     sort_palette,
 )
@@ -818,7 +820,7 @@ class PixelEditorWindow(QMainWindow):
         self.reduce_palette_import_checkbox = QCheckBox("Reduce to 64")
         self.reduce_palette_import_checkbox.setChecked(False)
         self.reduce_palette_import_checkbox.setToolTip(
-            "Off loads every distinct visible color; enable for the previous 64-color reduction"
+            "Off preserves every listed or distinct visible color; enable to limit imports to 64"
         )
         self.export_palette_button = QPushButton("Export")
         self.sort_palette_combo = QComboBox()
@@ -1453,12 +1455,12 @@ class PixelEditorWindow(QMainWindow):
             self,
             "Load Palette",
             "",
-            "Images (*.png *.bmp *.gif *.jpg *.jpeg *.webp)",
+            PALETTE_SOURCE_FILTER,
         )
         if not path:
             return
         try:
-            self.document.palette = load_palette_from_image(
+            self.document.palette = load_palette_from_source(
                 path,
                 max_colors=64
                 if self.reduce_palette_import_checkbox.isChecked()
@@ -1493,14 +1495,14 @@ class PixelEditorWindow(QMainWindow):
     def add_palette_from_file(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
             self,
-            "Add Colors from Palette Image",
+            "Add Colors from Palette File",
             "",
-            "Images (*.png *.bmp *.gif *.jpg *.jpeg *.webp)",
+            PALETTE_SOURCE_FILTER,
         )
         if not path:
             return
         try:
-            incoming = load_palette_from_image(
+            incoming = load_palette_from_source(
                 path,
                 max_colors=64
                 if self.reduce_palette_import_checkbox.isChecked()
@@ -1542,16 +1544,25 @@ class PixelEditorWindow(QMainWindow):
         if not self.document.palette:
             self.statusBar().showMessage("No palette to export")
             return
-        path, _ = QFileDialog.getSaveFileName(
+        path, _selected_filter = QFileDialog.getSaveFileName(
             self,
             "Export PixelForge Palette",
             f"{self.document.name}_palette.png",
-            "PNG Image (*.png)",
+            PALETTE_EXPORT_FILTER,
         )
         if not path:
             return
-        export_palette_strip(self.document.palette, path)
-        self.statusBar().showMessage(f"Exported palette to {Path(path).name}")
+        try:
+            destination = export_palette_file(
+                self.document.palette,
+                path,
+                name=f"{self.document.name} palette",
+                selected_filter=_selected_filter,
+            )
+        except Exception as exc:  # pragma: no cover - GUI feedback
+            QMessageBox.critical(self, "Palette export failed", str(exc))
+            return
+        self.statusBar().showMessage(f"Exported palette to {destination.name}")
 
     def organize_palette(self) -> None:
         if not self.document.palette:

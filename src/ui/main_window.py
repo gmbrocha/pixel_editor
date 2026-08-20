@@ -32,15 +32,17 @@ from src.core.document import EditorDocument
 from src.core.extract_region import extract_to_preview, selection_source_size
 from src.core.image_io import load_image, save_image
 from src.core.palette import (
+    PALETTE_EXPORT_FILTER,
+    PALETTE_SOURCE_FILTER,
     add_color_to_palette,
     all_colors_from_image,
-    export_palette_strip,
+    export_palette_file,
     load_palette_from_source,
     palette_from_image_with_debug,
     quantize_to_palette,
     sort_palette,
 )
-from src.core.persistent_palette import add_color_persistent, color_tooltip
+from src.core.persistent_palette import color_tooltip
 from src.core.pixel_document import (
     PixelDocument,
     RGB_DISTANCE_MAX,
@@ -476,6 +478,15 @@ class MainWindow(QMainWindow):
             self.clear_quantized_preview
         )
         self.palette_panel.dither_changed.connect(self._on_palette_dither_changed)
+        self.persistent_palette.color_selected.connect(
+            self._on_persistent_palette_color
+        )
+        self.persistent_palette.use_for_preview_requested.connect(
+            self._use_persistent_palette_for_preview
+        )
+        self.persistent_palette.status_changed.connect(
+            self.statusBar().showMessage
+        )
         self.asset_tray.import_requested.connect(self.import_asset)
         self.asset_tray.export_requested.connect(self.export_tilesheet)
         self.asset_tray.clear_requested.connect(self.clear_assets)
@@ -583,9 +594,9 @@ class MainWindow(QMainWindow):
     def load_palette(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
             self,
-            "Load Palette From Image",
+            "Load Active Preview Palette",
             "",
-            "Palette Sources (*.png *.bmp *.gif *.jpg *.jpeg *.webp *.txt *.hex *.pal)",
+            PALETTE_SOURCE_FILTER,
         )
         if not path:
             return
@@ -604,22 +615,32 @@ class MainWindow(QMainWindow):
             return
         self._set_active_palette(palette, Path(path).name)
         self.statusBar().showMessage(
-            f"Loaded active palette from {Path(path).name} ({len(palette)} colors)"
+            f"Loaded active preview palette from {Path(path).name} "
+            f"({len(palette)} colors); choose Quantize Preview to apply it"
         )
 
     def export_palette(self) -> None:
         if not self.document.palette:
             return
-        path, _ = QFileDialog.getSaveFileName(
+        path, _selected_filter = QFileDialog.getSaveFileName(
             self,
             "Export Palette",
             "palette.png",
-            "PNG Image (*.png)",
+            PALETTE_EXPORT_FILTER,
         )
         if not path:
             return
-        export_palette_strip(self.document.palette, path)
-        self.statusBar().showMessage(f"Exported palette to {Path(path).name}")
+        try:
+            destination = export_palette_file(
+                self.document.palette,
+                path,
+                name=self.document.palette_name,
+                selected_filter=_selected_filter,
+            )
+        except Exception as exc:  # pragma: no cover - GUI feedback
+            QMessageBox.critical(self, "Palette export failed", str(exc))
+            return
+        self.statusBar().showMessage(f"Exported palette to {destination.name}")
 
     def add_custom_palette_color(self) -> None:
         initial_color = QColor(255, 255, 255, 255)
@@ -633,8 +654,9 @@ class MainWindow(QMainWindow):
         self.document.palette = add_color_to_palette(
             self.document.palette,
             rgba,
-            max_colors=self.palette_panel.max_colors(),
         )
+        if self.document.palette_name is None:
+            self.document.palette_name = "custom colors"
         self._active_palette_changed()
         self.statusBar().showMessage("Added custom color to palette")
 
@@ -1148,22 +1170,47 @@ class MainWindow(QMainWindow):
         self._selected_transparency_color = color
         self._update_transparency_color_swatch()
         is_new = self.persistent_palette.add_color(color)
-
-        self.document.palette = add_color_to_palette(
-            self.document.palette,
-            color,
-            max_colors=self.palette_panel.max_colors(),
-        )
-        self.palette_panel.set_palette(self.document.palette)
-
-        for win in self._pixel_windows:
-            win.add_external_color(color)
+        self._add_color_to_active_palette_and_editors(color)
 
         hex_str = color_tooltip(color)
         if is_new:
             self.statusBar().showMessage(f"Picked {hex_str}")
         else:
-            self.statusBar().showMessage(f"Already in palette: {hex_str}")
+            self.statusBar().showMessage(f"Already in saved colors: {hex_str}")
+
+    def _on_persistent_palette_color(self, rgba: tuple) -> None:
+        color = (int(rgba[0]), int(rgba[1]), int(rgba[2]), int(rgba[3]))
+        self._selected_transparency_color = color
+        self._update_transparency_color_swatch()
+        self._add_color_to_active_palette_and_editors(color)
+        self.statusBar().showMessage(
+            f"Selected saved {color_tooltip(color)} and added it to the active palette"
+        )
+
+    def _add_color_to_active_palette_and_editors(
+        self,
+        color: tuple[int, int, int, int],
+    ) -> bool:
+        added = color not in self.document.palette
+        if added:
+            self.document.palette = [*self.document.palette, color]
+            if self.document.palette_name is None:
+                self.document.palette_name = "picked colors"
+            self._active_palette_changed()
+        for window in self._pixel_windows:
+            window.add_external_color(color)
+        return added
+
+    def _use_persistent_palette_for_preview(self, palette: object) -> None:
+        colors = list(palette) if isinstance(palette, list) else []
+        if not colors:
+            self.statusBar().showMessage("No saved colors available for preview quantization")
+            return
+        self._set_active_palette(colors, "saved colors")
+        self.statusBar().showMessage(
+            f"Using {len(colors)} saved colors as the active preview palette; "
+            "choose Quantize Preview to apply it"
+        )
 
     def _on_pixel_editor_asset_saved(self, name: str, image) -> None:
         self._add_asset(name, image.copy())

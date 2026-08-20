@@ -1,7 +1,11 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
+
+from src.core.palette import (
+    export_palette_json as _export_palette_json,
+    load_palette_from_json,
+)
 
 Color = tuple[int, int, int, int]
 
@@ -16,29 +20,15 @@ def _ensure_dir() -> None:
 def load_persistent_palette() -> list[Color]:
     if not _PALETTE_PATH.exists():
         return []
-    try:
-        data = json.loads(_PALETTE_PATH.read_text(encoding="utf-8"))
-        colors: list[Color] = []
-        for entry in data.get("palette", []):
-            rgba = entry.get("rgba", [0, 0, 0, 255])
-            c = (int(rgba[0]), int(rgba[1]), int(rgba[2]), int(rgba[3]))
-            if c not in colors:
-                colors.append(c)
-        return colors
-    except Exception:
-        return []
+    return load_palette_from_json(_PALETTE_PATH, max_colors=None)
 
 
 def save_persistent_palette(palette: list[Color]) -> None:
     _ensure_dir()
-    entries = []
-    for c in palette:
-        entries.append({
-            "hex": "#{:02X}{:02X}{:02X}{:02X}".format(*c),
-            "rgba": list(c),
-        })
-    data = {"palette": entries}
-    _PALETTE_PATH.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    if not palette:
+        _PALETTE_PATH.unlink(missing_ok=True)
+        return
+    _export_palette_json(palette, _PALETTE_PATH, name="Saved colors")
 
 
 def add_color_persistent(palette: list[Color], color: Color) -> list[Color]:
@@ -59,24 +49,11 @@ def merge_palettes(base: list[Color], incoming: list[Color]) -> list[Color]:
 
 
 def export_palette_json(palette: list[Color], path: str | Path) -> None:
-    entries = []
-    for c in palette:
-        entries.append({
-            "hex": "#{:02X}{:02X}{:02X}{:02X}".format(*c),
-            "rgba": list(c),
-        })
-    Path(path).write_text(json.dumps({"palette": entries}, indent=2), encoding="utf-8")
+    _export_palette_json(palette, path, name="Saved colors")
 
 
 def import_palette_json(path: str | Path) -> list[Color]:
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
-    colors: list[Color] = []
-    for entry in data.get("palette", []):
-        rgba = entry.get("rgba", [0, 0, 0, 255])
-        c = (int(rgba[0]), int(rgba[1]), int(rgba[2]), int(rgba[3]))
-        if c not in colors:
-            colors.append(c)
-    return colors
+    return load_palette_from_json(path, max_colors=None)
 
 
 def color_hex(color: Color) -> str:

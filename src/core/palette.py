@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import Counter
 import colorsys
 from dataclasses import dataclass, field
+import json
 import math
 import re
 from pathlib import Path
@@ -12,7 +13,25 @@ from PIL import Image, ImageDraw
 
 
 Color = tuple[int, int, int, int]
-_HEX_COLOR_RE = re.compile(r"#?(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6})")
+_HEX_COLOR_RE = re.compile(
+    r"(?<![0-9a-fA-F])#?(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6})(?![0-9a-fA-F])"
+)
+_HEX_COLOR_FULL_RE = re.compile(r"#?(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6})\Z")
+_IMAGE_PALETTE_SUFFIXES = {".png", ".bmp", ".gif", ".jpg", ".jpeg", ".webp"}
+_TEXT_PALETTE_SUFFIXES = {".txt", ".hex", ".pal", ".gpl"}
+PALETTE_SOURCE_FILTER = (
+    "Palette Sources (*.json *.txt *.hex *.pal *.gpl *.png *.bmp *.gif *.jpg *.jpeg *.webp);;"
+    "JSON Palettes (*.json);;"
+    "Text Palettes (*.txt *.hex *.pal *.gpl);;"
+    "Palette Images (*.png *.bmp *.gif *.jpg *.jpeg *.webp)"
+)
+PALETTE_EXPORT_FILTER = (
+    "PNG Palette Strip (*.png);;"
+    "PixelForge JSON (*.json);;"
+    "Hex Color List (*.hex *.txt);;"
+    "JASC Palette (*.pal);;"
+    "GIMP Palette (*.gpl)"
+)
 _FAMILY_ORDER = (
     "neutral_shadow",
     "stone_gray",
@@ -1129,7 +1148,7 @@ def _floyd_steinberg_to_palette(
     """Deterministic Floyd-Steinberg without scanline or transparency bleed."""
     source = np.asarray(image.convert("RGBA"), dtype=np.uint8)
     alpha = source[..., 3]
-    if np.all(alpha > 0):
+    if np.all(alpha > 0) and len(palette) <= 256:
         palette_image = _pillow_palette_image(palette)
         output = image.convert("RGB").quantize(
             palette=palette_image,
@@ -1181,31 +1200,195 @@ def _pillow_palette_image(palette: list[Color]) -> Image.Image:
     return palette_image
 
 
-def load_palette_from_hex_list(text: str, max_colors: int | None = 256) -> list[Color]:
-    colors: list[Color] = []
-    for match in _HEX_COLOR_RE.finditer(text):
-        raw = match.group(0).lstrip("#")
-        if len(raw) == 6:
-            color = (
-                int(raw[0:2], 16),
-                int(raw[2:4], 16),
-                int(raw[4:6], 16),
-                255,
+def _normalize_palette_limit(max_colors: int | None) -> int | None:
+    if max_colors is None:
+        return None
+    limit = int(max_colors)
+    if limit < 1:
+        raise ValueError("Palette color limit must be at least 1")
+    return limit
+
+
+def _color_from_hex(value: str, *, context: str = "color") -> Color:
+    raw = value.strip()
+    if _HEX_COLOR_FULL_RE.fullmatch(raw) is None:
+        raise ValueError(
+            f"Invalid {context}: expected #RRGGBB or #RRGGBBAA, got {value!r}"
+        )
+    raw = raw.lstrip("#")
+    channels = [int(raw[index : index + 2], 16) for index in range(0, len(raw), 2)]
+    if len(channels) == 3:
+        channels.append(255)
+    return (channels[0], channels[1], channels[2], channels[3])
+
+
+def _color_component(value: object, *, context: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"Invalid {context}: expected an integer from 0 to 255")
+    component = int(value)
+    if component != value or not 0 <= component <= 255:
+        raise ValueError(f"Invalid {context}: expected an integer from 0 to 255")
+    return component
+
+
+def _color_from_channels(value: object, *, context: str) -> Color:
+    if not isinstance(value, (list, tuple)) or len(value) not in {3, 4}:
+        raise ValueError(f"Invalid {context}: expected [R, G, B] or [R, G, B, A]")
+    channels = [
+        _color_component(component, context=f"{context}[{index}]")
+        for index, component in enumerate(value)
+    ]
+    if len(channels) == 3:
+        channels.append(255)
+    return (channels[0], channels[1], channels[2], channels[3])
+
+
+def _color_from_json_entry(value: object, *, context: str) -> Color:
+    if isinstance(value, str):
+        return _color_from_hex(value, context=context)
+    if isinstance(value, (list, tuple)):
+        return _color_from_channels(value, context=context)
+    if not isinstance(value, dict):
+        raise ValueError(
+            f"Invalid {context}: expected a hex string, channel array, or color object"
+        )
+
+    candidates: list[Color] = []
+    if "rgba" in value:
+        candidates.append(_color_from_channels(value["rgba"], context=f"{context}.rgba"))
+    if "rgb" in value:
+        candidates.append(_color_from_channels(value["rgb"], context=f"{context}.rgb"))
+    if "hex" in value:
+        if not isinstance(value["hex"], str):
+            raise ValueError(f"Invalid {context}.hex: expected a string")
+        candidates.append(_color_from_hex(value["hex"], context=f"{context}.hex"))
+    if "color" in value:
+        candidates.append(_color_from_json_entry(value["color"], context=f"{context}.color"))
+    if all(channel in value for channel in ("r", "g", "b")):
+        candidates.append(
+            _color_from_channels(
+                [value["r"], value["g"], value["b"], value.get("a", 255)],
+                context=context,
             )
+        )
+    if not candidates:
+        raise ValueError(
+            f"Invalid {context}: color objects need rgba, rgb, hex, color, or r/g/b fields"
+        )
+    if any(candidate != candidates[0] for candidate in candidates[1:]):
+        raise ValueError(f"Invalid {context}: color fields disagree")
+    return candidates[0]
+
+
+def parse_palette_json(
+    data: object,
+    max_colors: int | None = 256,
+) -> list[Color]:
+    """Parse common JSON palette shapes into validated, unique RGBA colors."""
+    limit = _normalize_palette_limit(max_colors)
+    entries: object
+    entry_label: str
+    if isinstance(data, list):
+        entries = data
+        entry_label = "colors"
+    elif isinstance(data, dict):
+        if "colors" in data:
+            entries = data["colors"]
+            entry_label = "colors"
+        elif "palette" in data:
+            entries = data["palette"]
+            entry_label = "palette"
         else:
-            color = (
-                int(raw[0:2], 16),
-                int(raw[2:4], 16),
-                int(raw[4:6], 16),
-                int(raw[6:8], 16),
+            raise ValueError(
+                "Palette JSON must be an array or contain a 'colors' or 'palette' array"
             )
+    else:
+        raise ValueError(
+            "Palette JSON must be an array or contain a 'colors' or 'palette' array"
+        )
+    if not isinstance(entries, list):
+        raise ValueError(f"Palette JSON field '{entry_label}' must be an array")
+
+    colors: list[Color] = []
+    for index, entry in enumerate(entries):
+        color = _color_from_json_entry(entry, context=f"{entry_label}[{index}]")
         if color not in colors:
             colors.append(color)
-        if max_colors is not None and len(colors) >= max_colors:
+        if limit is not None and len(colors) >= limit:
+            break
+    if not colors:
+        raise ValueError("Palette JSON contains no colors")
+    return colors
+
+
+def load_palette_from_json(
+    path_or_text: str | Path,
+    max_colors: int | None = 256,
+) -> list[Color]:
+    path: Path | None = None
+    try:
+        candidate = Path(path_or_text)
+        if candidate.is_file():
+            path = candidate
+    except (OSError, TypeError, ValueError):
+        path = None
+    text = path.read_text(encoding="utf-8-sig") if path is not None else str(path_or_text)
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            f"Invalid palette JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}"
+        ) from exc
+    return parse_palette_json(data, max_colors=max_colors)
+
+
+def load_palette_from_hex_list(text: str, max_colors: int | None = 256) -> list[Color]:
+    limit = _normalize_palette_limit(max_colors)
+    colors: list[Color] = []
+    for match in _HEX_COLOR_RE.finditer(text):
+        color = _color_from_hex(match.group(0))
+        if color not in colors:
+            colors.append(color)
+        if limit is not None and len(colors) >= limit:
             break
 
     if not colors:
-        raise ValueError("No palette colors found in hex list")
+        raise ValueError("No hex palette colors found")
+    return colors
+
+
+def load_palette_from_text(text: str, max_colors: int | None = 256) -> list[Color]:
+    """Load hex lists, JASC-PAL, GIMP GPL, or plain RGB/RGBA rows."""
+    limit = _normalize_palette_limit(max_colors)
+    hex_matches = list(_HEX_COLOR_RE.finditer(text))
+    if hex_matches:
+        return load_palette_from_hex_list(text, max_colors=limit)
+
+    colors: list[Color] = []
+    numeric_row = re.compile(
+        r"^\s*(\d{1,3})[\s,]+(\d{1,3})[\s,]+(\d{1,3})"
+        r"(?:[\s,]+(\d{1,3}))?(?:\s+[^\d].*)?$"
+    )
+    for line_number, line in enumerate(text.splitlines(), start=1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith(("#", ";")):
+            continue
+        match = numeric_row.fullmatch(line)
+        if match is None:
+            continue
+        raw_channels = [int(value) for value in match.groups() if value is not None]
+        try:
+            color = _color_from_channels(raw_channels, context=f"line {line_number}")
+        except ValueError as exc:
+            raise ValueError(f"Invalid palette color: {exc}") from exc
+        if color not in colors:
+            colors.append(color)
+        if limit is not None and len(colors) >= limit:
+            break
+    if not colors:
+        raise ValueError(
+            "No palette colors found; use hex colors or one RGB/RGBA color per line"
+        )
     return colors
 
 
@@ -1216,20 +1399,37 @@ def load_palette_from_source(
     selection: str = "frequent",
     settings: PaletteExtractionSettings | None = None,
 ) -> list[Color]:
-    path = Path(path_or_text)
-    if path.exists():
-        if path.suffix.lower() in {".txt", ".hex", ".pal"}:
-            return load_palette_from_hex_list(
-                path.read_text(encoding="utf-8"),
+    path: Path | None = None
+    try:
+        candidate = Path(path_or_text)
+        if candidate.is_file():
+            path = candidate
+    except (OSError, TypeError, ValueError):
+        path = None
+
+    if path is not None:
+        suffix = path.suffix.lower()
+        if suffix == ".json":
+            return load_palette_from_json(path, max_colors=max_colors)
+        if suffix in _TEXT_PALETTE_SUFFIXES:
+            text = path.read_text(encoding="utf-8-sig")
+            if text.lstrip().startswith(("{", "[")):
+                return load_palette_from_json(text, max_colors=max_colors)
+            return load_palette_from_text(text, max_colors=max_colors)
+        if suffix in _IMAGE_PALETTE_SUFFIXES:
+            return load_palette_from_image(
+                path,
                 max_colors=max_colors,
+                selection=selection,
+                settings=settings,
             )
-        return load_palette_from_image(
-            path,
-            max_colors=max_colors,
-            selection=selection,
-            settings=settings,
-        )
-    return load_palette_from_hex_list(str(path_or_text), max_colors=max_colors)
+        supported = ", ".join(sorted(_IMAGE_PALETTE_SUFFIXES | _TEXT_PALETTE_SUFFIXES | {".json"}))
+        raise ValueError(f"Unsupported palette file type '{suffix}'. Supported: {supported}")
+
+    text = str(path_or_text)
+    if text.lstrip().startswith(("{", "[")):
+        return load_palette_from_json(text, max_colors=max_colors)
+    return load_palette_from_text(text, max_colors=max_colors)
 
 
 def load_palette_from_image(
@@ -1239,7 +1439,8 @@ def load_palette_from_image(
     selection: str = "frequent",
     settings: PaletteExtractionSettings | None = None,
 ) -> list[Color]:
-    image = Image.open(path).convert("RGBA")
+    with Image.open(path) as source:
+        image = source.convert("RGBA")
     if max_colors is None:
         return all_colors_from_image(image)
     return palette_from_image(
@@ -1263,6 +1464,111 @@ def export_palette_strip(
         x1 = x0 + swatch_size - 1
         draw.rectangle((x0, 0, x1, swatch_size - 1), fill=color)
     image.save(path)
+
+
+def _validated_unique_palette(palette: list[Color]) -> list[Color]:
+    colors: list[Color] = []
+    for index, color in enumerate(palette):
+        normalized = _color_from_channels(color, context=f"palette[{index}]")
+        if normalized not in colors:
+            colors.append(normalized)
+    if not colors:
+        raise ValueError("Cannot export an empty palette")
+    return colors
+
+
+def export_palette_json(
+    palette: list[Color],
+    path: str | Path,
+    *,
+    name: str | None = None,
+) -> None:
+    colors = _validated_unique_palette(palette)
+    data: dict[str, object] = {
+        "format": "pixelforge-palette",
+        "version": 1,
+        "palette": [
+            {
+                "hex": "#{:02X}{:02X}{:02X}{:02X}".format(*color),
+                "rgba": list(color),
+            }
+            for color in colors
+        ],
+    }
+    if name:
+        data["name"] = name
+    Path(path).write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+
+
+def export_palette_hex(palette: list[Color], path: str | Path) -> None:
+    colors = _validated_unique_palette(palette)
+    lines = [
+        "#{:02X}{:02X}{:02X}".format(*color[:3])
+        if color[3] == 255
+        else "#{:02X}{:02X}{:02X}{:02X}".format(*color)
+        for color in colors
+    ]
+    Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def export_palette_jasc(palette: list[Color], path: str | Path) -> None:
+    colors = _validated_unique_palette(palette)
+    lines = ["JASC-PAL", "0100", str(len(colors))]
+    lines.extend(f"{red} {green} {blue}" for red, green, blue, _alpha in colors)
+    Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def export_palette_gpl(
+    palette: list[Color],
+    path: str | Path,
+    *,
+    name: str | None = None,
+) -> None:
+    colors = _validated_unique_palette(palette)
+    lines = ["GIMP Palette", f"Name: {name or Path(path).stem}", "Columns: 8", "#"]
+    lines.extend(
+        f"{red:3d} {green:3d} {blue:3d}\t#{red:02X}{green:02X}{blue:02X}"
+        for red, green, blue, _alpha in colors
+    )
+    Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def export_palette_file(
+    palette: list[Color],
+    path: str | Path,
+    *,
+    name: str | None = None,
+    selected_filter: str | None = None,
+) -> Path:
+    """Export a palette according to the destination suffix."""
+    destination = Path(path)
+    if not destination.suffix:
+        filter_suffix = next(
+            (
+                suffix
+                for suffix in (".json", ".hex", ".pal", ".gpl", ".png")
+                if selected_filter and f"*{suffix}" in selected_filter.lower()
+            ),
+            ".png",
+        )
+        destination = destination.with_suffix(filter_suffix)
+    suffix = destination.suffix.lower()
+    if suffix == ".png":
+        export_palette_strip(_validated_unique_palette(palette), destination)
+    elif suffix == ".json":
+        export_palette_json(palette, destination, name=name)
+    elif suffix in {".hex", ".txt"}:
+        export_palette_hex(palette, destination)
+    elif suffix == ".pal":
+        export_palette_jasc(palette, destination)
+    elif suffix == ".gpl":
+        export_palette_gpl(palette, destination, name=name)
+    else:
+        raise ValueError(
+            "Unsupported palette export type "
+            f"'{suffix}'. Use .png, .json, .hex, .txt, .pal, or .gpl"
+        )
+    return destination
 
 
 def export_palette_grid(

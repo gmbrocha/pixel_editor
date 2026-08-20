@@ -74,6 +74,16 @@ def test_floyd_steinberg_preserves_alpha_and_ignores_hidden_rgb() -> None:
     )
 
 
+def test_floyd_steinberg_uses_palette_entries_beyond_pillow_256_limit() -> None:
+    image = Image.new("RGBA", (1, 1), (255, 255, 255, 255))
+    palette = [(0, 0, value, 255) for value in range(256)]
+    palette.append((255, 255, 255, 255))
+
+    result = quantize_to_palette(image, palette, dither=True)
+
+    assert result.getpixel((0, 0)) == (255, 255, 255, 255)
+
+
 def test_palette_panel_consolidates_status_dither_and_legacy_preferences() -> None:
     application = QApplication.instance() or QApplication([])
     panel = PalettePanel()

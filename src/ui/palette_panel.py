@@ -175,7 +175,7 @@ class PalettePanel(QWidget):
         self.reduce_colors_checkbox = QCheckBox("Reduce colors")
         self.reduce_colors_checkbox.setChecked(False)
         self.reduce_colors_checkbox.setToolTip(
-            "Off loads every distinct visible color. Enable to use palette-size and sampling options."
+            "Off preserves every listed or distinct visible color. Enable to use palette-size limits and image sampling options."
         )
 
         self.advanced_details_toggle = QToolButton()
