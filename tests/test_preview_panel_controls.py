@@ -22,6 +22,7 @@ def test_new_resize_and_cleanup_controls_have_expected_names_and_defaults() -> N
     assert panel.post_process_combo.findText("Edge-Preserving Denoise") >= 0
     assert panel.post_process_combo.findText("Despeckle") >= 0
     assert panel.post_process_combo.findText("Cluster Cleanup") >= 0
+    assert panel.post_process_combo.findText("2x2 Macro Pixels") >= 0
     assert panel.denoise_radius_spin.value() == 1
     assert panel.denoise_strength_spin.value() == 35
     assert panel.despeckle_max_size_spin.value() == 1
@@ -116,6 +117,28 @@ def test_cluster_cleanup_control_is_live_visible_and_resettable() -> None:
     assert panel.post_process_combo.currentText() == "None"
     assert panel.cluster_cleanup_threshold_spin.value() == 3
     assert panel.cluster_cleanup_threshold_spin.isVisible() is False
+
+    panel.close()
+    panel.deleteLater()
+    application.processEvents()
+
+
+def test_macro_pixels_is_a_parameterless_live_process_mode() -> None:
+    application = QApplication.instance() or QApplication([])
+    panel = PreviewPanel()
+    emitted = []
+    panel.settings_changed.connect(emitted.append)
+    panel.show()
+
+    panel.post_process_combo.setCurrentText("2x2 Macro Pixels")
+    application.processEvents()
+
+    assert emitted[-1].post_process_mode == "2x2 Macro Pixels"
+    assert panel.process_controls_widget.isVisible() is True
+    assert panel.denoise_radius_spin.isVisible() is False
+    assert panel.despeckle_max_size_spin.isVisible() is False
+    assert panel.cluster_cleanup_threshold_spin.isVisible() is False
+    assert panel.reset_processing_button.isVisible() is False
 
     panel.close()
     panel.deleteLater()

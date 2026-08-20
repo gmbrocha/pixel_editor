@@ -164,6 +164,7 @@ class PreviewPanel(QWidget):
                 "Edge-Preserving Denoise",
                 "Despeckle",
                 "Cluster Cleanup",
+                "2x2 Macro Pixels",
             ]
         )
         self.post_process_combo.setToolTip(
@@ -177,6 +178,11 @@ class PreviewPanel(QWidget):
         self.post_process_combo.setItemData(
             self.post_process_combo.findText("Despeckle"),
             "Conservatively replaces small isolated color clusters with coherent surroundings.",
+            Qt.ItemDataRole.ToolTipRole,
+        )
+        self.post_process_combo.setItemData(
+            self.post_process_combo.findText("2x2 Macro Pixels"),
+            "Makes every complete top-left-aligned 2x2 cell one indivisible exact-color pixel.",
             Qt.ItemDataRole.ToolTipRole,
         )
 

@@ -198,6 +198,40 @@ def cluster_cleanup(image: Image.Image, *, threshold: int = 3) -> Image.Image:
     return Image.fromarray(output.astype(np.uint8, copy=False), mode="RGBA")
 
 
+def macro_pixels_2x2(image: Image.Image) -> Image.Image:
+    """Render every complete two-by-two cell as one indivisible macro pixel.
+
+    The most frequent exact RGBA value in each cell wins. Ties use the first
+    value in row-major order. An unmatched final row or column is preserved so
+    processing never crops, pads, or resizes the image.
+    """
+    source = image.convert("RGBA")
+    width, height = source.size
+    full_width = width - width % 2
+    full_height = height - height % 2
+    if full_width == 0 or full_height == 0:
+        return source.copy()
+
+    raw = np.asarray(source, dtype=np.uint8)
+    output = raw.copy()
+    block_rows = full_height // 2
+    block_columns = full_width // 2
+    blocks = (
+        raw[:full_height, :full_width]
+        .reshape(block_rows, 2, block_columns, 2, 4)
+        .transpose(0, 2, 1, 3, 4)
+        .reshape(-1, 4, 4)
+    )
+    matches = np.all(blocks[:, :, None, :] == blocks[:, None, :, :], axis=3)
+    winner_indices = np.argmax(matches.sum(axis=2), axis=1)
+    winners = blocks[np.arange(len(blocks)), winner_indices]
+    macro_pixels = winners.reshape(block_rows, block_columns, 4)
+    output[:full_height, :full_width] = macro_pixels.repeat(2, axis=0).repeat(
+        2, axis=1
+    )
+    return Image.fromarray(output, mode="RGBA")
+
+
 def _build_component_graph(raw: np.ndarray) -> _ComponentGraph:
     height, width = raw.shape[:2]
     encoded = (

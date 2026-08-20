@@ -36,3 +36,17 @@ if another pass is desired.
 Cluster Cleanup runs before explicit preview quantization, like the other Process
 options. To clean an already quantized image, apply the palette to the source and
 then select Cluster Cleanup.
+
+## 2x2 Macro Pixels
+
+**2x2 Macro Pixels** makes a complete two-by-two cell the smallest visible unit.
+The grid begins at the preview's top-left corner. Every complete cell becomes one
+uniform exact RGBA color selected by majority vote from its four source pixels;
+a tie uses the first color in row-major order.
+
+The operation is equivalent to representing the image at half its width and
+height and displaying each logical pixel as a nearest-neighbor two-by-two block,
+while selecting only existing colors. It does not blur, interpolate, resize, or
+expand the palette. For odd dimensions, the unmatched final row or column is
+left unchanged so the output is never cropped or padded. Strict full-image
+two-by-two coverage therefore requires even output dimensions.

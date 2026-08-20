@@ -8,6 +8,7 @@ from src.core.image_processing import (
     cluster_cleanup,
     despeckle,
     edge_preserving_denoise,
+    macro_pixels_2x2,
     resize_image,
 )
 from src.core.selection_models import RegionSelection
@@ -140,4 +141,6 @@ def _apply_post_process(image: Image.Image, settings: ExtractSettings) -> Image.
             image,
             threshold=settings.cluster_cleanup_threshold,
         )
+    if mode == "2x2 Macro Pixels":
+        return macro_pixels_2x2(image)
     return image

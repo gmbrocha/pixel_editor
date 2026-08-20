@@ -105,6 +105,27 @@ def test_preview_cluster_cleanup_matches_direct_processing() -> None:
     assert preview.tobytes() == cluster_cleanup(image, threshold=1).tobytes()
 
 
+def test_preview_macro_pixels_matches_direct_processing() -> None:
+    image = Image.new("RGBA", (4, 4))
+    image.putdata(
+        [
+            ((x * 70) % 256, (y * 80) % 256, ((x + y) * 50) % 256, 255)
+            for y in range(4)
+            for x in range(4)
+        ]
+    )
+    settings = ExtractSettings(
+        fit_mode="Actual",
+        post_process_mode="2x2 Macro Pixels",
+    )
+
+    preview = extract_to_preview(image, _full_selection(4, 4), settings)
+
+    from src.core.image_processing import macro_pixels_2x2
+
+    assert preview.tobytes() == macro_pixels_2x2(image).tobytes()
+
+
 def test_extract_preview_never_runs_an_automatic_palette_quantization_pass() -> None:
     image = Image.new("RGBA", (16, 16))
     image.putdata(

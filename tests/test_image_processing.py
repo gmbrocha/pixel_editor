@@ -7,6 +7,7 @@ from src.core.image_processing import (
     despeckle,
     edge_preserving_denoise,
     lanczos3_resize,
+    macro_pixels_2x2,
     resize_image,
 )
 from src.core.pixel_document import (
@@ -299,6 +300,71 @@ def test_cluster_cleanup_preserves_palette_dimensions_and_determinism() -> None:
 
     input_colors = {image.getpixel((x, y)) for y in range(4) for x in range(5)}
     output_colors = {first.getpixel((x, y)) for y in range(4) for x in range(5)}
+    assert first.size == image.size
+    assert output_colors <= input_colors
+    assert first.tobytes() == second.tobytes()
+
+
+def test_macro_pixels_2x2_makes_each_complete_block_indivisible() -> None:
+    red = (220, 30, 40, 255)
+    blue = (30, 40, 220, 255)
+    green = (30, 200, 60, 255)
+    yellow = (220, 200, 30, 255)
+    image = Image.new("RGBA", (4, 2))
+    image.putdata(
+        [
+            red,
+            red,
+            green,
+            blue,
+            red,
+            blue,
+            yellow,
+            red,
+        ]
+    )
+
+    result = macro_pixels_2x2(image)
+
+    assert [result.getpixel((x, y)) for y in range(2) for x in range(2)] == [red] * 4
+    assert [result.getpixel((x, y)) for y in range(2) for x in range(2, 4)] == [
+        green
+    ] * 4
+
+
+def test_macro_pixels_2x2_preserves_unmatched_odd_edges() -> None:
+    background = (20, 30, 40, 255)
+    accent = (210, 190, 170, 255)
+    image = Image.new("RGBA", (3, 3), background)
+    image.putpixel((1, 0), accent)
+    image.putpixel((2, 0), accent)
+    image.putpixel((2, 1), accent)
+    image.putpixel((0, 2), accent)
+
+    result = macro_pixels_2x2(image)
+
+    assert [result.getpixel((x, y)) for y in range(2) for x in range(2)] == [
+        background
+    ] * 4
+    assert result.getpixel((2, 0)) == accent
+    assert result.getpixel((2, 1)) == accent
+    assert result.getpixel((0, 2)) == accent
+
+
+def test_macro_pixels_2x2_preserves_palette_alpha_dimensions_and_determinism() -> None:
+    colors = [
+        (10, 20, 30, 255),
+        (80, 90, 100, 128),
+        (120, 130, 140, 0),
+    ]
+    image = Image.new("RGBA", (6, 4))
+    image.putdata([colors[(x + y) % 3] for y in range(4) for x in range(6)])
+
+    first = macro_pixels_2x2(image)
+    second = macro_pixels_2x2(image)
+
+    input_colors = {image.getpixel((x, y)) for y in range(4) for x in range(6)}
+    output_colors = {first.getpixel((x, y)) for y in range(4) for x in range(6)}
     assert first.size == image.size
     assert output_colors <= input_colors
     assert first.tobytes() == second.tobytes()
