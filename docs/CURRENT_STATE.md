@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-08-19
+Last updated: 2026-08-20
 
 ## Summary
 PixelForge is a PySide6 desktop pixel-art and tileset utility. Source-grounded tools include image import and preview extraction, palette handling, pixel editing, animation editing, modular Character Forge assembly/export, tile layout, tileset processing, tileset template generation, and procedural texture generation.
@@ -15,6 +15,10 @@ Animation Studio now imports animated GIFs directly. It composites each frame on
 Character Forge now uses the latest supplied authoritative Walk and Run artwork. Walk is preserved byte-for-byte and every direction uses a normal six-frame forward loop. Run uses six Front frames, eight Back frames, six Right frames, and six Left frames in a padded 512x256 linked sheet; Front and Back loop forward, Right starts at frame 6 and ping-pongs backward, and Left starts at frame 1 and ping-pongs forward. Per-direction frame counts and playback sequences are catalog metadata, so source pixels are never duplicated or reordered.
 
 The main Preview Process workflow now includes Cluster Cleanup, a deterministic four-connected component pass that absorbs exact-color islands at or below a configurable threshold into structurally adjacent same-alpha regions. It preserves dimensions, transparency boundaries, hard pixel edges, and the input RGBA palette while using shared boundary, Lab similarity, neighbor area, and row-major order for stable merge selection.
+
+The Preview Process workflow also includes 2x2 Macro Pixels, which treats each complete top-left-aligned 2x2 cell as one indivisible output pixel. Each cell takes its most frequent exact RGBA color with deterministic row-major tie-breaking; dimensions, the input palette, alpha values, and unmatched odd edge rows or columns are preserved.
+
+Palette files now use one validated import/export layer across the main active preview palette, persistent saved colors, and Pixel Editor. JSON, hex/text, JASC, GIMP, and palette-image inputs are supported; saved colors can explicitly replace the preview quantization palette; persistent swatches are wired to selection and editor handoff; palette changes invalidate stale quantized previews; and PNG, JSON, hex, JASC, and GIMP exports are available where applicable.
 
 ## Blockers
 None. The ten immutable-prompt Idle candidates are available for human review and cleanup; the broader bootstrap queue remains intentionally held.
@@ -46,6 +50,12 @@ Update this document after commits or other git state changes made during agent 
 Review `assets/character-forge/workbench/component-silhouette-starters-all-frames.png`, choose the strongest starter, and edit its linked `regions.png` using the exact semantic markers. The pickup guide recommends beginning with Hair, either Pauldron set, Ratty Shawl, Orcish Armor, or Cult Mask. Pivot component production toward reusable hand-authored topology families with authoritative-base underlays, animation-aware editing, linked ramps, and deterministic variants. Retain generated candidates as optional concept/reference material. Clean and palette-reduce the short wool travel coat and quilted gambeson Idle candidates against the authoritative base before deciding whether either design warrants controlled Walk and Run follow-up jobs. Do not run the full remaining bootstrap queue yet.
 
 ## Recent Activity
+2026-08-20: Created `agent/publish-processing-palette-assets` from the synchronized `main` tip to publish the verified 2x2 Macro Pixels process, complete palette lifecycle repair, 40-file animation-testing reference set plus matching ZIP archive, and the validated 64-color `blacksmith_new.json` palette.
+
+2026-08-20: Audited and repaired the complete palette lifecycle. The user's `colors`-array JSON schema now loads unchanged, malformed or empty palettes report actionable errors, main and Pixel Editor imports/exports share validated JSON/text/JASC/GIMP/image handling, persistent saved colors are explained and can become the active preview palette, saved swatches and eyedropper handoff work without silently truncating colors, palette mutations clear stale quantized previews, and dithering honors palettes beyond 256 entries; the full suite passes with 228 tests.
+
+2026-08-19: Added the 2x2 Macro Pixels preview process, which converts every complete top-left-aligned 2x2 cell into one exact existing RGBA color by deterministic majority vote while preserving dimensions, alpha, palette membership, and odd edge rows or columns; a 1448x1086 benchmark completes in about 0.21 seconds and the full suite passes with 203 tests.
+
 2026-08-19: Added the user-supplied `hk-between-essence-32x.png` and `ludpiratepalette64-32x.png` RGBA palette strips to tracked project assets; both files were format- and geometry-validated before publication on `agent/add-palette-assets`.
 
 2026-08-19: Synchronized this checkout with `origin/main` at `dbe72d3`, bringing in the merged animation/editor workflow plus the subsequent animation-preview fixes and cluster-aware image cleanup; metadata-only local state note, with the pulled code otherwise matching the remote.
