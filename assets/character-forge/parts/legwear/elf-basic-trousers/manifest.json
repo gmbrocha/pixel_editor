@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "id": "elf-basic-trousers",
+  "displayName": "Basic Trousers",
+  "slot": "legwear",
+  "occupiesSlots": [
+    "legwear"
+  ],
+  "reservedSlots": [],
+  "layer": "legwear",
+  "tags": [
+    "semantic_regions",
+    "starter",
+    "recolorable"
+  ],
+  "fit": "elf-01",
+  "version": 1,
+  "status": "approved",
+  "animations": {
+    "idle": "idle.png",
+    "walk": "walk.png",
+    "run": "run.png"
+  },
+  "coverage": {
+    "idle": [
+      "front",
+      "back",
+      "right",
+      "left"
+    ],
+    "walk": [
+      "front",
+      "back",
+      "right",
+      "left"
+    ],
+    "run": [
+      "front",
+      "back",
+      "right",
+      "left"
+    ]
+  },
+  "colorRamp": {
+    "main": "#465445",
+    "colors": [
+      "#171B18",
+      "#29332C",
+      "#465445",
+      "#6B7861",
+      "#9AA58C"
+    ]
+  },
+  "suggestedColors": [
+    "#465445",
+    "#3D485D",
+    "#5E4737",
+    "#6A3F47"
+  ],
+  "provenance": {
+    "kind": "deterministic_anatomical_region_overlay",
+    "generator": "tools/build_semantic_character_forge.py",
+    "sourceRegions": [
+      "pelvis_front",
+      "pelvis_back",
+      "left_thigh",
+      "right_thigh",
+      "left_knee",
+      "right_knee",
+      "left_shin",
+      "right_shin",
+      "left_ankle",
+      "right_ankle"
+    ],
+    "animationSha256": {
+      "idle": "c0443075a82adaf4d42ef8a64b2015a1c9dad8c6655463d60687a5f6880e5c2e",
+      "walk": "833eae067bda384ced48573abf33ae9a95cb4b76295d965d9e918fceb17ab096",
+      "run": "7f8f2bafc7bcb2e534556315077e0b512795076e90e9d2351631173cac3da14e"
+    }
+  }
+}

@@ -1,147 +1,71 @@
 # Character Forge assets
 
-`sheet_specs.json` is the shared authority for runtime composition and the Pip &
-Pyre component factory. It records frame geometry, direction ordering, timing,
-matte handling, generation transforms, the generation-only reversible reserved-blue
-mannequin ramp, slot regions, layers, and canonical SHA-256 checksums. Canonical
-runtime sheets are never recolored.
+Character Forge now uses the 128×128 semantic elf pipeline exclusively. The old
+64px human base, generated candidates, reserved-blue mannequin output, workbench,
+component sources, and retired factory code/tests remain recoverable under
+`legacy_sources/pre-semantic-elf-20260821/` but are outside runtime discovery.
 
-## Canonical base
+## Runtime base
 
-- `idle.png`: 64x256 RGBA; one 64x64 frame in Front, Left, Right, Back rows. Its
-  exact `#FFFFFF` source matte is cleared at runtime; the off-white eye pixels are
-  preserved.
-- `walk.png`: 384x259 RGBA; six frames in Front, Back, Right, Left rows. Its three
-  extra transparent bottom pixels are preserved. The corrected authored sheet is
-  retained at `base_sources/human-01/walk-authored.png`. Runtime rows 1–3 are
-  preserved exactly, and only the Left row is reversed as frames
-  `6, 5, 4, 3, 2, 1`. The resulting Left frames are the authored `-1, -1` aligned
-  mirrors of the corresponding Right frames.
-- `run-front.png`, `run-back.png`, `run-right.png`, and `run-left.png`: authoritative
-  384x64 six-frame strips.
-- `run.png`: derived 384x256 sheet assembled pixel-identically in Front, Back,
-  Right, Left rows by `tools/build_character_forge_run_sheet.py`.
+`sheet_specs.json` registers `elf-01` (`Semantic Elf Base`) with four rows in
+Front, Back, Right, Left order:
 
-Generation and promotion refuse changed canonical checksums. Accept an intentional
-same-geometry revision only with:
+- Idle: 26 frames per direction at 12 FPS, 3328×512 sheet.
+- Walk: 8 frames per direction at 10 FPS, 1024×512 sheet.
+- Run: 8 frames per direction at 10 FPS, 1024×512 sheet.
 
-```powershell
-python component_pipeline.py rebaseline --confirm human-01
-```
+The sheets live under `bases/elf-01/`. They are ordinary indexed-palette pixel
+art with binary transparency and 128×128 cells. Idle is derived non-destructively
+from 13 manually authored poses by placing those poses on alternating frames and
+using Blender's keyed-transform interpolation for the in-betweens. Run uses the
+approved forward-lean/head-down action.
 
-Regenerate or byte-verify the corrected Walk runtime sheet with:
+## Semantic packages
 
-```powershell
-python tools/build_character_forge_walk_sheet.py
-python tools/build_character_forge_walk_sheet.py --check
-```
+`semantic/elf-01/<animation>/` contains the complete durable package for each
+animation:
 
-## Production components
+- ordinary art sheet and native-speed direction GIFs;
+- exact 8-bit per-pixel anatomical region IDs;
+- color-coded region inspection sheet;
+- individual art, ID, and preview frames;
+- all 13 component-slot masks and all 13 body-hide masks;
+- direction strips, palette, hashes, source-frame mapping, and manifest.
 
-Every component lives beneath `parts/<slot>/<component-id>/` with a versioned
-`manifest.json` and canonical-size transparent animation overlays. Runtime discovery
-uses manifests; rejected/raw pipeline candidates never belong here.
+Every opaque art pixel has exactly one region ID, and transparent pixels have ID
+zero. `tools/build_semantic_sprite_package.py --check` recreates a package and
+byte-compares it.
 
-`walking-shirt-test` is an incomplete `torso` component (displayed as **Tops**).
-It covers all six Front Walk frames, falls back to the base elsewhere, and preserves
-its exact nine-shade recolorable blue ramp with `#2C4267` as the main color.
+## Starter components
 
-`leather-boots-front-test` is an incomplete Front Walk component for **Feet**.
-The original larger-hood cloak and its two derived treatments are preserved under
-`legacy_sources/old-model-cloaks/` but are intentionally excluded from runtime
-discovery. All selectable cloaks now use the complete semantic-region source,
-cover all six Walk frames in Front, Back, Right, and Left, reserve Headwear and
-Neck, and fall back exactly for unsupported animations.
+The live `parts/` tree contains only five simple, approved, region-derived items:
 
-## Deterministic variants
+- Basic Linen Shirt (`torso`)
+- Simple Work Vest (`outerwear`)
+- Basic Trousers (`legwear`)
+- Plain Leather Gloves (`hands`)
+- Tall Work Boots (`feet`)
 
-`tools/generate_character_component_variants.py` derives three non-destructive
-examples from the shirt and boots: palette-remapped crimson cloth,
-coordinate-masked cream/indigo cloth, and stable blackened iron. Cloak treatments
-have moved entirely to semantic-region finishing. The earlier seeded Muddy Field
-Boots experiment is intentionally excluded until a semantic-region source is
-authored. Every transform preserves the source alpha mask and records its source
-hash, output hash, and method in the derived manifest.
+Each covers Idle, Walk, and Run in all four directions. Each manifest declares a
+five-color material ramp, so Character Forge's existing color picker can produce
+arbitrary color variants without duplicating component entries. These are basic
+pipeline proofs intended for later pixel cleanup, not final costume design.
 
-Regenerate or verify the committed examples with:
+Review contact sheets for the base and every starter item are under `review/`.
+
+## Regeneration
+
+After building the three semantic animation packages, reinstall the runtime and
+starter components with:
 
 ```powershell
-python tools/generate_character_component_variants.py
-python tools/generate_character_component_variants.py --check
+python tools/build_semantic_character_forge.py `
+  --asset-root assets/character-forge `
+  --idle-package animation_images_models/elf_bald_female/working/idle_26f_128_semantic `
+  --walk-package animation_images_models/elf_bald_female/working/walk_manual_v1_128_semantic `
+  --run-package animation_images_models/elf_bald_female/working/run_128_semantic `
+  --force
 ```
 
-## Semantic-region cloak finishing
-
-`tools/finish_component_regions.py` accepts a base composite or transparent mask
-containing five exact opaque authoring colors: main `#FF4040`, lining `#40FF80`,
-trim `#FFD840`, hardware `#7A40A8`, and hood panel `#083EFF`. It strips every
-non-marker pixel, locks the resulting alpha silhouette, and applies five-step
-material ramps, fixed top-left lighting, colored boundary shading, and
-clasp-anchored folds without frame-local random noise.
-
-The supplied `walk_hooded_cloak.png` is preserved byte-for-byte at
-`semantic_sources/hooded-cloak-walk/authored-regions.png`. It contains authored
-Front, Back, and Right rows. `tools/complete_cloak_walk_regions.py` creates the
-canonical 384x259 `semantic-regions.png`, applies the same `1, 2, 3, 6, 5, 4`
-side-view phase correction as the character base, and fills Left with a per-frame
-Right mirror plus the matching `-1, -1` alignment offset. The source manifest
-records both hashes, direction provenance, marker counts, frame geometry, and the completion algorithm. The
-superseded Front-only source remains recoverable under
-`legacy_sources/semantic-cloak-front-walk/`.
-
-Ten full-direction Walk components are derived from the canonical source:
-Forest Wool, Burgundy + Gold Trim, Storm Blue & Silver, Autumn Russet, Pointed
-Hood Green, Winter Gray, Royal Amethyst + Gold, Midnight Raven, Desert Sand +
-Teal, and Ivory + Crimson. Regenerate or byte-verify the source, every finished
-sheet, and every component manifest with:
-
-```powershell
-python tools/generate_cloak_walk_variants.py
-python tools/generate_cloak_walk_variants.py --check
-```
-
-### Warlock Robe variants
-
-The supplied two-region `walk_warlock_robe.png` is preserved byte-for-byte at
-`semantic_sources/warlock-robe-front-walk/authored-regions.png`. Its six Front
-Walk frames use main fabric `#FF4040` and trim `#FFD840`; the deterministic
-finisher normalizes the sheet to 384x259 without altering its authored pixels.
-Four Front Walk treatments are registered as Outerwear: Void Amethyst, Blood
-Ritual, Necrotic Jade, and Astral Midnight. They do not reserve Headwear or Neck.
-
-Regenerate or verify the source, outputs, and manifests with:
-
-```powershell
-python tools/generate_warlock_robe_variants.py
-python tools/generate_warlock_robe_variants.py --check
-```
-
-## Editable silhouette starter workbench
-
-`workbench/` contains eleven deliberately rough Front Walk component starters for
-the next manual-art pass: messy hair, one pauldron, gloves, eyepatch, double
-pauldrons, mage hat/vestments, leather armor, ratty shawl, headband, orcish armor,
-and a horned cult mask. Each is registered in Character Forge, has all six Front
-Walk frames, and falls back to the base outside Walk/Front. Frost Hair now uses
-the directly authored `walk_frost_blue_hair.png`, and Double Leaf Pauldrons use
-the directly authored Front + Back `walk_double_pauldrons_working.png`; the other
-nine starters retain directly editable exact-color `regions.png` masks.
-
-Component manifests can declare `alphaOccludedByTags` to hide their pixels behind
-the animation alpha of matching selected components. Frost Hair uses
-`["hooded_cloak"]`, so all ten tagged hooded cloaks cover the hair fabric area while
-the bangs remain visible through each transparent face opening. This rule is
-tag-driven rather than tied to specific component IDs and can be reused by future
-hair or accessory components.
-
-Open `workbench/component-silhouette-starters-all-frames.png` for the visual
-index and `workbench/README.md` for the direct mask paths and component-specific
-caveats. Regenerate or verify the complete set with:
-
-```powershell
-python tools/generate_component_silhouette_starters.py
-python tools/generate_component_silhouette_starters.py --check
-```
-
-Normal component discovery exposes only `approved` manifests. Character Forge is a
-developer picker and also exposes `incomplete` components for visual inspection.
+Runtime discovery reads only manifests beneath the live `parts/` directory; it
+does not scan `legacy_sources/`.

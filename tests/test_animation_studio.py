@@ -554,7 +554,7 @@ def test_animation_editor_ping_pong_playback_bounces_inside_selected_range() -> 
     application.processEvents()
 
 
-def test_canonical_walk_sheet_builds_four_tracks_without_touching_extra_rows(
+def test_semantic_elf_walk_sheet_builds_four_complete_tracks(
     tmp_path,
 ) -> None:
     source_path = (
@@ -562,24 +562,22 @@ def test_canonical_walk_sheet_builds_four_tracks_without_touching_extra_rows(
         / "assets"
         / "character-forge"
         / "bases"
-        / "human-01"
+        / "elf-01"
         / "walk.png"
     )
     with Image.open(source_path) as opened:
         source = opened.convert("RGBA").copy()
     project = create_animation_project_from_sheet(
-        source, name="walk", frame_size=(64, 64), fps=8
+        source, name="walk", frame_size=(128, 128), fps=10
     )
-    for name, y in (("Front", 0), ("Back", 64), ("Right", 128), ("Left", 192)):
-        project.add_track(name, FrameSequenceSpec(0, y, 64, 64, 6, 64, 0))
-    extra_rows = project.working_sheet.crop((0, 256, 384, 259)).tobytes()
+    for name, y in (("Front", 0), ("Back", 128), ("Right", 256), ("Left", 384)):
+        project.add_track(name, FrameSequenceSpec(0, y, 128, 128, 8, 128, 0))
     edited = project.frame_image(project.tracks[0].id, 0)
     edited.putpixel((0, 0), (255, 0, 0, 255))
     project.commit_frame_image(project.tracks[0].id, 0, edited)
 
-    assert project.sheet_size == (384, 259)
-    assert project_to_sheet(project).size == (384, 256)
-    assert project.working_sheet.crop((0, 256, 384, 259)).tobytes() == extra_rows
+    assert project.sheet_size == (1024, 512)
+    assert project_to_sheet(project).size == (1024, 512)
     archive = tmp_path / "walk.pfa"
     save_animation_project(project, archive)
     assert (

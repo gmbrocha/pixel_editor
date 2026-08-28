@@ -1,0 +1,21 @@
+{
+  "columns": [
+    "front",
+    "back",
+    "right",
+    "left"
+  ],
+  "rows": [
+    "base",
+    "elf-basic-linen-shirt",
+    "elf-simple-work-vest",
+    "elf-basic-trousers",
+    "elf-plain-leather-gloves",
+    "elf-tall-work-boots"
+  ],
+  "animation": "walk",
+  "frame_size": [
+    128,
+    128
+  ]
+}

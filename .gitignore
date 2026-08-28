@@ -4,3 +4,10 @@ __pycache__/
 .venv/
 .env
 .env.local
+/assets/Top-Down Asset Pack/
+/animation_images_models/**/*.fbx
+/animation_images_models/**/*.zip
+/animation_images_models/**/*.blend1
+/animation_images_models/**/extracted/
+/animation_images_models/**/working/
+/animation_images_models/**/diagnostics/

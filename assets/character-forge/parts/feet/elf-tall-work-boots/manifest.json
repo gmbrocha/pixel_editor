@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "id": "elf-tall-work-boots",
+  "displayName": "Tall Work Boots",
+  "slot": "feet",
+  "occupiesSlots": [
+    "feet"
+  ],
+  "reservedSlots": [],
+  "layer": "footwear",
+  "tags": [
+    "semantic_regions",
+    "starter",
+    "recolorable"
+  ],
+  "fit": "elf-01",
+  "version": 1,
+  "status": "approved",
+  "animations": {
+    "idle": "idle.png",
+    "walk": "walk.png",
+    "run": "run.png"
+  },
+  "coverage": {
+    "idle": [
+      "front",
+      "back",
+      "right",
+      "left"
+    ],
+    "walk": [
+      "front",
+      "back",
+      "right",
+      "left"
+    ],
+    "run": [
+      "front",
+      "back",
+      "right",
+      "left"
+    ]
+  },
+  "colorRamp": {
+    "main": "#503828",
+    "colors": [
+      "#18110D",
+      "#32231A",
+      "#503828",
+      "#74543D",
+      "#9C795B"
+    ]
+  },
+  "suggestedColors": [
+    "#503828",
+    "#303337",
+    "#67362E",
+    "#5C5137"
+  ],
+  "provenance": {
+    "kind": "deterministic_anatomical_region_overlay",
+    "generator": "tools/build_semantic_character_forge.py",
+    "sourceRegions": [
+      "left_shin",
+      "right_shin",
+      "left_ankle",
+      "right_ankle",
+      "left_foot",
+      "right_foot"
+    ],
+    "animationSha256": {
+      "idle": "15e20f589516a0263723d9da9481c3282956d788f3d6af56f33bedce95d6de6c",
+      "walk": "9ebc394f87410725c2aa63fc7b1f9892f76fcfe2327fadb29584f2a5bdcbe9db",
+      "run": "d521cfe0fddb37dc0fdc6b798944868fabd525b2d474edb99f50fd574dbbe133"
+    }
+  }
+}

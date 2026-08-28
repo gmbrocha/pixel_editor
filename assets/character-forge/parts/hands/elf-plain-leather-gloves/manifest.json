@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "id": "elf-plain-leather-gloves",
+  "displayName": "Plain Leather Gloves",
+  "slot": "hands",
+  "occupiesSlots": [
+    "hands"
+  ],
+  "reservedSlots": [],
+  "layer": "handwear",
+  "tags": [
+    "semantic_regions",
+    "starter",
+    "recolorable"
+  ],
+  "fit": "elf-01",
+  "version": 1,
+  "status": "approved",
+  "animations": {
+    "idle": "idle.png",
+    "walk": "walk.png",
+    "run": "run.png"
+  },
+  "coverage": {
+    "idle": [
+      "front",
+      "back",
+      "right",
+      "left"
+    ],
+    "walk": [
+      "front",
+      "back",
+      "right",
+      "left"
+    ],
+    "run": [
+      "front",
+      "back",
+      "right",
+      "left"
+    ]
+  },
+  "colorRamp": {
+    "main": "#71472D",
+    "colors": [
+      "#24150E",
+      "#4C2D1C",
+      "#71472D",
+      "#9A6A48",
+      "#C49A73"
+    ]
+  },
+  "suggestedColors": [
+    "#71472D",
+    "#343A42",
+    "#6A352F",
+    "#79623B"
+  ],
+  "provenance": {
+    "kind": "deterministic_anatomical_region_overlay",
+    "generator": "tools/build_semantic_character_forge.py",
+    "sourceRegions": [
+      "left_hand",
+      "right_hand"
+    ],
+    "animationSha256": {
+      "idle": "fd38f101f80dacbd1517ab86e7276917220c8c65b24c0d185fb330d4f7d4fb96",
+      "walk": "508df34fe1511198a4ee05c6fc14e0fac56bf51d40ef3d892d2382ebdb71dd3b",
+      "run": "c1cc6c44928fd8f8a7dc548ae311931b9320931864d083dcfabc30197d787ac8"
+    }
+  }
+}

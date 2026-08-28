@@ -195,7 +195,7 @@ class CharacterCatalog:
 
 @dataclass(slots=True)
 class CharacterRecipe:
-    base_id: str = "human-01"
+    base_id: str = "elf-01"
     name: str = "character"
     parts: dict[str, str | None] = field(
         default_factory=lambda: {slot: None for slot in CHARACTER_SLOTS}
@@ -471,10 +471,10 @@ def create_default_catalog(
             part = load_component_manifest(manifest_path)
             if part.status == "approved" or include_incomplete:
                 parts.append(part)
-    base_id = specs.get("base_id", "human-01")
+    base_id = specs.get("base_id", "elf-01")
     base = CharacterBase(
         id=str(base_id),
-        name="Human Base 01",
+        name=str(specs.get("base_name", str(base_id))),
         directory=root / "bases" / str(base_id),
         animations=animations,
     )
@@ -483,7 +483,6 @@ def create_default_catalog(
 
 def create_default_recipe(name: str = "character") -> CharacterRecipe:
     parts = {slot: None for slot in CHARACTER_SLOTS}
-    parts["torso"] = "walking-shirt-test"
     return CharacterRecipe(name=name, parts=parts)
 
 

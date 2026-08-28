@@ -1,0 +1,329 @@
+{
+  "schema_version": 1,
+  "base_id": "human-01",
+  "frame_size": [
+    64,
+    64
+  ],
+  "layers": [
+    "body_back",
+    "hair_back",
+    "body",
+    "legwear",
+    "footwear",
+    "torso",
+    "outerwear",
+    "handwear",
+    "waist",
+    "neck",
+    "hair_front",
+    "face_accessory",
+    "headwear",
+    "foreground_accessory"
+  ],
+  "slots": {
+    "headwear": {
+      "label": "Headwear",
+      "layer": "headwear",
+      "generation": true
+    },
+    "face": {
+      "label": "Face",
+      "layer": "face_accessory",
+      "generation": true
+    },
+    "neck": {
+      "label": "Neck",
+      "layer": "neck",
+      "generation": true
+    },
+    "torso": {
+      "label": "Tops",
+      "layer": "torso",
+      "generation": true
+    },
+    "waist": {
+      "label": "Waist",
+      "layer": "waist",
+      "generation": true
+    },
+    "outerwear": {
+      "label": "Outerwear",
+      "layer": "outerwear",
+      "generation": true
+    },
+    "hands": {
+      "label": "Hands",
+      "layer": "handwear",
+      "generation": true
+    },
+    "feet": {
+      "label": "Feet",
+      "layer": "footwear",
+      "generation": true
+    },
+    "legwear": {
+      "label": "Legwear",
+      "layer": "legwear",
+      "generation": false
+    },
+    "hair": {
+      "label": "Hair",
+      "layer": "hair_front",
+      "generation": false
+    },
+    "facial_hair": {
+      "label": "Facial Hair",
+      "layer": "face_accessory",
+      "generation": false
+    },
+    "shoulder_chest": {
+      "label": "Shoulder / Chest",
+      "layer": "foreground_accessory",
+      "generation": false
+    },
+    "back": {
+      "label": "Back",
+      "layer": "body_back",
+      "generation": false
+    }
+  },
+  "regions": {
+    "headwear": [
+      12,
+      2,
+      52,
+      27
+    ],
+    "face": [
+      16,
+      7,
+      48,
+      30
+    ],
+    "neck": [
+      15,
+      17,
+      49,
+      35
+    ],
+    "torso": [
+      9,
+      15,
+      55,
+      44
+    ],
+    "waist": [
+      10,
+      25,
+      54,
+      47
+    ],
+    "outerwear": [
+      7,
+      14,
+      57,
+      52
+    ],
+    "hands": [
+      4,
+      18,
+      60,
+      54
+    ],
+    "feet": [
+      6,
+      36,
+      60,
+      64
+    ]
+  },
+  "generation": {
+    "scale": 4,
+    "matte": "#FF00FF",
+    "default_normalization": "dominant",
+    "difference_threshold": 24,
+    "matte_threshold": 20,
+    "mannequin": {
+      "enabled": true,
+      "name": "reserved-blue-v1",
+      "processing_version": "reserved-blue-v2-position-aware",
+      "minimum_red": 16,
+      "minimum_red_lead": 4,
+      "minimum_green_lead": 1,
+      "target_dark": [
+        0,
+        96,
+        210
+      ],
+      "target_light": [
+        96,
+        245,
+        255
+      ],
+      "reverse_threshold": 64,
+      "leak_threshold": 64,
+      "matte_restore_threshold": 64,
+      "border_background_tolerance": 48,
+      "border_dark_ceiling": 96,
+      "border_matte_threshold": 96
+    }
+  },
+  "animations": {
+    "idle": {
+      "name": "Idle",
+      "runtime_file": "bases/human-01/idle.png",
+      "runtime_sha256": "80326212e8a23301f9d2d5309ae3f2edb269251dbeeee5b6f2325dcfc497eeee",
+      "sheet_size": [
+        64,
+        256
+      ],
+      "logical_extent": [
+        64,
+        256
+      ],
+      "frames_per_direction": 1,
+      "direction_rows": {
+        "front": 0,
+        "left": 1,
+        "right": 2,
+        "back": 3
+      },
+      "fps": 2,
+      "source_matte": "#FFFFFF",
+      "pivot": null,
+      "generation_size": [
+        656,
+        1024
+      ],
+      "padding": [
+        200,
+        0,
+        200,
+        0
+      ],
+      "sources": [
+        {
+          "file": "bases/human-01/idle.png",
+          "sha256": "80326212e8a23301f9d2d5309ae3f2edb269251dbeeee5b6f2325dcfc497eeee"
+        }
+      ]
+    },
+    "walk": {
+      "name": "Walk",
+      "runtime_file": "bases/human-01/walk.png",
+      "runtime_sha256": "7e148f5d0aa37d4493a681c2b1f63f13b79f4f62c28f308444608bb3da37c920",
+      "sheet_size": [
+        384,
+        259
+      ],
+      "logical_extent": [
+        384,
+        256
+      ],
+      "frames_per_direction": 6,
+      "direction_rows": {
+        "front": 0,
+        "back": 1,
+        "right": 2,
+        "left": 3
+      },
+      "direction_playback": {
+        "front": [0, 1, 2, 3, 4, 5],
+        "back": [0, 1, 2, 3, 4, 5],
+        "right": [0, 1, 2, 3, 4, 5],
+        "left": [0, 1, 2, 3, 4, 5]
+      },
+      "fps": 8,
+      "source_matte": null,
+      "pivot": null,
+      "generation_size": [
+        1536,
+        1040
+      ],
+      "padding": [
+        0,
+        2,
+        0,
+        2
+      ],
+      "sources": [
+        {
+          "file": "base_sources/human-01/walk-authored.png",
+          "sha256": "7e148f5d0aa37d4493a681c2b1f63f13b79f4f62c28f308444608bb3da37c920"
+        }
+      ]
+    },
+    "run": {
+      "name": "Run",
+      "runtime_file": "bases/human-01/run.png",
+      "runtime_sha256": "0bd012f9801b0c3ebb44223661e88e28d24c7cf5b5d91a95c42cd438daee015d",
+      "sheet_size": [
+        512,
+        256
+      ],
+      "logical_extent": [
+        512,
+        256
+      ],
+      "frames_per_direction": 8,
+      "direction_rows": {
+        "front": 0,
+        "back": 1,
+        "right": 2,
+        "left": 3
+      },
+      "direction_frame_counts": {
+        "front": 6,
+        "back": 8,
+        "right": 6,
+        "left": 6
+      },
+      "direction_playback": {
+        "front": [0, 1, 2, 3, 4, 5],
+        "back": [0, 1, 2, 3, 4, 5, 6, 7],
+        "right": [5, 4, 3, 2, 1, 0, 1, 2, 3, 4],
+        "left": [0, 1, 2, 3, 4, 5, 4, 3, 2, 1]
+      },
+      "fps": 10,
+      "source_matte": null,
+      "pivot": null,
+      "generation_size": [
+        2048,
+        1024
+      ],
+      "padding": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sources": [
+        {
+          "file": "base_sources/human-01/run-front.png",
+          "sha256": "2a876ca822ded59f06f43e78dfc46ddbe7edced9017a1250d2bbe61c535d31b0",
+          "row": "front",
+          "frame_count": 6
+        },
+        {
+          "file": "base_sources/human-01/run-back.png",
+          "sha256": "c723499a8273c0442d517f564721f0a4229abc1997c83a3e3563bf0f14b5b1dc",
+          "row": "back",
+          "frame_count": 8
+        },
+        {
+          "file": "base_sources/human-01/run-right.png",
+          "sha256": "f5c4ae57e7cb6ca039a1b7bf52b27ff165d42d2f43bdb74d5f1bde39bd9f1d9b",
+          "row": "right",
+          "frame_count": 6
+        },
+        {
+          "file": "base_sources/human-01/run-left.png",
+          "sha256": "32566d95b52b00a3eb21e2a2db0710f58e1256c042e1f8741a26c75ae4e2f9eb",
+          "row": "left",
+          "frame_count": 6
+        }
+      ]
+    }
+  }
+}

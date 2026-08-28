@@ -399,7 +399,8 @@ class CharacterForgeWindow(QMainWindow):
         )
         self.frame_label.setText(
             f"Frame {self._frame_index + 1}/{frame_count}{cycle_note}  |  "
-            f"64x64 frame  |  {self._sheet.width}x{self._sheet.height} sheet"
+            f"{animation.frame_size[0]}x{animation.frame_size[1]} frame  |  "
+            f"{self._sheet.width}x{self._sheet.height} sheet"
         )
 
     def _advance_frame(self) -> None:

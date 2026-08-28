@@ -1,9 +1,10 @@
 {
   "schema_version": 1,
-  "base_id": "human-01",
+  "base_id": "elf-01",
+  "base_name": "Semantic Elf Base",
   "frame_size": [
-    64,
-    64
+    128,
+    128
   ],
   "layers": [
     "body_back",
@@ -25,42 +26,42 @@
     "headwear": {
       "label": "Headwear",
       "layer": "headwear",
-      "generation": true
+      "generation": false
     },
     "face": {
       "label": "Face",
       "layer": "face_accessory",
-      "generation": true
+      "generation": false
     },
     "neck": {
       "label": "Neck",
       "layer": "neck",
-      "generation": true
+      "generation": false
     },
     "torso": {
       "label": "Tops",
       "layer": "torso",
-      "generation": true
+      "generation": false
     },
     "waist": {
       "label": "Waist",
       "layer": "waist",
-      "generation": true
+      "generation": false
     },
     "outerwear": {
       "label": "Outerwear",
       "layer": "outerwear",
-      "generation": true
+      "generation": false
     },
     "hands": {
       "label": "Hands",
       "layer": "handwear",
-      "generation": true
+      "generation": false
     },
     "feet": {
       "label": "Feet",
       "layer": "footwear",
-      "generation": true
+      "generation": false
     },
     "legwear": {
       "label": "Legwear",
@@ -88,140 +89,24 @@
       "generation": false
     }
   },
-  "regions": {
-    "headwear": [
-      12,
-      2,
-      52,
-      27
-    ],
-    "face": [
-      16,
-      7,
-      48,
-      30
-    ],
-    "neck": [
-      15,
-      17,
-      49,
-      35
-    ],
-    "torso": [
-      9,
-      15,
-      55,
-      44
-    ],
-    "waist": [
-      10,
-      25,
-      54,
-      47
-    ],
-    "outerwear": [
-      7,
-      14,
-      57,
-      52
-    ],
-    "hands": [
-      4,
-      18,
-      60,
-      54
-    ],
-    "feet": [
-      6,
-      36,
-      60,
-      64
-    ]
-  },
   "generation": {
-    "scale": 4,
-    "matte": "#FF00FF",
-    "default_normalization": "dominant",
-    "difference_threshold": 24,
-    "matte_threshold": 20,
-    "mannequin": {
-      "enabled": true,
-      "name": "reserved-blue-v1",
-      "processing_version": "reserved-blue-v2-position-aware",
-      "minimum_red": 16,
-      "minimum_red_lead": 4,
-      "minimum_green_lead": 1,
-      "target_dark": [
-        0,
-        96,
-        210
-      ],
-      "target_light": [
-        96,
-        245,
-        255
-      ],
-      "reverse_threshold": 64,
-      "leak_threshold": 64,
-      "matte_restore_threshold": 64,
-      "border_background_tolerance": 48,
-      "border_dark_ceiling": 96,
-      "border_matte_threshold": 96
-    }
+    "enabled": false,
+    "note": "The retired 64px component-generation pipeline is archived outside runtime discovery."
   },
   "animations": {
     "idle": {
       "name": "Idle",
-      "runtime_file": "bases/human-01/idle.png",
-      "runtime_sha256": "80326212e8a23301f9d2d5309ae3f2edb269251dbeeee5b6f2325dcfc497eeee",
+      "runtime_file": "bases/elf-01/idle.png",
+      "runtime_sha256": "da7792c9465309d062f613c0c1f1ec477906d857f7d0c9b85799482e88d5f1ab",
       "sheet_size": [
-        64,
-        256
+        3328,
+        512
       ],
       "logical_extent": [
-        64,
-        256
+        3328,
+        512
       ],
-      "frames_per_direction": 1,
-      "direction_rows": {
-        "front": 0,
-        "left": 1,
-        "right": 2,
-        "back": 3
-      },
-      "fps": 2,
-      "source_matte": "#FFFFFF",
-      "pivot": null,
-      "generation_size": [
-        656,
-        1024
-      ],
-      "padding": [
-        200,
-        0,
-        200,
-        0
-      ],
-      "sources": [
-        {
-          "file": "bases/human-01/idle.png",
-          "sha256": "80326212e8a23301f9d2d5309ae3f2edb269251dbeeee5b6f2325dcfc497eeee"
-        }
-      ]
-    },
-    "walk": {
-      "name": "Walk",
-      "runtime_file": "bases/human-01/walk.png",
-      "runtime_sha256": "7e148f5d0aa37d4493a681c2b1f63f13b79f4f62c28f308444608bb3da37c920",
-      "sheet_size": [
-        384,
-        259
-      ],
-      "logical_extent": [
-        384,
-        256
-      ],
-      "frames_per_direction": 6,
+      "frames_per_direction": 26,
       "direction_rows": {
         "front": 0,
         "back": 1,
@@ -229,42 +114,169 @@
         "left": 3
       },
       "direction_playback": {
-        "front": [0, 1, 2, 3, 4, 5],
-        "back": [0, 1, 2, 3, 4, 5],
-        "right": [0, 1, 2, 3, 4, 5],
-        "left": [0, 1, 2, 3, 4, 5]
+        "front": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25
+        ],
+        "back": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25
+        ],
+        "right": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25
+        ],
+        "left": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25
+        ]
       },
-      "fps": 8,
+      "fps": 12,
       "source_matte": null,
       "pivot": null,
-      "generation_size": [
-        1536,
-        1040
-      ],
-      "padding": [
-        0,
-        2,
-        0,
-        2
-      ],
       "sources": [
         {
-          "file": "base_sources/human-01/walk-authored.png",
-          "sha256": "7e148f5d0aa37d4493a681c2b1f63f13b79f4f62c28f308444608bb3da37c920"
+          "file": "semantic/elf-01/idle/idle_manifest.json",
+          "sha256": "3f0adbffec967cc501d6d118d0381d949b3dd6df01afe6d6191f67c7a5a62abe",
+          "action": "PF_Idle_Edit",
+          "source_frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
         }
       ]
     },
-    "run": {
-      "name": "Run",
-      "runtime_file": "bases/human-01/run.png",
-      "runtime_sha256": "0bd012f9801b0c3ebb44223661e88e28d24c7cf5b5d91a95c42cd438daee015d",
+    "walk": {
+      "name": "Walk",
+      "runtime_file": "bases/elf-01/walk.png",
+      "runtime_sha256": "3d0beeb959477f0fadd4c1637d9995e4f4df7cc1b13d83253c4d94e76a43818c",
       "sheet_size": [
-        512,
-        256
+        1024,
+        512
       ],
       "logical_extent": [
-        512,
-        256
+        1024,
+        512
       ],
       "frames_per_direction": 8,
       "direction_rows": {
@@ -273,55 +285,148 @@
         "right": 2,
         "left": 3
       },
-      "direction_frame_counts": {
-        "front": 6,
-        "back": 8,
-        "right": 6,
-        "left": 6
-      },
       "direction_playback": {
-        "front": [0, 1, 2, 3, 4, 5],
-        "back": [0, 1, 2, 3, 4, 5, 6, 7],
-        "right": [5, 4, 3, 2, 1, 0, 1, 2, 3, 4],
-        "left": [0, 1, 2, 3, 4, 5, 4, 3, 2, 1]
+        "front": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "back": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "right": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "left": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
       },
       "fps": 10,
       "source_matte": null,
       "pivot": null,
-      "generation_size": [
-        2048,
-        1024
-      ],
-      "padding": [
-        0,
-        0,
-        0,
-        0
-      ],
       "sources": [
         {
-          "file": "base_sources/human-01/run-front.png",
-          "sha256": "2a876ca822ded59f06f43e78dfc46ddbe7edced9017a1250d2bbe61c535d31b0",
-          "row": "front",
-          "frame_count": 6
-        },
+          "file": "semantic/elf-01/walk/walk_manifest.json",
+          "sha256": "a8315adcd7c8b9d6a4448b27f98fc4b50418dec523cc2c7f8d9af31080cf5068",
+          "action": "PF_Walk_Meshy_Edit",
+          "source_frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ]
+        }
+      ]
+    },
+    "run": {
+      "name": "Run",
+      "runtime_file": "bases/elf-01/run.png",
+      "runtime_sha256": "7d38a7b9d0f5e2fbfd5188ecdc0bc52bdaf575d1fdbe20497a0f65ff36660d6e",
+      "sheet_size": [
+        1024,
+        512
+      ],
+      "logical_extent": [
+        1024,
+        512
+      ],
+      "frames_per_direction": 8,
+      "direction_rows": {
+        "front": 0,
+        "back": 1,
+        "right": 2,
+        "left": 3
+      },
+      "direction_playback": {
+        "front": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "back": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "right": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "left": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "fps": 10,
+      "source_matte": null,
+      "pivot": null,
+      "sources": [
         {
-          "file": "base_sources/human-01/run-back.png",
-          "sha256": "c723499a8273c0442d517f564721f0a4229abc1997c83a3e3563bf0f14b5b1dc",
-          "row": "back",
-          "frame_count": 8
-        },
-        {
-          "file": "base_sources/human-01/run-right.png",
-          "sha256": "f5c4ae57e7cb6ca039a1b7bf52b27ff165d42d2f43bdb74d5f1bde39bd9f1d9b",
-          "row": "right",
-          "frame_count": 6
-        },
-        {
-          "file": "base_sources/human-01/run-left.png",
-          "sha256": "32566d95b52b00a3eb21e2a2db0710f58e1256c042e1f8741a26c75ae4e2f9eb",
-          "row": "left",
-          "frame_count": 6
+          "file": "semantic/elf-01/run/run_manifest.json",
+          "sha256": "c99c0fbc9e9dab645245ebb7b697a2c1d68caa17d957c51b483a2020e041c133",
+          "action": "PF_Run_ForwardLean_HeadDown",
+          "source_frames": [
+            1,
+            3,
+            6,
+            8,
+            10,
+            13,
+            15,
+            18
+          ]
         }
       ]
     }

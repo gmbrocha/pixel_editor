@@ -51,7 +51,6 @@ from src.core.pixel_document import (
 )
 from src.ui.asset_tray import AssetTray
 from src.ui.character_forge_window import CharacterForgeWindow
-from src.ui.component_review_window import ComponentReviewWindow
 from src.ui.palette_panel import PalettePanel
 from src.ui.persistent_palette_widget import PersistentPaletteWidget
 from src.ui.animation_editor_window import AnimationEditorWindow
@@ -167,9 +166,6 @@ class MainWindow(QMainWindow):
         self.character_forge_action = QAction("Character Forge", self)
         self.character_forge_action.triggered.connect(self.open_character_forge)
         toolbar.addAction(self.character_forge_action)
-        self.component_review_action = QAction("Component Factory", self)
-        self.component_review_action.triggered.connect(self.open_component_review)
-        toolbar.addAction(self.component_review_action)
 
         anim_action = QAction("Animation Editor…", self)
         anim_action.triggered.connect(self.open_animation_editor)
@@ -1032,23 +1028,6 @@ class MainWindow(QMainWindow):
         self._tool_windows.append(window)
         window.show()
         self.statusBar().showMessage("Opened Character Forge")
-
-    def open_component_review(self) -> None:
-        window = ComponentReviewWindow(parent=None)
-        window.component_promoted.connect(self._on_component_promoted)
-        window.destroyed.connect(lambda *_args, target=window: self._remove_tool_window(target))
-        self._tool_windows.append(window)
-        window.show()
-        self.statusBar().showMessage("Opened component review factory")
-
-    def _on_component_promoted(self, path: str) -> None:
-        refreshed = 0
-        for window in tuple(self._tool_windows):
-            if isinstance(window, CharacterForgeWindow):
-                window._reload_catalog()
-                refreshed += 1
-        suffix = f"; refreshed {refreshed} open Character Forge window(s)" if refreshed else ""
-        self.statusBar().showMessage(f"Promoted component {path}{suffix}")
 
     def open_animation_editor(self) -> None:
         window = AnimationEditorWindow(

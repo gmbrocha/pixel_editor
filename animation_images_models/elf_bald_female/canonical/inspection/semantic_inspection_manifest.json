@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "blend": "elf_bald_female_mannequin.blend",
+  "blend_sha256": "950faf164c6db0e963b310b3f241dbbb8de49704b9af3cb494fde65dd1a675fd",
+  "render_size": 384,
+  "view_count": 6,
+  "slot_hide_preview_count": 13,
+  "outputs": {
+    "view:front": {
+      "file": "views\\front.png",
+      "sha256": "e495e4814e8852ea9fbe659f5a4b80295cebf89592fcf2078cc02c53009812f4"
+    },
+    "view:back": {
+      "file": "views\\back.png",
+      "sha256": "47388a8a00d3f578776517b3e8a737bbd26e0bd746345cc87dce6211757c57a7"
+    },
+    "view:right": {
+      "file": "views\\right.png",
+      "sha256": "6af49690ab0cccf63d4456b8a1891c2f6e6a46c2dc18609ee5bab8204c3c6cc1"
+    },
+    "view:left": {
+      "file": "views\\left.png",
+      "sha256": "7f9cb5128717e603018cc0397d5e7ed7179251b3cf68609556df864446a65b56"
+    },
+    "view:front_left_three_quarter": {
+      "file": "views\\front_left_three_quarter.png",
+      "sha256": "01073df4da29386721c71a206885a44f8dce76396e4ff94c025af7adc7609ce6"
+    },
+    "view:back_right_three_quarter": {
+      "file": "views\\back_right_three_quarter.png",
+      "sha256": "3b23beab3fc92cac6420e5455a7e2b3010c9b723987977069f7181882dd755df"
+    },
+    "hide:headwear": {
+      "file": "body_hide\\headwear.png",
+      "sha256": "fa59f95ff671314a8ef121dbf1039eb21540854210adf8f5b4a7657a42ea1558"
+    },
+    "hide:face": {
+      "file": "body_hide\\face.png",
+      "sha256": "3e7205c3a15380c5f2dd785ef7b0122a54f7e080687aea340cb4cd03cc87b5c4"
+    },
+    "hide:neck": {
+      "file": "body_hide\\neck.png",
+      "sha256": "429bd87fc30494beda9b29d5499667f3c27a4a0c584c2aef67eb4ae2d1cf3ea6"
+    },
+    "hide:torso": {
+      "file": "body_hide\\torso.png",
+      "sha256": "da44d3d173fe7d4e44054409af04d74b50736d40e9ba16fc11faca57205d1ca0"
+    },
+    "hide:outerwear": {
+      "file": "body_hide\\outerwear.png",
+      "sha256": "2b3e741cee5c0351d8573757ba455b27c350a676e6516e34d534d3c944f89778"
+    },
+    "hide:waist": {
+      "file": "body_hide\\waist.png",
+      "sha256": "036f90be009e47b723eced0d81cd92cc182f09d1ad349a99b4ab0a5c65d52737"
+    },
+    "hide:hands": {
+      "file": "body_hide\\hands.png",
+      "sha256": "8ee1586d4890135b188bed9e048eab739304b3309399acc311b1b944971fd11a"
+    },
+    "hide:legwear": {
+      "file": "body_hide\\legwear.png",
+      "sha256": "3535f7346a3edf1997a6c9a77bf162158a271530cd1a94d7546af0aa0d3ac380"
+    },
+    "hide:feet": {
+      "file": "body_hide\\feet.png",
+      "sha256": "ee4cb8a53cc83548060aad0790f98f90d6c2bf2d789d42b4052d99dec1d4ca0a"
+    },
+    "hide:hair": {
+      "file": "body_hide\\hair.png",
+      "sha256": "0a135baa30280237ec6f1e9b9b5c248d0595b8ae0598dcc07af8d5b8cb949e3f"
+    },
+    "hide:facial_hair": {
+      "file": "body_hide\\facial_hair.png",
+      "sha256": "c875410b8e0660687860b982ee0c9bd01fca4fa58fb7a86e12e43456f5cbb723"
+    },
+    "hide:shoulder_chest": {
+      "file": "body_hide\\shoulder_chest.png",
+      "sha256": "b031c93383df35aa680f3763e3eedfccf3180afffdbfaba6361b0529c163dba8"
+    },
+    "hide:back": {
+      "file": "body_hide\\back.png",
+      "sha256": "151a24e8c50e810d20e9c010f8b34c389ad1aa53dbcd36fb8aea1986b4f9fe54"
+    }
+  }
+}

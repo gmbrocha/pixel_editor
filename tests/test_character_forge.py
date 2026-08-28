@@ -1,11 +1,14 @@
-import hashlib
+from __future__ import annotations
+
+import json
 import os
+from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+import numpy as np
 from PIL import Image
-from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QApplication, QColorDialog
+from PySide6.QtWidgets import QApplication
 
 from src.core.character_forge import (
     CHARACTER_SLOTS,
@@ -24,645 +27,217 @@ from src.core.character_forge import (
     validate_catalog,
 )
 from src.ui.character_forge_window import CharacterForgeWindow
-from src.ui.component_review_window import ComponentReviewWindow
 from src.ui.main_window import MainWindow
 
-BASE_HASHES = {
-    "idle.png": "80326212e8a23301f9d2d5309ae3f2edb269251dbeeee5b6f2325dcfc497eeee",
-    "run.png": "0bd012f9801b0c3ebb44223661e88e28d24c7cf5b5d91a95c42cd438daee015d",
-    "run-back.png": "c723499a8273c0442d517f564721f0a4229abc1997c83a3e3563bf0f14b5b1dc",
-    "run-front.png": "2a876ca822ded59f06f43e78dfc46ddbe7edced9017a1250d2bbe61c535d31b0",
-    "run-left.png": "32566d95b52b00a3eb21e2a2db0710f58e1256c042e1f8741a26c75ae4e2f9eb",
-    "run-right.png": "f5c4ae57e7cb6ca039a1b7bf52b27ff165d42d2f43bdb74d5f1bde39bd9f1d9b",
-    "walk.png": "7e148f5d0aa37d4493a681c2b1f63f13b79f4f62c28f308444608bb3da37c920",
+
+ROOT = Path(__file__).parents[1]
+ASSET_ROOT = ROOT / "assets" / "character-forge"
+PART_IDS = {
+    "elf-basic-linen-shirt": "torso",
+    "elf-simple-work-vest": "outerwear",
+    "elf-basic-trousers": "legwear",
+    "elf-plain-leather-gloves": "hands",
+    "elf-tall-work-boots": "feet",
 }
 
 
-def test_static_catalog_preserves_supplied_sheet_geometry_and_bytes() -> None:
+def _pixels(image: Image.Image):
+    return (
+        image.get_flattened_data()
+        if hasattr(image, "get_flattened_data")
+        else image.getdata()
+    )
+
+
+def test_catalog_contains_only_the_new_semantic_elf_runtime() -> None:
     catalog = create_default_catalog()
     validate_catalog(catalog)
-    base = catalog.base("human-01")
+    assert len(catalog.bases) == 1
+    base = catalog.base("elf-01")
+    assert base.name == "Semantic Elf Base"
+    assert {part.id: part.slot for part in catalog.parts} == PART_IDS
+    assert not (ASSET_ROOT / "bases" / "human-01").exists()
+    assert not (ASSET_ROOT / "workbench").exists()
+    assert not (ROOT / "art_pipeline").exists()
 
-    assert base.animations["idle"].sheet_size == (64, 256)
-    assert base.animations["idle"].frames_per_direction == 1
-    assert base.animations["idle"].direction_rows == {
-        "front": 0,
-        "left": 1,
-        "right": 2,
-        "back": 3,
+    expected = {
+        "idle": ((3328, 512), 26, 12),
+        "walk": ((1024, 512), 8, 10),
+        "run": ((1024, 512), 8, 10),
     }
-    assert base.animations["walk"].sheet_size == (384, 259)
-    assert base.animations["walk"].frames_per_direction == 6
-    assert base.animations["walk"].direction_rows == {
-        "front": 0,
-        "back": 1,
-        "right": 2,
-        "left": 3,
-    }
-    assert all(
-        base.animations["walk"].playback_frames(direction) == tuple(range(6))
-        for direction in base.animations["walk"].directions
-    )
-    assert base.animations["run"].sheet_size == (512, 256)
-    assert base.animations["run"].frames_per_direction == 8
-    assert base.animations["run"].direction_rows == {
-        "front": 0,
-        "back": 1,
-        "right": 2,
-        "left": 3,
-    }
-    assert {
-        direction: base.animations["run"].frame_count(direction)
-        for direction in base.animations["run"].directions
-    } == {"front": 6, "back": 8, "left": 6, "right": 6}
-    assert base.animations["run"].playback_frames("front") == tuple(range(6))
-    assert base.animations["run"].playback_frames("back") == tuple(range(8))
-    assert base.animations["run"].playback_frames("right") == (
-        5,
-        4,
-        3,
-        2,
-        1,
-        0,
-        1,
-        2,
-        3,
-        4,
-    )
-    assert base.animations["run"].playback_frames("left") == (
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        4,
-        3,
-        2,
-        1,
-    )
-    assert all(
-        animation.frame_size == (64, 64) for animation in base.animations.values()
-    )
-
-    for filename, expected_hash in BASE_HASHES.items():
-        digest = hashlib.sha256((base.directory / filename).read_bytes()).hexdigest()
-        assert digest == expected_hash
-
-
-def test_matte_normalization_only_changes_exact_white_alpha() -> None:
-    catalog = create_default_catalog()
-    base = catalog.base("human-01")
-    with Image.open(base.animation_path("idle")) as source_image:
-        source = source_image.convert("RGBA")
-    normalized = load_base_animation(catalog, base.id, "idle")
-
-    source_pixels = list(
-        source.get_flattened_data()
-        if hasattr(source, "get_flattened_data")
-        else source.getdata()
-    )
-    rendered_pixels = list(
-        normalized.get_flattened_data()
-        if hasattr(normalized, "get_flattened_data")
-        else normalized.getdata()
-    )
-    for original, rendered in zip(source_pixels, rendered_pixels):
-        if original[:3] == (255, 255, 255):
-            assert rendered == (255, 255, 255, 0)
-        else:
-            assert rendered == original
-
-
-def test_corrected_walk_preserves_native_white_eye_pixels() -> None:
-    catalog = create_default_catalog()
-    base = catalog.base("human-01")
-    source_path = (
-        base.directory.parents[1] / "base_sources" / "human-01" / "walk-authored.png"
-    )
-    with Image.open(base.animation_path("walk")) as source_image:
-        source = source_image.convert("RGBA")
-    loaded = load_base_animation(catalog, base.id, "walk")
-
-    assert base.animation_path("walk").read_bytes() == source_path.read_bytes()
-    assert loaded.tobytes() == source.tobytes()
-    assert (
-        sum(
-            pixel == (255, 255, 255, 255)
-            for pixel in (
-                loaded.get_flattened_data()
-                if hasattr(loaded, "get_flattened_data")
-                else loaded.getdata()
-            )
-        )
-        == 48
-    )
-
-
-def test_authoritative_run_rows_are_assembled_pixel_exactly() -> None:
-    catalog = create_default_catalog()
-    base = catalog.base("human-01")
-    source_root = base.directory.parents[1] / "base_sources" / "human-01"
-    run = load_base_animation(catalog, base.id, "run")
-    assert run.size == (512, 256)
-
-    for filename, row in (
-        ("run-front.png", 0),
-        ("run-back.png", 1),
-        ("run-right.png", 2),
-        ("run-left.png", 3),
-    ):
-        assert (base.directory / filename).read_bytes() == (
-            source_root / filename
-        ).read_bytes()
-        with Image.open(source_root / filename) as source_image:
-            source = source_image.convert("RGBA")
-        assert (
-            run.crop((0, row * 64, source.width, row * 64 + 64)).tobytes()
-            == source.tobytes()
-        )
-        if source.width < run.width:
-            assert (
-                run.crop((source.width, row * 64, run.width, row * 64 + 64)).getbbox()
-                is None
-            )
-
-
-def test_partial_walking_shirt_is_registered_only_for_its_authored_sheet() -> None:
-    catalog = create_default_catalog()
-    recipe = create_default_recipe()
-    shirt = catalog.part("walking-shirt-test")
-
-    assert shirt.name == "Blue Walking Shirt (Front Test)"
-    assert shirt.slot == "torso"
-    assert shirt.layer == "torso"
-    assert shirt.status == "incomplete"
-    assert set(shirt.animations) == {"walk"}
-    assert len(shirt.color_ramp) == 9
-    assert shirt.ramp_main_color == (44, 66, 103)
-    assert recipe.parts["torso"] == shirt.id
-    assert all(
-        recipe.parts[slot] is None for slot in CHARACTER_SLOTS if slot != "torso"
-    )
-    assert {part.id for part in catalog.parts_for_slot("torso")} == {
-        "walking-shirt-test",
-        "walking-shirt-crimson-derived",
-        "walking-shirt-cream-indigo-yoke-derived",
-    }
-    assert {part.id for part in catalog.parts_for_slot("feet")} == {
-        "leather-boots-front-test",
-        "leather-boots-blackened-iron-derived",
-    }
-    assert all(
-        catalog.parts_for_slot(slot) == ()
-        for slot in ("waist", "legwear", "facial_hair", "back")
-    )
-
-    with Image.open(shirt.animations["walk"]) as source:
-        overlay = source.convert("RGBA")
-    assert overlay.size == (384, 259)
-    assert overlay.getchannel("A").getextrema() == (0, 255)
-    assert all(
-        overlay.crop((column * 64, 0, column * 64 + 64, 64)).getbbox() is not None
-        for column in range(6)
-    )
-    assert all(
-        overlay.crop((0, row * 64, 384, row * 64 + 64)).getbbox() is None
-        for row in range(1, 4)
-    )
-
-
-def test_partial_leather_boots_are_front_walk_only_and_fall_back_to_base() -> None:
-    catalog = create_default_catalog()
-    boots = catalog.part("leather-boots-front-test")
-    recipe = CharacterRecipe()
-    recipe.parts["feet"] = boots.id
-
-    assert boots.name == "Leather Boots (Front Walk Test)"
-    assert boots.slot == "feet"
-    assert boots.layer == "footwear"
-    assert boots.status == "incomplete"
-    assert set(boots.animations) == {"walk"}
-    assert boots.coverage == {"walk": ("front",)}
-
-    overlay = load_part_animation(catalog, boots.id, "walk")
-    assert overlay.size == (384, 259)
-    assert all(
-        overlay.crop((column * 64, 0, column * 64 + 64, 64)).getbbox() is not None
-        for column in range(6)
-    )
-    assert overlay.crop((0, 64, 384, 259)).getbbox() is None
-
-    walk = catalog.base(recipe.base_id).animations["walk"]
-    base_walk = load_base_animation(catalog, recipe.base_id, "walk")
-    composed_walk = composite_character_animation(catalog, recipe, "walk")
-    for frame_index in range(walk.frames_per_direction):
-        assert (
-            extract_character_frame(composed_walk, walk, "front", frame_index).tobytes()
-            != extract_character_frame(base_walk, walk, "front", frame_index).tobytes()
-        )
-        for direction in ("back", "right", "left"):
-            assert (
-                extract_character_frame(
-                    composed_walk, walk, direction, frame_index
-                ).tobytes()
-                == extract_character_frame(
-                    base_walk, walk, direction, frame_index
-                ).tobytes()
-            )
-
-    for animation_id in ("idle", "run"):
-        assert (
-            composite_character_animation(catalog, recipe, animation_id).tobytes()
-            == load_base_animation(catalog, recipe.base_id, animation_id).tobytes()
-        )
-
-
-def test_semantic_pointed_hood_cloak_covers_every_walk_direction() -> None:
-    catalog = create_default_catalog()
-    cloak = catalog.part("hooded-cloak-semantic-pointed-green")
-    recipe = CharacterRecipe()
-    recipe.parts["outerwear"] = cloak.id
-
-    assert cloak.name == "Pointed Green Hooded Cloak (Full Walk)"
-    assert cloak.slot == "outerwear"
-    assert cloak.layer == "outerwear"
-    assert cloak.status == "incomplete"
-    assert cloak.occupies_slots == ("outerwear",)
-    assert cloak.reserved_slots == ("headwear", "neck")
-    assert set(cloak.animations) == {"walk"}
-    assert cloak.coverage == {"walk": ("front", "back", "right", "left")}
-
-    overlay = load_part_animation(catalog, cloak.id, "walk")
-    assert overlay.size == (384, 259)
-    assert all(
-        overlay.crop((column * 64, row * 64, column * 64 + 64, row * 64 + 64)).getbbox()
-        is not None
-        for row in range(4)
-        for column in range(6)
-    )
-    assert overlay.crop((0, 256, 384, 259)).getbbox() is None
-
-    walk = catalog.base(recipe.base_id).animations["walk"]
-    base_walk = load_base_animation(catalog, recipe.base_id, "walk")
-    composed_walk = composite_character_animation(catalog, recipe, "walk")
-    for frame_index in range(walk.frames_per_direction):
-        for direction in ("front", "back", "right", "left"):
-            assert (
-                extract_character_frame(
-                    composed_walk, walk, direction, frame_index
-                ).tobytes()
-                != extract_character_frame(
-                    base_walk, walk, direction, frame_index
-                ).tobytes()
-            )
-
-    for animation_id in ("idle", "run"):
-        assert (
-            composite_character_animation(catalog, recipe, animation_id).tobytes()
-            == load_base_animation(catalog, recipe.base_id, animation_id).tobytes()
-        )
-
-
-def test_frost_hair_uses_selected_hooded_cloak_alpha_as_an_occlusion_mask() -> None:
-    catalog = create_default_catalog()
-    hair = catalog.part("workbench-messy-frost-hair")
-    hair_overlay = load_part_animation(catalog, hair.id, "walk")
-    assert hair.alpha_occluded_by_tags == ("hooded_cloak",)
-
-    hooded_cloaks = tuple(part for part in catalog.parts if "hooded_cloak" in part.tags)
-    assert len(hooded_cloaks) == 10
-    for cloak in hooded_cloaks:
-        cloak_overlay = load_part_animation(catalog, cloak.id, "walk")
-        recipe = CharacterRecipe()
-        recipe.parts["hair"] = hair.id
-        recipe.parts["outerwear"] = cloak.id
-        composed = composite_character_animation(catalog, recipe, "walk")
-
-        cloak_only_recipe = CharacterRecipe()
-        cloak_only_recipe.parts["outerwear"] = cloak.id
-        cloak_only = composite_character_animation(catalog, cloak_only_recipe, "walk")
-
-        hair_alpha = hair_overlay.getchannel("A").tobytes()
-        cloak_alpha = cloak_overlay.getchannel("A").tobytes()
-        composed_bytes = composed.tobytes()
-        cloak_only_bytes = cloak_only.tobytes()
-        overlap = [
-            index
-            for index, (hair_value, cloak_value) in enumerate(
-                zip(hair_alpha, cloak_alpha)
-            )
-            if hair_value and cloak_value
-        ]
-        visible_opening = [
-            index
-            for index, (hair_value, cloak_value) in enumerate(
-                zip(hair_alpha, cloak_alpha)
-            )
-            if hair_value and not cloak_value
-        ]
-        assert overlap
-        assert visible_opening
+    for animation_id, (sheet_size, frame_count, fps) in expected.items():
+        animation = base.animations[animation_id]
+        assert animation.sheet_size == sheet_size
+        assert animation.frame_size == (128, 128)
+        assert animation.frames_per_direction == frame_count
+        assert animation.fps == fps
+        assert animation.direction_rows == {
+            "front": 0, "back": 1, "right": 2, "left": 3
+        }
         assert all(
-            composed_bytes[index * 4 : index * 4 + 4]
-            == cloak_only_bytes[index * 4 : index * 4 + 4]
-            for index in overlap
-        )
-        assert any(
-            composed_bytes[index * 4 : index * 4 + 4]
-            != cloak_only_bytes[index * 4 : index * 4 + 4]
-            for index in visible_opening
-        )
-        assert (
-            composed.crop((0, 64, 384, 259)).tobytes()
-            == cloak_only.crop((0, 64, 384, 259)).tobytes()
+            animation.playback_frames(direction) == tuple(range(frame_count))
+            for direction in animation.directions
         )
 
 
-def test_shirt_main_color_remaps_only_its_authored_ramp() -> None:
+def test_semantic_art_region_previews_and_gifs_are_installed() -> None:
     catalog = create_default_catalog()
-    shirt = catalog.part("walking-shirt-test")
-    original = load_part_animation(catalog, shirt.id, "walk")
-    recolored = recolor_part_ramp(original, shirt, "#B43A46")
-    source_pixels = list(
-        original.get_flattened_data()
-        if hasattr(original, "get_flattened_data")
-        else original.getdata()
-    )
-    output_pixels = list(
-        recolored.get_flattened_data()
-        if hasattr(recolored, "get_flattened_data")
-        else recolored.getdata()
-    )
-
-    changed = 0
-    selected_main_pixels = 0
-    for source, output in zip(source_pixels, output_pixels):
-        if source[:3] in shirt.color_ramp:
-            assert output[3] == source[3]
-            changed += output != source
-            if source[:3] == shirt.ramp_main_color:
-                assert output[:3] == (180, 58, 70)
-                selected_main_pixels += 1
-        else:
-            assert output == source
-    assert changed > 0
-    assert selected_main_pixels > 0
-    assert recolored.getchannel("A").tobytes() == original.getchannel("A").tobytes()
-
-
-def test_recipe_round_trip_and_seeded_randomization_are_deterministic(tmp_path) -> None:
-    catalog = create_default_catalog()
-    first = randomize_recipe(catalog, "human-01", 48271, name="seeded")
-    second = randomize_recipe(catalog, "human-01", 48271, name="seeded")
-    assert first.to_dict() == second.to_dict()
-
-    path = tmp_path / "seeded.json"
-    save_recipe(first, path)
-    loaded = load_recipe(path)
-    assert loaded.to_dict() == first.to_dict()
-    assert CharacterRecipe.from_dict(loaded.to_dict()).to_dict() == first.to_dict()
-
-    colored = create_default_recipe("colored")
-    colored.part_colors["walking-shirt-test"] = "#B43A46"
-    colored_path = tmp_path / "colored.json"
-    save_recipe(colored, colored_path)
-    assert load_recipe(colored_path).to_dict() == colored.to_dict()
-
-
-def test_partial_shirt_composition_and_export_preserve_supported_fallbacks(
-    tmp_path,
-) -> None:
-    catalog = create_default_catalog()
-    recipe = create_default_recipe("forge-test")
-    recipe.part_colors["walking-shirt-test"] = "#B43A46"
-    outputs = export_character(catalog, recipe, tmp_path)
-    base = catalog.base(recipe.base_id)
-
-    assert set(outputs) == {"idle", "walk", "run", "recipe"}
+    base = catalog.base("elf-01")
     for animation_id, animation in base.animations.items():
-        base_sheet = load_base_animation(catalog, base.id, animation_id)
-        composed = composite_character_animation(catalog, recipe, animation_id)
-        with Image.open(outputs[animation_id]) as output_image:
-            exported = output_image.convert("RGBA")
-        assert composed.size == animation.sheet_size
-        assert exported.size == animation.sheet_size
-        assert exported.tobytes() == composed.tobytes()
+        semantic = ASSET_ROOT / "semantic" / "elf-01" / animation_id
+        manifest = json.loads(
+            (semantic / f"{animation_id}_manifest.json").read_text(encoding="utf-8")
+        )
+        assert manifest["sequence"] == animation_id
+        assert manifest["sheet_dimensions"] == list(animation.sheet_size)
+        assert len(manifest["source_frames"]) == animation.frames_per_direction
+        assert (semantic / f"{animation_id}.png").read_bytes() == (
+            base.animation_path(animation_id).read_bytes()
+        )
+        with Image.open(semantic / f"{animation_id}_regions.png") as opened:
+            regions = np.asarray(opened.convert("L"))
+        with Image.open(base.animation_path(animation_id)) as opened:
+            alpha = np.asarray(opened.convert("RGBA"))[..., 3] > 0
+        assert regions.shape == alpha.shape
+        assert np.array_equal(regions > 0, alpha)
+        assert set(np.unique(regions)) <= set(range(33))
+        assert (semantic / f"{animation_id}_regions_preview.png").is_file()
+        for direction in animation.directions:
+            gif = semantic / "gifs" / f"{animation_id}_{direction}.gif"
+            with Image.open(gif) as opened:
+                assert opened.size == (128, 128)
+                assert opened.n_frames >= 2
 
-        if animation_id == "walk":
-            assert composed.tobytes() != base_sheet.tobytes()
-            exported_pixels = (
-                exported.get_flattened_data()
-                if hasattr(exported, "get_flattened_data")
-                else exported.getdata()
+
+def test_five_region_derived_parts_cover_every_animation_and_direction() -> None:
+    catalog = create_default_catalog()
+    base = catalog.base("elf-01")
+    for part in catalog.parts:
+        assert part.status == "approved"
+        assert part.fit == "elf-01"
+        assert set(part.animations) == set(base.animations)
+        assert len(part.color_ramp) == 5
+        assert part.ramp_main_color in part.color_ramp
+        for animation_id, animation in base.animations.items():
+            overlay = load_part_animation(catalog, part.id, animation_id)
+            assert overlay.size == animation.sheet_size
+            assert overlay.getchannel("A").getbbox() is not None
+            assert part.coverage[animation_id] == (
+                "front", "back", "right", "left"
             )
-            assert (180, 58, 70, 255) in set(exported_pixels)
-            for frame_index in range(animation.frames_per_direction):
-                clothed = extract_character_frame(
-                    composed, animation, "front", frame_index
+            for direction in animation.directions:
+                row = animation.direction_rows[direction]
+                row_box = (
+                    0, row * 128, animation.sheet_size[0], (row + 1) * 128
                 )
-                naked = extract_character_frame(
-                    base_sheet, animation, "front", frame_index
-                )
-                assert clothed.tobytes() != naked.tobytes()
-            for direction in ("back", "left", "right"):
-                for frame_index in range(animation.frames_per_direction):
-                    assert (
+                assert overlay.crop(row_box).getchannel("A").getbbox() is not None
+
+
+def test_every_starter_part_changes_idle_walk_and_run() -> None:
+    catalog = create_default_catalog()
+    base = catalog.base("elf-01")
+    for part in catalog.parts:
+        recipe = create_default_recipe(part.id)
+        recipe.parts[part.slot] = part.id
+        for animation_id, animation in base.animations.items():
+            naked = load_base_animation(catalog, base.id, animation_id)
+            dressed = composite_character_animation(catalog, recipe, animation_id)
+            assert dressed.size == naked.size
+            assert dressed.tobytes() != naked.tobytes()
+            for direction in animation.directions:
+                changed = False
+                for frame_index in range(animation.frame_count(direction)):
+                    changed |= (
                         extract_character_frame(
-                            composed, animation, direction, frame_index
+                            dressed, animation, direction, frame_index
                         ).tobytes()
-                        == extract_character_frame(
-                            base_sheet, animation, direction, frame_index
+                        != extract_character_frame(
+                            naked, animation, direction, frame_index
                         ).tobytes()
                     )
+                assert changed, (part.id, animation_id, direction)
+
+
+def test_starter_color_variants_remap_only_declared_ramp() -> None:
+    catalog = create_default_catalog()
+    shirt = catalog.part("elf-basic-linen-shirt")
+    original = load_part_animation(catalog, shirt.id, "walk")
+    recolored = recolor_part_ramp(original, shirt, "#B43A46")
+    source_pixels = list(_pixels(original))
+    output_pixels = list(_pixels(recolored))
+    assert recolored.getchannel("A").tobytes() == original.getchannel("A").tobytes()
+    assert source_pixels != output_pixels
+    for source, output in zip(source_pixels, output_pixels, strict=True):
+        if source[:3] not in shirt.color_ramp:
+            assert output == source
         else:
-            assert composed.tobytes() == base_sheet.tobytes()
-
-        last_frame = extract_character_frame(
-            composed,
-            animation,
-            animation.directions[-1],
-            animation.frame_count(animation.directions[-1]) - 1,
-        )
-        assert last_frame.size == (64, 64)
-
-    assert load_recipe(outputs["recipe"]).to_dict() == recipe.to_dict()
+            assert output[3] == source[3]
+    assert any(
+        source[:3] == shirt.ramp_main_color and output[:3] == (180, 58, 70)
+        for source, output in zip(source_pixels, output_pixels, strict=True)
+    )
 
 
-def test_character_forge_window_exposes_animation_direction_zoom_parts_and_color(
-    monkeypatch,
-) -> None:
+def test_recipe_round_trip_randomization_and_export(tmp_path: Path) -> None:
+    catalog = create_default_catalog()
+    first = randomize_recipe(catalog, "elf-01", 48271, name="seeded")
+    second = randomize_recipe(catalog, "elf-01", 48271, name="seeded")
+    assert first.to_dict() == second.to_dict()
+
+    recipe = create_default_recipe("all-starters")
+    for part in catalog.parts:
+        recipe.parts[part.slot] = part.id
+    recipe.part_colors["elf-basic-linen-shirt"] = "#B43A46"
+    path = tmp_path / "recipe.json"
+    save_recipe(recipe, path)
+    assert load_recipe(path).to_dict() == recipe.to_dict()
+
+    outputs = export_character(catalog, recipe, tmp_path / "export")
+    assert set(outputs) == {"idle", "walk", "run", "recipe"}
+    for animation_id in ("idle", "walk", "run"):
+        with Image.open(outputs[animation_id]) as opened:
+            assert opened.size == catalog.base("elf-01").animations[animation_id].sheet_size
+
+
+def test_character_forge_window_displays_128px_elf_and_new_parts() -> None:
     application = QApplication.instance() or QApplication([])
     window = CharacterForgeWindow()
-
     assert window.windowTitle() == "Character Forge"
-    assert window.base_combo.currentText() == "Human Base 01"
+    assert window.base_combo.currentText() == "Semantic Elf Base"
     assert [
         window.animation_combo.itemData(index)
         for index in range(window.animation_combo.count())
     ] == ["idle", "walk", "run"]
-    assert window.preview_label.pixmap().size().toTuple() == (512, 512)
-    assert set(window.part_combos) == set(CHARACTER_SLOTS)
-    assert window.part_combos["torso"].count() == 4
-    assert window.part_combos["torso"].isEnabled()
-    assert window.part_combos["torso"].currentData() == "walking-shirt-test"
-    assert window.part_combos["feet"].count() == 3
-    assert window.part_combos["feet"].isEnabled()
-    assert window.part_combos["feet"].findData("leather-boots-front-test") >= 1
-    assert window.part_combos["feet"].currentData() is None
-    assert window.part_combos["outerwear"].count() == 18
-    assert window.part_combos["outerwear"].isEnabled()
-    assert (
-        window.part_combos["outerwear"].findData("hooded-cloak-semantic-pointed-green")
-        >= 1
-    )
-    assert (
-        window.part_combos["outerwear"].findData("warlock-robe-semantic-void-amethyst")
-        >= 1
-    )
-    assert window.part_combos["outerwear"].currentData() is None
-    assert window.part_combos["hair"].count() == 2
-    assert window.part_combos["hair"].isEnabled()
-    assert window.part_combos["face"].count() == 3
-    assert window.part_combos["face"].isEnabled()
-    assert window.part_combos["headwear"].count() == 2
-    assert window.part_combos["headwear"].isEnabled()
-    assert window.part_combos["neck"].count() == 2
-    assert window.part_combos["neck"].isEnabled()
+    assert window.part_combos["torso"].count() == 2
+    assert window.part_combos["outerwear"].count() == 2
+    assert window.part_combos["legwear"].count() == 2
     assert window.part_combos["hands"].count() == 2
-    assert window.part_combos["hands"].isEnabled()
-    assert window.part_combos["shoulder_chest"].count() == 3
-    assert window.part_combos["shoulder_chest"].isEnabled()
-    assert not window.edit_part_buttons["torso"].isEnabled()
-    assert window.part_color_button.isEnabled()
-    assert window.part_color_button.text() == "#2C4267"
-    assert not window.reset_part_color_button.isEnabled()
+    assert window.part_combos["feet"].count() == 2
     assert all(
-        combo.count() == 1 and combo.itemText(0) == "None" and not combo.isEnabled()
-        for slot, combo in window.part_combos.items()
-        if slot
-        not in {
-            "torso",
-            "outerwear",
-            "feet",
-            "hair",
-            "face",
-            "headwear",
-            "neck",
-            "hands",
-            "shoulder_chest",
-        }
+        window.part_combos[slot].count() == 1
+        for slot in CHARACTER_SLOTS
+        if slot not in {"torso", "outerwear", "legwear", "hands", "feet"}
     )
-
     window.animation_combo.setCurrentIndex(window.animation_combo.findData("walk"))
-    assert [
-        window.direction_combo.itemData(index)
-        for index in range(window.direction_combo.count())
-    ] == ["front", "back", "left", "right"]
-    assert "Frame 1/6" in window.frame_label.text()
-    assert "384x259 sheet" in window.frame_label.text()
-    assert window.edit_part_buttons["torso"].isEnabled()
-    window.part_combos["feet"].setCurrentIndex(
-        window.part_combos["feet"].findData("leather-boots-front-test")
-    )
-    assert window.recipe.parts["feet"] == "leather-boots-front-test"
-    assert window.edit_part_buttons["feet"].isEnabled()
-
-    monkeypatch.setattr(
-        QColorDialog,
-        "getColor",
-        lambda *_args, **_kwargs: QColor("#B43A46"),
-    )
-    window.part_color_button.click()
-    assert window.recipe.part_colors == {"walking-shirt-test": "#B43A46"}
-    assert window.part_color_button.text() == "#B43A46"
-    assert window.reset_part_color_button.isEnabled()
-    window.reset_part_color_button.click()
-    assert window.recipe.part_colors == {}
-    assert window.part_color_button.text() == "#2C4267"
-
-    window.animation_combo.setCurrentIndex(window.animation_combo.findData("run"))
-    assert "Frame 1/6" in window.frame_label.text()
-    assert "512x256 sheet" in window.frame_label.text()
-
-    window.seed_spin.setValue(17)
-    window.randomize_button.click()
-    randomized = dict(window.recipe.parts)
-    window.randomize_button.click()
-    assert window.recipe.parts == randomized
-    assert window.recipe.random_seed == 17
-
+    application.processEvents()
+    assert "128x128 frame" in window.frame_label.text()
+    assert window.preview_label.pixmap().size().toTuple() == (1024, 1024)
     window.close()
     application.processEvents()
 
 
-def test_main_window_has_character_tools_and_refreshes_forge_after_promotion(
-    monkeypatch,
-) -> None:
+def test_main_window_keeps_character_forge_and_retires_old_component_factory() -> None:
     application = QApplication.instance() or QApplication([])
     window = MainWindow()
-
     assert window.character_forge_action.text() == "Character Forge"
-    assert window.character_forge_action.isVisible()
+    assert not hasattr(window, "component_review_action")
     window.character_forge_action.trigger()
     application.processEvents()
-
     forge_windows = [
-        tool for tool in window._tool_windows if isinstance(tool, CharacterForgeWindow)
+        child for child in window._tool_windows
+        if isinstance(child, CharacterForgeWindow)
     ]
     assert len(forge_windows) == 1
-    assert forge_windows[0].isVisible()
-
-    assert window.component_review_action.text() == "Component Factory"
-    assert window.component_review_action.isVisible()
-    window.component_review_action.trigger()
-    application.processEvents()
-    review_windows = [
-        tool for tool in window._tool_windows if isinstance(tool, ComponentReviewWindow)
-    ]
-    assert len(review_windows) == 1
-
-    reloads = []
-    monkeypatch.setattr(
-        forge_windows[0], "_reload_catalog", lambda: reloads.append(True)
-    )
-    review_windows[0].component_promoted.emit("test-component")
-    assert reloads == [True]
-
-    review_windows[0].close()
     forge_windows[0].close()
-    window.close()
-    application.processEvents()
-
-
-def test_character_forge_preview_honors_direction_specific_run_cycles() -> None:
-    application = QApplication.instance() or QApplication([])
-    window = CharacterForgeWindow()
-    window._timer.stop()
-    window.animation_combo.setCurrentIndex(window.animation_combo.findData("run"))
-
-    window.direction_combo.setCurrentIndex(window.direction_combo.findData("right"))
-    right_frames = [window._frame_index]
-    for _ in range(9):
-        window._advance_frame()
-        right_frames.append(window._frame_index)
-    assert right_frames == [5, 4, 3, 2, 1, 0, 1, 2, 3, 4]
-    assert "Frame 5/6" in window.frame_label.text()
-    assert "Cycle 10/10" in window.frame_label.text()
-    window._advance_frame()
-    assert window._frame_index == 5
-
-    window.direction_combo.setCurrentIndex(window.direction_combo.findData("left"))
-    left_frames = [window._frame_index]
-    for _ in range(9):
-        window._advance_frame()
-        left_frames.append(window._frame_index)
-    assert left_frames == [0, 1, 2, 3, 4, 5, 4, 3, 2, 1]
-
-    window.direction_combo.setCurrentIndex(window.direction_combo.findData("back"))
-    assert window._frame_index == 0
-    assert "Frame 1/8" in window.frame_label.text()
-    assert "Cycle" not in window.frame_label.text()
-
     window.close()
     application.processEvents()

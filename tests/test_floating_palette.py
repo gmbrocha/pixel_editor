@@ -10,10 +10,8 @@ from PySide6.QtWidgets import QApplication, QMainWindow
 
 from src.core.pixel_document import PixelDocument
 from src.ui import character_forge_window as character_forge_module
-from src.ui import component_review_window as component_review_module
 from src.ui import main_window as main_window_module
 from src.ui.character_forge_window import CharacterForgeWindow
-from src.ui.component_review_window import ComponentReviewWindow
 from src.ui.main_window import MainWindow
 from src.ui.pixel_editor_window import (
     ClickableColorButton,
@@ -232,7 +230,6 @@ def test_main_window_launches_every_persistent_tool_as_independent(
     main = MainWindow()
     for name in (
         "CharacterForgeWindow",
-        "ComponentReviewWindow",
         "AnimationEditorWindow",
         "ReferenceMapperWindow",
         "TileLayoutWindow",
@@ -243,7 +240,6 @@ def test_main_window_launches_every_persistent_tool_as_independent(
         monkeypatch.setattr(main_window_module, name, _FakeToolWindow)
 
     main.open_character_forge()
-    main.open_component_review()
     main.open_animation_editor()
     main.open_reference_mapper()
     main.open_tile_layout()
@@ -251,7 +247,7 @@ def test_main_window_launches_every_persistent_tool_as_independent(
     main.open_tileset_template()
     main.open_texture_generator()
 
-    assert len(main._tool_windows) == 8
+    assert len(main._tool_windows) == 7
     assert all(window.parentWidget() is None for window in main._tool_windows)
     assert all(window.isWindow() for window in main._tool_windows)
 
@@ -294,7 +290,6 @@ def test_nested_pixel_editor_launchers_are_independent(
 ) -> None:
     application = _application()
     monkeypatch.setattr(character_forge_module, "PixelEditorWindow", _FakePixelEditor)
-    monkeypatch.setattr(component_review_module, "PixelEditorWindow", _FakePixelEditor)
 
     forge = CharacterForgeWindow()
     part = forge.catalog.parts[0]
@@ -309,20 +304,6 @@ def test_nested_pixel_editor_launchers_are_independent(
     assert len(forge._pixel_windows) == 1
     assert forge._pixel_windows[0].parentWidget() is None
 
-    job_dir = tmp_path / "job"
-    extracted = job_dir / "extracted"
-    extracted.mkdir(parents=True)
-    candidate = extracted / "candidate-001.png"
-    Image.new("RGBA", (4, 4), (80, 90, 100, 255)).save(candidate)
-    review = ComponentReviewWindow()
-    monkeypatch.setattr(review, "_selected", lambda: (job_dir, "candidate-001"))
-    review._edit()
-
-    assert len(review._cleanup_windows) == 1
-    assert review._cleanup_windows[0].parentWidget() is None
-
-    review._cleanup_windows[0].close()
     forge._pixel_windows[0].close()
-    review.close()
     forge.close()
     application.processEvents()

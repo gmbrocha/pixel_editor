@@ -1,0 +1,1042 @@
+{
+  "schema_version": 1,
+  "mannequin_id": "elf-bald-female-v1",
+  "blender_version": "5.1.2",
+  "source_blend": "elf_bald_female_complete.blend",
+  "source_blend_sha256": "2c4ca192471aa543d052f777b33d061ffa59b13a538a3417a4660b58035fedb8",
+  "canonical_blend": "elf_bald_female_mannequin.blend",
+  "canonical_blend_sha256": "950faf164c6db0e963b310b3f241dbbb8de49704b9af3cb494fde65dd1a675fd",
+  "mesh": "PF_Elf_Bald_Female",
+  "armature": "PF_Elf_Bald_Female_Rig",
+  "face_count": 200054,
+  "vertex_count": 100029,
+  "protected_invariants": {
+    "topology_sha256": "98d6b8c12ef228bbac03416022946d8067758462f64c8ea6011acf752aaba87f",
+    "weights_sha256": "4d8f819b1b553433a188f8f67c82e110577f44eec29b582c1adc58d63d3694d2",
+    "rest_pose_sha256": "067ddcc8537198142d8b9c8a73bcec4426a6fdd4b82ccb08d64c9cc504cc9670",
+    "production_material_sha256": "3f8717d77530961e41fc4e2f386b98f8e5247c3c5d4a06bba33391daac1afb92",
+    "actions": {
+      "PF_BindPose": "b6c1515b614b7474803ab72dfd214af512cd9ebb2ea009966fb3d214d8cdec93",
+      "PF_Idle": "690976757a0f2d080a2cdd57eec11eccb48c2be55bc57d64e6632ae6d84a6b2b",
+      "PF_Run": "b5b8d353d77651f234887f18629e3248291b276e434ada580e556ddfc07f506e",
+      "PF_Run_ForwardLean": "31320b54e87aa2dede55dbd12a6b58ea3ccf3e3f0a4a5c9193f1cf35afd219f6",
+      "PF_Run_ForwardLean_HeadDown": "dc54607e4126ad5548ea8740f2c4eec315ce9fa2fc291752245f490648b88b04",
+      "PF_Walk": "f0d3c2031d0dd29c0e880d71112155938a7d0e4fa7a85607435ca772a72f6904"
+    }
+  },
+  "regions": [
+    {
+      "id": 1,
+      "name": "face",
+      "side": "center",
+      "color": [
+        239,
+        71,
+        111,
+        255
+      ],
+      "face_count": 4418
+    },
+    {
+      "id": 2,
+      "name": "scalp",
+      "side": "center",
+      "color": [
+        255,
+        209,
+        102,
+        255
+      ],
+      "face_count": 5351
+    },
+    {
+      "id": 3,
+      "name": "rear_head",
+      "side": "center",
+      "color": [
+        6,
+        214,
+        160,
+        255
+      ],
+      "face_count": 5504
+    },
+    {
+      "id": 4,
+      "name": "left_ear",
+      "side": "left",
+      "color": [
+        17,
+        138,
+        178,
+        255
+      ],
+      "face_count": 842
+    },
+    {
+      "id": 5,
+      "name": "right_ear",
+      "side": "right",
+      "color": [
+        131,
+        56,
+        236,
+        255
+      ],
+      "face_count": 861
+    },
+    {
+      "id": 6,
+      "name": "neck",
+      "side": "center",
+      "color": [
+        255,
+        127,
+        80,
+        255
+      ],
+      "face_count": 4102
+    },
+    {
+      "id": 7,
+      "name": "chest_front",
+      "side": "center",
+      "color": [
+        255,
+        89,
+        94,
+        255
+      ],
+      "face_count": 7903
+    },
+    {
+      "id": 8,
+      "name": "upper_back",
+      "side": "center",
+      "color": [
+        255,
+        180,
+        65,
+        255
+      ],
+      "face_count": 2446
+    },
+    {
+      "id": 9,
+      "name": "abdomen_front",
+      "side": "center",
+      "color": [
+        67,
+        205,
+        128,
+        255
+      ],
+      "face_count": 7874
+    },
+    {
+      "id": 10,
+      "name": "lower_back",
+      "side": "center",
+      "color": [
+        49,
+        151,
+        213,
+        255
+      ],
+      "face_count": 7049
+    },
+    {
+      "id": 11,
+      "name": "pelvis_front",
+      "side": "center",
+      "color": [
+        151,
+        86,
+        214,
+        255
+      ],
+      "face_count": 9756
+    },
+    {
+      "id": 12,
+      "name": "pelvis_back",
+      "side": "center",
+      "color": [
+        220,
+        92,
+        170,
+        255
+      ],
+      "face_count": 12570
+    },
+    {
+      "id": 13,
+      "name": "left_shoulder",
+      "side": "left",
+      "color": [
+        229,
+        57,
+        53,
+        255
+      ],
+      "face_count": 8002
+    },
+    {
+      "id": 14,
+      "name": "right_shoulder",
+      "side": "right",
+      "color": [
+        255,
+        152,
+        0,
+        255
+      ],
+      "face_count": 6894
+    },
+    {
+      "id": 15,
+      "name": "left_upper_arm",
+      "side": "left",
+      "color": [
+        76,
+        175,
+        80,
+        255
+      ],
+      "face_count": 6227
+    },
+    {
+      "id": 16,
+      "name": "right_upper_arm",
+      "side": "right",
+      "color": [
+        3,
+        169,
+        244,
+        255
+      ],
+      "face_count": 6141
+    },
+    {
+      "id": 17,
+      "name": "left_elbow",
+      "side": "left",
+      "color": [
+        103,
+        58,
+        183,
+        255
+      ],
+      "face_count": 1662
+    },
+    {
+      "id": 18,
+      "name": "right_elbow",
+      "side": "right",
+      "color": [
+        233,
+        30,
+        99,
+        255
+      ],
+      "face_count": 1660
+    },
+    {
+      "id": 19,
+      "name": "left_forearm",
+      "side": "left",
+      "color": [
+        198,
+        40,
+        40,
+        255
+      ],
+      "face_count": 5001
+    },
+    {
+      "id": 20,
+      "name": "right_forearm",
+      "side": "right",
+      "color": [
+        245,
+        124,
+        0,
+        255
+      ],
+      "face_count": 4895
+    },
+    {
+      "id": 21,
+      "name": "left_hand",
+      "side": "left",
+      "color": [
+        46,
+        125,
+        50,
+        255
+      ],
+      "face_count": 4258
+    },
+    {
+      "id": 22,
+      "name": "right_hand",
+      "side": "right",
+      "color": [
+        2,
+        119,
+        189,
+        255
+      ],
+      "face_count": 4315
+    },
+    {
+      "id": 23,
+      "name": "left_thigh",
+      "side": "left",
+      "color": [
+        81,
+        45,
+        168,
+        255
+      ],
+      "face_count": 18928
+    },
+    {
+      "id": 24,
+      "name": "right_thigh",
+      "side": "right",
+      "color": [
+        194,
+        24,
+        91,
+        255
+      ],
+      "face_count": 19613
+    },
+    {
+      "id": 25,
+      "name": "left_knee",
+      "side": "left",
+      "color": [
+        255,
+        107,
+        107,
+        255
+      ],
+      "face_count": 1751
+    },
+    {
+      "id": 26,
+      "name": "right_knee",
+      "side": "right",
+      "color": [
+        255,
+        202,
+        40,
+        255
+      ],
+      "face_count": 1785
+    },
+    {
+      "id": 27,
+      "name": "left_shin",
+      "side": "left",
+      "color": [
+        102,
+        187,
+        106,
+        255
+      ],
+      "face_count": 12810
+    },
+    {
+      "id": 28,
+      "name": "right_shin",
+      "side": "right",
+      "color": [
+        79,
+        195,
+        247,
+        255
+      ],
+      "face_count": 12947
+    },
+    {
+      "id": 29,
+      "name": "left_ankle",
+      "side": "left",
+      "color": [
+        149,
+        117,
+        205,
+        255
+      ],
+      "face_count": 994
+    },
+    {
+      "id": 30,
+      "name": "right_ankle",
+      "side": "right",
+      "color": [
+        240,
+        98,
+        146,
+        255
+      ],
+      "face_count": 967
+    },
+    {
+      "id": 31,
+      "name": "left_foot",
+      "side": "left",
+      "color": [
+        141,
+        110,
+        99,
+        255
+      ],
+      "face_count": 6260
+    },
+    {
+      "id": 32,
+      "name": "right_foot",
+      "side": "right",
+      "color": [
+        120,
+        144,
+        156,
+        255
+      ],
+      "face_count": 6268
+    }
+  ],
+  "slots": {
+    "headwear": {
+      "surface_regions": [
+        "scalp",
+        "rear_head",
+        "left_ear",
+        "right_ear"
+      ],
+      "default_hide_regions": [
+        "scalp",
+        "rear_head"
+      ],
+      "surface_attribute": "pf_slot_headwear",
+      "hide_attribute": "pf_hide_headwear",
+      "component_override_policy": "add_remove_region_names"
+    },
+    "face": {
+      "surface_regions": [
+        "face",
+        "left_ear",
+        "right_ear"
+      ],
+      "default_hide_regions": [],
+      "surface_attribute": "pf_slot_face",
+      "hide_attribute": "pf_hide_face",
+      "component_override_policy": "add_remove_region_names"
+    },
+    "neck": {
+      "surface_regions": [
+        "neck",
+        "chest_front",
+        "upper_back"
+      ],
+      "default_hide_regions": [
+        "neck"
+      ],
+      "surface_attribute": "pf_slot_neck",
+      "hide_attribute": "pf_hide_neck",
+      "component_override_policy": "add_remove_region_names"
+    },
+    "torso": {
+      "surface_regions": [
+        "chest_front",
+        "upper_back",
+        "abdomen_front",
+        "lower_back"
+      ],
+      "default_hide_regions": [
+        "chest_front",
+        "upper_back",
+        "abdomen_front",
+        "lower_back"
+      ],
+      "surface_attribute": "pf_slot_torso",
+      "hide_attribute": "pf_hide_torso",
+      "component_override_policy": "add_remove_region_names"
+    },
+    "outerwear": {
+      "surface_regions": [
+        "chest_front",
+        "upper_back",
+        "abdomen_front",
+        "lower_back",
+        "pelvis_front",
+        "pelvis_back",
+        "left_shoulder",
+        "right_shoulder",
+        "left_upper_arm",
+        "right_upper_arm",
+        "left_forearm",
+        "right_forearm"
+      ],
+      "default_hide_regions": [
+        "chest_front",
+        "upper_back",
+        "abdomen_front",
+        "lower_back",
+        "pelvis_front",
+        "pelvis_back",
+        "left_shoulder",
+        "right_shoulder"
+      ],
+      "surface_attribute": "pf_slot_outerwear",
+      "hide_attribute": "pf_hide_outerwear",
+      "component_override_policy": "add_remove_region_names"
+    },
+    "waist": {
+      "surface_regions": [
+        "pelvis_front",
+        "pelvis_back",
+        "abdomen_front",
+        "lower_back"
+      ],
+      "default_hide_regions": [
+        "pelvis_front",
+        "pelvis_back"
+      ],
+      "surface_attribute": "pf_slot_waist",
+      "hide_attribute": "pf_hide_waist",
+      "component_override_policy": "add_remove_region_names"
+    },
+    "hands": {
+      "surface_regions": [
+        "left_hand",
+        "right_hand",
+        "left_forearm",
+        "right_forearm"
+      ],
+      "default_hide_regions": [
+        "left_hand",
+        "right_hand"
+      ],
+      "surface_attribute": "pf_slot_hands",
+      "hide_attribute": "pf_hide_hands",
+      "component_override_policy": "add_remove_region_names"
+    },
+    "legwear": {
+      "surface_regions": [
+        "pelvis_front",
+        "pelvis_back",
+        "left_thigh",
+        "right_thigh",
+        "left_knee",
+        "right_knee",
+        "left_shin",
+        "right_shin",
+        "left_ankle",
+        "right_ankle"
+      ],
+      "default_hide_regions": [
+        "pelvis_front",
+        "pelvis_back",
+        "left_thigh",
+        "right_thigh",
+        "left_knee",
+        "right_knee",
+        "left_shin",
+        "right_shin",
+        "left_ankle",
+        "right_ankle"
+      ],
+      "surface_attribute": "pf_slot_legwear",
+      "hide_attribute": "pf_hide_legwear",
+      "component_override_policy": "add_remove_region_names"
+    },
+    "feet": {
+      "surface_regions": [
+        "left_ankle",
+        "right_ankle",
+        "left_foot",
+        "right_foot"
+      ],
+      "default_hide_regions": [
+        "left_ankle",
+        "right_ankle",
+        "left_foot",
+        "right_foot"
+      ],
+      "surface_attribute": "pf_slot_feet",
+      "hide_attribute": "pf_hide_feet",
+      "component_override_policy": "add_remove_region_names"
+    },
+    "hair": {
+      "surface_regions": [
+        "scalp",
+        "rear_head",
+        "left_ear",
+        "right_ear",
+        "neck"
+      ],
+      "default_hide_regions": [
+        "scalp",
+        "rear_head"
+      ],
+      "surface_attribute": "pf_slot_hair",
+      "hide_attribute": "pf_hide_hair",
+      "component_override_policy": "add_remove_region_names"
+    },
+    "facial_hair": {
+      "surface_regions": [
+        "face"
+      ],
+      "default_hide_regions": [],
+      "surface_attribute": "pf_slot_facial_hair",
+      "hide_attribute": "pf_hide_facial_hair",
+      "component_override_policy": "add_remove_region_names"
+    },
+    "shoulder_chest": {
+      "surface_regions": [
+        "chest_front",
+        "upper_back",
+        "left_shoulder",
+        "right_shoulder"
+      ],
+      "default_hide_regions": [
+        "chest_front",
+        "upper_back",
+        "left_shoulder",
+        "right_shoulder"
+      ],
+      "surface_attribute": "pf_slot_shoulder_chest",
+      "hide_attribute": "pf_hide_shoulder_chest",
+      "component_override_policy": "add_remove_region_names"
+    },
+    "back": {
+      "surface_regions": [
+        "upper_back",
+        "lower_back",
+        "pelvis_back"
+      ],
+      "default_hide_regions": [],
+      "surface_attribute": "pf_slot_back",
+      "hide_attribute": "pf_hide_back",
+      "component_override_policy": "add_remove_region_names"
+    }
+  },
+  "attachments": {
+    "head_top": {
+      "bone": "Head",
+      "region": "scalp",
+      "object": "PF_ATTACH_head_top",
+      "rest_matrix": [
+        1.00000036,
+        7e-08,
+        2.4e-07,
+        0.13768685,
+        -7e-08,
+        1.00000048,
+        1.2e-07,
+        2.13313246,
+        -2.4e-07,
+        -1.2e-07,
+        1.00000012,
+        -6.05257845,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "face_center": {
+      "bone": "Head",
+      "region": "face",
+      "object": "PF_ATTACH_face_center",
+      "rest_matrix": [
+        1.00000036,
+        7e-08,
+        2.4e-07,
+        0.12975812,
+        -7e-08,
+        1.00000048,
+        1.2e-07,
+        -5.90527248,
+        -2.4e-07,
+        -1.2e-07,
+        1.00000012,
+        3.78983593,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "neck_base": {
+      "bone": "neck",
+      "region": "neck",
+      "object": "PF_ATTACH_neck_base",
+      "rest_matrix": [
+        0.99999988,
+        -7e-08,
+        2.4e-07,
+        -0.13460609,
+        7e-08,
+        1.00000024,
+        4e-08,
+        -7.98751116,
+        -2.4e-07,
+        -4e-08,
+        1.0,
+        -2.58787584,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "chest_front": {
+      "bone": "Spine",
+      "region": "chest_front",
+      "object": "PF_ATTACH_chest_front",
+      "rest_matrix": [
+        0.99999994,
+        -1.3e-07,
+        2.1e-07,
+        -0.52239692,
+        1.3e-07,
+        1.00000048,
+        1.8e-07,
+        -11.65961075,
+        -2.1e-07,
+        -1.8e-07,
+        1.00000012,
+        5.19384956,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "upper_back": {
+      "bone": "Spine",
+      "region": "upper_back",
+      "object": "PF_ATTACH_upper_back",
+      "rest_matrix": [
+        0.99999994,
+        -1.3e-07,
+        2.1e-07,
+        -3.39081836,
+        1.3e-07,
+        1.00000048,
+        1.8e-07,
+        -9.62932205,
+        -2.1e-07,
+        -1.8e-07,
+        1.00000012,
+        -8.36155319,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "waist_front": {
+      "bone": "Hips",
+      "region": "pelvis_front",
+      "object": "PF_ATTACH_waist_front",
+      "rest_matrix": [
+        0.99999982,
+        -7e-08,
+        -1.3e-07,
+        2.59030342,
+        7e-08,
+        0.99999994,
+        4e-08,
+        -11.19810295,
+        1.3e-07,
+        -4e-08,
+        1.0,
+        0.74145937,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "waist_back": {
+      "bone": "Hips",
+      "region": "pelvis_back",
+      "object": "PF_ATTACH_waist_back",
+      "rest_matrix": [
+        0.99999982,
+        -7e-08,
+        -1.3e-07,
+        -9.77396774,
+        7e-08,
+        0.99999994,
+        4e-08,
+        -12.48577309,
+        1.3e-07,
+        -4e-08,
+        1.0,
+        -6.27572346,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "left_shoulder": {
+      "bone": "LeftShoulder",
+      "region": "left_shoulder",
+      "object": "PF_ATTACH_left_shoulder",
+      "rest_matrix": [
+        1.0,
+        2.6e-07,
+        1.8e-07,
+        2.077245,
+        -2.6e-07,
+        0.99999976,
+        -0.0,
+        -3.1065836,
+        -1.8e-07,
+        0.0,
+        1.0000006,
+        0.00582741,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "right_shoulder": {
+      "bone": "RightShoulder",
+      "region": "right_shoulder",
+      "object": "PF_ATTACH_right_shoulder",
+      "rest_matrix": [
+        1.00000012,
+        3e-07,
+        5e-08,
+        -1.94008636,
+        -3e-07,
+        1.0,
+        -2.8e-07,
+        -2.7078228,
+        -5e-08,
+        2.8e-07,
+        1.00000048,
+        -1.21578717,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "left_hand": {
+      "bone": "LeftHand",
+      "region": "left_hand",
+      "object": "PF_ATTACH_left_hand",
+      "rest_matrix": [
+        1.00000012,
+        3.3e-07,
+        -2.2e-07,
+        0.65642548,
+        -3.3e-07,
+        1.00000012,
+        -1.9e-07,
+        -14.50706482,
+        2.2e-07,
+        1.9e-07,
+        1.00000048,
+        -0.58905411,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "right_hand": {
+      "bone": "RightHand",
+      "region": "right_hand",
+      "object": "PF_ATTACH_right_hand",
+      "rest_matrix": [
+        1.0,
+        4.2e-07,
+        -1e-07,
+        -0.67313385,
+        -4.2e-07,
+        1.00000036,
+        0.0,
+        -14.59058571,
+        1e-07,
+        -0.0,
+        1.00000012,
+        -0.61074066,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "left_hip": {
+      "bone": "LeftUpLeg",
+      "region": "left_thigh",
+      "object": "PF_ATTACH_left_hip",
+      "rest_matrix": [
+        0.99999994,
+        -6e-08,
+        -1.5e-07,
+        1.58346653,
+        6e-08,
+        1.0,
+        2e-07,
+        -19.42495346,
+        1.5e-07,
+        -2e-07,
+        1.00000024,
+        1.62894464,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "right_hip": {
+      "bone": "RightUpLeg",
+      "region": "right_thigh",
+      "object": "PF_ATTACH_right_hip",
+      "rest_matrix": [
+        0.99999982,
+        -1.8e-07,
+        9e-08,
+        -1.90099335,
+        1.8e-07,
+        1.00000012,
+        3e-07,
+        -19.92752266,
+        -9e-08,
+        -3e-07,
+        1.0,
+        1.67438698,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "left_ankle": {
+      "bone": "LeftFoot",
+      "region": "left_ankle",
+      "object": "PF_ATTACH_left_ankle",
+      "rest_matrix": [
+        1.00000012,
+        2e-08,
+        -1.1e-07,
+        0.38887119,
+        -2e-08,
+        0.99999982,
+        -1e-08,
+        -12.79664516,
+        1.1e-07,
+        1e-08,
+        0.99999976,
+        -1.42999816,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "right_ankle": {
+      "bone": "RightFoot",
+      "region": "right_ankle",
+      "object": "PF_ATTACH_right_ankle",
+      "rest_matrix": [
+        0.99999988,
+        -1.6e-07,
+        -9e-08,
+        -0.33120632,
+        1.6e-07,
+        1.0,
+        2.5e-07,
+        -12.90034485,
+        9e-08,
+        -2.5e-07,
+        1.0,
+        -1.40241742,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "left_foot": {
+      "bone": "LeftToeBase",
+      "region": "left_foot",
+      "object": "PF_ATTACH_left_foot",
+      "rest_matrix": [
+        1.0,
+        1.2e-07,
+        -8e-08,
+        0.57874966,
+        -1.2e-07,
+        0.99999994,
+        -1e-08,
+        -14.29212189,
+        8e-08,
+        1e-08,
+        0.99999911,
+        -0.75330955,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "right_foot": {
+      "bone": "RightToeBase",
+      "region": "right_foot",
+      "object": "PF_ATTACH_right_foot",
+      "rest_matrix": [
+        1.00000012,
+        -4e-08,
+        -1.9e-07,
+        -0.5622282,
+        4e-08,
+        1.0,
+        2.8e-07,
+        -14.35612679,
+        1.9e-07,
+        -2.8e-07,
+        1.00000048,
+        -0.81571054,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  },
+  "debug_texture": {
+    "file": "semantic_regions.png",
+    "sha256": "9a62a5ff3bf4e8b21e9831fc84aaec0788bec7f2884b704fbe1ae3e2774f5320",
+    "dimensions": [
+      256,
+      128
+    ],
+    "grid": [
+      8,
+      4
+    ],
+    "cell_size": 32,
+    "uv_layer": "PF_SemanticUV",
+    "overlap_policy": "faces_may_overlap_only_when_they_share_a_region_id"
+  },
+  "debug_material": "PF_Semantic_Debug",
+  "overrides": {
+    "file": "semantic_region_overrides.json",
+    "topology_guard": "98d6b8c12ef228bbac03416022946d8067758462f64c8ea6011acf752aaba87f"
+  }
+}
