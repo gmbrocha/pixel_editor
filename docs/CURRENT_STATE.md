@@ -12,14 +12,14 @@ The main Pixel Editor now provides an editor-owned, session-local Floating Palet
 
 Animation Studio now imports animated GIFs directly. It composites each frame onto the GIF's full logical canvas, builds an editable horizontal original/working source sheet and track, and fits GIF delays into the shared FPS plus per-frame duration model.
 
-Character Forge now exposes only the 128px `elf-01` semantic base. Idle is a 26-frame 12 FPS loop derived from 13 manually authored poses with Blender in-betweens; Walk is the approved eight-frame 10 FPS edit; Run is the approved eight-frame forward-lean/head-down capture at 10 FPS. All use Front, Back, Right, Left rows. Five approved region-derived starters—shirt, vest, trousers, gloves, and boots—cover every animation and direction and retain editable five-color ramps. The retired 64px base, component catalog, workbench, reserved-blue output archive, and old factory source/tests are preserved under `assets/character-forge/legacy_sources/pre-semantic-elf-20260821/` outside runtime discovery.
+Character Forge now exposes only the 128px `elf-01` semantic base. Idle is a user-approved 26-frame 12 FPS loop derived from 13 manually authored poses with Blender in-betweens; Walk is the user-approved eight-frame 10 FPS edit. The installed eight-frame forward-lean/head-down Run remains the runtime baseline but is scheduled for manual replacement. All use Front, Back, Right, Left rows. Five approved region-derived starters—shirt, vest, trousers, gloves, and boots—cover every animation and direction and retain editable five-color ramps. The retired 64px base, component catalog, workbench, reserved-blue output archive, and old factory source/tests are preserved under `assets/character-forge/legacy_sources/pre-semantic-elf-20260821/` outside runtime discovery.
 
 The main Preview Process workflow now includes Cluster Cleanup, a deterministic four-connected component pass that absorbs exact-color islands at or below a configurable threshold into structurally adjacent same-alpha regions. It preserves dimensions, transparency boundaries, hard pixel edges, and the input RGBA palette while using shared boundary, Lab similarity, neighbor area, and row-major order for stable merge selection.
 
 A headless Blender 5.1 pipeline maintains the canonical semantic mannequin with 32 anatomical IDs, all 13 slot/hide masks, 17 attachment landmarks, protected topology/weights/material/actions, and deterministic inspection. Manual finalization supports arbitrary frame counts. The interpolation pass proves all 13 authored Idle poses unchanged, exposes 13 Blender-generated in-betweens, and produces 26 visible frames with closure frame 27. Idle, Walk, and Run now each have ordinary art, exact ID sheets, color previews, individual frames, all slot/hide masks, direction strips, native-speed GIFs, and hash-linked manifests.
 
 ## Blockers
-None. The new Idle should still receive an eyeball review at 12 FPS, and the five starter items are intentionally basic pipeline proofs rather than final costume art.
+None. Idle and Walk have received user visual approval. Run awaits manual pose revision, and the five starter items are intentionally basic pipeline proofs rather than final costume art.
 
 ## Current Decisions
 Use `.project-command/project.json` as provisional Command Center V1 project metadata.
@@ -41,7 +41,7 @@ Palette PNG assets are now tracked under `palettes/`; their color contents were 
 The base pixel art remains a deterministic reduction of 3D renders and will benefit from deliberate face/silhouette cleanup. Starter garments follow anatomy exactly and therefore read more like fitted base clothing than authored loose geometry. Hair, headwear, facial details, outer silhouettes, and component geometry beyond the five proofs remain future work.
 
 ## Next Actions
-Review the installed 12 FPS Idle GIFs and the Idle/Walk/Run starter-component contact sheets. Refine only obvious motion or semantic errors, then begin one deliberately authored component with geometry beyond the body silhouette.
+Edit `animation_images_models/elf_bald_female/editable/run_redo_v1.blend`, review the revised Run from front and side, then finalize, render, and promote it only after approval. Component experiments can use the tracked Idle/Walk bases and semantic guides indexed in `assets/character-forge/AUTHORING.md`.
 
 Review the `category`, `status`, and `priorityRank` values when registering the project in Command Center.
 
@@ -50,6 +50,8 @@ Update this document after commits or other git state changes made during agent 
 Use `tools/build_semantic_character_forge.py` to regenerate the live base and five starters after semantic-package changes. The retired factory remains an archive, not an active generation route.
 
 ## Recent Activity
+2026-08-28: Recorded user approval of the semantic elf Idle and Walk, packaged a self-contained Git LFS Run redo project containing both the current-baseline and original-Meshy eight-pose edit actions plus protected source actions, and added a transfer-safe Character Forge authoring index for the tracked Idle/Walk base sheets, region sheets, frames, strips, slot masks, and hide masks. The portable Blender project reopens with exact baseline poses and closure and requires no external files.
+
 2026-08-28: Audited the repository publication boundary and prepared the complete August 20-21 semantic-elf/Blender working set for commit and remote publication. Kept the intentionally removed Mixamo backup and superseded review visualizations outside the repository, confirmed raw acquisition and working files remain ignored, and verified the active suite passes with 169 tests.
 
 2026-08-21: Completed the semantic-elf Character Forge cutover. Doubled the user's 13 authored Idle poses into a 26-frame 12 FPS loop through audited Blender interpolation, rendered and byte-checked its four-direction 128px art/semantic package, retained the approved Walk, rendered the approved corrected Run, and installed all three as the sole live `elf-01` base. Added five full-coverage recolorable region-derived starters (shirt, vest, trousers, gloves, and boots), contact sheets, and runtime tests. Archived the old 64px base, all old components/workbench/sources, the 2,461-file reserved-blue output tree, retired factory source/tests, and stale root handoff guidance outside discovery; the active suite passes with 169 tests.

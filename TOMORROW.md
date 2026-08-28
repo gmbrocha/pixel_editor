@@ -1,36 +1,36 @@
 # Tomorrow's Pixel Forge Checklist
 
-Last updated: 2026-08-21
+Last updated: 2026-08-28
 
 ## Start Here
 
-1. Open the four installed Idle previews in:
-   `assets/character-forge/semantic/elf-01/idle/gifs/`
-2. Review Front, Back, Right, and Left at 12 FPS. The 13 authored poses are on alternating frames; Blender produced the in-betweens.
-3. Open `idle_regions_preview.png` beside `idle.png` and look for any anatomical region that changes unexpectedly.
-4. Open the three starter-component contact sheets under `assets/character-forge/review/` and note only clear silhouette or coverage problems.
+1. After cloning or pulling on the other machine, run `git lfs pull`.
+2. Open `animation_images_models/elf_bald_female/editable/run_redo_v1.blend` in Blender 5.1 or newer.
+3. Use **File > Save As** to create a personal Run work file before changing poses.
+4. Edit `PF_Run_Redo_Edit` on frames 1-8 at 10 FPS. Use `PF_Run_Meshy_Edit` if the untouched original motion is a better starting point.
+5. Review the Run from front and side and check the frame-8-to-frame-1 seam before promotion.
 
 ## Walk Decision
 
 - [x] Treat the edited Walk motion as the current completed Walk.
-- [ ] Decide whether the current figure scale and framing are right for the new 128x128 base.
-- [ ] Check foot contact, foot sliding, arm swing, head stability, and the frame-8-to-frame-1 loop.
-- [ ] Check the side views for leg crossings or unreadable silhouettes.
+- [x] Approve the current figure scale and framing for the new 128x128 base.
+- [x] Approve foot contact, foot sliding, arm swing, head stability, and the frame-8-to-frame-1 loop.
+- [x] Approve the side views and silhouettes.
 - [ ] Check `walk_regions_preview.png` for visibly incorrect face, head, hand, pelvis, or limb assignments.
-- [ ] If the motion needs revision, edit `walk_manual_v1.blend`. Do **not** edit `walk_manual_v1_pipeline.blend`; that is the sanitized render input.
+- [x] Preserve `walk_manual_v1.blend` as the approved artist source. Do **not** edit `walk_manual_v1_pipeline.blend`; that is the sanitized render input.
 - [ ] If only pixel cleanup is needed, preserve the region map alongside every art correction so the two remain aligned.
 
 ## Next Blender Work
 
-Continue from the expanded artist save:
+Continue from the portable Run redo starter:
 
-`animation_images_models/elf_bald_female/working/idle_more_frames.blend`
+`animation_images_models/elf_bald_female/editable/run_redo_v1.blend`
 
 - [x] Preserve `PF_Idle_Edit` as a 13-pose authored loop and derive a 26-frame interpolated runtime.
-- [ ] Keep the feet planted and avoid the backward-arm posture from the failed generated idle.
+- [x] Approve the finished Idle motion.
 - [x] Validate frame 14 as the authored closure, then validate derived frame 27 as the 26-frame closure.
-- [ ] Keep editing the artist save, never `idle_more_frames_pipeline.blend`; the pipeline copy is mechanically sanitized render input.
-- [ ] Edit `PF_Run_Meshy_Edit` only if the existing approved Run needs more work.
+- [ ] Redo the Run in `PF_Run_Redo_Edit`; use `PF_Run_Meshy_Edit` as the clean original-motion fallback.
+- [ ] Keep the protected `PF_Run` and `PF_Run_ForwardLean_HeadDown` actions unchanged.
 - [ ] Save new artist versions under clear names; never overwrite the original source actions.
 
 Beginner references:
@@ -38,7 +38,7 @@ Beginner references:
 - `docs/BLENDER_ANIMATION_EDITING.md`
 - `docs/BLENDER_BASIC_CONTROLS.md`
 
-## After Idle or Run Is Edited
+## After Run Is Edited
 
 - [x] Run the non-destructive finalizer and interpolation pass.
 - [x] Render synchronized 1024px beauty and semantic passes.
@@ -51,7 +51,7 @@ The exact generalized commands are documented under **128px Semantic Animation P
 ## Integration Decisions — Do Not Rush
 
 - [x] Install the elf as the sole live `elf-01` Character Forge base.
-- [ ] Treat the installed Walk as the working default, but still record any issues found during visual review.
+- [x] Treat the installed Walk and Idle as approved working defaults.
 - [ ] Decide how component geometry will consume slot masks, hide masks, and attachment landmarks.
 - [x] Preserve the retired 64px runtime and factory under `legacy_sources/pre-semantic-elf-20260821/` outside discovery.
 
@@ -67,7 +67,7 @@ The exact generalized commands are documented under **128px Semantic Animation P
 
 ## Sensible Stopping Point Tomorrow
 
-A productive session is complete if the Walk is reviewed and the Idle edit is either finished or clearly scoped. Run and Character Forge promotion can wait.
+A productive session is complete when the revised Run has a clean eight-pose loop saved under a new artist filename and is ready for front/side review. Promotion can wait for explicit approval.
 
 ---
 
@@ -87,8 +87,8 @@ The durable production equation is:
 
 Finish the elf as the reference implementation for the entire pipeline.
 
-- [ ] Approve the elf Walk motion at 128x128.
-- [ ] Finish and approve a natural Idle.
+- [x] Approve the elf Walk motion at 128x128.
+- [x] Finish and approve a natural Idle.
 - [ ] Approve or refine the existing Run.
 - [x] Produce ordinary art sheets and GIFs for Idle, Walk, and Run.
 - [x] Produce exact anatomical-region maps for all three animations.
