@@ -239,7 +239,9 @@ def _validate_generated(
                 for index in range(opened.n_frames):
                     opened.seek(index)
                     actual.append(int(opened.info["duration"]))
-            if actual != [round(value / 10) * 10 for value in durations]:
+            # GIF stores delays in whole centiseconds; Pillow truncates the
+            # millisecond values supplied by the canonical timing contract.
+            if actual != [(value // 10) * 10 for value in durations]:
                 raise RuntimeError(f"Invalid GIF timing {gif}")
 
 

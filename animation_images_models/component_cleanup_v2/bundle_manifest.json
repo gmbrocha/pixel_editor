@@ -6,13 +6,13 @@
   "variant_count": 100,
   "sheet_count": 300,
   "cleanup_totals": {
-    "removed_islands": 4203,
-    "removed_island_pixels": 34068,
-    "chamfered_outline_pixels": 284229,
-    "removed_spurs": 13800,
-    "removed_spur_pixels": 13842,
-    "filled_holes": 542,
-    "filled_hole_pixels": 694
+    "removed_islands": 4190,
+    "removed_island_pixels": 33948,
+    "chamfered_outline_pixels": 282106,
+    "removed_spurs": 13702,
+    "removed_spur_pixels": 13744,
+    "filled_holes": 536,
+    "filled_hole_pixels": 687
   },
   "index": {
     "file": "index.csv",
@@ -24,7 +24,7 @@
     "review/elf-01-run.png": "60b7fc8a13fcade420eb17dec4d614a02bb55124810f287b71ba44a799f9998a",
     "review/tiefling-female-01-idle.png": "7216676ded9c4d2f0bfe56f79a11b07e4f0f61ad15d5ad83000625c9f0e510dd",
     "review/tiefling-female-01-walk.png": "ddec2f0fa519d7441fafc35f3135b3a7247b336a9c896166ae30ebb7362f6bb7",
-    "review/tiefling-female-01-run.png": "053128de7324de9b7bd5b467b7b623ea26ad817469507cdadd0a9582a9dfc3f6",
+    "review/tiefling-female-01-run.png": "069cb00c5f2218e60049a49b99e951f5b7b30aa948746d36cd4c9e9b2564d647",
     "review/dwarf-male-01-idle.png": "295ced9ddb0c08171d370aaca35195cdbd12da8346c3b6009003d8326681b975",
     "review/dwarf-male-01-walk.png": "4ec3d9d46076194715a7f9654e1390adae347b307633d2de17f562caeaf64196",
     "review/dwarf-male-01-run.png": "9144c8efd48b1010f9e84b7bade4b8788504b884c22dae7b98b772ffc01a4754",
@@ -86,7 +86,7 @@
       "fit": "tiefling-female-01",
       "slot": "torso",
       "manifest": "tiefling-female-01/cap-sleeve-field-shirt/cleanup_manifest.json",
-      "manifest_sha256": "b4b740d3e62e4238a66ff8bf4ada8135d2adb361bf38de8f95ef2dca2c98d4cc"
+      "manifest_sha256": "b16f608881890a4b8f288b53dd5e96a1567c70cfa32cfb780e3dd733ed45843f"
     },
     {
       "component_id": "cap-sleeve-field-shirt-dwarf-male-01",
@@ -150,7 +150,7 @@
       "fit": "tiefling-female-01",
       "slot": "torso",
       "manifest": "tiefling-female-01/cropped-training-top/cleanup_manifest.json",
-      "manifest_sha256": "779739029a3f3e3a7e84e84f5543f38f2c65a56158e66b530281bfb428548e67"
+      "manifest_sha256": "9e2dfaa0b8b3adbb27a42a164c7056c7b614f16fbe8ed02d5e5adae7e66c8798"
     },
     {
       "component_id": "cropped-training-top-dwarf-male-01",
@@ -630,7 +630,7 @@
       "fit": "tiefling-female-01",
       "slot": "feet",
       "manifest": "tiefling-female-01/ankle-boots/cleanup_manifest.json",
-      "manifest_sha256": "c9639e1da7b20514e4f14550080d898bf305f20f82c078297f11830cdddab4ca"
+      "manifest_sha256": "326afd928fc5f623e53c80fff35368f63108961c6cd9d4a65feb7b432450bef6"
     },
     {
       "component_id": "ankle-boots-dwarf-male-01",

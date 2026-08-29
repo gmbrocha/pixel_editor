@@ -23,6 +23,8 @@ from src.core.component_cleanup import cleanup_component_sheet
 
 
 ASSET_ROOT = ROOT / "assets" / "character-forge"
+OVERRIDE_ROOT = ROOT / "animation_images_models" / "component_overrides"
+OVERRIDE_MANIFEST = OVERRIDE_ROOT / "manifest.json"
 SEQUENCES = ("idle", "walk", "run")
 DIRECTIONS = ("front", "back", "right", "left")
 FRAME_COUNTS = {"idle": 14, "walk": 8, "run": 8}
@@ -296,33 +298,111 @@ def _component_id(family: Family, base_id: str) -> str:
     return f"{family.id}-{base_id}"
 
 
+def _load_approved_overrides() -> dict[tuple[str, str], dict[str, object]]:
+    if not OVERRIDE_MANIFEST.is_file():
+        return {}
+    data = json.loads(OVERRIDE_MANIFEST.read_text(encoding="utf-8"))
+    if (
+        data.get("schema_version") != 1
+        or data.get("kind") != "approved_component_overrides"
+        or data.get("status") != "canonical"
+    ):
+        raise RuntimeError("Unsupported approved component override manifest")
+    result: dict[tuple[str, str], dict[str, object]] = {}
+    for record in data["overrides"]:
+        key = (str(record["component_id"]), str(record["sequence"]))
+        if key in result:
+            raise RuntimeError(f"Duplicate approved component override {key}")
+        path = OVERRIDE_ROOT / str(record["file"])
+        if not path.is_file() or _sha256(path) != record["output_sha256"]:
+            raise RuntimeError(f"Approved component override is stale: {path}")
+        result[key] = record
+    return result
+
+
+def _approved_override_report(sequence: str) -> dict[str, object]:
+    return {
+        "frame_size": [128, 128],
+        "frame_columns": FRAME_COUNTS[sequence],
+        "direction_rows": len(DIRECTIONS),
+        "frames_changed": 0,
+        "removed_islands": 0,
+        "removed_island_pixels": 0,
+        "chamfered_outline_pixels": 0,
+        "removed_spurs": 0,
+        "removed_spur_pixels": 0,
+        "filled_holes": 0,
+        "filled_hole_pixels": 0,
+        "frame_reports": [],
+        "approved_override": True,
+    }
+
+
 def _build_variant(
     asset_root: Path,
     output_root: Path,
     family: Family,
     base_id: str,
+    overrides: dict[tuple[str, str], dict[str, object]],
 ) -> dict[str, object]:
     component_id = _component_id(family, base_id)
     part_dir = output_root / family.slot / component_id
     part_dir.mkdir(parents=True, exist_ok=True)
     animation_hashes: dict[str, str] = {}
     cleanup_reports: dict[str, object] = {}
+    approved_overrides: dict[str, object] = {}
+    direction_mirrors: dict[str, dict[str, str]] = {}
     for sequence in SEQUENCES:
         art = asset_root / "bases" / base_id / f"{sequence}.png"
         regions = _region_path(asset_root, base_id, sequence)
         if not art.is_file() or not regions.is_file():
             raise FileNotFoundError(f"Missing {base_id}/{sequence} art or regions")
         raw_image = _component_sheet(art, regions, family, sequence)
-        image, cleanup_report = cleanup_component_sheet(
-            raw_image,
-            outline_rgb=_rgb(family.palette[0]),
-            palette=tuple(_rgb(color) for color in family.palette),
-            protected_components=1,
-        )
+        override = overrides.get((component_id, sequence))
+        if override is None:
+            image, cleanup_report = cleanup_component_sheet(
+                raw_image,
+                outline_rgb=_rgb(family.palette[0]),
+                palette=tuple(_rgb(color) for color in family.palette),
+                protected_components=1,
+            )
+            cleanup_reports[sequence] = cleanup_report.to_dict()
+        else:
+            override_path = OVERRIDE_ROOT / str(override["file"])
+            with Image.open(override_path) as opened:
+                image = opened.convert("RGBA")
+            if image.size != raw_image.size:
+                raise RuntimeError(
+                    f"Approved override {override_path} is {image.size}; expected {raw_image.size}"
+                )
+            visible_colors = {
+                tuple(int(channel) for channel in color)
+                for color in np.asarray(image, dtype=np.uint8)[..., :3][
+                    np.asarray(image, dtype=np.uint8)[..., 3] > 0
+                ]
+            }
+            palette = {_rgb(color) for color in family.palette}
+            if not visible_colors <= palette:
+                raise RuntimeError(
+                    f"Approved override {override_path} contains undeclared colors"
+                )
+            cleanup_reports[sequence] = _approved_override_report(sequence)
+            approved_overrides[sequence] = {
+                "file": override_path.relative_to(ROOT).as_posix(),
+                "sha256": _sha256(override_path),
+                "source": override["source"],
+                "sourceSha256": override["source_sha256"],
+                "authoritativeDirections": override["authoritative_directions"],
+                "derivedDirections": override["derived_directions"],
+                "transform": override["transform"],
+            }
+            direction_mirrors[sequence] = {
+                str(target): str(origin)
+                for target, origin in override["derived_directions"].items()
+            }
         output = part_dir / f"{sequence}.png"
         image.save(output, format="PNG", optimize=False, compress_level=9)
         animation_hashes[sequence] = _sha256(output)
-        cleanup_reports[sequence] = cleanup_report.to_dict()
     manifest = {
         "schemaVersion": 1,
         "id": component_id,
@@ -333,11 +413,18 @@ def _build_variant(
         "reservedSlots": list(family.reserved_slots),
         "layer": SLOT_LAYERS[family.slot],
         "hairOcclusion": HEADWEAR_HAIR_OCCLUSION.get(family.id, "show"),
-        "tags": ["generated_family", "cross_model", "recolorable", *family.tags],
+        "tags": [
+            "generated_family",
+            "cross_model",
+            "recolorable",
+            *(["user_authored_override"] if approved_overrides else []),
+            *family.tags,
+        ],
         "fit": base_id,
-        "version": 1,
+        "version": 2 if approved_overrides else 1,
         "status": "approved",
         "animations": {sequence: f"{sequence}.png" for sequence in SEQUENCES},
+        **({"directionMirrors": direction_mirrors} if direction_mirrors else {}),
         "coverage": {sequence: list(DIRECTIONS) for sequence in SEQUENCES},
         "colorRamp": {"main": family.main, "colors": list(family.palette)},
         "suggestedColors": [family.main],
@@ -354,6 +441,11 @@ def _build_variant(
                 "reports": cleanup_reports,
             },
             "animationSha256": animation_hashes,
+            **(
+                {"approvedOverrides": approved_overrides}
+                if approved_overrides
+                else {}
+            ),
         },
     }
     manifest_path = part_dir / "manifest.json"
@@ -414,10 +506,13 @@ def _owned_directories(parts_root: Path) -> list[Path]:
 
 
 def _build_all(asset_root: Path, output_root: Path) -> dict[str, object]:
+    overrides = _load_approved_overrides()
     variants = []
     for family in FAMILIES:
         for base_id in BASES:
-            variants.append(_build_variant(asset_root, output_root, family, base_id))
+            variants.append(
+                _build_variant(asset_root, output_root, family, base_id, overrides)
+            )
     return {
         "schema_version": 1,
         "status": "generated_component_families",

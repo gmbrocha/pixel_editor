@@ -165,8 +165,10 @@ The finalizer preserves the Meshy and transfer actions and writes separate
 `PF_Idle_Approved`, `PF_Walk_Approved`, and `PF_Run_Approved` actions. It removes
 stray keys such as the Tiefling artist file's frame-0 keys only in the derived
 canonical action. All Blender Idles retain 26 authored pose columns. Character
-Forge samples 14 of those poses at 6 FPS and holds runtime frames 6 and 13 for
-1500 ms each. The less-muscular Human is excluded.
+Forge samples 14 of those poses at 6 FPS, plays both weight shifts consecutively,
+and holds only runtime frame 13 for 1500 ms before looping. Timing-only contract
+changes can be applied and verified with
+`tools/apply_approved_motion_timing.py`. The less-muscular Human is excluded.
 
 ## Canonical Character Forge Camera Views
 

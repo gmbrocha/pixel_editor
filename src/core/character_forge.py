@@ -212,6 +212,7 @@ class CharacterPart:
     camera_variants: Mapping[str, Mapping[str, Path]] = field(default_factory=dict)
     render_layers: Mapping[str, CharacterPartRenderLayer] = field(default_factory=dict)
     hair_occlusion: str = "show"
+    direction_mirrors: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
 
     @property
     def claimed_slots(self) -> frozenset[str]:
@@ -559,6 +560,27 @@ def load_component_manifest(path: str | Path) -> CharacterPart:
         raise CharacterForgeError(
             f"Component {part_id!r} has invalid hairOcclusion {hair_occlusion!r}"
         )
+    raw_direction_mirrors = data.get("directionMirrors", {})
+    if not isinstance(raw_direction_mirrors, Mapping):
+        raise CharacterForgeError(
+            f"Component {part_id!r} directionMirrors must be an object"
+        )
+    direction_mirrors: dict[str, dict[str, str]] = {}
+    for animation_id, raw_mirrors in raw_direction_mirrors.items():
+        if not isinstance(animation_id, str) or not isinstance(raw_mirrors, Mapping):
+            raise CharacterForgeError(
+                f"Component {part_id!r} has invalid directionMirrors"
+            )
+        mirrors = {
+            str(target): str(source)
+            for target, source in raw_mirrors.items()
+            if isinstance(target, str) and isinstance(source, str)
+        }
+        if len(mirrors) != len(raw_mirrors):
+            raise CharacterForgeError(
+                f"Component {part_id!r} direction mirror entries must be text"
+            )
+        direction_mirrors[animation_id] = mirrors
     return CharacterPart(
         id=part_id,
         name=data["displayName"],
@@ -579,6 +601,7 @@ def load_component_manifest(path: str | Path) -> CharacterPart:
         camera_variants=camera_variants,
         render_layers=render_layers,
         hair_occlusion=str(hair_occlusion),
+        direction_mirrors=direction_mirrors,
     )
 
 
@@ -841,6 +864,22 @@ def validate_catalog(catalog: CharacterCatalog) -> None:
                 raise CharacterForgeError(
                     f"Component {part.id!r} has unknown coverage directions {sorted(unknown)}"
                 )
+        for animation_id, mirrors in part.direction_mirrors.items():
+            if animation_id not in fit_base.animations:
+                raise CharacterForgeError(
+                    f"Component {part.id!r} mirrors an unknown animation"
+                )
+            animation = fit_base.animations[animation_id]
+            directions = set(animation.direction_rows)
+            for target, source in mirrors.items():
+                if target not in directions or source not in directions or target == source:
+                    raise CharacterForgeError(
+                        f"Component {part.id!r} has invalid {target!r} <- {source!r} mirror"
+                    )
+                if animation.frame_count(target) != animation.frame_count(source):
+                    raise CharacterForgeError(
+                        f"Component {part.id!r} mirrored directions differ in frame count"
+                    )
 
 
 def validate_recipe(catalog: CharacterCatalog, recipe: CharacterRecipe) -> None:
@@ -1115,6 +1154,37 @@ def _apply_selected_part_alpha_occlusion(
     return result
 
 
+def _apply_selected_direction_mirrors(
+    sheet: Image.Image,
+    animation: CharacterAnimation,
+    selected: list[CharacterPart],
+    animation_id: str,
+) -> Image.Image:
+    """Derive requested final directions by mirroring the complete composite."""
+    mirrors: dict[str, tuple[str, str]] = {}
+    for part in selected:
+        for target, source in part.direction_mirrors.get(animation_id, {}).items():
+            previous = mirrors.get(target)
+            if previous is not None and previous[0] != source:
+                raise CharacterForgeError(
+                    f"Parts {previous[1]!r} and {part.id!r} request conflicting "
+                    f"mirrors for {animation_id!r}/{target!r}"
+                )
+            mirrors[target] = (source, part.id)
+    if not mirrors:
+        return sheet
+    source_sheet = sheet.copy()
+    result = sheet.copy()
+    for target, (source, _part_id) in mirrors.items():
+        frame_count = animation.frame_count(target)
+        for frame_index in range(frame_count):
+            source_frame = source_sheet.crop(
+                animation.frame_box(source, frame_index)
+            ).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+            result.paste(source_frame, animation.frame_box(target, frame_index))
+    return result
+
+
 def composite_character_animation(
     catalog: CharacterCatalog,
     recipe: CharacterRecipe,
@@ -1133,6 +1203,7 @@ def composite_character_animation(
         for slot in CHARACTER_SLOTS
         if (part_id := recipe.parts.get(slot)) is not None
     ]
+    mirror_active: dict[str, CharacterPart] = {}
     for layer in CHARACTER_LAYER_ORDER:
         if layer == "body":
             if result.getbbox() is None:
@@ -1159,12 +1230,19 @@ def composite_character_animation(
                 animation_id,
                 recipe.camera_height,
             )
+            if overlay.getchannel("A").getbbox() is not None:
+                mirror_active[part.id] = part
             if overlay.size != result.size:
                 raise CharacterForgeError(
                     f"Part {part.id!r} {animation_id!r} sheet is {overlay.size}; base sheet is {result.size}"
                 )
             result = Image.alpha_composite(result, overlay)
-    return result
+    return _apply_selected_direction_mirrors(
+        result,
+        base.animations[animation_id],
+        list(mirror_active.values()),
+        animation_id,
+    )
 
 
 def extract_character_frame(

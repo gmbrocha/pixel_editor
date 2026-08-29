@@ -169,7 +169,9 @@ def _build_target(
                 for index in range(opened.n_frames):
                     opened.seek(index)
                     gif_durations.append(int(opened.info["duration"]))
-            expected_gif = [round(value / 10) * 10 for value in durations]
+            # GIF stores delays in whole centiseconds; Pillow truncates the
+            # millisecond values supplied by the canonical timing contract.
+            expected_gif = [(value // 10) * 10 for value in durations]
             if gif_durations != expected_gif:
                 raise RuntimeError(
                     f"{target_id} {sequence}/{direction} GIF timing differs: {gif_durations}"

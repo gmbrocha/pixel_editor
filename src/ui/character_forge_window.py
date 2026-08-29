@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QColor
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtGui import QColor, QWheelEvent
 from PySide6.QtWidgets import (
     QColorDialog,
     QComboBox,
@@ -54,6 +54,20 @@ from src.core.qt_image import pil_image_to_qpixmap
 from src.ui.pixel_editor_window import PixelEditorWindow
 
 SLOT_LABELS = CHARACTER_SLOT_LABELS
+
+
+class CharacterPreviewLabel(QLabel):
+    """Pixel preview that exposes wheel motion as discrete zoom steps."""
+
+    zoom_step_requested = Signal(int)
+
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        delta = event.angleDelta().y()
+        if delta == 0:
+            super().wheelEvent(event)
+            return
+        self.zoom_step_requested.emit(1 if delta > 0 else -1)
+        event.accept()
 
 
 class CharacterForgeWindow(QMainWindow):
@@ -140,6 +154,9 @@ class CharacterForgeWindow(QMainWindow):
         for zoom in (1, 2, 4, 8):
             self.zoom_combo.addItem(f"{zoom}x", zoom)
         self.zoom_combo.setCurrentIndex(self.zoom_combo.findData(8))
+        self.zoom_combo.setToolTip(
+            "Choose a preview scale, or use the mouse wheel over the preview"
+        )
         animation_form.addRow("Preview zoom", self.zoom_combo)
         animation_layout.addLayout(animation_form)
 
@@ -158,8 +175,9 @@ class CharacterForgeWindow(QMainWindow):
 
         preview_group = QGroupBox("Character Preview")
         preview_layout = QVBoxLayout(preview_group)
-        self.preview_label = QLabel()
+        self.preview_label = CharacterPreviewLabel()
         self.preview_label.setObjectName("characterPreview")
+        self.preview_label.setToolTip("Mouse wheel: zoom preview in or out")
         self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.preview_label.setMinimumSize(530, 530)
         self.preview_label.setSizePolicy(
@@ -268,6 +286,7 @@ class CharacterForgeWindow(QMainWindow):
         )
         self.direction_combo.currentIndexChanged.connect(self._on_direction_changed)
         self.zoom_combo.currentIndexChanged.connect(self._render_frame)
+        self.preview_label.zoom_step_requested.connect(self._step_preview_zoom)
         self.play_button.clicked.connect(self._toggle_playback)
         self.name_edit.textChanged.connect(self._on_name_changed)
         for slot, combo in self.part_combos.items():
@@ -440,6 +459,14 @@ class CharacterForgeWindow(QMainWindow):
     def _on_name_changed(self, name: str) -> None:
         if not self._updating_controls:
             self.recipe.name = name.strip() or "character"
+
+    def _step_preview_zoom(self, step: int) -> None:
+        if step == 0:
+            return
+        index = self.zoom_combo.currentIndex()
+        target = max(0, min(self.zoom_combo.count() - 1, index + (1 if step > 0 else -1)))
+        if target != index:
+            self.zoom_combo.setCurrentIndex(target)
 
     def _refresh_composite(self) -> None:
         try:

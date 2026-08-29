@@ -36,12 +36,12 @@ promoted in Character Forge. Later manual edits here still require promotion.
 The live Character Forge family builder applies this pass once. This mirror
 copies those canonical results byte-for-byte and never preprocesses them again.
 
-The pass removed 4203 detached islands
-(34068 pixels), chamfered
-284229 outline pixels, and filled
-542 tiny holes (694 pixels).
-It also removed 13800 terminal spurs
-(13842 pixels).
+The pass removed 4190 detached islands
+(33948 pixels), chamfered
+282106 outline pixels, and filled
+536 tiny holes (687 pixels).
+It also removed 13702 terminal spurs
+(13744 pixels).
 
 Use `index.csv` to navigate the 100 variants. Every component folder contains a
 `cleanup_manifest.json` with source/output hashes and per-frame changes.

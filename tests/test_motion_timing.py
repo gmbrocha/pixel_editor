@@ -17,9 +17,9 @@ def test_idle_runtime_samples_authored_action_without_expanding_holds() -> None:
     assert runtime.source_frames == (1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 24, 25)
     assert runtime.fps == 6
     assert len(runtime.frame_durations_ms) == 14
-    assert runtime.frame_durations_ms[5] == 1500
+    assert runtime.frame_durations_ms[5] == 167
     assert runtime.frame_durations_ms[12] == 1500
-    assert sum(runtime.frame_durations_ms) == 5004
+    assert sum(runtime.frame_durations_ms) == 3671
 
 
 def test_walk_and_run_runtime_contracts_fall_back_to_authored_timing() -> None:

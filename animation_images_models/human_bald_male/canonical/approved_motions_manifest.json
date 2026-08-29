@@ -5,7 +5,7 @@
   "artist_input": "F:\\Desktop\\archive_projects\\pixel_forge\\animation_images_models\\human_bald_male\\working\\motion_transfer\\human_bald_male_motion_transfer_candidate.blend",
   "artist_input_sha256": "5b94e7b01d33da0dc478160c03925694a88b4288e59a5f49c517d24bff475d2c",
   "canonical_blend": "human_bald_male_approved_motions.blend",
-  "canonical_blend_sha256": "7b8fb6e5d228e756a87a445f405432195471bb72ba4bb8df6318fa258e852a5e",
+  "canonical_blend_sha256": "99d199a2a60c17d08da916d88c03c69965ca233e042c73c72793cd4a97633f89",
   "timing_sha256": "671002004d4ef6c7f2d0661aac8b48c886cb1da1bfbe66f482f1fdf291865eae",
   "protected_source_pose_sha256": {
     "PF_Idle_Transfer": "b6c750f1feb7cbec17d77e6d533d759e513537fbfc4e219d8da267be0a3d1f84",
@@ -57,7 +57,7 @@
         83,
         83,
         83,
-        1500,
+        83,
         83,
         83,
         83,

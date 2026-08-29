@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -99,12 +100,12 @@ def test_catalog_contains_all_approved_motion_bases() -> None:
                 ).is_file()
         idle = character_base.animations["idle"]
         assert len(idle.frame_durations_ms) == 14
-        assert idle.frame_duration_ms(5) == 1500
+        assert idle.frame_duration_ms(5) == 167
         assert idle.frame_duration_ms(12) == 1500
         assert all(
             duration == 167
             for index, duration in enumerate(idle.frame_durations_ms)
-            if index not in {5, 12}
+            if index != 12
         )
     assert all(catalog.part(part_id).fit == "elf-01" for part_id in PART_IDS)
 
@@ -200,7 +201,7 @@ def test_every_starter_part_changes_idle_walk_and_run() -> None:
                 assert changed, (part.id, animation_id, direction)
 
 
-def test_tiefling_long_hair_prototype_is_front_run_low_only() -> None:
+def test_tiefling_long_hair_run_preserves_authored_views_and_mirrors_left() -> None:
     catalog = create_default_catalog()
     validate_catalog(catalog)
     part_id = "tiefling-long-hair-run-front-prototype"
@@ -209,7 +210,12 @@ def test_tiefling_long_hair_prototype_is_front_run_low_only() -> None:
     assert part.fit == "tiefling-female-01"
     assert part.slot == "hair"
     assert set(part.render_layers) == {"hair_back", "hair_front"}
-    assert part.coverage == {"idle": (), "walk": (), "run": ("front",)}
+    assert part.coverage == {
+        "idle": (),
+        "walk": (),
+        "run": ("front", "back", "right", "left"),
+    }
+    assert part.direction_mirrors == {"run": {"left": "right"}}
     assert part in catalog.parts_for_slot("hair", "tiefling-female-01", "low")
     assert part not in catalog.parts_for_slot("hair", "elf-01", "low")
     assert part not in catalog.parts_for_slot(
@@ -227,9 +233,20 @@ def test_tiefling_long_hair_prototype_is_front_run_low_only() -> None:
     )
     with Image.open(source_path) as opened:
         approved = opened.convert("RGBA")
-    assert load_part_render_layer(
-        catalog, part_id, "hair_front", "run"
-    ).tobytes() == approved.tobytes()
+    installed = load_part_render_layer(catalog, part_id, "hair_front", "run")
+    for row in range(3):
+        box = (0, row * 128, 1024, (row + 1) * 128)
+        assert installed.crop(box).tobytes() == approved.crop(box).tobytes()
+    for frame_index in range(8):
+        right = approved.crop(
+            (frame_index * 128, 256, (frame_index + 1) * 128, 384)
+        )
+        left = installed.crop(
+            (frame_index * 128, 384, (frame_index + 1) * 128, 512)
+        )
+        assert left.tobytes() == right.transpose(
+            Image.Transpose.FLIP_LEFT_RIGHT
+        ).tobytes()
     for animation_id in ("idle", "walk", "run"):
         assert load_part_render_layer(
             catalog, part_id, "hair_back", animation_id
@@ -244,7 +261,171 @@ def test_tiefling_long_hair_prototype_is_front_run_low_only() -> None:
                 != extract_character_frame(base, animation, direction, frame).tobytes()
                 for frame in range(animation.frame_count(direction))
             )
-            assert changed is (animation_id == "run" and direction == "front")
+            assert changed is (animation_id == "run")
+
+    run_result = composite_character_animation(catalog, recipe, "run")
+    run_animation = catalog.base(recipe.base_id).animations["run"]
+    for frame_index in range(8):
+        right = extract_character_frame(
+            run_result, run_animation, "right", frame_index
+        )
+        left = extract_character_frame(
+            run_result, run_animation, "left", frame_index
+        )
+        assert left.tobytes() == right.transpose(
+            Image.Transpose.FLIP_LEFT_RIGHT
+        ).tobytes()
+
+
+def test_tiefling_hair_main_color_remaps_its_entire_authored_ramp() -> None:
+    catalog = create_default_catalog()
+    part = catalog.part("tiefling-long-hair-run-front-prototype")
+    original = load_part_render_layer(catalog, part.id, "hair_front", "run")
+    authored_colors = {
+        pixel[:3] for pixel in _pixels(original) if pixel[3] > 0
+    }
+    assert authored_colors == set(part.color_ramp)
+    assert len(part.color_ramp) == 5
+
+    recolored = recolor_part_ramp(original, part, "#5A382B")
+    assert recolored.getchannel("A").tobytes() == original.getchannel("A").tobytes()
+    assert all(
+        output[:3] != source[:3]
+        for source, output in zip(_pixels(original), _pixels(recolored), strict=True)
+        if source[3] > 0
+    )
+
+
+def test_tiefling_blindfold_is_exact_and_renders_beneath_hair() -> None:
+    catalog = create_default_catalog()
+    validate_catalog(catalog)
+    blindfold_id = "tiefling-blindfold-run"
+    hair_id = "tiefling-long-hair-run-front-prototype"
+    part = catalog.part(blindfold_id)
+    assert part.status == "incomplete"
+    assert part.fit == "tiefling-female-01"
+    assert part.slot == "face"
+    assert part.layer == "face_accessory_under_hair"
+    assert part.coverage == {
+        "idle": (),
+        "walk": (),
+        "run": ("front", "back", "right", "left"),
+    }
+    assert part in catalog.parts_for_slot("face", "tiefling-female-01", "low")
+    assert part not in catalog.parts_for_slot("face", "elf-01", "low")
+    assert part not in catalog.parts_for_slot(
+        "face", "tiefling-female-01", "three_quarter"
+    )
+
+    source_path = (
+        ROOT
+        / "animation_images_models"
+        / "component_cleanup_v2"
+        / "new_hand_authored"
+        / "teifling_blindfold_run.png"
+    )
+    with Image.open(source_path) as opened:
+        source = opened.convert("RGBA")
+    installed = load_part_animation(catalog, blindfold_id, "run")
+    assert installed.tobytes() == source.tobytes()
+    assert {pixel[:3] for pixel in _pixels(installed) if pixel[3]} == set(
+        part.color_ramp
+    )
+
+    def rendered(*, blindfold: bool, hair: bool) -> Image.Image:
+        recipe = create_default_recipe("blindfold-layering")
+        recipe.base_id = "tiefling-female-01"
+        recipe.camera_height = "low"
+        recipe.parts["face"] = blindfold_id if blindfold else None
+        recipe.parts["hair"] = hair_id if hair else None
+        return composite_character_animation(catalog, recipe, "run")
+
+    blindfold_only = rendered(blindfold=True, hair=False)
+    hair_only = rendered(blindfold=False, hair=True)
+    together = rendered(blindfold=True, hair=True)
+    hair = load_part_render_layer(catalog, hair_id, "hair_front", "run")
+    blindfold_alpha = np.asarray(installed.getchannel("A")) > 0
+    hair_alpha = np.asarray(hair.getchannel("A")) > 0
+    authored_rows = np.zeros(blindfold_alpha.shape, dtype=bool)
+    authored_rows[: 3 * 128, :] = True
+    covered = blindfold_alpha & hair_alpha & authored_rows
+    exposed = blindfold_alpha & ~hair_alpha & authored_rows
+    assert covered.any()
+    assert exposed.any()
+    assert np.array_equal(np.asarray(together)[covered], np.asarray(hair_only)[covered])
+    assert np.array_equal(
+        np.asarray(together)[exposed], np.asarray(blindfold_only)[exposed]
+    )
+
+    animation = catalog.base("tiefling-female-01").animations["run"]
+    for frame_index in range(8):
+        right = extract_character_frame(together, animation, "right", frame_index)
+        left = extract_character_frame(together, animation, "left", frame_index)
+        assert left.tobytes() == right.transpose(
+            Image.Transpose.FLIP_LEFT_RIGHT
+        ).tobytes()
+
+
+def test_approved_tiefling_run_component_overrides_are_live_and_mirrored() -> None:
+    catalog = create_default_catalog()
+    override_root = ROOT / "animation_images_models" / "component_overrides"
+    data = json.loads((override_root / "manifest.json").read_text(encoding="utf-8"))
+    assert data["kind"] == "approved_component_overrides"
+    assert data["status"] == "canonical"
+    assert data["override_count"] == 3
+    assert {record["component_id"] for record in data["overrides"]} == {
+        "ankle-boots-tiefling-female-01",
+        "cap-sleeve-field-shirt-tiefling-female-01",
+        "cropped-training-top-tiefling-female-01",
+    }
+
+    for record in data["overrides"]:
+        part = catalog.part(record["component_id"])
+        assert "user_authored_override" in part.tags
+        assert part.status == "approved"
+        assert part.direction_mirrors == {"run": {"left": "right"}}
+        source_path = ROOT / record["source"]
+        override_path = override_root / record["file"]
+        live = load_part_animation(catalog, part.id, "run")
+        assert hashlib.sha256(source_path.read_bytes()).hexdigest() == record[
+            "source_sha256"
+        ]
+        assert hashlib.sha256(override_path.read_bytes()).hexdigest() == record[
+            "output_sha256"
+        ]
+        with Image.open(override_path) as opened:
+            assert live.tobytes() == opened.convert("RGBA").tobytes()
+        with Image.open(source_path) as opened:
+            source = opened.convert("RGBA")
+        for row in range(3):
+            box = (0, row * 128, 1024, (row + 1) * 128)
+            assert live.crop(box).tobytes() == source.crop(box).tobytes()
+        for frame_index in range(8):
+            right = source.crop(
+                (frame_index * 128, 256, (frame_index + 1) * 128, 384)
+            )
+            left = live.crop(
+                (frame_index * 128, 384, (frame_index + 1) * 128, 512)
+            )
+            assert left.tobytes() == right.transpose(
+                Image.Transpose.FLIP_LEFT_RIGHT
+            ).tobytes()
+
+        recipe = create_default_recipe(f"{part.id}-mirror")
+        recipe.base_id = "tiefling-female-01"
+        recipe.parts[part.slot] = part.id
+        composite = composite_character_animation(catalog, recipe, "run")
+        animation = catalog.base(recipe.base_id).animations["run"]
+        for frame_index in range(8):
+            right = extract_character_frame(
+                composite, animation, "right", frame_index
+            )
+            left = extract_character_frame(
+                composite, animation, "left", frame_index
+            )
+            assert left.tobytes() == right.transpose(
+                Image.Transpose.FLIP_LEFT_RIGHT
+            ).tobytes()
 
 
 def test_headwear_hair_occlusion_contract() -> None:
@@ -277,6 +458,9 @@ def test_headwear_hair_occlusion_contract() -> None:
     cap = load_part_animation(catalog, cap_id, "run")
     cap_alpha = np.asarray(cap.getchannel("A")) > 0
     assert np.any((np.asarray(hair.getchannel("A")) > 0) & cap_alpha)
+    # Left is intentionally replaced by the hair component's complete
+    # mirrored-Right composite, including the cap and base.
+    cap_alpha[384:, :] = False
     with_cap = rendered(cap_id, True)
     without_hair = rendered(cap_id, False)
     assert np.array_equal(
@@ -390,7 +574,18 @@ def test_character_forge_window_displays_128px_elf_and_new_parts() -> None:
     assert window.part_combos["feet"].count() == 5
     assert window.part_combos["headwear"].count() == 5
     assert window.part_combos["hair"].count() == 2
-    assert window.catalog.base("tiefling-female-01").animations["idle"].frame_duration_ms(5) == 1500
+    assert window.part_combos["face"].count() == 2
+    assert window.catalog.base("tiefling-female-01").animations["idle"].frame_duration_ms(5) == 167
+    assert window.catalog.base("tiefling-female-01").animations["idle"].frame_duration_ms(12) == 1500
+    assert window.zoom_combo.currentData() == 8
+    window.preview_label.zoom_step_requested.emit(-1)
+    application.processEvents()
+    assert window.zoom_combo.currentData() == 4
+    assert window.preview_label.pixmap().size().toTuple() == (512, 512)
+    window.preview_label.zoom_step_requested.emit(1)
+    application.processEvents()
+    assert window.zoom_combo.currentData() == 8
+    assert window.preview_label.pixmap().size().toTuple() == (1024, 1024)
     window.close()
     application.processEvents()
 

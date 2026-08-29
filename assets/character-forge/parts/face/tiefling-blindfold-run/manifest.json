@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "id": "tiefling-blindfold-run",
+  "familyId": "tiefling-blindfold",
+  "displayName": "Tiefling Blindfold \u2014 Run",
+  "slot": "face",
+  "occupiesSlots": [
+    "face"
+  ],
+  "reservedSlots": [],
+  "layer": "face_accessory_under_hair",
+  "tags": [
+    "user_authored",
+    "blindfold",
+    "under_hair",
+    "low_camera_only"
+  ],
+  "fit": "tiefling-female-01",
+  "version": 1,
+  "status": "incomplete",
+  "animations": {
+    "idle": "idle.png",
+    "walk": "walk.png",
+    "run": "run.png"
+  },
+  "coverage": {
+    "idle": [],
+    "walk": [],
+    "run": [
+      "front",
+      "back",
+      "right",
+      "left"
+    ]
+  },
+  "colorRamp": {
+    "main": "#ED1C24",
+    "colors": [
+      "#63000F",
+      "#880015",
+      "#ED1C24",
+      "#FF4555"
+    ]
+  },
+  "suggestedColors": [
+    "#ED1C24",
+    "#222222",
+    "#5A382B",
+    "#334A7D"
+  ],
+  "provenance": {
+    "kind": "hand_authored_component",
+    "source": "animation_images_models/component_cleanup_v2/new_hand_authored/teifling_blindfold_run.png",
+    "sourceSha256": "3a7971b481e216e67c6b113aa0666b25eacae15bba25c8cabc6c899d3905b693",
+    "cameraHeight": "low",
+    "authoritativeDirections": [
+      "front",
+      "back",
+      "right",
+      "left"
+    ],
+    "approvedAnimations": [
+      "run"
+    ],
+    "renderOrderContract": "face_accessory_under_hair",
+    "animationSha256": {
+      "idle": "76074ca80dd6695e8e5247f7fb3de6b48832ef8414eafc59ad956d1c9a81362f",
+      "walk": "21df068863f49340e4a38a9e1bd69f4e6e29ae5655a3b8d855b88980fdcf4df9",
+      "run": "ece01bbf0f2f8e890eb5f8667579bbd2852e6162ff187890fa2055b776f0d033"
+    }
+  }
+}

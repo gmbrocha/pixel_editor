@@ -65,7 +65,7 @@ def test_camera_view_manifest_covers_every_approved_base_motion_and_direction() 
                     assert sheet.size == (128 * frame_count, 128 * 4)
                 assert len(sequence["frame_durations_ms"]) == frame_count
                 if sequence_name == "idle":
-                    assert sequence["frame_durations_ms"][5] == 1500
+                    assert sequence["frame_durations_ms"][5] == 167
                     assert sequence["frame_durations_ms"][12] == 1500
                 assert set(sequence["gifs"]) == DIRECTIONS
                 for gif_record in sequence["gifs"].values():

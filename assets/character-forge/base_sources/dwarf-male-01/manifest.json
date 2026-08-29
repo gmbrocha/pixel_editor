@@ -4,9 +4,9 @@
   "base_id": "dwarf-male-01",
   "character_id": "dwarf_bald_male",
   "canonical_blend": "animation_images_models/dwarf_bald_male/canonical/dwarf_bald_male_approved_motions.blend",
-  "canonical_blend_sha256": "a62ccbbf7b266228449eafef276364e9c287ec5d6919aa2c4ba5edf3a526394b",
-  "canonical_manifest_sha256": "36f535a0f9580f4636b152e47a41115f669f063adc9ca758fb251c388a408335",
-  "timing_sha256": "3957d06eceee0a8cf26c65713a45a93101803c767e255705c3b9345d9f79893b",
+  "canonical_blend_sha256": "403f4898361bc8e73ebdd3cfb91fb4656f54f46f4078bf8194a514984545a73c",
+  "canonical_manifest_sha256": "e15c5b3cf8e83574b3ca8250744e30207b85fbcb970fa52f779f11698bb1fa24",
+  "timing_sha256": "6bc9ce7ea1004a2c9b06cef7ac62c40d33cea96a3637a097c1298d4a59e84eb0",
   "palette_sha256": "148147f66f510f3eaff16b7031698335a5dc373e8b0650588273cb9a626710ac",
   "sequences": {
     "idle": {
@@ -33,7 +33,7 @@
         167,
         167,
         167,
-        1500,
+        167,
         167,
         167,
         167,

@@ -5,7 +5,7 @@
   "source_blend": "elf_bald_female_complete.blend",
   "source_blend_sha256": "2c4ca192471aa543d052f777b33d061ffa59b13a538a3417a4660b58035fedb8",
   "canonical_blend": "elf_bald_female_mannequin.blend",
-  "canonical_blend_sha256": "ff5e3dc983765337b6a8737e46f7eef1bdad2ed22b7b06e105603d8452fc6557",
+  "canonical_blend_sha256": "75a721dd8d53ccb9ce31f87690158fe4ce14a24babe580963e3c07b1b6bef2e3",
   "mesh": "PF_Elf_Bald_Female",
   "armature": "PF_Elf_Bald_Female_Rig",
   "face_count": 200054,

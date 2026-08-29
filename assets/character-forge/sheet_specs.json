@@ -203,7 +203,7 @@
             167,
             167,
             167,
-            1500,
+            167,
             167,
             167,
             167,
@@ -218,7 +218,7 @@
           "sources": [
             {
               "file": "semantic/elf-01/idle/idle_manifest.json",
-              "sha256": "14c98993b10325cf8191fe31d70a07adbed249c358c78c733abaf778bbef8e64",
+              "sha256": "08b9955e0678f0a42990b18586d82d2b5a665982a7a6fb5eefb6e9e530314b4e",
               "action": "PF_Idle_Approved",
               "source_frames": [
                 1,
@@ -330,7 +330,7 @@
           "sources": [
             {
               "file": "semantic/elf-01/walk/walk_manifest.json",
-              "sha256": "19e1e51c9c3ec533f8cff9286a2e425ad61ec3176cb492613acc5c01e192b49a",
+              "sha256": "9eed13b494fe47f85f640fd9e824170e84e71096ea3e70426075e11c7657aa09",
               "action": "PF_Walk_Approved",
               "source_frames": [
                 1,
@@ -436,7 +436,7 @@
           "sources": [
             {
               "file": "semantic/elf-01/run/run_manifest.json",
-              "sha256": "7b3e58072fef19c156a2671975f3b74f317d2848679ecc6d1666108201b5be3f",
+              "sha256": "18342684b07fc2d312c4045590fae38e3ef2053cc76b71f1c11ad04c160fdd1a",
               "action": "PF_Run_Approved",
               "source_frames": [
                 1,
@@ -563,7 +563,7 @@
             167,
             167,
             167,
-            1500,
+            167,
             167,
             167,
             167,
@@ -920,7 +920,7 @@
             167,
             167,
             167,
-            1500,
+            167,
             167,
             167,
             167,
@@ -1277,7 +1277,7 @@
             167,
             167,
             167,
-            1500,
+            167,
             167,
             167,
             167,

@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "overrides": [
+    {
+      "component_id": "ankle-boots-tiefling-female-01",
+      "family_id": "ankle-boots",
+      "base_id": "tiefling-female-01",
+      "slot": "feet",
+      "sequence": "run",
+      "source": "component_cleanup_v2/tiefling-female-01/ankle-boots/run.png",
+      "authoritative_directions": ["front", "back", "right"],
+      "derived_directions": {"left": "right"}
+    },
+    {
+      "component_id": "cap-sleeve-field-shirt-tiefling-female-01",
+      "family_id": "cap-sleeve-field-shirt",
+      "base_id": "tiefling-female-01",
+      "slot": "torso",
+      "sequence": "run",
+      "source": "component_cleanup_v2/tiefling-female-01/cap-sleeve-field-shirt/run.png",
+      "authoritative_directions": ["front", "back", "right"],
+      "derived_directions": {"left": "right"}
+    },
+    {
+      "component_id": "cropped-training-top-tiefling-female-01",
+      "family_id": "cropped-training-top",
+      "base_id": "tiefling-female-01",
+      "slot": "torso",
+      "sequence": "run",
+      "source": "component_cleanup_v2/tiefling-female-01/cropped-training-top/run.png",
+      "authoritative_directions": ["front", "back", "right"],
+      "derived_directions": {"left": "right"}
+    }
+  ]
+}

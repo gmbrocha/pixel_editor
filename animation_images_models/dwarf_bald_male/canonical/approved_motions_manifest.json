@@ -5,7 +5,7 @@
   "artist_input": "F:\\Desktop\\archive_projects\\pixel_forge\\animation_images_models\\dwarf_bald_male\\working\\motion_transfer\\dwarf_bald_male_motion_transfer_candidate.blend",
   "artist_input_sha256": "83146b9b4a5b805be8a13daec54d43a987abcb65956d545cc12cac531c5be945",
   "canonical_blend": "dwarf_bald_male_approved_motions.blend",
-  "canonical_blend_sha256": "a62ccbbf7b266228449eafef276364e9c287ec5d6919aa2c4ba5edf3a526394b",
+  "canonical_blend_sha256": "403f4898361bc8e73ebdd3cfb91fb4656f54f46f4078bf8194a514984545a73c",
   "timing_sha256": "671002004d4ef6c7f2d0661aac8b48c886cb1da1bfbe66f482f1fdf291865eae",
   "protected_source_pose_sha256": {
     "PF_Idle_Transfer": "0750709bde3a07ac662794f7964359bae1a2d9bbbeac7d57c2b9d6a3c8607f59",
@@ -57,7 +57,7 @@
         83,
         83,
         83,
-        1500,
+        83,
         83,
         83,
         83,

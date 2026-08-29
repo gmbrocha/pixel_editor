@@ -1,4 +1,4 @@
-"""Install the approved Tiefling Front/Low Run hair as a two-layer part."""
+"""Install the approved Tiefling Low Run hair as a two-layer part."""
 
 from __future__ import annotations
 
@@ -30,20 +30,41 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _hex(color: tuple[int, int, int]) -> str:
+    return "#" + "".join(f"{channel:02X}" for channel in color)
+
+
+def _with_mirrored_left(source: Image.Image) -> Image.Image:
+    result = source.copy()
+    for frame_index in range(8):
+        right = source.crop(
+            (frame_index * 128, 2 * 128, (frame_index + 1) * 128, 3 * 128)
+        )
+        result.paste(
+            right.transpose(Image.Transpose.FLIP_LEFT_RIGHT),
+            (frame_index * 128, 3 * 128),
+        )
+    return result
+
+
 def _build(destination: Path) -> None:
     with Image.open(SOURCE) as opened:
         source = opened.convert("RGBA")
     if source.size != SIZES["run"]:
         raise ValueError(f"Expected {SIZES['run']} source, got {source.size}")
     pixels = np.asarray(source, dtype=np.uint8)
-    if np.count_nonzero(pixels[128:, :, 3]):
-        raise ValueError("Prototype source must contain artwork only in the Front row")
+    for row, direction in enumerate(("Front", "Back", "Right")):
+        if not np.count_nonzero(pixels[row * 128 : (row + 1) * 128, :, 3]):
+            raise ValueError(f"Approved source is missing its {direction} row")
+    if np.count_nonzero(pixels[3 * 128 :, :, 3]):
+        raise ValueError("Approved source Left row must remain empty and mirror Right")
+    run = _with_mirrored_left(source)
 
     destination.mkdir(parents=True, exist_ok=True)
     for sequence, size in SIZES.items():
         front_output = destination / f"{sequence}_front.png"
         back_output = destination / f"{sequence}_back.png"
-        front = source if sequence == "run" else Image.new("RGBA", size, (0, 0, 0, 0))
+        front = run if sequence == "run" else Image.new("RGBA", size, (0, 0, 0, 0))
         back = Image.new("RGBA", size, (0, 0, 0, 0))
         front.save(front_output, format="PNG", optimize=False, compress_level=9)
         back.save(back_output, format="PNG", optimize=False, compress_level=9)
@@ -51,7 +72,14 @@ def _build(destination: Path) -> None:
         # Preserve the primary-layer filenames for legacy single-layer readers.
         shutil.copy2(front_output, destination / f"{sequence}.png")
 
-    colors = ["#946575", "#FFAEC9", "#FFCEE1"]
+    source_colors = {
+        tuple(int(channel) for channel in color)
+        for color in pixels[:, :, :3][pixels[:, :, 3] > 0]
+    }
+    colors = [
+        _hex(color)
+        for color in sorted(source_colors, key=lambda color: (sum(color), color))
+    ]
     animations = {sequence: f"{sequence}.png" for sequence in SIZES}
     front_animations = {sequence: f"{sequence}_front.png" for sequence in SIZES}
     back_animations = {sequence: f"{sequence}_back.png" for sequence in SIZES}
@@ -59,21 +87,26 @@ def _build(destination: Path) -> None:
         "schemaVersion": 1,
         "id": "tiefling-long-hair-run-front-prototype",
         "familyId": "tiefling-long-hair",
-        "displayName": "Tiefling Long Hair — Run Front",
+        "displayName": "Tiefling Long Hair — Run",
         "slot": "hair",
         "occupiesSlots": ["hair"],
         "reservedSlots": [],
         "layer": "hair_front",
         "tags": ["user_authored", "prototype", "low_camera_only"],
         "fit": "tiefling-female-01",
-        "version": 1,
+        "version": 2,
         "status": "incomplete",
         "animations": animations,
         "renderLayers": {
             "hair_back": {"animations": back_animations},
             "hair_front": {"animations": front_animations},
         },
-        "coverage": {"idle": [], "walk": [], "run": ["front"]},
+        "directionMirrors": {"run": {"left": "right"}},
+        "coverage": {
+            "idle": [],
+            "walk": [],
+            "run": ["front", "back", "right", "left"],
+        },
         "colorRamp": {"main": "#FFAEC9", "colors": colors},
         "suggestedColors": ["#FFAEC9", "#A96B4F", "#5A382B", "#E6D1A3"],
         "provenance": {
@@ -81,7 +114,14 @@ def _build(destination: Path) -> None:
             "source": SOURCE.relative_to(ROOT).as_posix(),
             "sourceSha256": _sha256(SOURCE),
             "cameraHeight": "low",
-            "direction": "front",
+            "authoritativeDirections": ["front", "back", "right"],
+            "derivedDirections": {
+                "left": {
+                    "source": "right",
+                    "transform": "flip_complete_composite_horizontal",
+                }
+            },
+            "approvedAnimations": ["run"],
             "animationSha256": {
                 sequence: _sha256(destination / filename)
                 for sequence, filename in animations.items()

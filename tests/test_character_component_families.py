@@ -53,7 +53,7 @@ def test_25_component_families_are_fitted_to_all_four_bases() -> None:
     generated_parts = [
         part for part in catalog.parts if "generated_family" in part.tags
     ]
-    assert len(catalog.parts) == 106
+    assert len(catalog.parts) == 107
     assert len(generated_parts) == 100
     assert {
         base_id: sum(part.fit == base_id for part in generated_parts)

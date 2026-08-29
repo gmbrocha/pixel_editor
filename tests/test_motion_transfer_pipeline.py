@@ -81,7 +81,7 @@ def test_promoted_target_canonical_contract(target_id: str) -> None:
         assert entry["fps"] == fps
         assert entry["closure_frame"] == closure
     idle_durations = manifest["sequences"]["idle"]["frame_durations_ms"]
-    assert idle_durations[10] == 1500
+    assert idle_durations[10] == 83
     assert idle_durations[23] == 1500
     assert len(idle_durations) == 26
 

@@ -7,7 +7,7 @@
   "source": {
     "paired_manifest": "713e0d0eb959cac40330be42217f06798826cc834b3d669f57eb961628236844",
     "blend": "F:\\Desktop\\archive_projects\\pixel_forge\\animation_images_models\\elf_bald_female\\canonical\\elf_bald_female_mannequin.blend",
-    "blend_sha256": "ff5e3dc983765337b6a8737e46f7eef1bdad2ed22b7b06e105603d8452fc6557"
+    "blend_sha256": "75a721dd8d53ccb9ce31f87690158fe4ce14a24babe580963e3c07b1b6bef2e3"
   },
   "direction_order": [
     "front",
@@ -37,7 +37,7 @@
     167,
     167,
     167,
-    1500,
+    167,
     167,
     167,
     167,
@@ -59,10 +59,6 @@
     "fps": 6,
     "thin_region_source_pixels": 8,
     "frame_duration_overrides": [
-      [
-        6,
-        1500
-      ],
       [
         13,
         1500
@@ -6226,10 +6222,10 @@
     "frames/regions_preview/right/frame_11.png": "7993ca8398408f3590e35010235081a53b3ed2cdd599175961601a4261c7dc39",
     "frames/regions_preview/right/frame_12.png": "0dfb2a2070f23c0780a9996b9eb369af5e428aa0dedc0759fbe7bc2ec96b2020",
     "frames/regions_preview/right/frame_13.png": "11d96039d0f9409abb96a8062bd0207159437c35db2d436963cec4604a5f7127",
-    "gifs/idle_back.gif": "e6e3f619d52fe23c3434cf64bd4acf6695b817871f8dd3f7163d851711dec109",
-    "gifs/idle_front.gif": "69c393300d7d2ebdfc9020cd814a432cfb0bdb8accb54384e23c2e92d2764b1f",
-    "gifs/idle_left.gif": "1665fa8fd1ba1fa8544c1f7f4237af9f41e80b8044fcdd5a8c956d8e3792cce2",
-    "gifs/idle_right.gif": "92cac916a9bc36acd7255d69cfda5e10c783985f61aec606c0618471655c9720",
+    "gifs/idle_back.gif": "101ab178240814022e126b94e1f21c458d95fce10f4fe355250674465abfaf39",
+    "gifs/idle_front.gif": "a6c67f3217275119c8721b4147e65a09f7be20e9d2445cd518ae078edabbe226",
+    "gifs/idle_left.gif": "9067d4f44c4fc0e54bf3840770db86dd3cfe6afb3edd46ae9f47dbaf6fb03c52",
+    "gifs/idle_right.gif": "91a70adac8fd40da2e681553da5829722d8e2d7e591e4c1e495c733c383787cf",
     "hide/idle_hide_back.png": "dbf42a8a33576fba25a2fadfd5f1477affbfb751016ba129049da020c3a9f8bd",
     "hide/idle_hide_face.png": "dbf42a8a33576fba25a2fadfd5f1477affbfb751016ba129049da020c3a9f8bd",
     "hide/idle_hide_facial_hair.png": "dbf42a8a33576fba25a2fadfd5f1477affbfb751016ba129049da020c3a9f8bd",

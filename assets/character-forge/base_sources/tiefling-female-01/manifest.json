@@ -4,9 +4,9 @@
   "base_id": "tiefling-female-01",
   "character_id": "tiefling_bald_female",
   "canonical_blend": "animation_images_models/tiefling_bald_female/canonical/tiefling_bald_female_approved_motions.blend",
-  "canonical_blend_sha256": "c79a73f1ddd8b994ef5bd154ad75be12c391e2f6fda4d198f36e60717eccb1b6",
-  "canonical_manifest_sha256": "e078140c4239a68581d907b1d69dfde721a98bb914c702c0399142159eed4bd9",
-  "timing_sha256": "3957d06eceee0a8cf26c65713a45a93101803c767e255705c3b9345d9f79893b",
+  "canonical_blend_sha256": "06a07e80a1f8139c74f3856f742fb703344f098ba018aa4e9c8bf8399a8b82aa",
+  "canonical_manifest_sha256": "52377bb11239d8cae0dcbdf654ec2cac378db6b64548d85f8cd8913d87cdfac7",
+  "timing_sha256": "6bc9ce7ea1004a2c9b06cef7ac62c40d33cea96a3637a097c1298d4a59e84eb0",
   "palette_sha256": "72080a406f7aee2408103c24a19d94ffdc881c4164762012dbe18537beea7beb",
   "sequences": {
     "idle": {
@@ -33,7 +33,7 @@
         167,
         167,
         167,
-        1500,
+        167,
         167,
         167,
         167,

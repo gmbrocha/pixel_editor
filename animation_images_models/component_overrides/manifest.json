@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "kind": "approved_component_overrides",
+  "status": "canonical",
+  "source_config": "animation_images_models/component_override_sources.json",
+  "source_config_sha256": "a673d99e7f60db3ee89a2693a20f05a688c1e219837b959cd09f583f3b542850",
+  "override_count": 3,
+  "overrides": [
+    {
+      "component_id": "ankle-boots-tiefling-female-01",
+      "family_id": "ankle-boots",
+      "base_id": "tiefling-female-01",
+      "slot": "feet",
+      "sequence": "run",
+      "file": "tiefling-female-01/ankle-boots/run.png",
+      "source": "animation_images_models/component_cleanup_v2/tiefling-female-01/ankle-boots/run.png",
+      "source_sha256": "a2ad7e34b5fb4e79d9f37fe501fbc9331d77c0d32f5c618dd58209fec2a9df36",
+      "output_sha256": "a2ad7e34b5fb4e79d9f37fe501fbc9331d77c0d32f5c618dd58209fec2a9df36",
+      "dimensions": [
+        1024,
+        512
+      ],
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_rows": [
+        "front",
+        "back",
+        "right",
+        "left"
+      ],
+      "authoritative_directions": [
+        "front",
+        "back",
+        "right"
+      ],
+      "derived_directions": {
+        "left": "right"
+      },
+      "transform": "flip_complete_composite_horizontal",
+      "status": "approved"
+    },
+    {
+      "component_id": "cap-sleeve-field-shirt-tiefling-female-01",
+      "family_id": "cap-sleeve-field-shirt",
+      "base_id": "tiefling-female-01",
+      "slot": "torso",
+      "sequence": "run",
+      "file": "tiefling-female-01/cap-sleeve-field-shirt/run.png",
+      "source": "animation_images_models/component_cleanup_v2/tiefling-female-01/cap-sleeve-field-shirt/run.png",
+      "source_sha256": "a84bff6cbcf0f5b7c53bc3c35d1c2c3014d2e94853cf249d0ce1ce8b2596268a",
+      "output_sha256": "a84bff6cbcf0f5b7c53bc3c35d1c2c3014d2e94853cf249d0ce1ce8b2596268a",
+      "dimensions": [
+        1024,
+        512
+      ],
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_rows": [
+        "front",
+        "back",
+        "right",
+        "left"
+      ],
+      "authoritative_directions": [
+        "front",
+        "back",
+        "right"
+      ],
+      "derived_directions": {
+        "left": "right"
+      },
+      "transform": "flip_complete_composite_horizontal",
+      "status": "approved"
+    },
+    {
+      "component_id": "cropped-training-top-tiefling-female-01",
+      "family_id": "cropped-training-top",
+      "base_id": "tiefling-female-01",
+      "slot": "torso",
+      "sequence": "run",
+      "file": "tiefling-female-01/cropped-training-top/run.png",
+      "source": "animation_images_models/component_cleanup_v2/tiefling-female-01/cropped-training-top/run.png",
+      "source_sha256": "3c3806dceb807040d73b3b675b259f5052f1cfffca64fd1516031e65b50d8e5c",
+      "output_sha256": "3c3806dceb807040d73b3b675b259f5052f1cfffca64fd1516031e65b50d8e5c",
+      "dimensions": [
+        1024,
+        512
+      ],
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_rows": [
+        "front",
+        "back",
+        "right",
+        "left"
+      ],
+      "authoritative_directions": [
+        "front",
+        "back",
+        "right"
+      ],
+      "derived_directions": {
+        "left": "right"
+      },
+      "transform": "flip_complete_composite_horizontal",
+      "status": "approved"
+    }
+  ]
+}
