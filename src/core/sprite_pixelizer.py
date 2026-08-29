@@ -32,6 +32,7 @@ class SpritePixelizationSettings:
     palette_selection: str = "most_frequent"
     min_cluster_percent: float = 0.0005
     min_perceptual_distance: float = 4.0
+    silhouette_outline: bool = False
 
     def normalized(self) -> "SpritePixelizationSettings":
         return SpritePixelizationSettings(
@@ -44,6 +45,7 @@ class SpritePixelizationSettings:
             palette_selection=(self.palette_selection or "most_frequent").strip(),
             min_cluster_percent=max(0.0, float(self.min_cluster_percent)),
             min_perceptual_distance=max(0.0, float(self.min_perceptual_distance)),
+            silhouette_outline=bool(self.silhouette_outline),
         )
 
 
@@ -72,6 +74,22 @@ def _binary_alpha(image: Image.Image, threshold: int) -> Image.Image:
     visible = pixels[..., 3] >= threshold
     pixels[~visible] = 0
     pixels[visible, 3] = 255
+    return Image.fromarray(pixels, mode="RGBA")
+
+
+def _silhouette_outline(image: Image.Image, color: RGBA) -> Image.Image:
+    """Color the one-pixel interior silhouette without changing alpha."""
+    pixels = np.asarray(image.convert("RGBA"), dtype=np.uint8).copy()
+    visible = pixels[..., 3] > 0
+    padded = np.pad(visible, 1, constant_values=False)
+    interior = (
+        padded[:-2, 1:-1]
+        & padded[2:, 1:-1]
+        & padded[1:-1, :-2]
+        & padded[1:-1, 2:]
+    )
+    boundary = visible & ~interior
+    pixels[boundary, :3] = color[:3]
     return Image.fromarray(pixels, mode="RGBA")
 
 
@@ -217,6 +235,10 @@ def generate_pixel_sprite_sheets(
         raise ValueError("Visible Blender renders produced no opaque palette colors")
 
     processed: dict[tuple[str, str, int], Image.Image] = {}
+    outline_color = min(
+        opaque_palette,
+        key=lambda color: 0.2126 * color[0] + 0.7152 * color[1] + 0.0722 * color[2],
+    )
     for entry, image in zip(entries, reduced, strict=True):
         converted = quantize_to_palette(image, opaque_palette, dither=False)
         if normalized.cleanup_threshold > 0:
@@ -224,6 +246,8 @@ def generate_pixel_sprite_sheets(
                 converted,
                 threshold=normalized.cleanup_threshold,
             )
+        if normalized.silhouette_outline:
+            converted = _silhouette_outline(converted, outline_color)
         processed[(entry["sequence"], entry["direction"], entry["frame_index"])] = converted
 
     output_dir.mkdir(parents=True, exist_ok=True)

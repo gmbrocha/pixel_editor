@@ -9,9 +9,22 @@ import pytest
 
 from src.core.sprite_pixelizer import (
     SpritePixelizationSettings,
+    _silhouette_outline,
     check_pixel_sprite_sheets,
     generate_pixel_sprite_sheets,
 )
+
+
+def test_silhouette_outline_darkens_only_the_one_pixel_interior_boundary() -> None:
+    image = Image.new("RGBA", (5, 5), (0, 0, 0, 0))
+    for y in range(1, 4):
+        for x in range(1, 4):
+            image.putpixel((x, y), (180, 150, 120, 255))
+    outlined = _silhouette_outline(image, (24, 20, 18, 255))
+    assert outlined.getpixel((2, 2)) == (180, 150, 120, 255)
+    assert outlined.getpixel((1, 2)) == (24, 20, 18, 255)
+    assert outlined.getpixel((2, 1)) == (24, 20, 18, 255)
+    assert outlined.getpixel((0, 2)) == (0, 0, 0, 0)
 
 
 def _digest(path: Path) -> str:

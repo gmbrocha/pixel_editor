@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
 
 from src.core.character_forge import (
     CAMERA_HEIGHT_LABELS,
+    DEFAULT_SPRITE_STYLE,
     CHARACTER_SLOT_LABELS,
     CHARACTER_SLOTS,
     DIRECTION_LABELS,
@@ -130,6 +131,12 @@ class CharacterForgeWindow(QMainWindow):
         self.base_combo.setEnabled(self.base_combo.count() > 1)
         animation_form.addRow("Base", self.base_combo)
 
+        self.sprite_style_combo = QComboBox()
+        self.sprite_style_combo.setObjectName("characterSpriteStyleCombo")
+        for style_id, style_name in self.catalog.sprite_styles.items():
+            self.sprite_style_combo.addItem(style_name, style_id)
+        animation_form.addRow("Sprite style", self.sprite_style_combo)
+
         self.animation_combo = QComboBox()
         self.animation_combo.setObjectName("characterAnimationCombo")
         initial_base = self.catalog.bases[0]
@@ -212,7 +219,10 @@ class CharacterForgeWindow(QMainWindow):
             combo.setObjectName(f"characterPart_{slot}")
             combo.addItem("None", None)
             for part in self.catalog.parts_for_slot(
-                slot, initial_base.id, self.recipe.camera_height
+                slot,
+                initial_base.id,
+                self.recipe.camera_height,
+                self.recipe.sprite_style,
             ):
                 suffix = " (Incomplete)" if part.status == "incomplete" else ""
                 combo.addItem(f"{part.name}{suffix}", part.id)
@@ -280,6 +290,9 @@ class CharacterForgeWindow(QMainWindow):
 
     def _connect_signals(self) -> None:
         self.base_combo.currentIndexChanged.connect(self._on_base_changed)
+        self.sprite_style_combo.currentIndexChanged.connect(
+            self._on_sprite_style_changed
+        )
         self.animation_combo.currentIndexChanged.connect(self._on_animation_changed)
         self.camera_height_combo.currentIndexChanged.connect(
             self._on_camera_height_changed
@@ -318,6 +331,11 @@ class CharacterForgeWindow(QMainWindow):
         return value if isinstance(value, str) else "low"
 
     @property
+    def current_sprite_style(self) -> str:
+        value = self.sprite_style_combo.currentData()
+        return value if isinstance(value, str) else DEFAULT_SPRITE_STYLE
+
+    @property
     def current_direction(self) -> str:
         value = self.direction_combo.currentData()
         return value if isinstance(value, str) else "front"
@@ -354,7 +372,10 @@ class CharacterForgeWindow(QMainWindow):
                 combo.clear()
                 combo.addItem("None", None)
                 for part in self.catalog.parts_for_slot(
-                    slot, base.id, self.recipe.camera_height
+                    slot,
+                    base.id,
+                    self.recipe.camera_height,
+                    self.recipe.sprite_style,
                 ):
                     suffix = " (Incomplete)" if part.status == "incomplete" else ""
                     combo.addItem(f"{part.name}{suffix}", part.id)
@@ -370,6 +391,12 @@ class CharacterForgeWindow(QMainWindow):
         self._update_part_color_controls()
         self._on_animation_changed()
 
+    def _on_sprite_style_changed(self) -> None:
+        if self._updating_controls:
+            return
+        self.recipe.sprite_style = self.current_sprite_style
+        self._on_camera_height_changed()
+
     def _on_camera_height_changed(self) -> None:
         if self._updating_controls:
             return
@@ -381,7 +408,10 @@ class CharacterForgeWindow(QMainWindow):
                 combo.clear()
                 combo.addItem("None", None)
                 for part in self.catalog.parts_for_slot(
-                    slot, self.recipe.base_id, self.recipe.camera_height
+                    slot,
+                    self.recipe.base_id,
+                    self.recipe.camera_height,
+                    self.recipe.sprite_style,
                 ):
                     suffix = " (Incomplete)" if part.status == "incomplete" else ""
                     combo.addItem(f"{part.name}{suffix}", part.id)
@@ -546,6 +576,7 @@ class CharacterForgeWindow(QMainWindow):
             self.seed_spin.value(),
             name=self.name_edit.text().strip() or "character",
             camera_height=self.recipe.camera_height,
+            sprite_style=self.recipe.sprite_style,
         )
         self._sync_recipe_to_controls()
         self._refresh_composite()
@@ -576,6 +607,17 @@ class CharacterForgeWindow(QMainWindow):
                 max(0, self.base_combo.findData(selected_base))
             )
             self.base_combo.setEnabled(self.base_combo.count() > 1)
+            self.sprite_style_combo.clear()
+            for style_id, style_name in catalog.sprite_styles.items():
+                self.sprite_style_combo.addItem(style_name, style_id)
+            if self.recipe.sprite_style not in catalog.sprite_styles:
+                self.recipe.sprite_style = DEFAULT_SPRITE_STYLE
+            self.sprite_style_combo.setCurrentIndex(
+                max(
+                    0,
+                    self.sprite_style_combo.findData(self.recipe.sprite_style),
+                )
+            )
             current_animation = self.current_animation_id
             self.animation_combo.clear()
             for animation in catalog.base(selected_base).animations.values():
@@ -601,7 +643,10 @@ class CharacterForgeWindow(QMainWindow):
                 combo.clear()
                 combo.addItem("None", None)
                 for part in catalog.parts_for_slot(
-                    slot, self.recipe.base_id, self.recipe.camera_height
+                    slot,
+                    self.recipe.base_id,
+                    self.recipe.camera_height,
+                    self.recipe.sprite_style,
                 ):
                     suffix = " (Incomplete)" if part.status == "incomplete" else ""
                     combo.addItem(f"{part.name}{suffix}", part.id)
@@ -624,6 +669,15 @@ class CharacterForgeWindow(QMainWindow):
             if base_index >= 0:
                 self.base_combo.setCurrentIndex(base_index)
             base = self.catalog.base(self.recipe.base_id)
+            style_index = self.sprite_style_combo.findData(
+                self.recipe.sprite_style
+            )
+            if style_index < 0:
+                self.recipe.sprite_style = DEFAULT_SPRITE_STYLE
+                style_index = self.sprite_style_combo.findData(
+                    self.recipe.sprite_style
+                )
+            self.sprite_style_combo.setCurrentIndex(max(0, style_index))
             current_animation = self.current_animation_id
             self.animation_combo.clear()
             for animation in base.animations.values():
@@ -647,7 +701,10 @@ class CharacterForgeWindow(QMainWindow):
                 combo.clear()
                 combo.addItem("None", None)
                 for part in self.catalog.parts_for_slot(
-                    slot, self.recipe.base_id, self.recipe.camera_height
+                    slot,
+                    self.recipe.base_id,
+                    self.recipe.camera_height,
+                    self.recipe.sprite_style,
                 ):
                     suffix = " (Incomplete)" if part.status == "incomplete" else ""
                     combo.addItem(f"{part.name}{suffix}", part.id)
@@ -669,7 +726,9 @@ class CharacterForgeWindow(QMainWindow):
         part = self.catalog.part(part_id)
         available = (
             part.animation_path(
-                self.current_animation_id, self.recipe.camera_height
+                self.current_animation_id,
+                self.recipe.camera_height,
+                self.recipe.sprite_style,
             )
             is not None
         )
@@ -823,7 +882,11 @@ class CharacterForgeWindow(QMainWindow):
         animation_id = self.current_animation_id
         try:
             sheet = load_part_animation(
-                self.catalog, part_id, animation_id, self.recipe.camera_height
+                self.catalog,
+                part_id,
+                animation_id,
+                self.recipe.camera_height,
+                self.recipe.sprite_style,
             )
         except CharacterForgeError as exc:
             QMessageBox.critical(self, "Open part failed", str(exc))

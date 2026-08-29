@@ -1,6 +1,6 @@
 # Blender Character Capture Pipeline
 
-Last updated: 2026-08-21
+Last updated: 2026-08-29
 
 ## Purpose
 
@@ -190,9 +190,9 @@ native-size GIFs, promotes them below `assets/character-forge`, and writes
 `camera_views_manifest.json`. Low assets are retained byte-for-byte. A rebuild of
 the semantic elf or target motion bases preserves existing camera metadata, but
 the camera builder must be rerun whenever a canonical action changes so its
-blend and output hashes remain current. Angle-specific semantic regions and
-components are not inferred from Low-view masks; current components therefore
-remain available only at Low.
+blend and output hashes remain current. Standard-style angle-specific components
+are not inferred from Low-view masks; existing hand-authored Standard components
+therefore retain their declared camera coverage.
 
 `render_sprite_sequences.py --framing-scale` provides the canonical per-model
 size adjustment without modifying the rig or resizing finished pixels. Values
@@ -201,7 +201,36 @@ The older elf Low semantic capture is normalized with orthographic scale
 `2.442563056945801`, matching its apparent height to the newer auto-framed
 variants while retaining paired beauty/region rendering and aligned components.
 
-## Low-View Fitted Component Families
+## Canonical JRPG Chibi Style
+
+`tools/build_chibi_character_forge.py` is the single orchestration command for
+the second canonical sprite style. It applies
+`animation_images_models/chibi_style.json` non-destructively in pose space at
+render time: limb and torso bones are scaled along their local length, the head
+is enlarged uniformly, and Hips is shifted to preserve the source pose's foot
+ground level. Approved actions and canonical blends are never saved or modified.
+
+Each base/camera produces paired 512px beauty and weight-derived semantic
+renders. One fixed translation per direction centers every animation without
+frame jitter. Reduction uses a shared 20-color character palette, binary alpha,
+conservative cluster cleanup, and a one-pixel interior silhouette outline.
+Promotion requires exact 14/8/8 frame counts and timing, all 32 semantic IDs,
+exact region/base alpha coverage, deterministic postprocessing, and at least
+eight pixels of final canvas margin.
+
+```powershell
+python tools/build_chibi_character_forge.py --target all --camera-height all --force
+python tools/build_chibi_character_forge.py --target all --camera-height all --check
+```
+
+Tracked outputs include all four bases, all three cameras, Idle/Walk/Run sheets,
+four-direction GIFs, palettes, review sheets, style-specific fitting regions,
+and `assets/character-forge/chibi_manifest.json`. Ignored high-resolution renders
+live under each model's `working/chibi/`. Character Forge exposes `Standard Pixel`
+and `JRPG Chibi` independently of camera height and direction. Recipe schema 4
+stores `sprite_style`; older recipes migrate to `standard`.
+
+## Fitted Component Families
 
 The Tiefling, Dwarf, and muscular Human canonical Low cameras can render paired
 beauty/anatomical passes with
@@ -218,9 +247,10 @@ and supports byte verification with `--check`.
 
 `tools/build_character_component_families.py` then generates 25 shared design
 families with separately fitted variants for `elf-01`, Tiefling, Dwarf, and
-muscular Human. The resulting 100 manifests and 300 animation sheets cover six
-slots, all three approved motions, all four directions, five-color recoloring,
-and one-pixel outlines. Twelve 5-by-5 review boards are generated under
+muscular Human. The resulting 100 manifests retain 300 Standard Low sheets and
+add 900 JRPG Chibi sheets across three camera heights. They cover six slots, all
+three approved motions, all four directions, five-color recoloring, and one-pixel
+outlines. Standard and chibi 5-by-5 review boards are generated under
 `assets/character-forge/review/component-families/`.
 
 ```powershell
@@ -228,8 +258,11 @@ python tools/build_character_component_families.py --force
 python tools/build_character_component_families.py --check
 ```
 
-These overlays are canonical Low-view features. Elevated semantic captures and
-angle-specific component variants remain separate future work.
+Generated chibi overlays are canonical at all three camera heights. Existing
+hand-authored hair, face accessories, and approved Standard garment overrides
+remain available only for their declared Standard cameras until separately
+authored chibi fits exist; the Forge hides incompatible parts rather than
+scaling or misaligning them.
 
 Idle and Run use the same commands with their sequence name, action, output folders, FPS, and optional frame list/count. Render the interpolated Idle with `--sequence idle --action PF_Idle_Edit --frame-count 26`, then build with `--sequence idle --fps 12`. Run uses `PF_Run_ForwardLean_HeadDown` and source frames `1,3,6,8,10,13,15,18`. Closure frames are validation data and are not emitted as sprite frames.
 

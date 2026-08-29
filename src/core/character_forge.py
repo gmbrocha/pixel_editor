@@ -76,10 +76,24 @@ CAMERA_HEIGHT_LABELS = {
     "three_quarter": "Three-Quarter",
     "low": "Low",
 }
+DEFAULT_SPRITE_STYLE = "standard"
+SPRITE_STYLE_LABELS = {
+    "standard": "Standard Pixel",
+    "jrpg_chibi": "JRPG Chibi",
+}
+
+
+def sprite_camera_variant(sprite_style: str, camera_height: str) -> str:
+    """Return the manifest variant key for a public style/camera selection."""
+    return (
+        camera_height
+        if sprite_style == DEFAULT_SPRITE_STYLE
+        else f"{sprite_style}_{camera_height}"
+    )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CHARACTER_ASSET_ROOT = PROJECT_ROOT / "assets" / "character-forge"
-RECIPE_SCHEMA_VERSION = 3
+RECIPE_SCHEMA_VERSION = 4
 MANIFEST_SCHEMA_VERSION = 1
 VALID_COMPONENT_STATUSES = {"approved", "incomplete"}
 VALID_HAIR_OCCLUSION_POLICIES = {"show", "clip", "hide"}
@@ -147,14 +161,19 @@ class CharacterAnimation:
             return self.frame_durations_ms[frame_index]
         return max(10, round(1000 / self.fps))
 
-    def filename_for_camera(self, camera_height: str) -> str:
-        if camera_height == "low" and not self.camera_variants:
+    def filename_for_camera(
+        self,
+        camera_height: str,
+        sprite_style: str = DEFAULT_SPRITE_STYLE,
+    ) -> str:
+        variant = sprite_camera_variant(sprite_style, camera_height)
+        if variant == "low" and not self.camera_variants:
             return self.filename
         try:
-            return self.camera_variants[camera_height]
+            return self.camera_variants[variant]
         except KeyError as exc:
             raise CharacterForgeError(
-                f"Animation {self.id!r} has no {camera_height!r} camera variant"
+                f"Animation {self.id!r} has no {sprite_style!r}/{camera_height!r} variant"
             ) from exc
 
 
@@ -166,18 +185,36 @@ class CharacterBase:
     animations: Mapping[str, CharacterAnimation]
     camera_heights: tuple[str, ...] = ("low",)
 
-    def animation_path(self, animation_id: str, camera_height: str = "low") -> Path:
+    def camera_heights_for_style(self, sprite_style: str) -> tuple[str, ...]:
+        return tuple(
+            camera_height
+            for camera_height in self.camera_heights
+            if all(
+                sprite_camera_variant(sprite_style, camera_height)
+                in animation.camera_variants
+                for animation in self.animations.values()
+            )
+        )
+
+    def animation_path(
+        self,
+        animation_id: str,
+        camera_height: str = "low",
+        sprite_style: str = DEFAULT_SPRITE_STYLE,
+    ) -> Path:
         try:
             animation = self.animations[animation_id]
         except KeyError as exc:
             raise CharacterForgeError(
                 f"Unknown animation {animation_id!r} for base {self.id!r}"
             ) from exc
-        if camera_height not in self.camera_heights:
+        if camera_height not in self.camera_heights_for_style(sprite_style):
             raise CharacterForgeError(
-                f"Base {self.id!r} has no {camera_height!r} camera height"
+                f"Base {self.id!r} has no {sprite_style!r}/{camera_height!r} view"
             )
-        return self.directory / animation.filename_for_camera(camera_height)
+        return self.directory / animation.filename_for_camera(
+            camera_height, sprite_style
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -185,10 +222,16 @@ class CharacterPartRenderLayer:
     animations: Mapping[str, Path]
     camera_variants: Mapping[str, Mapping[str, Path]] = field(default_factory=dict)
 
-    def animation_path(self, animation_id: str, camera_height: str) -> Path | None:
-        if camera_height == "low":
+    def animation_path(
+        self,
+        animation_id: str,
+        camera_height: str,
+        sprite_style: str = DEFAULT_SPRITE_STYLE,
+    ) -> Path | None:
+        variant = sprite_camera_variant(sprite_style, camera_height)
+        if variant == "low":
             return self.animations.get(animation_id)
-        return self.camera_variants.get(camera_height, {}).get(animation_id)
+        return self.camera_variants.get(variant, {}).get(animation_id)
 
 
 @dataclass(frozen=True, slots=True)
@@ -218,27 +261,46 @@ class CharacterPart:
     def claimed_slots(self) -> frozenset[str]:
         return frozenset((*self.occupies_slots, *self.reserved_slots))
 
-    def animation_path(self, animation_id: str, camera_height: str) -> Path | None:
-        if camera_height == "low":
+    def animation_path(
+        self,
+        animation_id: str,
+        camera_height: str,
+        sprite_style: str = DEFAULT_SPRITE_STYLE,
+    ) -> Path | None:
+        variant = sprite_camera_variant(sprite_style, camera_height)
+        if variant == "low":
             return self.animations.get(animation_id)
-        return self.camera_variants.get(camera_height, {}).get(animation_id)
+        return self.camera_variants.get(variant, {}).get(animation_id)
 
     def render_layer_path(
-        self, layer: str, animation_id: str, camera_height: str
+        self,
+        layer: str,
+        animation_id: str,
+        camera_height: str,
+        sprite_style: str = DEFAULT_SPRITE_STYLE,
     ) -> Path | None:
         if self.render_layers:
             render_layer = self.render_layers.get(layer)
             return (
                 None if render_layer is None
-                else render_layer.animation_path(animation_id, camera_height)
+                else render_layer.animation_path(
+                    animation_id, camera_height, sprite_style
+                )
             )
-        return self.animation_path(animation_id, camera_height) if layer == self.layer else None
+        return (
+            self.animation_path(animation_id, camera_height, sprite_style)
+            if layer == self.layer
+            else None
+        )
 
 
 @dataclass(frozen=True, slots=True)
 class CharacterCatalog:
     bases: tuple[CharacterBase, ...]
     parts: tuple[CharacterPart, ...]
+    sprite_styles: Mapping[str, str] = field(
+        default_factory=lambda: {"standard": "Standard Pixel"}
+    )
 
     def base(self, base_id: str) -> CharacterBase:
         for base in self.bases:
@@ -257,6 +319,7 @@ class CharacterCatalog:
         slot: str,
         base_id: str | None = None,
         camera_height: str | None = None,
+        sprite_style: str = DEFAULT_SPRITE_STYLE,
     ) -> tuple[CharacterPart, ...]:
         if slot not in CHARACTER_SLOTS:
             raise CharacterForgeError(f"Unknown character slot {slot!r}")
@@ -271,7 +334,9 @@ class CharacterCatalog:
                 and (
                     camera_height is None
                     or all(
-                        part.animation_path(animation_id, camera_height) is not None
+                        part.animation_path(
+                            animation_id, camera_height, sprite_style
+                        ) is not None
                         for animation_id in self.base(base_id or part.fit).animations
                     )
                 )
@@ -283,6 +348,7 @@ class CharacterCatalog:
 class CharacterRecipe:
     base_id: str = "elf-01"
     camera_height: str = "low"
+    sprite_style: str = DEFAULT_SPRITE_STYLE
     name: str = "character"
     parts: dict[str, str | None] = field(
         default_factory=lambda: {slot: None for slot in CHARACTER_SLOTS}
@@ -296,6 +362,7 @@ class CharacterRecipe:
             "name": self.name,
             "base": self.base_id,
             "camera_height": self.camera_height,
+            "sprite_style": self.sprite_style,
             "seed": self.random_seed,
             "parts": {slot: self.parts.get(slot) for slot in CHARACTER_SLOTS},
             "part_colors": dict(sorted(self.part_colors.items())),
@@ -304,7 +371,7 @@ class CharacterRecipe:
     @classmethod
     def from_dict(cls, data: Mapping[str, object]) -> CharacterRecipe:
         version = data.get("schema_version", 1)
-        if version not in (1, 2, RECIPE_SCHEMA_VERSION):
+        if version not in (1, 2, 3, RECIPE_SCHEMA_VERSION):
             raise CharacterForgeError(
                 f"Unsupported character recipe version {version!r}"
             )
@@ -317,6 +384,9 @@ class CharacterRecipe:
         camera_height = data.get("camera_height", "low")
         if not isinstance(camera_height, str) or not camera_height:
             raise CharacterForgeError("Character recipe camera height must be text")
+        sprite_style = data.get("sprite_style", DEFAULT_SPRITE_STYLE)
+        if not isinstance(sprite_style, str) or not sprite_style:
+            raise CharacterForgeError("Character recipe sprite style must be text")
         raw_parts = data.get("parts", {})
         if not isinstance(raw_parts, Mapping):
             raise CharacterForgeError("Character recipe parts must be an object")
@@ -352,6 +422,7 @@ class CharacterRecipe:
         return cls(
             base_id=base_id,
             camera_height=camera_height,
+            sprite_style=sprite_style,
             name=name,
             parts=parts,
             part_colors=part_colors,
@@ -620,6 +691,21 @@ def create_default_catalog(
     if not isinstance(raw_camera_heights, Mapping) or not raw_camera_heights:
         raise CharacterForgeError("Character camera_heights specification is invalid")
     camera_height_ids = tuple(str(value) for value in raw_camera_heights)
+    raw_sprite_styles = specs.get(
+        "sprite_styles", {DEFAULT_SPRITE_STYLE: {"name": "Standard Pixel"}}
+    )
+    if not isinstance(raw_sprite_styles, Mapping) or not raw_sprite_styles:
+        raise CharacterForgeError("Character sprite_styles specification is invalid")
+    sprite_styles: dict[str, str] = {}
+    for style_id, raw_style in raw_sprite_styles.items():
+        if not isinstance(style_id, str) or not isinstance(raw_style, Mapping):
+            raise CharacterForgeError("Character sprite style entry is invalid")
+        style_name = raw_style.get("name")
+        if not isinstance(style_name, str) or not style_name:
+            raise CharacterForgeError(f"Sprite style {style_id!r} has no name")
+        sprite_styles[style_id] = style_name
+    if DEFAULT_SPRITE_STYLE not in sprite_styles:
+        raise CharacterForgeError("Character sprite styles must include standard")
     if specs["schema_version"] == 1:
         raw_bases = {
             str(specs.get("base_id", "elf-01")): {
@@ -739,7 +825,11 @@ def create_default_catalog(
             part = load_component_manifest(manifest_path)
             if part.status == "approved" or include_incomplete:
                 parts.append(part)
-    return CharacterCatalog(bases=tuple(bases), parts=tuple(parts))
+    return CharacterCatalog(
+        bases=tuple(bases),
+        parts=tuple(parts),
+        sprite_styles=sprite_styles,
+    )
 
 
 def create_default_recipe(name: str = "character") -> CharacterRecipe:
@@ -748,17 +838,27 @@ def create_default_recipe(name: str = "character") -> CharacterRecipe:
 
 
 def validate_catalog(catalog: CharacterCatalog) -> None:
+    if DEFAULT_SPRITE_STYLE not in catalog.sprite_styles:
+        raise CharacterForgeError("Character catalog has no standard sprite style")
     base_ids: set[str] = set()
     for base in catalog.bases:
         if base.id in base_ids:
             raise CharacterForgeError(f"Duplicate character base id {base.id!r}")
         base_ids.add(base.id)
-        for animation in base.animations.values():
-            for camera_height in base.camera_heights:
-                _validate_image_size(
-                    base.animation_path(animation.id, camera_height),
-                    animation.sheet_size,
+        for sprite_style in catalog.sprite_styles:
+            if base.camera_heights_for_style(sprite_style) != base.camera_heights:
+                raise CharacterForgeError(
+                    f"Base {base.id!r} lacks complete {sprite_style!r} camera coverage"
                 )
+        for animation in base.animations.values():
+            for sprite_style in catalog.sprite_styles:
+                for camera_height in base.camera_heights:
+                    _validate_image_size(
+                        base.animation_path(
+                            animation.id, camera_height, sprite_style
+                        ),
+                        animation.sheet_size,
+                    )
             columns = animation.sheet_size[0] // animation.frame_size[0]
             unknown_counts = set(animation.direction_frame_counts) - set(
                 animation.direction_rows
@@ -817,10 +917,15 @@ def validate_catalog(catalog: CharacterCatalog) -> None:
                     f"Component {part.id!r} uses unknown animation {animation_id!r}"
                 )
             _validate_image_size(path, fit_base.animations[animation_id].sheet_size)
+        valid_variant_keys = {
+            sprite_camera_variant(sprite_style, camera_height)
+            for sprite_style in catalog.sprite_styles
+            for camera_height in fit_base.camera_heights
+        }
         for camera_height, variants in part.camera_variants.items():
-            if camera_height not in fit_base.camera_heights:
+            if camera_height not in valid_variant_keys:
                 raise CharacterForgeError(
-                    f"Component {part.id!r} uses unknown camera height {camera_height!r}"
+                    f"Component {part.id!r} uses unknown view variant {camera_height!r}"
                 )
             for animation_id, path in variants.items():
                 if animation_id not in fit_base.animations:
@@ -842,9 +947,9 @@ def validate_catalog(catalog: CharacterCatalog) -> None:
                     )
                 _validate_image_size(path, fit_base.animations[animation_id].sheet_size)
             for camera_height, variants in layer_data.camera_variants.items():
-                if camera_height not in fit_base.camera_heights:
+                if camera_height not in valid_variant_keys:
                     raise CharacterForgeError(
-                        f"Component {part.id!r} render layer uses unknown camera height"
+                        f"Component {part.id!r} render layer uses unknown view variant"
                     )
                 for animation_id, path in variants.items():
                     if animation_id not in fit_base.animations:
@@ -884,9 +989,14 @@ def validate_catalog(catalog: CharacterCatalog) -> None:
 
 def validate_recipe(catalog: CharacterCatalog, recipe: CharacterRecipe) -> None:
     base = catalog.base(recipe.base_id)
-    if recipe.camera_height not in base.camera_heights:
+    if recipe.sprite_style not in catalog.sprite_styles:
         raise CharacterForgeError(
-            f"Base {recipe.base_id!r} has no camera height {recipe.camera_height!r}"
+            f"Unknown sprite style {recipe.sprite_style!r}"
+        )
+    if recipe.camera_height not in base.camera_heights_for_style(recipe.sprite_style):
+        raise CharacterForgeError(
+            f"Base {recipe.base_id!r} has no {recipe.sprite_style!r}/"
+            f"{recipe.camera_height!r} view"
         )
     claimed_by: dict[str, str] = {}
     selected_ids: set[str] = set()
@@ -903,11 +1013,14 @@ def validate_recipe(catalog: CharacterCatalog, recipe: CharacterRecipe) -> None:
                 f"Part {part_id!r} fits {part.fit!r}, not {recipe.base_id!r}"
             )
         if any(
-            part.animation_path(animation_id, recipe.camera_height) is None
+            part.animation_path(
+                animation_id, recipe.camera_height, recipe.sprite_style
+            ) is None
             for animation_id in base.animations
         ):
             raise CharacterForgeError(
-                f"Part {part_id!r} has no complete {recipe.camera_height!r} camera coverage"
+                f"Part {part_id!r} has no complete {recipe.sprite_style!r}/"
+                f"{recipe.camera_height!r} coverage"
             )
         if part.slot != slot:
             raise CharacterForgeError(
@@ -1043,13 +1156,15 @@ def load_base_animation(
     base_id: str,
     animation_id: str,
     camera_height: str = "low",
+    sprite_style: str = DEFAULT_SPRITE_STYLE,
 ) -> Image.Image:
     base = catalog.base(base_id)
     animation = base.animations.get(animation_id)
     if animation is None:
         raise CharacterForgeError(f"Unknown character animation {animation_id!r}")
     image = _load_rgba(
-        str(base.animation_path(animation_id, camera_height)), animation.matte_rgb
+        str(base.animation_path(animation_id, camera_height, sprite_style)),
+        animation.matte_rgb,
     ).copy()
     if image.size != animation.sheet_size:
         raise CharacterForgeError(
@@ -1063,9 +1178,10 @@ def load_part_animation(
     part_id: str,
     animation_id: str,
     camera_height: str = "low",
+    sprite_style: str = DEFAULT_SPRITE_STYLE,
 ) -> Image.Image:
     part = catalog.part(part_id)
-    path = part.animation_path(animation_id, camera_height)
+    path = part.animation_path(animation_id, camera_height, sprite_style)
     if path is None:
         raise CharacterForgeError(f"Part {part_id!r} has no {animation_id!r} animation")
     return _load_rgba(str(path), None).copy()
@@ -1077,9 +1193,12 @@ def load_part_render_layer(
     render_layer: str,
     animation_id: str,
     camera_height: str = "low",
+    sprite_style: str = DEFAULT_SPRITE_STYLE,
 ) -> Image.Image:
     part = catalog.part(part_id)
-    path = part.render_layer_path(render_layer, animation_id, camera_height)
+    path = part.render_layer_path(
+        render_layer, animation_id, camera_height, sprite_style
+    )
     if path is None:
         raise CharacterForgeError(
             f"Part {part_id!r} has no {render_layer!r}/{animation_id!r} animation"
@@ -1092,12 +1211,15 @@ def _combined_part_alpha(
     part: CharacterPart,
     animation_id: str,
     camera_height: str,
+    sprite_style: str,
     size: tuple[int, int],
 ) -> Image.Image:
     alpha = Image.new("L", size, 0)
     layers = tuple(part.render_layers) if part.render_layers else (part.layer,)
     for render_layer in layers:
-        path = part.render_layer_path(render_layer, animation_id, camera_height)
+        path = part.render_layer_path(
+            render_layer, animation_id, camera_height, sprite_style
+        )
         if path is None:
             continue
         source = _load_rgba(str(path), None)
@@ -1116,6 +1238,7 @@ def _apply_selected_part_alpha_occlusion(
     catalog: CharacterCatalog,
     animation_id: str,
     camera_height: str,
+    sprite_style: str,
 ) -> Image.Image:
     """Hide a part wherever matching selected component pixels are opaque."""
     result = overlay
@@ -1128,7 +1251,12 @@ def _apply_selected_part_alpha_occlusion(
             if occluder.hair_occlusion != "clip":
                 continue
             occluder_alpha = _combined_part_alpha(
-                catalog, occluder, animation_id, camera_height, result.size
+                catalog,
+                occluder,
+                animation_id,
+                camera_height,
+                sprite_style,
+                result.size,
             )
             keep_mask = ImageChops.invert(occluder_alpha)
             masked_alpha = ImageChops.multiply(result.getchannel("A"), keep_mask)
@@ -1140,12 +1268,19 @@ def _apply_selected_part_alpha_occlusion(
     for occluder in selected:
         if (
             occluder.id == part.id
-            or occluder.animation_path(animation_id, camera_height) is None
+            or occluder.animation_path(
+                animation_id, camera_height, sprite_style
+            ) is None
             or not (occluding_tags & set(occluder.tags))
         ):
             continue
         occluder_alpha = _combined_part_alpha(
-            catalog, occluder, animation_id, camera_height, result.size
+            catalog,
+            occluder,
+            animation_id,
+            camera_height,
+            sprite_style,
+            result.size,
         )
         keep_mask = ImageChops.invert(occluder_alpha)
         masked_alpha = ImageChops.multiply(result.getchannel("A"), keep_mask)
@@ -1195,7 +1330,11 @@ def composite_character_animation(
     if animation_id not in base.animations:
         raise CharacterForgeError(f"Unknown character animation {animation_id!r}")
     body = load_base_animation(
-        catalog, recipe.base_id, animation_id, recipe.camera_height
+        catalog,
+        recipe.base_id,
+        animation_id,
+        recipe.camera_height,
+        recipe.sprite_style,
     )
     result = Image.new("RGBA", body.size, (0, 0, 0, 0))
     selected = [
@@ -1213,11 +1352,21 @@ def composite_character_animation(
                 result = Image.alpha_composite(result, body)
         for part in selected:
             if (
-                part.render_layer_path(layer, animation_id, recipe.camera_height) is None
+                part.render_layer_path(
+                    layer,
+                    animation_id,
+                    recipe.camera_height,
+                    recipe.sprite_style,
+                ) is None
             ):
                 continue
             overlay = load_part_render_layer(
-                catalog, part.id, layer, animation_id, recipe.camera_height
+                catalog,
+                part.id,
+                layer,
+                animation_id,
+                recipe.camera_height,
+                recipe.sprite_style,
             )
             selected_color = recipe.part_colors.get(part.id)
             if selected_color is not None:
@@ -1229,6 +1378,7 @@ def composite_character_animation(
                 catalog,
                 animation_id,
                 recipe.camera_height,
+                recipe.sprite_style,
             )
             if overlay.getchannel("A").getbbox() is not None:
                 mirror_active[part.id] = part
@@ -1265,6 +1415,7 @@ def randomize_recipe(
     *,
     name: str = "character",
     camera_height: str = "low",
+    sprite_style: str = DEFAULT_SPRITE_STYLE,
 ) -> CharacterRecipe:
     catalog.base(base_id)
     generator = random.Random(seed)
@@ -1272,7 +1423,9 @@ def randomize_recipe(
     claimed: set[str] = set()
     for slot in CHARACTER_SLOTS:
         candidates = list(
-            catalog.parts_for_slot(slot, base_id, camera_height)
+            catalog.parts_for_slot(
+                slot, base_id, camera_height, sprite_style
+            )
         )
         generator.shuffle(candidates)
         choices: list[CharacterPart | None] = [None, *candidates]
@@ -1283,6 +1436,7 @@ def randomize_recipe(
     return CharacterRecipe(
         base_id=base_id,
         camera_height=camera_height,
+        sprite_style=sprite_style,
         name=name,
         parts=selections,
         random_seed=seed,

@@ -1,4 +1,4 @@
-"""Build 25 fitted low-camera component families for every approved base."""
+"""Build fitted component families for every canonical base and sprite style."""
 
 from __future__ import annotations
 
@@ -28,6 +28,8 @@ OVERRIDE_MANIFEST = OVERRIDE_ROOT / "manifest.json"
 SEQUENCES = ("idle", "walk", "run")
 DIRECTIONS = ("front", "back", "right", "left")
 FRAME_COUNTS = {"idle": 14, "walk": 8, "run": 8}
+CHIBI_STYLE_ID = "jrpg_chibi"
+CHIBI_CAMERAS = ("top_down", "three_quarter", "low")
 CLEANUP_SETTINGS = {
     "max_island_area": 16,
     "max_island_to_largest_ratio": 0.20,
@@ -288,10 +290,47 @@ def _component_sheet(
     return Image.fromarray(output, "RGBA")
 
 
-def _region_path(asset_root: Path, base_id: str, sequence: str) -> Path:
+def _region_path(
+    asset_root: Path,
+    base_id: str,
+    sequence: str,
+    *,
+    sprite_style: str = "standard",
+    camera_height: str = "low",
+) -> Path:
+    if sprite_style != "standard":
+        return (
+            asset_root
+            / "style_regions"
+            / sprite_style
+            / base_id
+            / camera_height
+            / f"{sequence}_regions.png"
+        )
     if base_id == "elf-01":
         return asset_root / "semantic" / base_id / sequence / f"{sequence}_regions.png"
     return asset_root / "base_regions" / base_id / sequence / f"{sequence}_regions.png"
+
+
+def _art_path(
+    asset_root: Path,
+    base_id: str,
+    sequence: str,
+    *,
+    sprite_style: str = "standard",
+    camera_height: str = "low",
+) -> Path:
+    if sprite_style == "standard":
+        return asset_root / "bases" / base_id / f"{sequence}.png"
+    return (
+        asset_root
+        / "bases"
+        / base_id
+        / "styles"
+        / sprite_style
+        / camera_height
+        / f"{sequence}.png"
+    )
 
 
 def _component_id(family: Family, base_id: str) -> str:
@@ -338,6 +377,15 @@ def _approved_override_report(sequence: str) -> dict[str, object]:
     }
 
 
+def _compact_cleanup_report(report: dict[str, object]) -> dict[str, object]:
+    """Keep canonical totals without embedding every generated frame diagnostic."""
+    return {
+        key: value
+        for key, value in report.items()
+        if key != "frame_reports"
+    }
+
+
 def _build_variant(
     asset_root: Path,
     output_root: Path,
@@ -350,10 +398,13 @@ def _build_variant(
     part_dir.mkdir(parents=True, exist_ok=True)
     animation_hashes: dict[str, str] = {}
     cleanup_reports: dict[str, object] = {}
+    style_cleanup_reports: dict[str, dict[str, object]] = {}
+    style_animation_hashes: dict[str, dict[str, str]] = {}
+    camera_variants: dict[str, dict[str, str]] = {}
     approved_overrides: dict[str, object] = {}
     direction_mirrors: dict[str, dict[str, str]] = {}
     for sequence in SEQUENCES:
-        art = asset_root / "bases" / base_id / f"{sequence}.png"
+        art = _art_path(asset_root, base_id, sequence)
         regions = _region_path(asset_root, base_id, sequence)
         if not art.is_file() or not regions.is_file():
             raise FileNotFoundError(f"Missing {base_id}/{sequence} art or regions")
@@ -403,6 +454,61 @@ def _build_variant(
         output = part_dir / f"{sequence}.png"
         image.save(output, format="PNG", optimize=False, compress_level=9)
         animation_hashes[sequence] = _sha256(output)
+    chibi_available = all(
+        _art_path(
+            asset_root,
+            base_id,
+            sequence,
+            sprite_style=CHIBI_STYLE_ID,
+            camera_height=camera_height,
+        ).is_file()
+        and _region_path(
+            asset_root,
+            base_id,
+            sequence,
+            sprite_style=CHIBI_STYLE_ID,
+            camera_height=camera_height,
+        ).is_file()
+        for camera_height in CHIBI_CAMERAS
+        for sequence in SEQUENCES
+    )
+    if chibi_available:
+        for camera_height in CHIBI_CAMERAS:
+            variant_key = f"{CHIBI_STYLE_ID}_{camera_height}"
+            camera_variants[variant_key] = {}
+            style_cleanup_reports[variant_key] = {}
+            style_animation_hashes[variant_key] = {}
+            for sequence in SEQUENCES:
+                art = _art_path(
+                    asset_root,
+                    base_id,
+                    sequence,
+                    sprite_style=CHIBI_STYLE_ID,
+                    camera_height=camera_height,
+                )
+                regions = _region_path(
+                    asset_root,
+                    base_id,
+                    sequence,
+                    sprite_style=CHIBI_STYLE_ID,
+                    camera_height=camera_height,
+                )
+                raw_image = _component_sheet(art, regions, family, sequence)
+                image, cleanup_report = cleanup_component_sheet(
+                    raw_image,
+                    outline_rgb=_rgb(family.palette[0]),
+                    palette=tuple(_rgb(color) for color in family.palette),
+                    protected_components=1,
+                )
+                relative = Path("styles") / CHIBI_STYLE_ID / camera_height / f"{sequence}.png"
+                output = part_dir / relative
+                output.parent.mkdir(parents=True, exist_ok=True)
+                image.save(output, format="PNG", optimize=False, compress_level=9)
+                camera_variants[variant_key][sequence] = relative.as_posix()
+                style_cleanup_reports[variant_key][sequence] = (
+                    _compact_cleanup_report(cleanup_report.to_dict())
+                )
+                style_animation_hashes[variant_key][sequence] = _sha256(output)
     manifest = {
         "schemaVersion": 1,
         "id": component_id,
@@ -421,9 +527,10 @@ def _build_variant(
             *family.tags,
         ],
         "fit": base_id,
-        "version": 2 if approved_overrides else 1,
+        "version": 3 if chibi_available else (2 if approved_overrides else 1),
         "status": "approved",
         "animations": {sequence: f"{sequence}.png" for sequence in SEQUENCES},
+        **({"cameraVariants": camera_variants} if camera_variants else {}),
         **({"directionMirrors": direction_mirrors} if direction_mirrors else {}),
         "coverage": {sequence: list(DIRECTIONS) for sequence in SEQUENCES},
         "colorRamp": {"main": family.main, "colors": list(family.palette)},
@@ -442,6 +549,19 @@ def _build_variant(
             },
             "animationSha256": animation_hashes,
             **(
+                {
+                    "styleVariants": {
+                        CHIBI_STYLE_ID: {
+                            "cameras": list(CHIBI_CAMERAS),
+                            "animationSha256": style_animation_hashes,
+                            "cleanupReports": style_cleanup_reports,
+                        }
+                    }
+                }
+                if chibi_available
+                else {}
+            ),
+            **(
                 {"approvedOverrides": approved_overrides}
                 if approved_overrides
                 else {}
@@ -459,14 +579,28 @@ def _build_variant(
         "manifest": (Path("parts") / family.slot / component_id / "manifest.json").as_posix(),
         "manifest_sha256": _sha256(manifest_path),
         "animation_sha256": animation_hashes,
+        "style_animation_sha256": style_animation_hashes,
     }
 
 
-def _review_board(asset_root: Path, base_id: str, sequence: str) -> Image.Image:
+def _review_board(
+    asset_root: Path,
+    base_id: str,
+    sequence: str,
+    *,
+    sprite_style: str = "standard",
+    camera_height: str = "low",
+) -> Image.Image:
     cell = 176
     board = Image.new("RGBA", (cell * 5, cell * 5), (27, 29, 34, 255))
     draw = ImageDraw.Draw(board)
-    base_sheet_path = asset_root / "bases" / base_id / f"{sequence}.png"
+    base_sheet_path = _art_path(
+        asset_root,
+        base_id,
+        sequence,
+        sprite_style=sprite_style,
+        camera_height=camera_height,
+    )
     with Image.open(base_sheet_path) as opened:
         base_sheet = opened.convert("RGBA")
     for index, family in enumerate(FAMILIES):
@@ -475,7 +609,11 @@ def _review_board(asset_root: Path, base_id: str, sequence: str) -> Image.Image:
             / "parts"
             / family.slot
             / _component_id(family, base_id)
-            / f"{sequence}.png"
+            / (
+                f"{sequence}.png"
+                if sprite_style == "standard"
+                else f"styles/{sprite_style}/{camera_height}/{sequence}.png"
+            )
         )
         with Image.open(component) as opened:
             overlay = opened.convert("RGBA")
@@ -544,6 +682,30 @@ def _write_review_boards(asset_root: Path, output_root: Path) -> None:
                 optimize=False,
                 compress_level=9,
             )
+        for camera_height in CHIBI_CAMERAS:
+            for sequence in SEQUENCES:
+                base = _art_path(
+                    asset_root,
+                    base_id,
+                    sequence,
+                    sprite_style=CHIBI_STYLE_ID,
+                    camera_height=camera_height,
+                )
+                if not base.is_file():
+                    continue
+                _review_board(
+                    asset_root,
+                    base_id,
+                    sequence,
+                    sprite_style=CHIBI_STYLE_ID,
+                    camera_height=camera_height,
+                ).save(
+                    output_root
+                    / f"{base_id}-{CHIBI_STYLE_ID}-{camera_height}-{sequence}.png",
+                    format="PNG",
+                    optimize=False,
+                    compress_level=9,
+                )
 
 
 def main() -> int:

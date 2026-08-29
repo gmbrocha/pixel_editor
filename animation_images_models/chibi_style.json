@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "id": "jrpg_chibi",
+  "display_name": "JRPG Chibi",
+  "description": "Render-time JRPG-inspired proportions with a larger head, compact torso, and shortened limbs.",
+  "render_size": 512,
+  "palette_size": 20,
+  "alpha_threshold": 96,
+  "cleanup_threshold": 1,
+  "silhouette_outline": true,
+  "framing_scales": {
+    "elf_bald_female": 2.50,
+    "tiefling_bald_female": 2.50,
+    "dwarf_bald_male": 2.85,
+    "human_bald_male": 2.55
+  },
+  "bone_scales": {
+    "Spine02": [1.0, 0.82, 1.0],
+    "Spine01": [1.0, 0.82, 1.0],
+    "Spine": [1.0, 0.90, 1.0],
+    "LeftShoulder": [1.0, 0.92, 1.0],
+    "RightShoulder": [1.0, 0.92, 1.0],
+    "LeftArm": [1.0, 0.68, 1.0],
+    "RightArm": [1.0, 0.68, 1.0],
+    "LeftForeArm": [1.0, 0.72, 1.0],
+    "RightForeArm": [1.0, 0.72, 1.0],
+    "LeftHand": [1.06, 0.90, 1.06],
+    "RightHand": [1.06, 0.90, 1.06],
+    "LeftUpLeg": [1.0, 0.56, 1.0],
+    "RightUpLeg": [1.0, 0.56, 1.0],
+    "LeftLeg": [1.0, 0.62, 1.0],
+    "RightLeg": [1.0, 0.62, 1.0],
+    "LeftFoot": [1.0, 0.92, 1.0],
+    "RightFoot": [1.0, 0.92, 1.0],
+    "LeftToeBase": [1.0, 0.92, 1.0],
+    "RightToeBase": [1.0, 0.92, 1.0],
+    "neck": [1.0, 0.76, 1.0],
+    "Head": [1.55, 1.55, 1.55]
+  },
+  "character_overrides": {
+    "dwarf_bald_male": {
+      "bone_scales": {
+        "Head": [1.68, 1.68, 1.68]
+      }
+    },
+    "human_bald_male": {
+      "bone_scales": {
+        "Head": [1.78, 1.78, 1.78]
+      }
+    }
+  }
+}

@@ -16,12 +16,29 @@
     "recolorable"
   ],
   "fit": "tiefling-female-01",
-  "version": 1,
+  "version": 3,
   "status": "approved",
   "animations": {
     "idle": "idle.png",
     "walk": "walk.png",
     "run": "run.png"
+  },
+  "cameraVariants": {
+    "jrpg_chibi_top_down": {
+      "idle": "styles/jrpg_chibi/top_down/idle.png",
+      "walk": "styles/jrpg_chibi/top_down/walk.png",
+      "run": "styles/jrpg_chibi/top_down/run.png"
+    },
+    "jrpg_chibi_three_quarter": {
+      "idle": "styles/jrpg_chibi/three_quarter/idle.png",
+      "walk": "styles/jrpg_chibi/three_quarter/walk.png",
+      "run": "styles/jrpg_chibi/three_quarter/run.png"
+    },
+    "jrpg_chibi_low": {
+      "idle": "styles/jrpg_chibi/low/idle.png",
+      "walk": "styles/jrpg_chibi/low/walk.png",
+      "run": "styles/jrpg_chibi/low/run.png"
+    }
   },
   "coverage": {
     "idle": [
@@ -1586,6 +1603,193 @@
       "idle": "1c025ae88326e8288640c0124cdf3ffc01d5aca78ab5ae87271491c3a8f866a9",
       "walk": "fc4303b80a8ab3b151add1e3c3dbeb61d04a3a6785cf56b566415f69f15293dc",
       "run": "5bd8bcc2252ece1bd1bdad9113559c11bf64f6993d9399fc0a03671c2594207d"
+    },
+    "styleVariants": {
+      "jrpg_chibi": {
+        "cameras": [
+          "top_down",
+          "three_quarter",
+          "low"
+        ],
+        "animationSha256": {
+          "jrpg_chibi_top_down": {
+            "idle": "0e408fad2a7eb719e4158663fe12c1342b5ed70d3158b51d98e9310d452eec65",
+            "walk": "4519f30a57140b29c7f35a061b831673f53dd6cf3d04477627c22f9aa45793e3",
+            "run": "73208b4da9cb9b8a6b2dc8aebdf1fa8bd83d64b0261bcd295acb8a41e70dc197"
+          },
+          "jrpg_chibi_three_quarter": {
+            "idle": "630b9623bef9fab82ccd5eb6bbc04af1ffa448e31dfb31cd722a74fd0379a71c",
+            "walk": "47370eb1d350679bd8a3b5388e6c7c7c17e887f862e0be3b154d4f8a56619f4c",
+            "run": "66d0f07ba05e1e971cca132d84b9f956a15a0c872ba7b2b403f4e734cf52fa79"
+          },
+          "jrpg_chibi_low": {
+            "idle": "baa56b5618dec970977146f4476a674f4248db0c2f85cd30bef0a53f49b68200",
+            "walk": "11b8debe5ec30dd19b510fcccfb1540d80feb4c4627286c96f0a335513451c56",
+            "run": "14ae4111607f875ad08c161bd6e09fa6471efebfc697898d15298d7de5f45e91"
+          }
+        },
+        "cleanupReports": {
+          "jrpg_chibi_top_down": {
+            "idle": {
+              "frame_size": [
+                128,
+                128
+              ],
+              "frame_columns": 14,
+              "direction_rows": 4,
+              "frames_changed": 56,
+              "removed_islands": 9,
+              "removed_island_pixels": 123,
+              "chamfered_outline_pixels": 573,
+              "removed_spurs": 36,
+              "removed_spur_pixels": 36,
+              "filled_holes": 0,
+              "filled_hole_pixels": 0,
+              "changed_pixels": 732
+            },
+            "walk": {
+              "frame_size": [
+                128,
+                128
+              ],
+              "frame_columns": 8,
+              "direction_rows": 4,
+              "frames_changed": 32,
+              "removed_islands": 4,
+              "removed_island_pixels": 51,
+              "chamfered_outline_pixels": 400,
+              "removed_spurs": 22,
+              "removed_spur_pixels": 22,
+              "filled_holes": 0,
+              "filled_hole_pixels": 0,
+              "changed_pixels": 473
+            },
+            "run": {
+              "frame_size": [
+                128,
+                128
+              ],
+              "frame_columns": 8,
+              "direction_rows": 4,
+              "frames_changed": 32,
+              "removed_islands": 4,
+              "removed_island_pixels": 60,
+              "chamfered_outline_pixels": 353,
+              "removed_spurs": 19,
+              "removed_spur_pixels": 19,
+              "filled_holes": 0,
+              "filled_hole_pixels": 0,
+              "changed_pixels": 432
+            }
+          },
+          "jrpg_chibi_three_quarter": {
+            "idle": {
+              "frame_size": [
+                128,
+                128
+              ],
+              "frame_columns": 14,
+              "direction_rows": 4,
+              "frames_changed": 56,
+              "removed_islands": 0,
+              "removed_island_pixels": 0,
+              "chamfered_outline_pixels": 571,
+              "removed_spurs": 40,
+              "removed_spur_pixels": 40,
+              "filled_holes": 0,
+              "filled_hole_pixels": 0,
+              "changed_pixels": 611
+            },
+            "walk": {
+              "frame_size": [
+                128,
+                128
+              ],
+              "frame_columns": 8,
+              "direction_rows": 4,
+              "frames_changed": 32,
+              "removed_islands": 1,
+              "removed_island_pixels": 14,
+              "chamfered_outline_pixels": 409,
+              "removed_spurs": 21,
+              "removed_spur_pixels": 21,
+              "filled_holes": 0,
+              "filled_hole_pixels": 0,
+              "changed_pixels": 444
+            },
+            "run": {
+              "frame_size": [
+                128,
+                128
+              ],
+              "frame_columns": 8,
+              "direction_rows": 4,
+              "frames_changed": 32,
+              "removed_islands": 2,
+              "removed_island_pixels": 29,
+              "chamfered_outline_pixels": 403,
+              "removed_spurs": 31,
+              "removed_spur_pixels": 31,
+              "filled_holes": 0,
+              "filled_hole_pixels": 0,
+              "changed_pixels": 463
+            }
+          },
+          "jrpg_chibi_low": {
+            "idle": {
+              "frame_size": [
+                128,
+                128
+              ],
+              "frame_columns": 14,
+              "direction_rows": 4,
+              "frames_changed": 56,
+              "removed_islands": 0,
+              "removed_island_pixels": 0,
+              "chamfered_outline_pixels": 513,
+              "removed_spurs": 19,
+              "removed_spur_pixels": 19,
+              "filled_holes": 0,
+              "filled_hole_pixels": 0,
+              "changed_pixels": 532
+            },
+            "walk": {
+              "frame_size": [
+                128,
+                128
+              ],
+              "frame_columns": 8,
+              "direction_rows": 4,
+              "frames_changed": 32,
+              "removed_islands": 0,
+              "removed_island_pixels": 0,
+              "chamfered_outline_pixels": 424,
+              "removed_spurs": 25,
+              "removed_spur_pixels": 25,
+              "filled_holes": 0,
+              "filled_hole_pixels": 0,
+              "changed_pixels": 449
+            },
+            "run": {
+              "frame_size": [
+                128,
+                128
+              ],
+              "frame_columns": 8,
+              "direction_rows": 4,
+              "frames_changed": 32,
+              "removed_islands": 1,
+              "removed_island_pixels": 15,
+              "chamfered_outline_pixels": 379,
+              "removed_spurs": 17,
+              "removed_spur_pixels": 17,
+              "filled_holes": 0,
+              "filled_hole_pixels": 0,
+              "changed_pixels": 411
+            }
+          }
+        }
+      }
     }
   }
 }

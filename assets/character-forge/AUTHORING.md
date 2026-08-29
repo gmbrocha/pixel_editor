@@ -14,11 +14,15 @@ Each frame is 128 by 128 pixels. Sheet rows are Front, Back, Right, and Left. Id
 
 Tiefling female, Dwarf male, and muscular Human male are also installed as approved bases under `bases/`. Their Low views have exact 32-region anatomical fitting sheets at `base_regions/<base-id>/<animation>/<animation>_regions.png`. Use the sheet matching the target body; never apply an elf-fit overlay directly to another model.
 
-Character Forge also provides Near Top-Down (70 degrees), Three-Quarter (45
-degrees), and Low (28 degrees) base views. The semantic region sheets and the
-current components in this guide are authored for Low only. Elevated-view
-component authoring must use separate angle-specific sheets and declare complete
-Idle, Walk, and Run camera coverage before the Forge will offer it.
+Character Forge provides Near Top-Down (70 degrees), Three-Quarter (45 degrees),
+and Low (28 degrees) base views in both `Standard Pixel` and `JRPG Chibi`. Chibi
+base sheets are under `bases/<base-id>/styles/jrpg_chibi/<camera>/`; their exact
+fitting regions are under
+`style_regions/jrpg_chibi/<base-id>/<camera>/`. The 25 generated families have
+fitted chibi variants at all three heights. Existing hand-authored hair, face
+accessories, and approved Standard overrides remain Standard-only until a
+separate chibi fit is authored; the Forge hides them in chibi recipes rather
+than resizing them.
 
 ## Easier per-frame drawing
 
@@ -91,6 +95,11 @@ Generated family IDs end with their fit, such as
 Their generated dark outline is exactly one pixel: the outside contour for
 dilated garments and the inside boundary for the already-undilated vest. Keep
 interior material shading separate from this outline when authoring replacements.
+Generated family manifests store chibi sheets in
+`styles/jrpg_chibi/<camera>/<animation>.png` and expose them through
+`cameraVariants` keys such as `jrpg_chibi_three_quarter`. A hand-authored chibi
+component must provide complete Idle, Walk, and Run coverage for a camera before
+the selector will offer it.
 
 ## Pre-cleaned editable family sheets
 

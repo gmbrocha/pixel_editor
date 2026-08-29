@@ -250,6 +250,18 @@
             "low": {
               "runtime_file": "bases/elf-01/idle.png",
               "runtime_sha256": "d686fdcdc6346abb9058756f4cae0540994c966d8ed9a04349dfe152c745c356"
+            },
+            "jrpg_chibi_top_down": {
+              "runtime_file": "bases/elf-01/styles/jrpg_chibi/top_down/idle.png",
+              "runtime_sha256": "bfd3adbde6af712d9678828dc724c07671bcec68b8170160aa3b5231382f156e"
+            },
+            "jrpg_chibi_three_quarter": {
+              "runtime_file": "bases/elf-01/styles/jrpg_chibi/three_quarter/idle.png",
+              "runtime_sha256": "ce094f3b47b7b77a79e1071d2ac34f8bdb07e91f83492728746c7a55c7d693a2"
+            },
+            "jrpg_chibi_low": {
+              "runtime_file": "bases/elf-01/styles/jrpg_chibi/low/idle.png",
+              "runtime_sha256": "e2290af8a4ea26e6227c0cda0b05e5b81f7d4a5af9130d2d12f7c7f58e2d6f92"
             }
           }
         },
@@ -356,6 +368,18 @@
             "low": {
               "runtime_file": "bases/elf-01/walk.png",
               "runtime_sha256": "96b73ea3a991fd71e7893b60da4a57cd2fbdc4e0977a9176d882f0c09c2f9f79"
+            },
+            "jrpg_chibi_top_down": {
+              "runtime_file": "bases/elf-01/styles/jrpg_chibi/top_down/walk.png",
+              "runtime_sha256": "051f0a87e6d4af7c5060b34f1552aacbf757354a54cc25cac2997b16486ddb1e"
+            },
+            "jrpg_chibi_three_quarter": {
+              "runtime_file": "bases/elf-01/styles/jrpg_chibi/three_quarter/walk.png",
+              "runtime_sha256": "0ec77c326aacc4695e7bf7d9bc8e522f4097148e8adfeba0593bbf2b19e3a58c"
+            },
+            "jrpg_chibi_low": {
+              "runtime_file": "bases/elf-01/styles/jrpg_chibi/low/walk.png",
+              "runtime_sha256": "852d35f922b5106ddf98a1f76675b6b57cdedc786ebfea2b18e8898f7dc3ae30"
             }
           }
         },
@@ -462,6 +486,18 @@
             "low": {
               "runtime_file": "bases/elf-01/run.png",
               "runtime_sha256": "13a461d3d2f24d6d40cde7e2fb3d0a15d9d08b0c70b086a0369d15b431764ea6"
+            },
+            "jrpg_chibi_top_down": {
+              "runtime_file": "bases/elf-01/styles/jrpg_chibi/top_down/run.png",
+              "runtime_sha256": "f556e68a8e2d34e47bf02c54ba70606d8e837ce86211f3c57949a6edcbef6d06"
+            },
+            "jrpg_chibi_three_quarter": {
+              "runtime_file": "bases/elf-01/styles/jrpg_chibi/three_quarter/run.png",
+              "runtime_sha256": "f23460c6230d0757d069e4a170c08c63b9c2b9cf166a644c572d923f84411eac"
+            },
+            "jrpg_chibi_low": {
+              "runtime_file": "bases/elf-01/styles/jrpg_chibi/low/run.png",
+              "runtime_sha256": "2a76971e27cf3914d40841c07d1e1542e9fed888a6372f715bb2764ad534c219"
             }
           }
         }
@@ -609,6 +645,18 @@
             "low": {
               "runtime_file": "bases/tiefling-female-01/idle.png",
               "runtime_sha256": "e9fecdcde8d7146f2ff521f388ce5f5c0fe34609d5f57acd12be9e63e902649a"
+            },
+            "jrpg_chibi_top_down": {
+              "runtime_file": "bases/tiefling-female-01/styles/jrpg_chibi/top_down/idle.png",
+              "runtime_sha256": "dba3c26dd9c95e64aa140b536bd722124ee459d38b7755e7bf7f692d1cfce27f"
+            },
+            "jrpg_chibi_three_quarter": {
+              "runtime_file": "bases/tiefling-female-01/styles/jrpg_chibi/three_quarter/idle.png",
+              "runtime_sha256": "5fa87a5da9fce21ae0e800e2fd5185dd701585a5de736ac9a10812516b7ca3c2"
+            },
+            "jrpg_chibi_low": {
+              "runtime_file": "bases/tiefling-female-01/styles/jrpg_chibi/low/idle.png",
+              "runtime_sha256": "433c57d3aa8d4755c4bffd5de5b4e6eb7365d26e7a3f26af0edf55e5a52dc41d"
             }
           }
         },
@@ -714,6 +762,18 @@
             "low": {
               "runtime_file": "bases/tiefling-female-01/walk.png",
               "runtime_sha256": "de8fd702c57757ee2cae6e4cc18e271242cfe1c494fcaf194b5cdabcc900503c"
+            },
+            "jrpg_chibi_top_down": {
+              "runtime_file": "bases/tiefling-female-01/styles/jrpg_chibi/top_down/walk.png",
+              "runtime_sha256": "db94c2edece0576489ad4b9876a5ce5aef672e81a3ece8c5af6a078cc3f6d903"
+            },
+            "jrpg_chibi_three_quarter": {
+              "runtime_file": "bases/tiefling-female-01/styles/jrpg_chibi/three_quarter/walk.png",
+              "runtime_sha256": "d99a4ab38a32f8c1959d81bf174f8a34905c5b8c7e750a4a576c1e93cbd9af1b"
+            },
+            "jrpg_chibi_low": {
+              "runtime_file": "bases/tiefling-female-01/styles/jrpg_chibi/low/walk.png",
+              "runtime_sha256": "73d6233292c05ac289bee60280381a5f93749c1112f8f684e9391f6e40d80cfe"
             }
           }
         },
@@ -819,6 +879,18 @@
             "low": {
               "runtime_file": "bases/tiefling-female-01/run.png",
               "runtime_sha256": "5983e6920659a00d881832d513456382b1a3cbe845a2c9bc43d836551d5a6190"
+            },
+            "jrpg_chibi_top_down": {
+              "runtime_file": "bases/tiefling-female-01/styles/jrpg_chibi/top_down/run.png",
+              "runtime_sha256": "e505764024e089ab279fdf3fda8e31da9eb5714a1be996c8afe2bbd72a07e0d3"
+            },
+            "jrpg_chibi_three_quarter": {
+              "runtime_file": "bases/tiefling-female-01/styles/jrpg_chibi/three_quarter/run.png",
+              "runtime_sha256": "16d929a41134ff6322e7283be67cc70dd14521bc4a5e9fda1653554a6c89ad77"
+            },
+            "jrpg_chibi_low": {
+              "runtime_file": "bases/tiefling-female-01/styles/jrpg_chibi/low/run.png",
+              "runtime_sha256": "d72e8d884871e9f1bc90d172473fb79e4bc5b24bf13292b28b7f323e736dbfcb"
             }
           }
         }
@@ -966,6 +1038,18 @@
             "low": {
               "runtime_file": "bases/dwarf-male-01/idle.png",
               "runtime_sha256": "85fa39048058f6ad91e602b8d22d09e978f743914925b48866857f1d36a28060"
+            },
+            "jrpg_chibi_top_down": {
+              "runtime_file": "bases/dwarf-male-01/styles/jrpg_chibi/top_down/idle.png",
+              "runtime_sha256": "dfb321619db089fee9d4b458b52d778036485e08db9a9e19e995d0de0892af9d"
+            },
+            "jrpg_chibi_three_quarter": {
+              "runtime_file": "bases/dwarf-male-01/styles/jrpg_chibi/three_quarter/idle.png",
+              "runtime_sha256": "fc630324815cfd00f453aff668eb87d7b3e5265f9060ea5ed015286c052a9b6c"
+            },
+            "jrpg_chibi_low": {
+              "runtime_file": "bases/dwarf-male-01/styles/jrpg_chibi/low/idle.png",
+              "runtime_sha256": "0d974a42c6e81f72d6ff3d9d86593b2e905f2db3c4487107d8b2b7e9c6277c53"
             }
           }
         },
@@ -1071,6 +1155,18 @@
             "low": {
               "runtime_file": "bases/dwarf-male-01/walk.png",
               "runtime_sha256": "aa1400f3d7addb563a9d3d48a9650f7bbc72fca50e58022a3d9a4173b1c6cd3a"
+            },
+            "jrpg_chibi_top_down": {
+              "runtime_file": "bases/dwarf-male-01/styles/jrpg_chibi/top_down/walk.png",
+              "runtime_sha256": "f4d016fe72babb95cac5bc63fec0c1df5b388cd2d6c455de890772e63760dd4e"
+            },
+            "jrpg_chibi_three_quarter": {
+              "runtime_file": "bases/dwarf-male-01/styles/jrpg_chibi/three_quarter/walk.png",
+              "runtime_sha256": "3597b88e582a3424eca64ec7d76dc95c03b10c267229e18fda08fa29ecdd29c5"
+            },
+            "jrpg_chibi_low": {
+              "runtime_file": "bases/dwarf-male-01/styles/jrpg_chibi/low/walk.png",
+              "runtime_sha256": "edf3440e6ac5ba9755915fea1503104beb019700356a88c9fcf95e3dba998bec"
             }
           }
         },
@@ -1176,6 +1272,18 @@
             "low": {
               "runtime_file": "bases/dwarf-male-01/run.png",
               "runtime_sha256": "6b7a88cc4dfee0569e30965705c84ec92d642c9b9f6c3cad6c3897de95822e1b"
+            },
+            "jrpg_chibi_top_down": {
+              "runtime_file": "bases/dwarf-male-01/styles/jrpg_chibi/top_down/run.png",
+              "runtime_sha256": "7ab578a10a33079da7b3154fcf17851770013aa0ecedfd67d7ed77c09c487cc3"
+            },
+            "jrpg_chibi_three_quarter": {
+              "runtime_file": "bases/dwarf-male-01/styles/jrpg_chibi/three_quarter/run.png",
+              "runtime_sha256": "8a2ead009468ee05537661c599219609e56a51338508b414a29b08df97e0e667"
+            },
+            "jrpg_chibi_low": {
+              "runtime_file": "bases/dwarf-male-01/styles/jrpg_chibi/low/run.png",
+              "runtime_sha256": "cbccebb5247aea502d7011a110a4338372aea01872c3731fbbddb25fad8ec860"
             }
           }
         }
@@ -1323,6 +1431,18 @@
             "low": {
               "runtime_file": "bases/human-muscular-male-01/idle.png",
               "runtime_sha256": "1080877218c6c23ca9f9d227d9ae6a33e69d744536ce386adc2e761de39d90da"
+            },
+            "jrpg_chibi_top_down": {
+              "runtime_file": "bases/human-muscular-male-01/styles/jrpg_chibi/top_down/idle.png",
+              "runtime_sha256": "2446efef7dbb02a2fe093881fba169377ac45e1dd2a61c5ab2aaef59e8655651"
+            },
+            "jrpg_chibi_three_quarter": {
+              "runtime_file": "bases/human-muscular-male-01/styles/jrpg_chibi/three_quarter/idle.png",
+              "runtime_sha256": "d61ec9ff5c9a1e6f06b803533a714f65b1b3afe5679d039c31cd4fb7e054f448"
+            },
+            "jrpg_chibi_low": {
+              "runtime_file": "bases/human-muscular-male-01/styles/jrpg_chibi/low/idle.png",
+              "runtime_sha256": "c443b2830ac2195ece14f99bc1e44388cbf81cdcd5acd9d38c0347f1277a094e"
             }
           }
         },
@@ -1428,6 +1548,18 @@
             "low": {
               "runtime_file": "bases/human-muscular-male-01/walk.png",
               "runtime_sha256": "c126987390c24baf8e593cfadaa8e8a47b5d664c77230afaf0b36832721467af"
+            },
+            "jrpg_chibi_top_down": {
+              "runtime_file": "bases/human-muscular-male-01/styles/jrpg_chibi/top_down/walk.png",
+              "runtime_sha256": "4fc40cc52cd69ce308479a8d341e0dc73e8cd83e70d68308caa12e799821a6ee"
+            },
+            "jrpg_chibi_three_quarter": {
+              "runtime_file": "bases/human-muscular-male-01/styles/jrpg_chibi/three_quarter/walk.png",
+              "runtime_sha256": "a8cb9aa9842af72680e2043331bef4deb37a5112ce564d828f9ca18cb7d4d489"
+            },
+            "jrpg_chibi_low": {
+              "runtime_file": "bases/human-muscular-male-01/styles/jrpg_chibi/low/walk.png",
+              "runtime_sha256": "5ce2f5829bbb8537b9521537cd8bb6973355cc61383fc028e73faf4f367fbf7b"
             }
           }
         },
@@ -1533,10 +1665,31 @@
             "low": {
               "runtime_file": "bases/human-muscular-male-01/run.png",
               "runtime_sha256": "43de53eca6acb7faf01b9da9a55f1637006a4e8718c04a18a767a96de8825c43"
+            },
+            "jrpg_chibi_top_down": {
+              "runtime_file": "bases/human-muscular-male-01/styles/jrpg_chibi/top_down/run.png",
+              "runtime_sha256": "e92bed9122181f9d3b76ad5fe49463dfb73eba4f36c696ca356a7a9a146bbf09"
+            },
+            "jrpg_chibi_three_quarter": {
+              "runtime_file": "bases/human-muscular-male-01/styles/jrpg_chibi/three_quarter/run.png",
+              "runtime_sha256": "2a9692185d7f120ee45494005fa4c4666b42dc5144ce65781cc31986bd69c2ff"
+            },
+            "jrpg_chibi_low": {
+              "runtime_file": "bases/human-muscular-male-01/styles/jrpg_chibi/low/run.png",
+              "runtime_sha256": "99276a76025323fb2003b3300ae84bab6734bd02d026843257bd633b85b4ea07"
             }
           }
         }
       }
+    }
+  },
+  "sprite_styles": {
+    "standard": {
+      "name": "Standard Pixel"
+    },
+    "jrpg_chibi": {
+      "name": "JRPG Chibi",
+      "description": "Compact limbs and torso with an enlarged head and crisp interior silhouette outline."
     }
   }
 }

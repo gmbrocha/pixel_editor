@@ -58,6 +58,10 @@ def _pixels(image: Image.Image):
 def test_catalog_contains_all_approved_motion_bases() -> None:
     catalog = create_default_catalog()
     validate_catalog(catalog)
+    assert dict(catalog.sprite_styles) == {
+        "standard": "Standard Pixel",
+        "jrpg_chibi": "JRPG Chibi",
+    }
     assert {base.id for base in catalog.bases} == {
         "elf-01",
         "tiefling-female-01",
@@ -93,10 +97,16 @@ def test_catalog_contains_all_approved_motion_bases() -> None:
                 animation.playback_frames(direction) == tuple(range(frame_count))
                 for direction in animation.directions
             )
-            assert set(animation.camera_variants) == set(CAMERA_HEIGHT_ORDER)
+            assert set(animation.camera_variants) == {
+                *CAMERA_HEIGHT_ORDER,
+                *(f"jrpg_chibi_{value}" for value in CAMERA_HEIGHT_ORDER),
+            }
             for camera_height in CAMERA_HEIGHT_ORDER:
                 assert character_base.animation_path(
                     animation_id, camera_height
+                ).is_file()
+                assert character_base.animation_path(
+                    animation_id, camera_height, "jrpg_chibi"
                 ).is_file()
         idle = character_base.animations["idle"]
         assert len(idle.frame_durations_ms) == 14
@@ -505,7 +515,10 @@ def test_recipe_round_trip_randomization_and_export(tmp_path: Path) -> None:
     assert load_recipe(path).to_dict() == recipe.to_dict()
 
     elevated = CharacterRecipe(
-        base_id="dwarf-male-01", camera_height="three_quarter", name="elevated"
+        base_id="dwarf-male-01",
+        camera_height="three_quarter",
+        sprite_style="jrpg_chibi",
+        name="elevated",
     )
     elevated_path = tmp_path / "elevated.json"
     save_recipe(elevated, elevated_path)
@@ -526,6 +539,10 @@ def test_character_forge_window_displays_128px_elf_and_new_parts() -> None:
     assert window.base_combo.currentText() == "Elf Female Base"
     assert window.base_combo.count() == 4
     assert window.base_combo.isEnabled()
+    assert [
+        window.sprite_style_combo.itemData(index)
+        for index in range(window.sprite_style_combo.count())
+    ] == ["standard", "jrpg_chibi"]
     assert [
         window.animation_combo.itemData(index)
         for index in range(window.animation_combo.count())
@@ -558,6 +575,19 @@ def test_character_forge_window_displays_128px_elf_and_new_parts() -> None:
     assert window.recipe.camera_height == "top_down"
     assert all(combo.count() == 1 for combo in window.part_combos.values())
     assert window.preview_label.pixmap().size().toTuple() == (1024, 1024)
+    window.sprite_style_combo.setCurrentIndex(
+        window.sprite_style_combo.findData("jrpg_chibi")
+    )
+    application.processEvents()
+    assert window.recipe.sprite_style == "jrpg_chibi"
+    assert window.part_combos["torso"].count() == 5
+    assert window.part_combos["outerwear"].count() == 5
+    assert window.part_combos["hair"].count() == 1
+    assert window.preview_label.pixmap().size().toTuple() == (1024, 1024)
+    window.sprite_style_combo.setCurrentIndex(
+        window.sprite_style_combo.findData("standard")
+    )
+    application.processEvents()
     window.camera_height_combo.setCurrentIndex(
         window.camera_height_combo.findData("low")
     )

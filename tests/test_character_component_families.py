@@ -76,7 +76,11 @@ def test_25_component_families_are_fitted_to_all_four_bases() -> None:
             assert part.status == "approved"
             assert len(part.color_ramp) == 5
             assert part.ramp_main_color in part.color_ramp
-            assert not part.camera_variants
+            assert set(part.camera_variants) == {
+                "jrpg_chibi_top_down",
+                "jrpg_chibi_three_quarter",
+                "jrpg_chibi_low",
+            }
 
 
 def test_generated_components_have_complete_low_camera_pixel_coverage() -> None:
@@ -160,6 +164,22 @@ def test_components_are_low_camera_only_and_isolated_by_fit() -> None:
             for slot in FAMILY_SLOT_COUNTS
             for part in catalog.parts_for_slot(slot, base_id, "low")
         )
+        for camera_height in ("top_down", "three_quarter", "low"):
+            assert sum(
+                len(
+                    catalog.parts_for_slot(
+                        slot, base_id, camera_height, "jrpg_chibi"
+                    )
+                )
+                for slot in FAMILY_SLOT_COUNTS
+            ) == 25
+            assert all(
+                part.fit == base_id
+                for slot in FAMILY_SLOT_COUNTS
+                for part in catalog.parts_for_slot(
+                    slot, base_id, camera_height, "jrpg_chibi"
+                )
+            )
 
 
 def test_all_component_family_review_boards_are_present() -> None:
@@ -168,3 +188,10 @@ def test_all_component_family_review_boards_are_present() -> None:
         for sequence in SEQUENCES:
             with Image.open(review_root / f"{base_id}-{sequence}.png") as opened:
                 assert opened.size == (880, 880)
+        for camera_height in ("top_down", "three_quarter", "low"):
+            for sequence in SEQUENCES:
+                with Image.open(
+                    review_root
+                    / f"{base_id}-jrpg_chibi-{camera_height}-{sequence}.png"
+                ) as opened:
+                    assert opened.size == (880, 880)
