@@ -135,3 +135,32 @@ def test_semantic_package_supports_thirteen_frame_idle(tmp_path: Path) -> None:
     assert manifest["sequence"] == "idle"
     assert manifest["source_frames"] == list(range(1, 14))
     assert manifest["sheet_dimensions"] == [104, 8]
+
+
+def test_semantic_package_preserves_exact_idle_hold_durations(tmp_path: Path) -> None:
+    manifest_path = _paired_fixture(
+        tmp_path / "source", frame_count=26, sequence_name="idle"
+    )
+    output = tmp_path / "package"
+    manifest = generate_semantic_sprite_package(
+        manifest_path,
+        output,
+        SemanticSpriteSettings(
+            cell_size=8,
+            palette_size=4,
+            cleanup_threshold=0,
+            fps=12,
+            frame_duration_overrides=((11, 1500), (24, 1500)),
+        ),
+        sequence_name="idle",
+    )
+    assert manifest["frame_durations_ms"][10] == 1500
+    assert manifest["frame_durations_ms"][23] == 1500
+    with Image.open(output / "gifs" / "idle_front.gif") as opened:
+        durations = []
+        for index in range(opened.n_frames):
+            opened.seek(index)
+            durations.append(opened.info["duration"])
+    assert durations[10] == 1500
+    assert durations[23] == 1500
+    assert set(durations[:10]) == {80}

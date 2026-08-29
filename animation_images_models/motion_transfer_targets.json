@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "source": {
+    "character_id": "elf_bald_female",
+    "canonical_blend": "elf_bald_female/canonical/elf_bald_female_mannequin.blend",
+    "profile": "elf_bald_female/canonical/approved_motion_transfer_profile.json",
+    "actions": {
+      "bind": "PF_BindPose",
+      "idle": "PF_Idle_Approved",
+      "walk_original": "PF_Walk",
+      "walk_approved": "PF_Walk_Approved",
+      "run_original": "PF_Run",
+      "run_approved": "PF_Run_Approved"
+    }
+  },
+  "expected_bones": [
+    "Hips",
+    "LeftUpLeg",
+    "LeftLeg",
+    "LeftFoot",
+    "LeftToeBase",
+    "RightUpLeg",
+    "RightLeg",
+    "RightFoot",
+    "RightToeBase",
+    "Spine02",
+    "Spine01",
+    "Spine",
+    "LeftShoulder",
+    "LeftArm",
+    "LeftForeArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightArm",
+    "RightForeArm",
+    "RightHand",
+    "neck",
+    "Head",
+    "head_end",
+    "headfront"
+  ],
+  "targets": {
+    "tiefling_bald_female": {
+      "base_id": "tiefling-female-01",
+      "display_name": "Tiefling Female Base",
+      "approved_idle_edit": "tiefling_bald_female/working/motion_transfer/editable/tiefling_idle_transfer_edit_v1.blend",
+      "approved_idle_action": "PF_Idle_Transfer_Edit",
+      "bind_fbx": "tiefling_bald_female/teifling_female_rigged_no_animation.fbx",
+      "walk_archive": "tiefling_bald_female/female_teifling_animation_package.zip",
+      "walk_entry": "Meshy_AI_Neutral_Figure_biped/Meshy_AI_Neutral_Figure_biped_Animation_Walking_withSkin.fbx",
+      "run_archive": "tiefling_bald_female/female_teifling_animation_run_only.zip",
+      "run_entry": "Meshy_AI_Neutral_Figure_biped/Meshy_AI_Neutral_Figure_biped_Animation_Running_withSkin.fbx",
+      "texture_archive": "tiefling_bald_female/female_teifling_animation_package.zip",
+      "texture_prefix": "Meshy_AI_Neutral_Figure_biped/Meshy_AI_Neutral_Figure_biped_texture_0"
+    },
+    "dwarf_bald_male": {
+      "base_id": "dwarf-male-01",
+      "display_name": "Dwarf Male Base",
+      "sprite_framing_scale": 1.12,
+      "bind_fbx": "dwarf_bald_male/dwarf_bald_male_low_poly_rigged_no_animation.fbx",
+      "walk_archive": "dwarf_bald_male/dwarf_bald_male_low_poly_animation_walk_only.zip",
+      "walk_entry": "Meshy_AI_Neutral_Figure_biped/Meshy_AI_Neutral_Figure_biped_Animation_Walking_withSkin.fbx",
+      "run_archive": "dwarf_bald_male/dwarf_bald_male_low_poly_animation_run_only_base.zip",
+      "run_entry": "Meshy_AI_Neutral_Figure_biped/Meshy_AI_Neutral_Figure_biped_Animation_Running_withSkin.fbx",
+      "texture_archive": "dwarf_bald_male/dwarf_bald_male_low_poly_animation_walk_only.zip",
+      "texture_prefix": "Meshy_AI_Neutral_Figure_biped/Meshy_AI_Neutral_Figure_biped_texture_0"
+    },
+    "human_bald_male": {
+      "base_id": "human-muscular-male-01",
+      "display_name": "Muscular Human Male Base",
+      "bind_fbx": "human_bald_male/human_bald_male_rigged_base_model.fbx",
+      "walk_archive": "human_bald_male/human_bald_male_animation_package.zip",
+      "walk_entry": "Meshy_AI_Neutral_Figure_biped/Meshy_AI_Neutral_Figure_biped_Animation_Walking_withSkin.fbx",
+      "run_archive": "human_bald_male/human_bald_male_animation_package.zip",
+      "run_entry": "Meshy_AI_Neutral_Figure_biped/Meshy_AI_Neutral_Figure_biped_Animation_Running_withSkin.fbx",
+      "texture_archive": "human_bald_male/human_bald_male_animation_package.zip",
+      "texture_prefix": "Meshy_AI_Neutral_Figure_biped/Meshy_AI_Neutral_Figure_biped_texture_0"
+    }
+  }
+}

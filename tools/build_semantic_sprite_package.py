@@ -25,15 +25,30 @@ def main() -> int:
     parser.add_argument("--alpha-threshold", type=int, default=112)
     parser.add_argument("--cleanup-threshold", type=int, default=1)
     parser.add_argument("--fps", type=int, default=10)
+    parser.add_argument(
+        "--frame-duration",
+        action="append",
+        default=[],
+        metavar="FRAME=MS",
+        help="Override one one-based frame duration; repeat as needed",
+    )
     parser.add_argument("--sequence", default="walk")
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
+    overrides = []
+    for value in args.frame_duration:
+        try:
+            frame, duration = value.split("=", 1)
+            overrides.append((int(frame), int(duration)))
+        except (TypeError, ValueError) as exc:
+            parser.error(f"Invalid --frame-duration {value!r}; expected FRAME=MS")
     settings = SemanticSpriteSettings(
         cell_size=args.cell_size,
         palette_size=args.palette_size,
         alpha_threshold=args.alpha_threshold,
         cleanup_threshold=args.cleanup_threshold,
         fps=args.fps,
+        frame_duration_overrides=tuple(overrides),
     )
     if args.check:
         mismatches = check_semantic_sprite_package(

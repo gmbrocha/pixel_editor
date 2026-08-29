@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "status": "approved_elf_motions_consolidated",
+  "canonical_input_sha256": "950faf164c6db0e963b310b3f241dbbb8de49704b9af3cb494fde65dd1a675fd",
+  "output_blend_sha256": "ff5e3dc983765337b6a8737e46f7eef1bdad2ed22b7b06e105603d8452fc6557",
+  "protected_actions": [
+    "PF_BindPose",
+    "PF_Idle",
+    "PF_Run",
+    "PF_Walk"
+  ],
+  "approved": {
+    "idle": {
+      "action": "PF_Idle_Approved",
+      "frames": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26
+      ],
+      "closure": 27,
+      "fps": 12,
+      "artist_source": "F:\\Desktop\\archive_projects\\pixel_forge\\animation_images_models\\elf_bald_female\\working\\idle_26f_pipeline.blend",
+      "artist_source_sha256": "b6a7f459e1c3b3270c8fca3d5c0b6331ba1fa2d08a769913582c4e1eeb6f061c",
+      "pose_sha256": "8498e131d71cf70ed722e48aa72b44e564038a21483f30b11443aa637abde34a"
+    },
+    "walk": {
+      "action": "PF_Walk_Approved",
+      "frames": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "closure": 9,
+      "fps": 10,
+      "artist_source": "F:\\Desktop\\archive_projects\\pixel_forge\\animation_images_models\\elf_bald_female\\working\\walk_manual_v1_pipeline.blend",
+      "artist_source_sha256": "a87c0cc9ec12ce39f1ba2e0fdd94789b8388db82839c3aafbc7fb477905d4cfa",
+      "pose_sha256": "28c95672c81924f64ae27af7118836615b682f49f5ac340b99e5cb8a4eac2e4d"
+    },
+    "run": {
+      "action": "PF_Run_Approved",
+      "frames": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "closure": 9,
+      "fps": 10,
+      "artist_source": "F:\\Desktop\\archive_projects\\pixel_forge\\animation_images_models\\elf_bald_female\\working\\run_redo_candidate_pipeline.blend",
+      "artist_source_sha256": "dfe9287a90538ea2999db53dd6bea33ec3b23dcce52e23311269ab5a41f13dbc",
+      "pose_sha256": "c1758f2574d8877f3f25ebc07a91184fdf8d7298931929d0837c64986e096a5d"
+    }
+  }
+}

@@ -20,6 +20,7 @@ def _args() -> argparse.Namespace:
     parser.add_argument("--walk", required=True, type=Path)
     parser.add_argument("--run", required=True, type=Path)
     parser.add_argument("--texture-dir", required=True, type=Path)
+    parser.add_argument("--character-id", default="elf_bald_female")
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--force", action="store_true")
@@ -79,15 +80,19 @@ def _image_node(
     return node
 
 
-def _build_material(mesh_obj: bpy.types.Object, texture_dir: Path) -> dict[str, str]:
+def _build_material(
+    mesh_obj: bpy.types.Object,
+    texture_dir: Path,
+    material_name: str = "PF_Elf_Bald_Female_Material",
+) -> dict[str, str]:
     texture_paths = {
         "base_color": _texture(texture_dir, "texture_0.png"),
         "metallic": _texture(texture_dir, "texture_0_metallic.png"),
         "normal": _texture(texture_dir, "texture_0_normal.png"),
         "roughness": _texture(texture_dir, "texture_0_roughness.png"),
     }
-    material = mesh_obj.active_material or bpy.data.materials.new("PF_Elf_Bald_Female_Material")
-    material.name = "PF_Elf_Bald_Female_Material"
+    material = mesh_obj.active_material or bpy.data.materials.new(material_name)
+    material.name = material_name
     material.use_nodes = True
     nodes = material.node_tree.nodes
     links = material.node_tree.links
@@ -183,6 +188,14 @@ def _action_manifest(action: bpy.types.Action) -> dict[str, Any]:
 
 def main() -> None:
     args = _args()
+    character_id = args.character_id.strip().lower()
+    if not character_id or any(
+        character not in "abcdefghijklmnopqrstuvwxyz0123456789_"
+        for character in character_id
+    ):
+        raise ValueError("character-id must contain only lowercase letters, digits, and underscores")
+    title = "_".join(part.capitalize() for part in character_id.split("_"))
+    prefix = f"PF_{title}"
     sources = [args.master, args.walk, args.run]
     missing = [path for path in sources if not path.is_file()]
     if missing:
@@ -197,10 +210,10 @@ def main() -> None:
     master_objects, master_import_actions = _import_fbx(args.master)
     master_armature = _only(master_objects, "ARMATURE")
     master_mesh = _only(master_objects, "MESH")
-    master_armature.name = "PF_Elf_Bald_Female_Rig"
-    master_armature.data.name = "PF_Elf_Bald_Female_Armature"
-    master_mesh.name = "PF_Elf_Bald_Female"
-    master_mesh.data.name = "PF_Elf_Bald_Female_Mesh"
+    master_armature.name = f"{prefix}_Rig"
+    master_armature.data.name = f"{prefix}_Armature"
+    master_mesh.name = prefix
+    master_mesh.data.name = f"{prefix}_Mesh"
     master_bones = [bone.name for bone in master_armature.data.bones]
 
     bind_action = master_armature.animation_data.action if master_armature.animation_data else None
@@ -217,7 +230,7 @@ def main() -> None:
     bpy.context.scene.collection.children.link(character_collection)
     _move_to_collection(master_objects, character_collection)
 
-    texture_paths = _build_material(master_mesh, args.texture_dir)
+    texture_paths = _build_material(master_mesh, args.texture_dir, f"{prefix}_Material")
     walk_action = _extract_action(args.walk, "PF_Walk", master_bones)
     run_action = _extract_action(args.run, "PF_Run", master_bones)
     _purge_unlinked_data()
@@ -226,14 +239,14 @@ def main() -> None:
     master_armature.animation_data.action = walk_action
 
     scene = bpy.context.scene
-    scene.name = "PF_Elf_Bald_Female_Master"
+    scene.name = f"{prefix}_Master"
     scene.render.fps = 30
     scene.render.fps_base = 1.0
     scene.frame_start = int(walk_action.frame_range[0])
     scene.frame_end = int(walk_action.frame_range[1])
     scene.frame_set(scene.frame_start)
     scene.render.film_transparent = True
-    scene["pf_character_id"] = "elf_bald_female"
+    scene["pf_character_id"] = character_id
     scene["pf_master_source"] = str(args.master.resolve())
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -245,7 +258,7 @@ def main() -> None:
     manifest = {
         "schema_version": 1,
         "blender_version": bpy.app.version_string,
-        "character_id": "elf_bald_female",
+        "character_id": character_id,
         "master_blend": str(args.output.resolve()),
         "master_fbx": {
             "path": str(args.master.resolve()),

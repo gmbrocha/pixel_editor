@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import json
 import sys
 from pathlib import Path
@@ -15,11 +16,22 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.core.mannequin_semantics import REGIONS, sha256_path  # noqa: E402
+from src.core.mannequin_semantics import (  # noqa: E402
+    REGIONS,
+    REGION_BY_NAME,
+    sha256_path,
+)
 from tools.blender.render_sprite_sequences import (  # noqa: E402
     _armature,
     _position_view,
     _setup,
+)
+from tools.blender.build_semantic_mannequin import (  # noqa: E402
+    _assign_regions,
+    _bone_point_in_mesh,
+    _dominant_groups,
+    _region_for_face,
+    _write_attributes,
 )
 
 
@@ -49,7 +61,73 @@ def _args() -> argparse.Namespace:
     parser.add_argument("--render-size", type=int, default=1024)
     parser.add_argument("--ortho-scale", type=float, default=1.95)
     parser.add_argument("--pitch", type=float, default=28.0)
+    parser.add_argument(
+        "--target",
+        help="Comma-separated camera target X,Y,Z; defaults to 0,0,0.82",
+    )
+    parser.add_argument(
+        "--derive-weight-regions",
+        action="store_true",
+        help="Derive temporary anatomical face regions from the shared rig weights",
+    )
     return parser.parse_args(argv)
+
+
+def _derive_weight_regions(armature: bpy.types.Object) -> dict[str, int]:
+    meshes = [obj for obj in bpy.data.objects if obj.type == "MESH"]
+    if len(meshes) != 1:
+        raise RuntimeError(
+            f"Expected one mesh for weight-region derivation, found {[obj.name for obj in meshes]}"
+        )
+    mesh_obj = meshes[0]
+    try:
+        assignments, counts = _assign_regions(mesh_obj, armature, None, "")
+    except RuntimeError as exc:
+        if "left_knee" not in str(exc) and "right_knee" not in str(exc):
+            raise
+        joints = {
+            "left_shoulder": _bone_point_in_mesh(mesh_obj, armature, "LeftArm", "head"),
+            "right_shoulder": _bone_point_in_mesh(mesh_obj, armature, "RightArm", "head"),
+            "left_elbow": _bone_point_in_mesh(mesh_obj, armature, "LeftForeArm", "head"),
+            "right_elbow": _bone_point_in_mesh(mesh_obj, armature, "RightForeArm", "head"),
+            "left_knee": _bone_point_in_mesh(mesh_obj, armature, "LeftLeg", "head"),
+            "right_knee": _bone_point_in_mesh(mesh_obj, armature, "RightLeg", "head"),
+            "left_ankle": _bone_point_in_mesh(mesh_obj, armature, "LeftFoot", "head"),
+            "right_ankle": _bone_point_in_mesh(mesh_obj, armature, "RightFoot", "head"),
+        }
+        dominant = _dominant_groups(mesh_obj)
+        centers = []
+        assignments = []
+        for polygon, group in zip(mesh_obj.data.polygons, dominant, strict=True):
+            center = sum(
+                (mesh_obj.data.vertices[index].co for index in polygon.vertices),
+                Vector(),
+            ) / len(polygon.vertices)
+            centers.append(center)
+            assignments.append(_region_for_face(center, group, joints))
+        counts_by_id = Counter(assignments)
+        for side in ("left", "right"):
+            knee_id = REGION_BY_NAME[f"{side}_knee"].id
+            if counts_by_id[knee_id] > 0:
+                continue
+            title = side.title()
+            candidates = [
+                index
+                for index, group in enumerate(dominant)
+                if group in {f"{title}UpLeg", f"{title}Leg"}
+            ]
+            candidates.sort(
+                key=lambda index: (centers[index] - joints[f"{side}_knee"]).length
+            )
+            for index in candidates[:1200]:
+                assignments[index] = knee_id
+        final_counts = Counter(assignments)
+        missing = [region.name for region in REGIONS if final_counts[region.id] == 0]
+        if missing:
+            raise RuntimeError(f"Weight-region fallback left empty regions: {missing}")
+        counts = {region.name: final_counts[region.id] for region in REGIONS}
+    _write_attributes(mesh_obj.data, assignments)
+    return counts
 
 
 def _mesh() -> bpy.types.Object:
@@ -136,10 +214,11 @@ def _render_frames(
     key: bpy.types.Object,
     fill: bpy.types.Object,
     pitch: float,
+    target: Vector,
 ) -> dict[str, list[str]]:
     outputs: dict[str, list[str]] = {}
     for direction_name, horizontal in DIRECTIONS.items():
-        _position_view(camera, key, fill, horizontal, pitch)
+        _position_view(camera, key, fill, horizontal, pitch, target)
         direction_outputs = []
         for frame_index, source_frame in enumerate(frames):
             bpy.context.scene.frame_set(source_frame)
@@ -166,6 +245,9 @@ def main() -> None:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     camera, key, fill = _setup(args.render_size, args.ortho_scale)
     armature = _armature()
+    derived_counts = (
+        _derive_weight_regions(armature) if args.derive_weight_regions else None
+    )
     mesh_obj = _mesh()
     if armature.animation_data is None:
         armature.animation_data_create()
@@ -193,16 +275,23 @@ def main() -> None:
             f"Expected {expected_count} distinct sprite frames, found {frames}"
         )
 
+    target = Vector((0.0, 0.0, 0.82))
+    if args.target:
+        values = [float(value.strip()) for value in args.target.split(",")]
+        if len(values) != 3:
+            raise ValueError("target must contain exactly X,Y,Z")
+        target = Vector(values)
+
     beauty = _render_frames(
         args.output_dir, "beauty", args.sequence, frames,
-        camera, key, fill, args.pitch,
+        camera, key, fill, args.pitch, target,
     )
     original_materials, original_indices = _install_semantic_materials(mesh_obj)
     try:
         _configure_semantic_color()
         semantic = _render_frames(
             args.output_dir, "semantic", args.sequence, frames,
-            camera, key, fill, args.pitch,
+            camera, key, fill, args.pitch, target,
         )
     finally:
         _restore_materials(mesh_obj, original_materials, original_indices)
@@ -216,6 +305,7 @@ def main() -> None:
         "render_size": args.render_size,
         "ortho_scale": args.ortho_scale,
         "pitch_degrees": args.pitch,
+        "target": [float(value) for value in target],
         "direction_order": list(DIRECTIONS),
         "semantic": {
             "attribute": "pf_region_id",
@@ -229,6 +319,8 @@ def main() -> None:
                 }
                 for region in REGIONS
             ],
+            "derived_from_weights": args.derive_weight_regions,
+            "derived_region_face_counts": derived_counts,
         },
         "sequences": {
             args.sequence: {

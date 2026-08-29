@@ -130,6 +130,105 @@ The output contains `walk.png`, exact 8-bit `walk_regions.png` IDs, `walk_region
 
 The current `PF_Idle`, manually edited `PF_Walk_Meshy_Edit`, untouched `PF_Run`, and approved `PF_Run_ForwardLean_HeadDown` remain separate actions. The reviewed 128px outputs are now installed as the `elf-01` Character Forge base; the Blender actions and local working renders remain separately recoverable.
 
+## Approved Motion Transfer
+
+The tracked canonical mannequin also contains `PF_Idle_Approved`,
+`PF_Walk_Approved`, and `PF_Run_Approved` without replacing the protected Meshy
+actions. `approved_motion_transfer_profile.json` records the 24-bone hierarchy,
+rest data, source hashes, per-frame quaternion corrections, Hips translation,
+contact paths, timing, and source self-checks.
+
+`tools/build_motion_transfer_candidates.py` extracts only configured entries
+from the ignored Meshy archives, builds a packed target master, applies the
+approved correction profile, renders all directions with one per-character
+camera frame, and creates a shared-palette 128px review set. Walk and Run apply
+the approved-versus-Meshy delta to the matching target Meshy actions. Idle maps
+the full approved bind-relative motion. Non-Hips translations and all scales
+remain target-owned; Hips motion is proportion-scaled, and planted-foot drift is
+corrected through capped root offsets without IK.
+
+```powershell
+python tools/build_motion_transfer_candidates.py --target all --force
+python tools/build_motion_transfer_candidates.py --target all --check
+```
+
+The approved Tiefling female, Dwarf male, and muscular Human male are finalized
+non-destructively into tracked `canonical/` blends and promoted as base-only
+Character Forge models with:
+
+```powershell
+python tools/promote_motion_transfer_bases.py --target all --force
+python tools/promote_motion_transfer_bases.py --target all --check
+```
+
+The finalizer preserves the Meshy and transfer actions and writes separate
+`PF_Idle_Approved`, `PF_Walk_Approved`, and `PF_Run_Approved` actions. It removes
+stray keys such as the Tiefling artist file's frame-0 keys only in the derived
+canonical action. All Blender Idles retain 26 authored pose columns. Character
+Forge samples 14 of those poses at 6 FPS and holds runtime frames 6 and 13 for
+1500 ms each. The less-muscular Human is excluded.
+
+## Canonical Character Forge Camera Views
+
+Character Forge treats camera height as a first-class recipe dimension, separate
+from base model, animation, and facing direction. The canonical orthographic
+heights are Near Top-Down at 70 degrees, Three-Quarter at 45 degrees, and Low at
+28 degrees. Each base uses one union auto-frame per height across all three
+approved actions and all directions, preventing scale or framing jumps when the
+animation changes.
+
+```powershell
+python tools/build_character_camera_views.py --force
+python tools/build_character_camera_views.py --check
+```
+
+The builder reads the four tracked canonical blends, renders only the two new
+elevated views, applies `approved_motion_timing.json`, generates 128px sheets and
+native-size GIFs, promotes them below `assets/character-forge`, and writes
+`camera_views_manifest.json`. Low assets are retained byte-for-byte. A rebuild of
+the semantic elf or target motion bases preserves existing camera metadata, but
+the camera builder must be rerun whenever a canonical action changes so its
+blend and output hashes remain current. Angle-specific semantic regions and
+components are not inferred from Low-view masks; current components therefore
+remain available only at Low.
+
+`render_sprite_sequences.py --framing-scale` provides the canonical per-model
+size adjustment without modifying the rig or resizing finished pixels. Values
+above one render the character smaller. The Dwarf uses `1.12` at every height.
+The older elf Low semantic capture is normalized with orthographic scale
+`2.442563056945801`, matching its apparent height to the newer auto-framed
+variants while retaining paired beauty/region rendering and aligned components.
+
+## Low-View Fitted Component Families
+
+The Tiefling, Dwarf, and muscular Human canonical Low cameras can render paired
+beauty/anatomical passes with
+`render_semantic_sprite_sequences.py --derive-weight-regions`. The renderer
+temporarily derives the same 32 anatomical IDs from each model's named 24-bone
+vertex groups without modifying the canonical blend. Dwarf knees use a
+deterministic nearest-joint fallback where the short proportions leave the
+standard knee-radius classification empty.
+
+`tools/build_weight_region_sheet.py` reduces each paired 1024px pass onto the
+matching promoted 128px base sheet. It requires exact base-alpha coverage, all
+32 IDs, four canonical directions, correct frame counts, portable provenance,
+and supports byte verification with `--check`.
+
+`tools/build_character_component_families.py` then generates 25 shared design
+families with separately fitted variants for `elf-01`, Tiefling, Dwarf, and
+muscular Human. The resulting 100 manifests and 300 animation sheets cover six
+slots, all three approved motions, all four directions, five-color recoloring,
+and one-pixel outlines. Twelve 5-by-5 review boards are generated under
+`assets/character-forge/review/component-families/`.
+
+```powershell
+python tools/build_character_component_families.py --force
+python tools/build_character_component_families.py --check
+```
+
+These overlays are canonical Low-view features. Elevated semantic captures and
+angle-specific component variants remain separate future work.
+
 Idle and Run use the same commands with their sequence name, action, output folders, FPS, and optional frame list/count. Render the interpolated Idle with `--sequence idle --action PF_Idle_Edit --frame-count 26`, then build with `--sequence idle --fps 12`. Run uses `PF_Run_ForwardLean_HeadDown` and source frames `1,3,6,8,10,13,15,18`. Closure frames are validation data and are not emitted as sprite frames.
 
 ## Repository Policy
@@ -247,7 +346,7 @@ Pass `--run-action PF_Run_ForwardLean_HeadDown` to `render_sprite_sequences.py` 
 
 ## Next Work
 
-1. Review the installed 12 FPS Idle GIFs for motion phase, planted feet, and loop continuity.
-2. Review the Idle, Walk, and Run component contact sheets for semantic-boundary errors.
+1. Review the installed 14-frame, 6 FPS Idle GIFs for motion phase, planted feet, holds, and loop continuity.
+2. Review the twelve fitted-family contact sheets for semantic-boundary errors.
 3. Make any deliberate motion or face/silhouette cleanup in derived artist files, never in raw renders or pipeline copies.
-4. Replace the five fitted starter items gradually with deliberately authored component geometry while retaining their complete animation coverage.
+4. Refine generated fitted-family pixels or replace them gradually with deliberately authored component geometry while retaining complete model and animation coverage.

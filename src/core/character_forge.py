@@ -52,6 +52,7 @@ CHARACTER_LAYER_ORDER = (
     "handwear",
     "waist",
     "neck",
+    "face_accessory_under_hair",
     "hair_front",
     "face_accessory",
     "headwear",
@@ -69,12 +70,19 @@ DIRECTION_LABELS = {
     "right": "Right",
 }
 DISPLAY_DIRECTION_ORDER = ("front", "back", "left", "right")
+CAMERA_HEIGHT_ORDER = ("top_down", "three_quarter", "low")
+CAMERA_HEIGHT_LABELS = {
+    "top_down": "Near Top-Down",
+    "three_quarter": "Three-Quarter",
+    "low": "Low",
+}
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CHARACTER_ASSET_ROOT = PROJECT_ROOT / "assets" / "character-forge"
-RECIPE_SCHEMA_VERSION = 2
+RECIPE_SCHEMA_VERSION = 3
 MANIFEST_SCHEMA_VERSION = 1
 VALID_COMPONENT_STATUSES = {"approved", "incomplete"}
+VALID_HAIR_OCCLUSION_POLICIES = {"show", "clip", "hide"}
 
 
 class CharacterForgeError(ValueError):
@@ -94,6 +102,8 @@ class CharacterAnimation:
     matte_rgb: tuple[int, int, int] | None
     direction_frame_counts: Mapping[str, int] = field(default_factory=dict)
     direction_playback: Mapping[str, tuple[int, ...]] = field(default_factory=dict)
+    frame_durations_ms: tuple[int, ...] = ()
+    camera_variants: Mapping[str, str] = field(default_factory=dict)
 
     @property
     def directions(self) -> tuple[str, ...]:
@@ -128,6 +138,25 @@ class CharacterAnimation:
         count = self.frame_count(direction)
         return self.direction_playback.get(direction, tuple(range(count)))
 
+    def frame_duration_ms(self, frame_index: int) -> int:
+        if self.frame_durations_ms:
+            if not 0 <= frame_index < len(self.frame_durations_ms):
+                raise CharacterForgeError(
+                    f"Frame {frame_index} has no duration in animation {self.id!r}"
+                )
+            return self.frame_durations_ms[frame_index]
+        return max(10, round(1000 / self.fps))
+
+    def filename_for_camera(self, camera_height: str) -> str:
+        if camera_height == "low" and not self.camera_variants:
+            return self.filename
+        try:
+            return self.camera_variants[camera_height]
+        except KeyError as exc:
+            raise CharacterForgeError(
+                f"Animation {self.id!r} has no {camera_height!r} camera variant"
+            ) from exc
+
 
 @dataclass(frozen=True, slots=True)
 class CharacterBase:
@@ -135,15 +164,31 @@ class CharacterBase:
     name: str
     directory: Path
     animations: Mapping[str, CharacterAnimation]
+    camera_heights: tuple[str, ...] = ("low",)
 
-    def animation_path(self, animation_id: str) -> Path:
+    def animation_path(self, animation_id: str, camera_height: str = "low") -> Path:
         try:
             animation = self.animations[animation_id]
         except KeyError as exc:
             raise CharacterForgeError(
                 f"Unknown animation {animation_id!r} for base {self.id!r}"
             ) from exc
-        return self.directory / animation.filename
+        if camera_height not in self.camera_heights:
+            raise CharacterForgeError(
+                f"Base {self.id!r} has no {camera_height!r} camera height"
+            )
+        return self.directory / animation.filename_for_camera(camera_height)
+
+
+@dataclass(frozen=True, slots=True)
+class CharacterPartRenderLayer:
+    animations: Mapping[str, Path]
+    camera_variants: Mapping[str, Mapping[str, Path]] = field(default_factory=dict)
+
+    def animation_path(self, animation_id: str, camera_height: str) -> Path | None:
+        if camera_height == "low":
+            return self.animations.get(animation_id)
+        return self.camera_variants.get(camera_height, {}).get(animation_id)
 
 
 @dataclass(frozen=True, slots=True)
@@ -164,10 +209,29 @@ class CharacterPart:
     color_ramp: tuple[tuple[int, int, int], ...] = ()
     ramp_main_color: tuple[int, int, int] | None = None
     alpha_occluded_by_tags: tuple[str, ...] = ()
+    camera_variants: Mapping[str, Mapping[str, Path]] = field(default_factory=dict)
+    render_layers: Mapping[str, CharacterPartRenderLayer] = field(default_factory=dict)
+    hair_occlusion: str = "show"
 
     @property
     def claimed_slots(self) -> frozenset[str]:
         return frozenset((*self.occupies_slots, *self.reserved_slots))
+
+    def animation_path(self, animation_id: str, camera_height: str) -> Path | None:
+        if camera_height == "low":
+            return self.animations.get(animation_id)
+        return self.camera_variants.get(camera_height, {}).get(animation_id)
+
+    def render_layer_path(
+        self, layer: str, animation_id: str, camera_height: str
+    ) -> Path | None:
+        if self.render_layers:
+            render_layer = self.render_layers.get(layer)
+            return (
+                None if render_layer is None
+                else render_layer.animation_path(animation_id, camera_height)
+            )
+        return self.animation_path(animation_id, camera_height) if layer == self.layer else None
 
 
 @dataclass(frozen=True, slots=True)
@@ -187,15 +251,37 @@ class CharacterCatalog:
                 return part
         raise CharacterForgeError(f"Unknown character part {part_id!r}")
 
-    def parts_for_slot(self, slot: str) -> tuple[CharacterPart, ...]:
+    def parts_for_slot(
+        self,
+        slot: str,
+        base_id: str | None = None,
+        camera_height: str | None = None,
+    ) -> tuple[CharacterPart, ...]:
         if slot not in CHARACTER_SLOTS:
             raise CharacterForgeError(f"Unknown character slot {slot!r}")
-        return tuple(part for part in self.parts if part.slot == slot)
+        if base_id is not None:
+            self.base(base_id)
+        return tuple(
+            part
+            for part in self.parts
+            if (
+                part.slot == slot
+                and (base_id is None or part.fit == base_id)
+                and (
+                    camera_height is None
+                    or all(
+                        part.animation_path(animation_id, camera_height) is not None
+                        for animation_id in self.base(base_id or part.fit).animations
+                    )
+                )
+            )
+        )
 
 
 @dataclass(slots=True)
 class CharacterRecipe:
     base_id: str = "elf-01"
+    camera_height: str = "low"
     name: str = "character"
     parts: dict[str, str | None] = field(
         default_factory=lambda: {slot: None for slot in CHARACTER_SLOTS}
@@ -208,6 +294,7 @@ class CharacterRecipe:
             "schema_version": RECIPE_SCHEMA_VERSION,
             "name": self.name,
             "base": self.base_id,
+            "camera_height": self.camera_height,
             "seed": self.random_seed,
             "parts": {slot: self.parts.get(slot) for slot in CHARACTER_SLOTS},
             "part_colors": dict(sorted(self.part_colors.items())),
@@ -216,7 +303,7 @@ class CharacterRecipe:
     @classmethod
     def from_dict(cls, data: Mapping[str, object]) -> CharacterRecipe:
         version = data.get("schema_version", 1)
-        if version not in (1, RECIPE_SCHEMA_VERSION):
+        if version not in (1, 2, RECIPE_SCHEMA_VERSION):
             raise CharacterForgeError(
                 f"Unsupported character recipe version {version!r}"
             )
@@ -226,6 +313,9 @@ class CharacterRecipe:
         name = data.get("name", "character")
         if not isinstance(name, str):
             raise CharacterForgeError("Character recipe name must be text")
+        camera_height = data.get("camera_height", "low")
+        if not isinstance(camera_height, str) or not camera_height:
+            raise CharacterForgeError("Character recipe camera height must be text")
         raw_parts = data.get("parts", {})
         if not isinstance(raw_parts, Mapping):
             raise CharacterForgeError("Character recipe parts must be an object")
@@ -260,6 +350,7 @@ class CharacterRecipe:
             part_colors[part_id] = normalize_color_hex(color)
         return cls(
             base_id=base_id,
+            camera_height=camera_height,
             name=name,
             parts=parts,
             part_colors=part_colors,
@@ -295,7 +386,7 @@ def load_character_sheet_specs(
         raise CharacterForgeError(
             f"Could not load character sheet specs: {exc}"
         ) from exc
-    if not isinstance(data, dict) or data.get("schema_version") != 1:
+    if not isinstance(data, dict) or data.get("schema_version") not in (1, 2):
         raise CharacterForgeError(
             "Unsupported or invalid character sheet specification"
         )
@@ -357,6 +448,79 @@ def load_component_manifest(path: str | Path) -> CharacterPart:
                 f"Component {part_id!r} animation entries must be text"
             )
         animations[animation_id] = manifest_path.parent / filename
+    raw_camera_variants = data.get("cameraVariants", {})
+    if not isinstance(raw_camera_variants, Mapping):
+        raise CharacterForgeError(
+            f"Component {part_id!r} cameraVariants must be an object"
+        )
+    camera_variants: dict[str, dict[str, Path]] = {}
+    for camera_height, raw_camera_animations in raw_camera_variants.items():
+        if not isinstance(camera_height, str) or not isinstance(
+            raw_camera_animations, Mapping
+        ):
+            raise CharacterForgeError(
+                f"Component {part_id!r} camera variant is invalid"
+            )
+        camera_variants[camera_height] = {
+            str(animation_id): manifest_path.parent / str(filename)
+            for animation_id, filename in raw_camera_animations.items()
+        }
+    render_layers: dict[str, CharacterPartRenderLayer] = {}
+    raw_render_layers = data.get("renderLayers")
+    if raw_render_layers is not None:
+        if not isinstance(raw_render_layers, Mapping) or not raw_render_layers:
+            raise CharacterForgeError(
+                f"Component {part_id!r} renderLayers must be a non-empty object"
+            )
+        for render_layer, raw_render_layer in raw_render_layers.items():
+            if (
+                not isinstance(render_layer, str)
+                or render_layer not in CHARACTER_LAYER_ORDER
+                or not isinstance(raw_render_layer, Mapping)
+            ):
+                raise CharacterForgeError(
+                    f"Component {part_id!r} has an invalid render layer"
+                )
+            raw_layer_animations = raw_render_layer.get("animations")
+            if not isinstance(raw_layer_animations, Mapping):
+                raise CharacterForgeError(
+                    f"Component {part_id!r} render layer {render_layer!r} "
+                    "requires animations"
+                )
+            layer_animations = {
+                str(animation_id): manifest_path.parent / str(filename)
+                for animation_id, filename in raw_layer_animations.items()
+                if isinstance(animation_id, str) and isinstance(filename, str)
+            }
+            if len(layer_animations) != len(raw_layer_animations):
+                raise CharacterForgeError(
+                    f"Component {part_id!r} render layer animations must be text"
+                )
+            raw_layer_variants = raw_render_layer.get("cameraVariants", {})
+            if not isinstance(raw_layer_variants, Mapping):
+                raise CharacterForgeError(
+                    f"Component {part_id!r} render layer cameraVariants is invalid"
+                )
+            layer_variants: dict[str, dict[str, Path]] = {}
+            for camera_height, raw_layer_camera in raw_layer_variants.items():
+                if not isinstance(camera_height, str) or not isinstance(
+                    raw_layer_camera, Mapping
+                ):
+                    raise CharacterForgeError(
+                        f"Component {part_id!r} render layer camera variant is invalid"
+                    )
+                layer_variants[camera_height] = {
+                    str(animation_id): manifest_path.parent / str(filename)
+                    for animation_id, filename in raw_layer_camera.items()
+                }
+            render_layers[render_layer] = CharacterPartRenderLayer(
+                animations=layer_animations,
+                camera_variants=layer_variants,
+            )
+        if layer not in render_layers:
+            raise CharacterForgeError(
+                f"Component {part_id!r} primary layer {layer!r} is absent from renderLayers"
+            )
     raw_coverage = data.get("coverage", {})
     if not isinstance(raw_coverage, Mapping):
         raise CharacterForgeError(f"Component {part_id!r} coverage must be an object")
@@ -387,6 +551,14 @@ def load_component_manifest(path: str | Path) -> CharacterPart:
     version = data.get("version", 1)
     if not isinstance(version, int) or isinstance(version, bool) or version < 1:
         raise CharacterForgeError(f"Component {part_id!r} version must be positive")
+    hair_occlusion = data.get("hairOcclusion", "show")
+    if (
+        not isinstance(hair_occlusion, str)
+        or hair_occlusion not in VALID_HAIR_OCCLUSION_POLICIES
+    ):
+        raise CharacterForgeError(
+            f"Component {part_id!r} has invalid hairOcclusion {hair_occlusion!r}"
+        )
     return CharacterPart(
         id=part_id,
         name=data["displayName"],
@@ -404,6 +576,9 @@ def load_component_manifest(path: str | Path) -> CharacterPart:
         color_ramp=ramp,
         ramp_main_color=ramp_main,
         alpha_occluded_by_tags=alpha_occluded_by_tags,
+        camera_variants=camera_variants,
+        render_layers=render_layers,
+        hair_occlusion=str(hair_occlusion),
     )
 
 
@@ -415,54 +590,124 @@ def create_default_catalog(
     root = Path(asset_root)
     specs = load_character_sheet_specs(root)
     raw_frame_size = specs.get("frame_size")
-    raw_animations = specs.get("animations")
     if not isinstance(raw_frame_size, list) or len(raw_frame_size) != 2:
         raise CharacterForgeError("Character frame_size is invalid")
-    if not isinstance(raw_animations, Mapping):
-        raise CharacterForgeError("Character animations specification is invalid")
     frame_size = tuple(int(value) for value in raw_frame_size)
-    animations: dict[str, CharacterAnimation] = {}
-    for animation_id, raw in raw_animations.items():
-        if not isinstance(animation_id, str) or not isinstance(raw, Mapping):
-            raise CharacterForgeError("Character animation entry is invalid")
-        sheet_size = tuple(int(value) for value in raw["sheet_size"])
-        direction_rows = {
-            str(direction): int(row) for direction, row in raw["direction_rows"].items()
+    raw_camera_heights = specs.get("camera_heights", {"low": {}})
+    if not isinstance(raw_camera_heights, Mapping) or not raw_camera_heights:
+        raise CharacterForgeError("Character camera_heights specification is invalid")
+    camera_height_ids = tuple(str(value) for value in raw_camera_heights)
+    if specs["schema_version"] == 1:
+        raw_bases = {
+            str(specs.get("base_id", "elf-01")): {
+                "name": specs.get("base_name", specs.get("base_id", "elf-01")),
+                "animations": specs.get("animations"),
+            }
         }
-        raw_frame_counts = raw.get("direction_frame_counts", {})
-        if not isinstance(raw_frame_counts, Mapping):
+    else:
+        raw_bases = specs.get("bases")
+    if not isinstance(raw_bases, Mapping) or not raw_bases:
+        raise CharacterForgeError("Character bases specification is invalid")
+
+    bases: list[CharacterBase] = []
+    for base_id, raw_base in raw_bases.items():
+        if not isinstance(base_id, str) or not isinstance(raw_base, Mapping):
+            raise CharacterForgeError("Character base entry is invalid")
+        raw_animations = raw_base.get("animations")
+        if not isinstance(raw_animations, Mapping):
             raise CharacterForgeError(
-                f"Character animation {animation_id!r} direction_frame_counts is invalid"
+                f"Character base {base_id!r} animations specification is invalid"
             )
-        direction_frame_counts = {
-            str(direction): int(count) for direction, count in raw_frame_counts.items()
-        }
-        raw_playback = raw.get("direction_playback", {})
-        if not isinstance(raw_playback, Mapping):
-            raise CharacterForgeError(
-                f"Character animation {animation_id!r} direction_playback is invalid"
-            )
-        direction_playback: dict[str, tuple[int, ...]] = {}
-        for direction, indices in raw_playback.items():
-            if not isinstance(indices, list):
+        animations: dict[str, CharacterAnimation] = {}
+        for animation_id, raw in raw_animations.items():
+            if not isinstance(animation_id, str) or not isinstance(raw, Mapping):
+                raise CharacterForgeError("Character animation entry is invalid")
+            sheet_size = tuple(int(value) for value in raw["sheet_size"])
+            direction_rows = {
+                str(direction): int(row)
+                for direction, row in raw["direction_rows"].items()
+            }
+            raw_frame_counts = raw.get("direction_frame_counts", {})
+            if not isinstance(raw_frame_counts, Mapping):
                 raise CharacterForgeError(
-                    f"Character animation {animation_id!r} playback for "
-                    f"{direction!r} must be a list"
+                    f"Character animation {animation_id!r} direction_frame_counts is invalid"
                 )
-            direction_playback[str(direction)] = tuple(int(index) for index in indices)
-        matte = raw.get("source_matte")
-        animations[animation_id] = CharacterAnimation(
-            id=animation_id,
-            name=str(raw["name"]),
-            filename=Path(str(raw["runtime_file"])).name,
-            sheet_size=sheet_size,
-            frame_size=frame_size,
-            frames_per_direction=int(raw["frames_per_direction"]),
-            direction_rows=direction_rows,
-            fps=int(raw["fps"]),
-            matte_rgb=color_hex_to_rgb(matte) if isinstance(matte, str) else None,
-            direction_frame_counts=direction_frame_counts,
-            direction_playback=direction_playback,
+            direction_frame_counts = {
+                str(direction): int(count)
+                for direction, count in raw_frame_counts.items()
+            }
+            raw_playback = raw.get("direction_playback", {})
+            if not isinstance(raw_playback, Mapping):
+                raise CharacterForgeError(
+                    f"Character animation {animation_id!r} direction_playback is invalid"
+                )
+            direction_playback: dict[str, tuple[int, ...]] = {}
+            for direction, indices in raw_playback.items():
+                if not isinstance(indices, list):
+                    raise CharacterForgeError(
+                        f"Character animation {animation_id!r} playback for "
+                        f"{direction!r} must be a list"
+                    )
+                direction_playback[str(direction)] = tuple(
+                    int(index) for index in indices
+                )
+            raw_durations = raw.get("frame_durations_ms", [])
+            if not isinstance(raw_durations, list):
+                raise CharacterForgeError(
+                    f"Character animation {animation_id!r} frame_durations_ms is invalid"
+                )
+            matte = raw.get("source_matte")
+            filename = Path(str(raw["runtime_file"])).name
+            raw_variants = raw.get("camera_variants", {})
+            if not isinstance(raw_variants, Mapping):
+                raise CharacterForgeError(
+                    f"Character animation {animation_id!r} camera_variants is invalid"
+                )
+            camera_variants: dict[str, str] = {"low": filename}
+            for camera_height, variant in raw_variants.items():
+                if isinstance(variant, Mapping):
+                    variant_file = variant.get("runtime_file")
+                else:
+                    variant_file = variant
+                if not isinstance(camera_height, str) or not isinstance(
+                    variant_file, str
+                ):
+                    raise CharacterForgeError(
+                        f"Character animation {animation_id!r} camera variant is invalid"
+                    )
+                camera_variants[camera_height] = str(
+                    Path(variant_file).relative_to(Path("bases") / base_id)
+                ).replace("\\", "/")
+            animations[animation_id] = CharacterAnimation(
+                id=animation_id,
+                name=str(raw["name"]),
+                filename=filename,
+                sheet_size=sheet_size,
+                frame_size=frame_size,
+                frames_per_direction=int(raw["frames_per_direction"]),
+                direction_rows=direction_rows,
+                fps=int(raw["fps"]),
+                matte_rgb=color_hex_to_rgb(matte) if isinstance(matte, str) else None,
+                direction_frame_counts=direction_frame_counts,
+                direction_playback=direction_playback,
+                frame_durations_ms=tuple(int(value) for value in raw_durations),
+                camera_variants=camera_variants,
+            )
+        bases.append(
+            CharacterBase(
+                id=base_id,
+                name=str(raw_base.get("name", base_id)),
+                directory=root / "bases" / base_id,
+                animations=animations,
+                camera_heights=tuple(
+                    value
+                    for value in camera_height_ids
+                    if all(
+                        value in animation.camera_variants
+                        for animation in animations.values()
+                    )
+                ),
+            )
         )
     parts: list[CharacterPart] = []
     parts_root = root / "parts"
@@ -471,14 +716,7 @@ def create_default_catalog(
             part = load_component_manifest(manifest_path)
             if part.status == "approved" or include_incomplete:
                 parts.append(part)
-    base_id = specs.get("base_id", "elf-01")
-    base = CharacterBase(
-        id=str(base_id),
-        name=str(specs.get("base_name", str(base_id))),
-        directory=root / "bases" / str(base_id),
-        animations=animations,
-    )
-    return CharacterCatalog(bases=(base,), parts=tuple(parts))
+    return CharacterCatalog(bases=tuple(bases), parts=tuple(parts))
 
 
 def create_default_recipe(name: str = "character") -> CharacterRecipe:
@@ -487,12 +725,17 @@ def create_default_recipe(name: str = "character") -> CharacterRecipe:
 
 
 def validate_catalog(catalog: CharacterCatalog) -> None:
-    ids: set[str] = set()
+    base_ids: set[str] = set()
     for base in catalog.bases:
+        if base.id in base_ids:
+            raise CharacterForgeError(f"Duplicate character base id {base.id!r}")
+        base_ids.add(base.id)
         for animation in base.animations.values():
-            _validate_image_size(
-                base.animation_path(animation.id), animation.sheet_size
-            )
+            for camera_height in base.camera_heights:
+                _validate_image_size(
+                    base.animation_path(animation.id, camera_height),
+                    animation.sheet_size,
+                )
             columns = animation.sheet_size[0] // animation.frame_size[0]
             unknown_counts = set(animation.direction_frame_counts) - set(
                 animation.direction_rows
@@ -521,41 +764,91 @@ def validate_catalog(catalog: CharacterCatalog) -> None:
                         f"Animation {animation.id!r} direction {direction!r} has "
                         "invalid playback frames"
                     )
-        for part in catalog.parts:
-            if part.id in ids:
+                if animation.frame_durations_ms and (
+                    len(animation.frame_durations_ms) != animation.frames_per_direction
+                    or any(value < 1 for value in animation.frame_durations_ms)
+                ):
+                    raise CharacterForgeError(
+                        f"Animation {animation.id!r} has invalid frame durations"
+                    )
+    ids: set[str] = set()
+    for part in catalog.parts:
+        if part.id in ids:
+            raise CharacterForgeError(
+                f"Duplicate character component id {part.id!r}"
+            )
+        ids.add(part.id)
+        if part.slot not in CHARACTER_SLOTS or part.layer not in CHARACTER_LAYER_ORDER:
+            raise CharacterForgeError(
+                f"Component {part.id!r} has an invalid slot or layer"
+            )
+        try:
+            fit_base = catalog.base(part.fit)
+        except CharacterForgeError as exc:
+            raise CharacterForgeError(
+                f"Component {part.id!r} fits unknown base {part.fit!r}"
+            ) from exc
+        for animation_id, path in part.animations.items():
+            if animation_id not in fit_base.animations:
                 raise CharacterForgeError(
-                    f"Duplicate character component id {part.id!r}"
+                    f"Component {part.id!r} uses unknown animation {animation_id!r}"
                 )
-            ids.add(part.id)
-            if (
-                part.slot not in CHARACTER_SLOTS
-                or part.layer not in CHARACTER_LAYER_ORDER
-            ):
+            _validate_image_size(path, fit_base.animations[animation_id].sheet_size)
+        for camera_height, variants in part.camera_variants.items():
+            if camera_height not in fit_base.camera_heights:
                 raise CharacterForgeError(
-                    f"Component {part.id!r} has an invalid slot or layer"
+                    f"Component {part.id!r} uses unknown camera height {camera_height!r}"
                 )
-            for animation_id, path in part.animations.items():
-                if animation_id not in base.animations:
+            for animation_id, path in variants.items():
+                if animation_id not in fit_base.animations:
                     raise CharacterForgeError(
                         f"Component {part.id!r} uses unknown animation {animation_id!r}"
                     )
-                _validate_image_size(path, base.animations[animation_id].sheet_size)
-            for animation_id, directions in part.coverage.items():
-                if animation_id not in base.animations:
-                    raise CharacterForgeError(
-                        f"Component {part.id!r} coverage is invalid"
-                    )
-                unknown = set(directions) - set(
-                    base.animations[animation_id].direction_rows
+                _validate_image_size(
+                    path, fit_base.animations[animation_id].sheet_size
                 )
-                if unknown:
+        for render_layer, layer_data in part.render_layers.items():
+            if render_layer not in CHARACTER_LAYER_ORDER:
+                raise CharacterForgeError(
+                    f"Component {part.id!r} uses unknown render layer {render_layer!r}"
+                )
+            for animation_id, path in layer_data.animations.items():
+                if animation_id not in fit_base.animations:
                     raise CharacterForgeError(
-                        f"Component {part.id!r} has unknown coverage directions {sorted(unknown)}"
+                        f"Component {part.id!r} render layer uses unknown animation"
                     )
+                _validate_image_size(path, fit_base.animations[animation_id].sheet_size)
+            for camera_height, variants in layer_data.camera_variants.items():
+                if camera_height not in fit_base.camera_heights:
+                    raise CharacterForgeError(
+                        f"Component {part.id!r} render layer uses unknown camera height"
+                    )
+                for animation_id, path in variants.items():
+                    if animation_id not in fit_base.animations:
+                        raise CharacterForgeError(
+                            f"Component {part.id!r} render layer uses unknown animation"
+                        )
+                    _validate_image_size(path, fit_base.animations[animation_id].sheet_size)
+        for animation_id, directions in part.coverage.items():
+            if animation_id not in fit_base.animations:
+                raise CharacterForgeError(
+                    f"Component {part.id!r} coverage is invalid"
+                )
+            unknown = set(directions) - set(
+                fit_base.animations[animation_id].direction_rows
+            )
+            if unknown:
+                raise CharacterForgeError(
+                    f"Component {part.id!r} has unknown coverage directions {sorted(unknown)}"
+                )
 
 
 def validate_recipe(catalog: CharacterCatalog, recipe: CharacterRecipe) -> None:
-    catalog.base(recipe.base_id)
+    base = catalog.base(recipe.base_id)
+    if recipe.camera_height not in base.camera_heights:
+        raise CharacterForgeError(
+            f"Base {recipe.base_id!r} has no camera height {recipe.camera_height!r}"
+        )
     claimed_by: dict[str, str] = {}
     selected_ids: set[str] = set()
     for slot in CHARACTER_SLOTS:
@@ -566,6 +859,17 @@ def validate_recipe(catalog: CharacterCatalog, recipe: CharacterRecipe) -> None:
             raise CharacterForgeError(f"Part {part_id!r} is selected more than once")
         selected_ids.add(part_id)
         part = catalog.part(part_id)
+        if part.fit != recipe.base_id:
+            raise CharacterForgeError(
+                f"Part {part_id!r} fits {part.fit!r}, not {recipe.base_id!r}"
+            )
+        if any(
+            part.animation_path(animation_id, recipe.camera_height) is None
+            for animation_id in base.animations
+        ):
+            raise CharacterForgeError(
+                f"Part {part_id!r} has no complete {recipe.camera_height!r} camera coverage"
+            )
         if part.slot != slot:
             raise CharacterForgeError(
                 f"Part {part_id!r} belongs to {part.slot!r}, not {slot!r}"
@@ -699,13 +1003,14 @@ def load_base_animation(
     catalog: CharacterCatalog,
     base_id: str,
     animation_id: str,
+    camera_height: str = "low",
 ) -> Image.Image:
     base = catalog.base(base_id)
     animation = base.animations.get(animation_id)
     if animation is None:
         raise CharacterForgeError(f"Unknown character animation {animation_id!r}")
     image = _load_rgba(
-        str(base.animation_path(animation_id)), animation.matte_rgb
+        str(base.animation_path(animation_id, camera_height)), animation.matte_rgb
     ).copy()
     if image.size != animation.sheet_size:
         raise CharacterForgeError(
@@ -718,12 +1023,51 @@ def load_part_animation(
     catalog: CharacterCatalog,
     part_id: str,
     animation_id: str,
+    camera_height: str = "low",
 ) -> Image.Image:
     part = catalog.part(part_id)
-    path = part.animations.get(animation_id)
+    path = part.animation_path(animation_id, camera_height)
     if path is None:
         raise CharacterForgeError(f"Part {part_id!r} has no {animation_id!r} animation")
     return _load_rgba(str(path), None).copy()
+
+
+def load_part_render_layer(
+    catalog: CharacterCatalog,
+    part_id: str,
+    render_layer: str,
+    animation_id: str,
+    camera_height: str = "low",
+) -> Image.Image:
+    part = catalog.part(part_id)
+    path = part.render_layer_path(render_layer, animation_id, camera_height)
+    if path is None:
+        raise CharacterForgeError(
+            f"Part {part_id!r} has no {render_layer!r}/{animation_id!r} animation"
+        )
+    return _load_rgba(str(path), None).copy()
+
+
+def _combined_part_alpha(
+    catalog: CharacterCatalog,
+    part: CharacterPart,
+    animation_id: str,
+    camera_height: str,
+    size: tuple[int, int],
+) -> Image.Image:
+    alpha = Image.new("L", size, 0)
+    layers = tuple(part.render_layers) if part.render_layers else (part.layer,)
+    for render_layer in layers:
+        path = part.render_layer_path(render_layer, animation_id, camera_height)
+        if path is None:
+            continue
+        source = _load_rgba(str(path), None)
+        if source.size != size:
+            raise CharacterForgeError(
+                f"Occlusion source {part.id!r} is {source.size}; expected {size}"
+            )
+        alpha = ImageChops.lighter(alpha, source.getchannel("A"))
+    return alpha
 
 
 def _apply_selected_part_alpha_occlusion(
@@ -732,26 +1076,39 @@ def _apply_selected_part_alpha_occlusion(
     selected: list[CharacterPart],
     catalog: CharacterCatalog,
     animation_id: str,
+    camera_height: str,
 ) -> Image.Image:
     """Hide a part wherever matching selected component pixels are opaque."""
-    if not part.alpha_occluded_by_tags:
-        return overlay
-    occluding_tags = set(part.alpha_occluded_by_tags)
     result = overlay
+    if part.slot == "hair":
+        for occluder in selected:
+            if occluder.id == part.id:
+                continue
+            if occluder.hair_occlusion == "hide":
+                return Image.new("RGBA", result.size, (0, 0, 0, 0))
+            if occluder.hair_occlusion != "clip":
+                continue
+            occluder_alpha = _combined_part_alpha(
+                catalog, occluder, animation_id, camera_height, result.size
+            )
+            keep_mask = ImageChops.invert(occluder_alpha)
+            masked_alpha = ImageChops.multiply(result.getchannel("A"), keep_mask)
+            result = result.copy()
+            result.putalpha(masked_alpha)
+    if not part.alpha_occluded_by_tags:
+        return result
+    occluding_tags = set(part.alpha_occluded_by_tags)
     for occluder in selected:
         if (
             occluder.id == part.id
-            or animation_id not in occluder.animations
+            or occluder.animation_path(animation_id, camera_height) is None
             or not (occluding_tags & set(occluder.tags))
         ):
             continue
-        mask_source = load_part_animation(catalog, occluder.id, animation_id)
-        if mask_source.size != result.size:
-            raise CharacterForgeError(
-                f"Occlusion source {occluder.id!r} {animation_id!r} sheet is "
-                f"{mask_source.size}; target {part.id!r} sheet is {result.size}"
-            )
-        keep_mask = ImageChops.invert(mask_source.getchannel("A"))
+        occluder_alpha = _combined_part_alpha(
+            catalog, occluder, animation_id, camera_height, result.size
+        )
+        keep_mask = ImageChops.invert(occluder_alpha)
         masked_alpha = ImageChops.multiply(result.getchannel("A"), keep_mask)
         result = result.copy()
         result.putalpha(masked_alpha)
@@ -767,7 +1124,9 @@ def composite_character_animation(
     base = catalog.base(recipe.base_id)
     if animation_id not in base.animations:
         raise CharacterForgeError(f"Unknown character animation {animation_id!r}")
-    body = load_base_animation(catalog, recipe.base_id, animation_id)
+    body = load_base_animation(
+        catalog, recipe.base_id, animation_id, recipe.camera_height
+    )
     result = Image.new("RGBA", body.size, (0, 0, 0, 0))
     selected = [
         catalog.part(part_id)
@@ -782,14 +1141,23 @@ def composite_character_animation(
             else:
                 result = Image.alpha_composite(result, body)
         for part in selected:
-            if part.layer != layer or animation_id not in part.animations:
+            if (
+                part.render_layer_path(layer, animation_id, recipe.camera_height) is None
+            ):
                 continue
-            overlay = load_part_animation(catalog, part.id, animation_id)
+            overlay = load_part_render_layer(
+                catalog, part.id, layer, animation_id, recipe.camera_height
+            )
             selected_color = recipe.part_colors.get(part.id)
             if selected_color is not None:
                 overlay = recolor_part_ramp(overlay, part, selected_color)
             overlay = _apply_selected_part_alpha_occlusion(
-                overlay, part, selected, catalog, animation_id
+                overlay,
+                part,
+                selected,
+                catalog,
+                animation_id,
+                recipe.camera_height,
             )
             if overlay.size != result.size:
                 raise CharacterForgeError(
@@ -818,13 +1186,16 @@ def randomize_recipe(
     seed: int,
     *,
     name: str = "character",
+    camera_height: str = "low",
 ) -> CharacterRecipe:
     catalog.base(base_id)
     generator = random.Random(seed)
     selections = {slot: None for slot in CHARACTER_SLOTS}
     claimed: set[str] = set()
     for slot in CHARACTER_SLOTS:
-        candidates = list(catalog.parts_for_slot(slot))
+        candidates = list(
+            catalog.parts_for_slot(slot, base_id, camera_height)
+        )
         generator.shuffle(candidates)
         choices: list[CharacterPart | None] = [None, *candidates]
         choice = generator.choice(choices)
@@ -832,7 +1203,11 @@ def randomize_recipe(
             selections[slot] = choice.id
             claimed.update(choice.claimed_slots)
     return CharacterRecipe(
-        base_id=base_id, name=name, parts=selections, random_seed=seed
+        base_id=base_id,
+        camera_height=camera_height,
+        name=name,
+        parts=selections,
+        random_seed=seed,
     )
 
 

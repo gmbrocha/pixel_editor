@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "id": "tiefling-long-hair-run-front-prototype",
+  "familyId": "tiefling-long-hair",
+  "displayName": "Tiefling Long Hair \u2014 Run Front",
+  "slot": "hair",
+  "occupiesSlots": [
+    "hair"
+  ],
+  "reservedSlots": [],
+  "layer": "hair_front",
+  "tags": [
+    "user_authored",
+    "prototype",
+    "low_camera_only"
+  ],
+  "fit": "tiefling-female-01",
+  "version": 1,
+  "status": "incomplete",
+  "animations": {
+    "idle": "idle.png",
+    "walk": "walk.png",
+    "run": "run.png"
+  },
+  "renderLayers": {
+    "hair_back": {
+      "animations": {
+        "idle": "idle_back.png",
+        "walk": "walk_back.png",
+        "run": "run_back.png"
+      }
+    },
+    "hair_front": {
+      "animations": {
+        "idle": "idle_front.png",
+        "walk": "walk_front.png",
+        "run": "run_front.png"
+      }
+    }
+  },
+  "coverage": {
+    "idle": [],
+    "walk": [],
+    "run": [
+      "front"
+    ]
+  },
+  "colorRamp": {
+    "main": "#FFAEC9",
+    "colors": [
+      "#946575",
+      "#FFAEC9",
+      "#FFCEE1"
+    ]
+  },
+  "suggestedColors": [
+    "#FFAEC9",
+    "#A96B4F",
+    "#5A382B",
+    "#E6D1A3"
+  ],
+  "provenance": {
+    "kind": "hand_authored_component_prototype",
+    "source": "animation_images_models/component_cleanup_v2/new_hand_authored/teifling_long_hair_run_front_only_third_edit.png",
+    "sourceSha256": "c497796c37023d42e2a621ad9b44632eb33f4296f963af33fe7e2b251ff8ea5d",
+    "cameraHeight": "low",
+    "direction": "front",
+    "animationSha256": {
+      "idle": "76074ca80dd6695e8e5247f7fb3de6b48832ef8414eafc59ad956d1c9a81362f",
+      "walk": "21df068863f49340e4a38a9e1bd69f4e6e29ae5655a3b8d855b88980fdcf4df9",
+      "run": "7418402b78e76dfc6bfd826553061ebe16e70597580a6bc513e44a057bcd3b83"
+    },
+    "renderLayerSha256": {
+      "hair_back": {
+        "idle": "76074ca80dd6695e8e5247f7fb3de6b48832ef8414eafc59ad956d1c9a81362f",
+        "walk": "21df068863f49340e4a38a9e1bd69f4e6e29ae5655a3b8d855b88980fdcf4df9",
+        "run": "21df068863f49340e4a38a9e1bd69f4e6e29ae5655a3b8d855b88980fdcf4df9"
+      },
+      "hair_front": {
+        "idle": "76074ca80dd6695e8e5247f7fb3de6b48832ef8414eafc59ad956d1c9a81362f",
+        "walk": "21df068863f49340e4a38a9e1bd69f4e6e29ae5655a3b8d855b88980fdcf4df9",
+        "run": "7418402b78e76dfc6bfd826553061ebe16e70597580a6bc513e44a057bcd3b83"
+      }
+    }
+  }
+}

@@ -1,0 +1,1836 @@
+{
+  "schema_version": 1,
+  "status": "canonical",
+  "camera_heights": {
+    "top_down": {
+      "name": "Near Top-Down",
+      "pitch_degrees": 70.0
+    },
+    "three_quarter": {
+      "name": "Three-Quarter",
+      "pitch_degrees": 45.0
+    },
+    "low": {
+      "name": "Low",
+      "pitch_degrees": 28.0
+    }
+  },
+  "direction_order": [
+    "front",
+    "back",
+    "right",
+    "left"
+  ],
+  "sequence_order": [
+    "idle",
+    "walk",
+    "run"
+  ],
+  "excluded_models": [
+    "human_bald_male_less_muscular"
+  ],
+  "timing_file": "animation_images_models/approved_motion_timing.json",
+  "timing_sha256": "3957d06eceee0a8cf26c65713a45a93101803c767e255705c3b9345d9f79893b",
+  "bases": {
+    "elf-01": {
+      "character_id": "elf_bald_female",
+      "name": "Elf Female Base",
+      "camera_views": {
+        "top_down": {
+          "pitch_degrees": 70.0,
+          "framing_scale": 1.0,
+          "orthographic": true,
+          "canonical_blend": "animation_images_models/elf_bald_female/canonical/elf_bald_female_mannequin.blend",
+          "canonical_blend_sha256": "ff5e3dc983765337b6a8737e46f7eef1bdad2ed22b7b06e105603d8452fc6557",
+          "palette_sha256": "a6d61aa9a255cad9b0ea7d8030abece23cfb2080b6955c2209ff491cc4be836e",
+          "sequences": {
+            "idle": {
+              "runtime_file": "bases/elf-01/camera_views/top_down/idle.png",
+              "runtime_sha256": "389d8088df1219b10ec90fba9ac57fa980d82f04833cb2ab33c9605f55f3d3d4",
+              "source_frames": [
+                1,
+                3,
+                5,
+                7,
+                9,
+                11,
+                13,
+                15,
+                17,
+                19,
+                21,
+                23,
+                24,
+                25
+              ],
+              "frame_durations_ms": [
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167,
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/elf-01/camera_views/top_down/gifs/idle_front.gif",
+                  "sha256": "8d7b6a8a5618c227a25b35a744f90c3afedcb607af643a876a4b35bc2327f76a"
+                },
+                "back": {
+                  "file": "base_sources/elf-01/camera_views/top_down/gifs/idle_back.gif",
+                  "sha256": "b99e57695b81837c4820749d8829fe9d409a1c374046ce91df4af19241d7a794"
+                },
+                "right": {
+                  "file": "base_sources/elf-01/camera_views/top_down/gifs/idle_right.gif",
+                  "sha256": "d20cae747b80ca3c3de7934f6cf79fae49990eb378a9137e2adc5e4e2011e12f"
+                },
+                "left": {
+                  "file": "base_sources/elf-01/camera_views/top_down/gifs/idle_left.gif",
+                  "sha256": "af77b19cc63a560b61877310353abe9c63dc5cdedc70991208a836fc8105772b"
+                }
+              }
+            },
+            "walk": {
+              "runtime_file": "bases/elf-01/camera_views/top_down/walk.png",
+              "runtime_sha256": "9427219ed88ea9a66307c0e1be2a4f85d6957b5570f74a96a2e83535ea22f853",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/elf-01/camera_views/top_down/gifs/walk_front.gif",
+                  "sha256": "80792978a7bbd8528d862961706ff4b93b5183ea8e0a21a32943860cfad54e00"
+                },
+                "back": {
+                  "file": "base_sources/elf-01/camera_views/top_down/gifs/walk_back.gif",
+                  "sha256": "dce223a9a0dc88baeecc16a3cd6f318dedb81fa805d602aab2045e6ce942ea76"
+                },
+                "right": {
+                  "file": "base_sources/elf-01/camera_views/top_down/gifs/walk_right.gif",
+                  "sha256": "18c516c9a2695852e7304ccee38a3b8ada9f69f13da21c34c56dd66b214a3783"
+                },
+                "left": {
+                  "file": "base_sources/elf-01/camera_views/top_down/gifs/walk_left.gif",
+                  "sha256": "dfdcf50a52e0cef1d74cfc0fee1cda034bbee2d92e8a9a35cb3be57ab5eb57c1"
+                }
+              }
+            },
+            "run": {
+              "runtime_file": "bases/elf-01/camera_views/top_down/run.png",
+              "runtime_sha256": "6262c04f7b71d1b313b2801d723d6467623f7b9156f0b6661951638079f3b0ce",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/elf-01/camera_views/top_down/gifs/run_front.gif",
+                  "sha256": "7c9c1ddf7b280a1ba4f12f9976cabc4027521ea4d095a4e00017938512fbaffa"
+                },
+                "back": {
+                  "file": "base_sources/elf-01/camera_views/top_down/gifs/run_back.gif",
+                  "sha256": "b88c170c829e6bae96ded0b1d6426b923ab1df8a3b0616002db76c4bc784fad6"
+                },
+                "right": {
+                  "file": "base_sources/elf-01/camera_views/top_down/gifs/run_right.gif",
+                  "sha256": "8a3bcf86a5a0e541ddf3ae2263ce7bb7da651e7255899c2df65c0cfb03ad791f"
+                },
+                "left": {
+                  "file": "base_sources/elf-01/camera_views/top_down/gifs/run_left.gif",
+                  "sha256": "9ecdfa7502079f67f579aff42c26077c1a65635975c956925ece493007b253dc"
+                }
+              }
+            }
+          }
+        },
+        "three_quarter": {
+          "pitch_degrees": 45.0,
+          "framing_scale": 1.0,
+          "orthographic": true,
+          "canonical_blend": "animation_images_models/elf_bald_female/canonical/elf_bald_female_mannequin.blend",
+          "canonical_blend_sha256": "ff5e3dc983765337b6a8737e46f7eef1bdad2ed22b7b06e105603d8452fc6557",
+          "palette_sha256": "a71791df8aa44fc1bb18381c9903595ef40594ad169f4bf22bf39cd45f180b87",
+          "sequences": {
+            "idle": {
+              "runtime_file": "bases/elf-01/camera_views/three_quarter/idle.png",
+              "runtime_sha256": "f12b7c154ae70de46a20c1b63a2a1160ee942a69d2ee5a21a3adc03b102b9551",
+              "source_frames": [
+                1,
+                3,
+                5,
+                7,
+                9,
+                11,
+                13,
+                15,
+                17,
+                19,
+                21,
+                23,
+                24,
+                25
+              ],
+              "frame_durations_ms": [
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167,
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/elf-01/camera_views/three_quarter/gifs/idle_front.gif",
+                  "sha256": "93a42e0867f76eef99b195024d36384cd8b604f75e357317b53fc054ece2e9a9"
+                },
+                "back": {
+                  "file": "base_sources/elf-01/camera_views/three_quarter/gifs/idle_back.gif",
+                  "sha256": "34386d43ab21a608bebda12726343ee24b678b61c4e9739af6ba7ab7552e2093"
+                },
+                "right": {
+                  "file": "base_sources/elf-01/camera_views/three_quarter/gifs/idle_right.gif",
+                  "sha256": "8fe6e82cef3505afe84128334ad7692df3f28dc5097f1d9a1ed18030d97e5c85"
+                },
+                "left": {
+                  "file": "base_sources/elf-01/camera_views/three_quarter/gifs/idle_left.gif",
+                  "sha256": "1d1565da688a445f892b56a86ed03c8f74c9490280e4197c39c8a1e9c2608da7"
+                }
+              }
+            },
+            "walk": {
+              "runtime_file": "bases/elf-01/camera_views/three_quarter/walk.png",
+              "runtime_sha256": "0aebf93c8256856fa1fb5687920a033e767d100ffd6cdeb321873799011935ff",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/elf-01/camera_views/three_quarter/gifs/walk_front.gif",
+                  "sha256": "2be6293fcfee88ecc5f6dae0e1394b0e819a2c4861072338d793b51368ed2409"
+                },
+                "back": {
+                  "file": "base_sources/elf-01/camera_views/three_quarter/gifs/walk_back.gif",
+                  "sha256": "02c9c4291e7c7c201c2754e7102f6f07c7c2a22c0bbd4389e59b28758333f208"
+                },
+                "right": {
+                  "file": "base_sources/elf-01/camera_views/three_quarter/gifs/walk_right.gif",
+                  "sha256": "f9f82863e1e3c7165ea627f39e74a8fc9d3c7e6f330ac370f5ff5969ac5db341"
+                },
+                "left": {
+                  "file": "base_sources/elf-01/camera_views/three_quarter/gifs/walk_left.gif",
+                  "sha256": "e025258d8311996a59dda0d07d87513d26c6cb9e201c92342fd0594c196efcfc"
+                }
+              }
+            },
+            "run": {
+              "runtime_file": "bases/elf-01/camera_views/three_quarter/run.png",
+              "runtime_sha256": "94fc614d33c01d8891bf2e4e81a3288956e2521634c49c4593c17fda332a7168",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/elf-01/camera_views/three_quarter/gifs/run_front.gif",
+                  "sha256": "ef247ff712d55871e9b9c156250d4b674ab48588eb14a4137dc9f57ae758f972"
+                },
+                "back": {
+                  "file": "base_sources/elf-01/camera_views/three_quarter/gifs/run_back.gif",
+                  "sha256": "347b0acd4a121ad32e1c2c03d0a4c8ad48a9c750f1396efe0ccfdfbf9dc6510c"
+                },
+                "right": {
+                  "file": "base_sources/elf-01/camera_views/three_quarter/gifs/run_right.gif",
+                  "sha256": "e62b8c1e9fbe2b0876a59d5616f5720b1e0f8c05abd3cf12b67a58eb104024c2"
+                },
+                "left": {
+                  "file": "base_sources/elf-01/camera_views/three_quarter/gifs/run_left.gif",
+                  "sha256": "06ffe449b02b58c52cf8c63614d9b0ab10b4184dd62056225edf688e6f637b94"
+                }
+              }
+            }
+          }
+        },
+        "low": {
+          "pitch_degrees": 28.0,
+          "framing_scale": 1.2525964394593851,
+          "orthographic": true,
+          "canonical_blend": "animation_images_models/elf_bald_female/canonical/elf_bald_female_mannequin.blend",
+          "canonical_blend_sha256": "ff5e3dc983765337b6a8737e46f7eef1bdad2ed22b7b06e105603d8452fc6557",
+          "palette_sha256": null,
+          "sequences": {
+            "idle": {
+              "runtime_file": "bases/elf-01/idle.png",
+              "runtime_sha256": "d686fdcdc6346abb9058756f4cae0540994c966d8ed9a04349dfe152c745c356",
+              "source_frames": [
+                1,
+                3,
+                5,
+                7,
+                9,
+                11,
+                13,
+                15,
+                17,
+                19,
+                21,
+                23,
+                24,
+                25
+              ],
+              "frame_durations_ms": [
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167,
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167
+              ],
+              "gifs": {
+                "front": {
+                  "file": "semantic/elf-01/idle/gifs/idle_front.gif",
+                  "sha256": "69c393300d7d2ebdfc9020cd814a432cfb0bdb8accb54384e23c2e92d2764b1f"
+                },
+                "back": {
+                  "file": "semantic/elf-01/idle/gifs/idle_back.gif",
+                  "sha256": "e6e3f619d52fe23c3434cf64bd4acf6695b817871f8dd3f7163d851711dec109"
+                },
+                "right": {
+                  "file": "semantic/elf-01/idle/gifs/idle_right.gif",
+                  "sha256": "92cac916a9bc36acd7255d69cfda5e10c783985f61aec606c0618471655c9720"
+                },
+                "left": {
+                  "file": "semantic/elf-01/idle/gifs/idle_left.gif",
+                  "sha256": "1665fa8fd1ba1fa8544c1f7f4237af9f41e80b8044fcdd5a8c956d8e3792cce2"
+                }
+              }
+            },
+            "walk": {
+              "runtime_file": "bases/elf-01/walk.png",
+              "runtime_sha256": "96b73ea3a991fd71e7893b60da4a57cd2fbdc4e0977a9176d882f0c09c2f9f79",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "semantic/elf-01/walk/gifs/walk_front.gif",
+                  "sha256": "d6322a7b8cb29bb93d30ee1b1e65b58fbf5fc3a253c3318e83acfa4c81452ba4"
+                },
+                "back": {
+                  "file": "semantic/elf-01/walk/gifs/walk_back.gif",
+                  "sha256": "b4781fb81af8c9c942a63b4cc28aa16797038f87c3d59172c6123f8e79f3eca4"
+                },
+                "right": {
+                  "file": "semantic/elf-01/walk/gifs/walk_right.gif",
+                  "sha256": "cd92703ffcece12c36533494ae5763451e4bd1409d7e5733532737f974e53dc2"
+                },
+                "left": {
+                  "file": "semantic/elf-01/walk/gifs/walk_left.gif",
+                  "sha256": "bcb748c7b9f9a8e5fcbada4bb5ffcdc4ef190490511cc4c025af0561cf1309f0"
+                }
+              }
+            },
+            "run": {
+              "runtime_file": "bases/elf-01/run.png",
+              "runtime_sha256": "13a461d3d2f24d6d40cde7e2fb3d0a15d9d08b0c70b086a0369d15b431764ea6",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "semantic/elf-01/run/gifs/run_front.gif",
+                  "sha256": "8b39455c50571fd1338978d24688d51eaa871fcd4e0abb4a19840da76cbd40be"
+                },
+                "back": {
+                  "file": "semantic/elf-01/run/gifs/run_back.gif",
+                  "sha256": "6c5e037fffb3dec3978c7e71771d607045db905c24f090f5e4bc63a1f3cf8b1b"
+                },
+                "right": {
+                  "file": "semantic/elf-01/run/gifs/run_right.gif",
+                  "sha256": "69bbb7807619b67847473a666648eec9a7154262e3b5799291c77daf4181cbee"
+                },
+                "left": {
+                  "file": "semantic/elf-01/run/gifs/run_left.gif",
+                  "sha256": "027ded817ac626c8a1660116d1cd0c2a144c525b951f7aa87c5094b45f2596c0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "tiefling-female-01": {
+      "character_id": "tiefling_bald_female",
+      "name": "Tiefling Female Base",
+      "camera_views": {
+        "top_down": {
+          "pitch_degrees": 70.0,
+          "framing_scale": 1.0,
+          "orthographic": true,
+          "canonical_blend": "animation_images_models/tiefling_bald_female/canonical/tiefling_bald_female_approved_motions.blend",
+          "canonical_blend_sha256": "c79a73f1ddd8b994ef5bd154ad75be12c391e2f6fda4d198f36e60717eccb1b6",
+          "palette_sha256": "050c9796d83346e62c4576c854d9d962531d535f244667c378415eebb1a8f05d",
+          "sequences": {
+            "idle": {
+              "runtime_file": "bases/tiefling-female-01/camera_views/top_down/idle.png",
+              "runtime_sha256": "9f53bcba78502eabb109ff0aaf3774dcbb6b98e5dc69a424d28f44fe05d3ae56",
+              "source_frames": [
+                1,
+                3,
+                5,
+                7,
+                9,
+                11,
+                13,
+                15,
+                17,
+                19,
+                21,
+                23,
+                24,
+                25
+              ],
+              "frame_durations_ms": [
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167,
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/tiefling-female-01/camera_views/top_down/gifs/idle_front.gif",
+                  "sha256": "dbc3149537eb99f5e6ddb48539f32cca54a7e00b7948da3fe012ac7a61d536d3"
+                },
+                "back": {
+                  "file": "base_sources/tiefling-female-01/camera_views/top_down/gifs/idle_back.gif",
+                  "sha256": "5590a0912263905af37d45a05044e81a1598085d1cec947fa7459a27cb58752c"
+                },
+                "right": {
+                  "file": "base_sources/tiefling-female-01/camera_views/top_down/gifs/idle_right.gif",
+                  "sha256": "6c425383f16f293ad05d63cdb1a4a7553dc929b9b13198dd84ea4b31963ebaee"
+                },
+                "left": {
+                  "file": "base_sources/tiefling-female-01/camera_views/top_down/gifs/idle_left.gif",
+                  "sha256": "92d3f3429ab62d18d3e58b9ab1082d90de642506deab073f5d9b9bf7c57878d8"
+                }
+              }
+            },
+            "walk": {
+              "runtime_file": "bases/tiefling-female-01/camera_views/top_down/walk.png",
+              "runtime_sha256": "a89e929eca2fd5af060d665366ed6b6ad08c5cbe310690d323db714d06bc49c1",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/tiefling-female-01/camera_views/top_down/gifs/walk_front.gif",
+                  "sha256": "295bf599262528f7b35d2a5ebbafae2f034e1fadc7f267d09ce6cfc8b573b1e5"
+                },
+                "back": {
+                  "file": "base_sources/tiefling-female-01/camera_views/top_down/gifs/walk_back.gif",
+                  "sha256": "eddc8135b9c5262673d3f723c9c161eb1434d178b0dc023e83f91d57e2d63237"
+                },
+                "right": {
+                  "file": "base_sources/tiefling-female-01/camera_views/top_down/gifs/walk_right.gif",
+                  "sha256": "1741a57f2a2bf473f4e1baaa01ed318c79410690b6e39244a1c9b36d4cc8daa2"
+                },
+                "left": {
+                  "file": "base_sources/tiefling-female-01/camera_views/top_down/gifs/walk_left.gif",
+                  "sha256": "6949637b8a49d365ccbd36ab565bbf4b2c4f9276163254372fd0d3d055708431"
+                }
+              }
+            },
+            "run": {
+              "runtime_file": "bases/tiefling-female-01/camera_views/top_down/run.png",
+              "runtime_sha256": "9c2c6f4c4d6096c4466d7781c38ab3d8b2d8521200b42a7f09cbf3e42a130273",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/tiefling-female-01/camera_views/top_down/gifs/run_front.gif",
+                  "sha256": "4d4d793c21a4e8ef0041b0ef54ffb31ba1ed15570207b95c77b9d6e988763953"
+                },
+                "back": {
+                  "file": "base_sources/tiefling-female-01/camera_views/top_down/gifs/run_back.gif",
+                  "sha256": "4403da0b57445bbe33b9fcba1b2b716febede945c37fe03b9626a17d67ee8649"
+                },
+                "right": {
+                  "file": "base_sources/tiefling-female-01/camera_views/top_down/gifs/run_right.gif",
+                  "sha256": "4fec5a41c38ba583f45503438adb6631bdfd613fac1c00dd5f0508065aff29bd"
+                },
+                "left": {
+                  "file": "base_sources/tiefling-female-01/camera_views/top_down/gifs/run_left.gif",
+                  "sha256": "bd231d57ca7f7882cfe81baa92ded4fe6f46df9ae118ebafce03829147270c01"
+                }
+              }
+            }
+          }
+        },
+        "three_quarter": {
+          "pitch_degrees": 45.0,
+          "framing_scale": 1.0,
+          "orthographic": true,
+          "canonical_blend": "animation_images_models/tiefling_bald_female/canonical/tiefling_bald_female_approved_motions.blend",
+          "canonical_blend_sha256": "c79a73f1ddd8b994ef5bd154ad75be12c391e2f6fda4d198f36e60717eccb1b6",
+          "palette_sha256": "7ffdb3831e72f4e4055befec9eda3ccb3a5a4af3fb89ae6c5406c75b1589b152",
+          "sequences": {
+            "idle": {
+              "runtime_file": "bases/tiefling-female-01/camera_views/three_quarter/idle.png",
+              "runtime_sha256": "c2304ff99afff0f430299bcf5746bc18bb2451928c2c1be64b47411c2e4af291",
+              "source_frames": [
+                1,
+                3,
+                5,
+                7,
+                9,
+                11,
+                13,
+                15,
+                17,
+                19,
+                21,
+                23,
+                24,
+                25
+              ],
+              "frame_durations_ms": [
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167,
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/tiefling-female-01/camera_views/three_quarter/gifs/idle_front.gif",
+                  "sha256": "ff962903796d3cb1a0b4b7b332ca8d7f6dccd981673b8e4c93ff813e82a05ef2"
+                },
+                "back": {
+                  "file": "base_sources/tiefling-female-01/camera_views/three_quarter/gifs/idle_back.gif",
+                  "sha256": "d8663e315be5130b55464931b33fa9ed92848f6ee07b930f2cfd714daa7781de"
+                },
+                "right": {
+                  "file": "base_sources/tiefling-female-01/camera_views/three_quarter/gifs/idle_right.gif",
+                  "sha256": "f4db94285bd6dcc38d6779d87213b40ac02a0d67861c850190200f9d1ddeafb6"
+                },
+                "left": {
+                  "file": "base_sources/tiefling-female-01/camera_views/three_quarter/gifs/idle_left.gif",
+                  "sha256": "a103a7c04474ee615f65d72682b6868b0b45bb735d0e1a8514ef217d0aeae868"
+                }
+              }
+            },
+            "walk": {
+              "runtime_file": "bases/tiefling-female-01/camera_views/three_quarter/walk.png",
+              "runtime_sha256": "06ecb3f68f9ecdd178bbcffe20ca27b1758b448dff35eafc4979ed0878053612",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/tiefling-female-01/camera_views/three_quarter/gifs/walk_front.gif",
+                  "sha256": "a21cc73746fb66e3c2fbf2f40c81aaad61249c1f36fb5053581d2fb221e76a65"
+                },
+                "back": {
+                  "file": "base_sources/tiefling-female-01/camera_views/three_quarter/gifs/walk_back.gif",
+                  "sha256": "95a2c45fff166d360317f8c6360d3faeb77f99e59746278f67463990527e807d"
+                },
+                "right": {
+                  "file": "base_sources/tiefling-female-01/camera_views/three_quarter/gifs/walk_right.gif",
+                  "sha256": "0ef17d997424cc3c8275d408fd52f340c74bb3fefa9c5b067787bd9eaa2b0d35"
+                },
+                "left": {
+                  "file": "base_sources/tiefling-female-01/camera_views/three_quarter/gifs/walk_left.gif",
+                  "sha256": "fd82eb5738032d811c7c41e0b8bdbd273f64cedde5569361e2a14e03cd0d52d0"
+                }
+              }
+            },
+            "run": {
+              "runtime_file": "bases/tiefling-female-01/camera_views/three_quarter/run.png",
+              "runtime_sha256": "382d7e0244878fcf505de89675a93b3e626b5cd0aeb41ae468a6afe909a40fb9",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/tiefling-female-01/camera_views/three_quarter/gifs/run_front.gif",
+                  "sha256": "a20289a825e67fc7b4a1a7b1329cfd6e6a31c51e0ff590a958b5f97785be5919"
+                },
+                "back": {
+                  "file": "base_sources/tiefling-female-01/camera_views/three_quarter/gifs/run_back.gif",
+                  "sha256": "b7253182f3a3743fb4f9625a22c73443fd1c6bbc518322dfdee6913caab2c1d3"
+                },
+                "right": {
+                  "file": "base_sources/tiefling-female-01/camera_views/three_quarter/gifs/run_right.gif",
+                  "sha256": "0053d8f89d6e5588530a7cf67044b2c94ce9f83f0332274f12041d3d79aaecc0"
+                },
+                "left": {
+                  "file": "base_sources/tiefling-female-01/camera_views/three_quarter/gifs/run_left.gif",
+                  "sha256": "990879b0e9467b142ce0dc2cdf7928a1a9b74ae601fbf047be3407162062d438"
+                }
+              }
+            }
+          }
+        },
+        "low": {
+          "pitch_degrees": 28.0,
+          "framing_scale": 1.0,
+          "orthographic": true,
+          "canonical_blend": "animation_images_models/tiefling_bald_female/canonical/tiefling_bald_female_approved_motions.blend",
+          "canonical_blend_sha256": "c79a73f1ddd8b994ef5bd154ad75be12c391e2f6fda4d198f36e60717eccb1b6",
+          "palette_sha256": null,
+          "sequences": {
+            "idle": {
+              "runtime_file": "bases/tiefling-female-01/idle.png",
+              "runtime_sha256": "e9fecdcde8d7146f2ff521f388ce5f5c0fe34609d5f57acd12be9e63e902649a",
+              "source_frames": [
+                1,
+                3,
+                5,
+                7,
+                9,
+                11,
+                13,
+                15,
+                17,
+                19,
+                21,
+                23,
+                24,
+                25
+              ],
+              "frame_durations_ms": [
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167,
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/tiefling-female-01/gifs/idle_front.gif",
+                  "sha256": "d2cfb80342242ca8b519adfc4ed0d90f1e99a6c714ea61996a316ef0ba1a8a43"
+                },
+                "back": {
+                  "file": "base_sources/tiefling-female-01/gifs/idle_back.gif",
+                  "sha256": "a14736e3724c2f6b580b438748bdf79947d22e38d37747324f39413c1d32f2cd"
+                },
+                "right": {
+                  "file": "base_sources/tiefling-female-01/gifs/idle_right.gif",
+                  "sha256": "235e49e453f81197c8ca12f6243d30c75030e8d38aaff7442ffac609d8da4ee0"
+                },
+                "left": {
+                  "file": "base_sources/tiefling-female-01/gifs/idle_left.gif",
+                  "sha256": "7779b999d095f71ab63b172586f6b30a82af95fa832cc8493a6fea6965b52b3b"
+                }
+              }
+            },
+            "walk": {
+              "runtime_file": "bases/tiefling-female-01/walk.png",
+              "runtime_sha256": "de8fd702c57757ee2cae6e4cc18e271242cfe1c494fcaf194b5cdabcc900503c",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/tiefling-female-01/gifs/walk_front.gif",
+                  "sha256": "7ac3b663e14040e7f9e431d0065d9e1e9d96cc865e86c8bab5084d25028ffbd0"
+                },
+                "back": {
+                  "file": "base_sources/tiefling-female-01/gifs/walk_back.gif",
+                  "sha256": "ea65dd21ff9b09ee8cf9e18ec884a4ba744f9f321e3386c05b6c1cd186ccd8ec"
+                },
+                "right": {
+                  "file": "base_sources/tiefling-female-01/gifs/walk_right.gif",
+                  "sha256": "f0483cec1fface4e7584e6f8c5507e2bece7aa4e6ca6a74aa21af82be5dac33a"
+                },
+                "left": {
+                  "file": "base_sources/tiefling-female-01/gifs/walk_left.gif",
+                  "sha256": "4c3ca546408758d244a6524149f6228ef7542631e218a6cd0e223861d821defd"
+                }
+              }
+            },
+            "run": {
+              "runtime_file": "bases/tiefling-female-01/run.png",
+              "runtime_sha256": "5983e6920659a00d881832d513456382b1a3cbe845a2c9bc43d836551d5a6190",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/tiefling-female-01/gifs/run_front.gif",
+                  "sha256": "611c1ccb0286b86ac4398afd08335e5a09810ca5454f51a134dac4c6cf10344f"
+                },
+                "back": {
+                  "file": "base_sources/tiefling-female-01/gifs/run_back.gif",
+                  "sha256": "d52614a65a43a67884ac27c6eb755576b14f08e93fdaeb81dcab8cf48dcc82ad"
+                },
+                "right": {
+                  "file": "base_sources/tiefling-female-01/gifs/run_right.gif",
+                  "sha256": "244e0c330e913f1770fd0f6c07324f1c46d22c06093e43827278ebaf87e9d247"
+                },
+                "left": {
+                  "file": "base_sources/tiefling-female-01/gifs/run_left.gif",
+                  "sha256": "7f85a9df4c497f3fc93391777a365d05d71ab347c489046d0939dfc456008db2"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "dwarf-male-01": {
+      "character_id": "dwarf_bald_male",
+      "name": "Dwarf Male Base",
+      "camera_views": {
+        "top_down": {
+          "pitch_degrees": 70.0,
+          "framing_scale": 1.12,
+          "orthographic": true,
+          "canonical_blend": "animation_images_models/dwarf_bald_male/canonical/dwarf_bald_male_approved_motions.blend",
+          "canonical_blend_sha256": "a62ccbbf7b266228449eafef276364e9c287ec5d6919aa2c4ba5edf3a526394b",
+          "palette_sha256": "c13b8e24a7d8f5a22b41209b65342566342f2e2716fdfe24802ae8c1b585f17f",
+          "sequences": {
+            "idle": {
+              "runtime_file": "bases/dwarf-male-01/camera_views/top_down/idle.png",
+              "runtime_sha256": "85041a91a1f4ff09ab62c64fac9205410931e75352bfd8a45b34445b309a6825",
+              "source_frames": [
+                1,
+                3,
+                5,
+                7,
+                9,
+                11,
+                13,
+                15,
+                17,
+                19,
+                21,
+                23,
+                24,
+                25
+              ],
+              "frame_durations_ms": [
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167,
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/dwarf-male-01/camera_views/top_down/gifs/idle_front.gif",
+                  "sha256": "823194b509f8b951dbf7cf5851bda84df9dfcd3a474e6b22eb56f6a85bde7c0a"
+                },
+                "back": {
+                  "file": "base_sources/dwarf-male-01/camera_views/top_down/gifs/idle_back.gif",
+                  "sha256": "c0d19b804660dd5641a1be427c7de7fc48c861376fabc3bae043a2da8eeacb95"
+                },
+                "right": {
+                  "file": "base_sources/dwarf-male-01/camera_views/top_down/gifs/idle_right.gif",
+                  "sha256": "028a8b9a520294810b8de25673a57f13f09611b20e9169283d19f3eb5032a320"
+                },
+                "left": {
+                  "file": "base_sources/dwarf-male-01/camera_views/top_down/gifs/idle_left.gif",
+                  "sha256": "e121dd988e9149bd207ed18684ebf758c5a79d2e0147fba058189f313eba03d6"
+                }
+              }
+            },
+            "walk": {
+              "runtime_file": "bases/dwarf-male-01/camera_views/top_down/walk.png",
+              "runtime_sha256": "4c0f7406211cab5bab6fc4b3df170162b2d83a31afead4aaa20d17a4574187dc",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/dwarf-male-01/camera_views/top_down/gifs/walk_front.gif",
+                  "sha256": "73ed68b1f8e1c114554d7bfba8cfe0d44034d64a2d1afcb69904d741063badf5"
+                },
+                "back": {
+                  "file": "base_sources/dwarf-male-01/camera_views/top_down/gifs/walk_back.gif",
+                  "sha256": "379959934951999d6c53d07eb8ad6e0a8e9b9b2bd7a0e28236122c2a67b64afd"
+                },
+                "right": {
+                  "file": "base_sources/dwarf-male-01/camera_views/top_down/gifs/walk_right.gif",
+                  "sha256": "09be2822a9e63c3d0ad793c492dae0a52effd6fae14c604ab73020425c92ab2c"
+                },
+                "left": {
+                  "file": "base_sources/dwarf-male-01/camera_views/top_down/gifs/walk_left.gif",
+                  "sha256": "e0261365fab6fcd8dcb64e0a66252419006ea7018bc9cb84745be18638e08490"
+                }
+              }
+            },
+            "run": {
+              "runtime_file": "bases/dwarf-male-01/camera_views/top_down/run.png",
+              "runtime_sha256": "4440a6fc45542a4653c648930b7ab9e2edfa8b8098f5700ae585579690d45521",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/dwarf-male-01/camera_views/top_down/gifs/run_front.gif",
+                  "sha256": "37110cba1151457971ff50edae868f0153fe97d0eaa09fd43e0cd74590ac431b"
+                },
+                "back": {
+                  "file": "base_sources/dwarf-male-01/camera_views/top_down/gifs/run_back.gif",
+                  "sha256": "dc8499b34bed6cf8439939c870240513ab2f47992762352d5e7d0ecd286300ac"
+                },
+                "right": {
+                  "file": "base_sources/dwarf-male-01/camera_views/top_down/gifs/run_right.gif",
+                  "sha256": "92f60758725f72d657896c7fbec243a9b3b297ea2a43a44da406ddaf9aee6562"
+                },
+                "left": {
+                  "file": "base_sources/dwarf-male-01/camera_views/top_down/gifs/run_left.gif",
+                  "sha256": "e7befbd00b95f3acb709b787eb3a3a00926824fb3c625e30dfec48a36ef45171"
+                }
+              }
+            }
+          }
+        },
+        "three_quarter": {
+          "pitch_degrees": 45.0,
+          "framing_scale": 1.12,
+          "orthographic": true,
+          "canonical_blend": "animation_images_models/dwarf_bald_male/canonical/dwarf_bald_male_approved_motions.blend",
+          "canonical_blend_sha256": "a62ccbbf7b266228449eafef276364e9c287ec5d6919aa2c4ba5edf3a526394b",
+          "palette_sha256": "09dcdbc4e79aeb06592660d117c457013ca9f88156cd12397fd08d7ddf920ed1",
+          "sequences": {
+            "idle": {
+              "runtime_file": "bases/dwarf-male-01/camera_views/three_quarter/idle.png",
+              "runtime_sha256": "198615c417a0e0d3e385d1513b05697ba1b405cea986af4a2edb4865bb7d1e36",
+              "source_frames": [
+                1,
+                3,
+                5,
+                7,
+                9,
+                11,
+                13,
+                15,
+                17,
+                19,
+                21,
+                23,
+                24,
+                25
+              ],
+              "frame_durations_ms": [
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167,
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/dwarf-male-01/camera_views/three_quarter/gifs/idle_front.gif",
+                  "sha256": "afa3fe9ce713eab03bd093ecc9bfbbba5db740f430a33468e3efe06cb1d41647"
+                },
+                "back": {
+                  "file": "base_sources/dwarf-male-01/camera_views/three_quarter/gifs/idle_back.gif",
+                  "sha256": "6f0b77fd76dc5e3eb84e89588b80fee217e94b90ec12da883fe30e12d4ab99fb"
+                },
+                "right": {
+                  "file": "base_sources/dwarf-male-01/camera_views/three_quarter/gifs/idle_right.gif",
+                  "sha256": "2a27214175d17d47902164e3d54477f91de60d6fb836d8423a6d9dfb96744bde"
+                },
+                "left": {
+                  "file": "base_sources/dwarf-male-01/camera_views/three_quarter/gifs/idle_left.gif",
+                  "sha256": "cde967694a7e073d2c22d475ec0f39810386634bbf5909f70d17e789e6714e7f"
+                }
+              }
+            },
+            "walk": {
+              "runtime_file": "bases/dwarf-male-01/camera_views/three_quarter/walk.png",
+              "runtime_sha256": "c7a29c85cea3e3c9b782e3b1f5500991673ab8e1ad6ecfb7a2683ce5c98eeaa3",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/dwarf-male-01/camera_views/three_quarter/gifs/walk_front.gif",
+                  "sha256": "48697111ff000dfd3f6e2ffd5951e239d9e2d86a8a57a92cef3841012f9e4bbf"
+                },
+                "back": {
+                  "file": "base_sources/dwarf-male-01/camera_views/three_quarter/gifs/walk_back.gif",
+                  "sha256": "833a5ea2243336afdf43a7d3ec73553bba27e6d53b308c5145c6c6cb53491dbb"
+                },
+                "right": {
+                  "file": "base_sources/dwarf-male-01/camera_views/three_quarter/gifs/walk_right.gif",
+                  "sha256": "d03a582134570efb34ed5016fadb82321b0cf3e40b4eebd7d4b1bca46937645b"
+                },
+                "left": {
+                  "file": "base_sources/dwarf-male-01/camera_views/three_quarter/gifs/walk_left.gif",
+                  "sha256": "5f5ee8a46519bb2464c1193744a3d01bf95a03cf1e86bcfb9ca35fd621a65fbb"
+                }
+              }
+            },
+            "run": {
+              "runtime_file": "bases/dwarf-male-01/camera_views/three_quarter/run.png",
+              "runtime_sha256": "96ca66d158ed6ea0af433459165441aa9655078393d32e3961011ff2b2057f4e",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/dwarf-male-01/camera_views/three_quarter/gifs/run_front.gif",
+                  "sha256": "fb63934631220a76987c02f884a88a1bbe8d94dea749de2739be8e8f6c3c8d35"
+                },
+                "back": {
+                  "file": "base_sources/dwarf-male-01/camera_views/three_quarter/gifs/run_back.gif",
+                  "sha256": "43de80e5fb42426f4e73bf57e0060c128af52eb2765d0e21d825aea834a3130b"
+                },
+                "right": {
+                  "file": "base_sources/dwarf-male-01/camera_views/three_quarter/gifs/run_right.gif",
+                  "sha256": "ac9165a0d5ef37e2eb05ea0626bd1764726b0b7087d9077ba3e9c2181bc4bc52"
+                },
+                "left": {
+                  "file": "base_sources/dwarf-male-01/camera_views/three_quarter/gifs/run_left.gif",
+                  "sha256": "344b1649ceb420ad42d9ee9888281b388fd30f23d954dbef58506b1d111019f4"
+                }
+              }
+            }
+          }
+        },
+        "low": {
+          "pitch_degrees": 28.0,
+          "framing_scale": 1.12,
+          "orthographic": true,
+          "canonical_blend": "animation_images_models/dwarf_bald_male/canonical/dwarf_bald_male_approved_motions.blend",
+          "canonical_blend_sha256": "a62ccbbf7b266228449eafef276364e9c287ec5d6919aa2c4ba5edf3a526394b",
+          "palette_sha256": null,
+          "sequences": {
+            "idle": {
+              "runtime_file": "bases/dwarf-male-01/idle.png",
+              "runtime_sha256": "85fa39048058f6ad91e602b8d22d09e978f743914925b48866857f1d36a28060",
+              "source_frames": [
+                1,
+                3,
+                5,
+                7,
+                9,
+                11,
+                13,
+                15,
+                17,
+                19,
+                21,
+                23,
+                24,
+                25
+              ],
+              "frame_durations_ms": [
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167,
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/dwarf-male-01/gifs/idle_front.gif",
+                  "sha256": "920f8e9c05cb8915e8d2986b0880c3c8310028bcb8ab166dc77be97255b0cff1"
+                },
+                "back": {
+                  "file": "base_sources/dwarf-male-01/gifs/idle_back.gif",
+                  "sha256": "48eb09c40fa12faeebc1adcc7e618a028837853801b9588b792ed76961f9149e"
+                },
+                "right": {
+                  "file": "base_sources/dwarf-male-01/gifs/idle_right.gif",
+                  "sha256": "92d14e61b7114c3bf4eb378b1774b3852882d777bdfb8cab89944b688744eb5f"
+                },
+                "left": {
+                  "file": "base_sources/dwarf-male-01/gifs/idle_left.gif",
+                  "sha256": "9b4e4523076ef0c50e58bf856993931877af1d672dbd0443d919f07c09159f04"
+                }
+              }
+            },
+            "walk": {
+              "runtime_file": "bases/dwarf-male-01/walk.png",
+              "runtime_sha256": "aa1400f3d7addb563a9d3d48a9650f7bbc72fca50e58022a3d9a4173b1c6cd3a",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/dwarf-male-01/gifs/walk_front.gif",
+                  "sha256": "08e2210472edc637caf3761ef25e282628adf5a7841c440169f3137e4699ad2f"
+                },
+                "back": {
+                  "file": "base_sources/dwarf-male-01/gifs/walk_back.gif",
+                  "sha256": "85f78f7c84ab41a5f24cbab255f5431d588b205f8af16d43329d28e00c7f790c"
+                },
+                "right": {
+                  "file": "base_sources/dwarf-male-01/gifs/walk_right.gif",
+                  "sha256": "d8d1ea76833c5fe82e81ff76bf4b79662375f554a61d2e49e67ea101aff99470"
+                },
+                "left": {
+                  "file": "base_sources/dwarf-male-01/gifs/walk_left.gif",
+                  "sha256": "d6a5d2c628e0175a9e7ec9a0802c53873762f43b2dcae84e68449271e6f28a63"
+                }
+              }
+            },
+            "run": {
+              "runtime_file": "bases/dwarf-male-01/run.png",
+              "runtime_sha256": "6b7a88cc4dfee0569e30965705c84ec92d642c9b9f6c3cad6c3897de95822e1b",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/dwarf-male-01/gifs/run_front.gif",
+                  "sha256": "fbb241027a4f27b9f3230562084ff0e2a35ec77f739060ff83d7fb2f0441d1c7"
+                },
+                "back": {
+                  "file": "base_sources/dwarf-male-01/gifs/run_back.gif",
+                  "sha256": "86caa7a5dcc8a5f397bbc38d26857257865a37100e68b0ce7d723485354b1fa4"
+                },
+                "right": {
+                  "file": "base_sources/dwarf-male-01/gifs/run_right.gif",
+                  "sha256": "dc6b95038081a4c553ff7d33db732101dfe217c1cd630b3ee2e790f02baaee31"
+                },
+                "left": {
+                  "file": "base_sources/dwarf-male-01/gifs/run_left.gif",
+                  "sha256": "4819b045f1ca37577c67b4de1aa84b0ff99905577f1e53acf234ab98f7a9ad75"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "human-muscular-male-01": {
+      "character_id": "human_bald_male",
+      "name": "Muscular Human Male Base",
+      "camera_views": {
+        "top_down": {
+          "pitch_degrees": 70.0,
+          "framing_scale": 1.0,
+          "orthographic": true,
+          "canonical_blend": "animation_images_models/human_bald_male/canonical/human_bald_male_approved_motions.blend",
+          "canonical_blend_sha256": "7b8fb6e5d228e756a87a445f405432195471bb72ba4bb8df6318fa258e852a5e",
+          "palette_sha256": "dd100edf1c35152a0da8a55607c629c57018b23afab7e0e3f269752f689cd2f2",
+          "sequences": {
+            "idle": {
+              "runtime_file": "bases/human-muscular-male-01/camera_views/top_down/idle.png",
+              "runtime_sha256": "423715009b60269bffc98d5daaa051b0a370bf1b40214e34c09545cccca39a2e",
+              "source_frames": [
+                1,
+                3,
+                5,
+                7,
+                9,
+                11,
+                13,
+                15,
+                17,
+                19,
+                21,
+                23,
+                24,
+                25
+              ],
+              "frame_durations_ms": [
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167,
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/top_down/gifs/idle_front.gif",
+                  "sha256": "bfcb7484f514db20b6dca0aa4b35d5bcdeb0c5353c4ccdb0130b0b6d2f89e81c"
+                },
+                "back": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/top_down/gifs/idle_back.gif",
+                  "sha256": "f8884ea620b3b0f22b1d412b4f184863cb495435264a43550479a49637cfd8ef"
+                },
+                "right": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/top_down/gifs/idle_right.gif",
+                  "sha256": "634f8f628b707c76bc65c122b85a75c123f905d0e22fd769355edddafc153999"
+                },
+                "left": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/top_down/gifs/idle_left.gif",
+                  "sha256": "d6043c91e1768f42214c33dab36fec7f9b5dcd23cec00f6affd3ade8167adfdf"
+                }
+              }
+            },
+            "walk": {
+              "runtime_file": "bases/human-muscular-male-01/camera_views/top_down/walk.png",
+              "runtime_sha256": "3d2106b7a220a9a278542f69e830f5d78608aedc38c2bf105fe8689eca5095c0",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/top_down/gifs/walk_front.gif",
+                  "sha256": "0494f6e7e1c3c937f3d7a3ca02a268e817f81398d546c20fab5d4e12eb8e7289"
+                },
+                "back": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/top_down/gifs/walk_back.gif",
+                  "sha256": "6a4fdf0baca6b36def41c8d4a2c4a60c2b42f178955b43d0ce376ef5b2dcd98c"
+                },
+                "right": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/top_down/gifs/walk_right.gif",
+                  "sha256": "700ccb6af629f9d9fbb0894e45b1a8060e272fe8a6ac0add29c18265b6e08050"
+                },
+                "left": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/top_down/gifs/walk_left.gif",
+                  "sha256": "3910a3e4d95671101e5f5f0954158c813b45eb9100fe2ccbe7d1975be3017ba3"
+                }
+              }
+            },
+            "run": {
+              "runtime_file": "bases/human-muscular-male-01/camera_views/top_down/run.png",
+              "runtime_sha256": "7905288dae070f81ee79cf7d762f172de93c2aadf4774f5a5d9e7b7a5b996d6c",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/top_down/gifs/run_front.gif",
+                  "sha256": "ba6b1fdaf6be8a4ffa125dbe1b1f4f679f3b54ddcabac3d71246ada5535b7247"
+                },
+                "back": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/top_down/gifs/run_back.gif",
+                  "sha256": "47172a3fa69312c123e03384a9af89164f2c3388424c1975121e6c7428843162"
+                },
+                "right": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/top_down/gifs/run_right.gif",
+                  "sha256": "7052e8fa0c192a8ba33b2d688e02115d74c3e2ad5ec0eb622384991c45df5b90"
+                },
+                "left": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/top_down/gifs/run_left.gif",
+                  "sha256": "8a1ee34be02b5c65b21ecd75cf9c8fa38dcc4d61a4127bcf76fef85e3939ea97"
+                }
+              }
+            }
+          }
+        },
+        "three_quarter": {
+          "pitch_degrees": 45.0,
+          "framing_scale": 1.0,
+          "orthographic": true,
+          "canonical_blend": "animation_images_models/human_bald_male/canonical/human_bald_male_approved_motions.blend",
+          "canonical_blend_sha256": "7b8fb6e5d228e756a87a445f405432195471bb72ba4bb8df6318fa258e852a5e",
+          "palette_sha256": "a2e9e549e6377bf5e58e86f74303316640dbe6756538b6afb5ed213ed00d969e",
+          "sequences": {
+            "idle": {
+              "runtime_file": "bases/human-muscular-male-01/camera_views/three_quarter/idle.png",
+              "runtime_sha256": "d487852532aabec6ea77b5216d4ff8bdaf3e6e66e7d1485244ef0679a9b4a3aa",
+              "source_frames": [
+                1,
+                3,
+                5,
+                7,
+                9,
+                11,
+                13,
+                15,
+                17,
+                19,
+                21,
+                23,
+                24,
+                25
+              ],
+              "frame_durations_ms": [
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167,
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/three_quarter/gifs/idle_front.gif",
+                  "sha256": "8fde2f154124413ca1824a7128d1573b5044a333dd61d6c1acdbf400df42316f"
+                },
+                "back": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/three_quarter/gifs/idle_back.gif",
+                  "sha256": "6f90d393a7272daaf6742601c9fc34b29ddfdf7b35c7fb4a0446109e64f55100"
+                },
+                "right": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/three_quarter/gifs/idle_right.gif",
+                  "sha256": "9a6c44654f70b2c12dca1b3c06c5c77c8436a61abc906216bf7e2d5990221fee"
+                },
+                "left": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/three_quarter/gifs/idle_left.gif",
+                  "sha256": "9887befdfd01c8a2b3328283d56f2e9f9beb07fb5dec2e90181764ae0101d735"
+                }
+              }
+            },
+            "walk": {
+              "runtime_file": "bases/human-muscular-male-01/camera_views/three_quarter/walk.png",
+              "runtime_sha256": "0c8a0a14884c00dcd6de806f78c550994722ff699728c1ab73a3af41ae114b07",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/three_quarter/gifs/walk_front.gif",
+                  "sha256": "e45dc95aa7b8c6970b0e7ec74a9496b1d9aa1d9ecc04ce559a7ee28c27a1a73f"
+                },
+                "back": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/three_quarter/gifs/walk_back.gif",
+                  "sha256": "984ab90e6986b074332006d8a628c9b450cfc42db737a4273271e72f67eb83f5"
+                },
+                "right": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/three_quarter/gifs/walk_right.gif",
+                  "sha256": "ba35c0520660e6d8eab720ef865d10932aedbdd595d55f7b5e851070be332c6e"
+                },
+                "left": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/three_quarter/gifs/walk_left.gif",
+                  "sha256": "822aed27a8d142211a01e985d8b6af5ac9d32193fdd424f932a3d547f35fb959"
+                }
+              }
+            },
+            "run": {
+              "runtime_file": "bases/human-muscular-male-01/camera_views/three_quarter/run.png",
+              "runtime_sha256": "a6975a1edc22e1e8eca31c7f451cb3201676aecd6a4439ed97bbf3a61364e5d1",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/three_quarter/gifs/run_front.gif",
+                  "sha256": "44644cb8fab6a53cb44d008237a60b0b195a0faf0c5c0df40df81f62aab81f8e"
+                },
+                "back": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/three_quarter/gifs/run_back.gif",
+                  "sha256": "ef300118663c93cc3eb53670399788e922f6bccd2aa55d2c46844baa08a6cfd2"
+                },
+                "right": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/three_quarter/gifs/run_right.gif",
+                  "sha256": "343781e2c11fe8f2c169bdf992e21352f01657f7ba3c23f89156be420f5a44f3"
+                },
+                "left": {
+                  "file": "base_sources/human-muscular-male-01/camera_views/three_quarter/gifs/run_left.gif",
+                  "sha256": "28606578081b412e2bc2da3f2f3979627d8a05c34049ffc92068c93dc5ab94c3"
+                }
+              }
+            }
+          }
+        },
+        "low": {
+          "pitch_degrees": 28.0,
+          "framing_scale": 1.0,
+          "orthographic": true,
+          "canonical_blend": "animation_images_models/human_bald_male/canonical/human_bald_male_approved_motions.blend",
+          "canonical_blend_sha256": "7b8fb6e5d228e756a87a445f405432195471bb72ba4bb8df6318fa258e852a5e",
+          "palette_sha256": null,
+          "sequences": {
+            "idle": {
+              "runtime_file": "bases/human-muscular-male-01/idle.png",
+              "runtime_sha256": "1080877218c6c23ca9f9d227d9ae6a33e69d744536ce386adc2e761de39d90da",
+              "source_frames": [
+                1,
+                3,
+                5,
+                7,
+                9,
+                11,
+                13,
+                15,
+                17,
+                19,
+                21,
+                23,
+                24,
+                25
+              ],
+              "frame_durations_ms": [
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167,
+                167,
+                167,
+                167,
+                167,
+                167,
+                1500,
+                167
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/human-muscular-male-01/gifs/idle_front.gif",
+                  "sha256": "35297d16cb85d8f2d2bafc376e5a5569a797b493ca0103337892649f12bf9f4d"
+                },
+                "back": {
+                  "file": "base_sources/human-muscular-male-01/gifs/idle_back.gif",
+                  "sha256": "4f3821a1a4610ff647e4d4dc5c8b571fdbbf300f19b417d6867d2b8b3c76a031"
+                },
+                "right": {
+                  "file": "base_sources/human-muscular-male-01/gifs/idle_right.gif",
+                  "sha256": "e7744269e2b789ee1141c4ad34ab882d8c72e3c2e3b67ae536560f27c1fa42ff"
+                },
+                "left": {
+                  "file": "base_sources/human-muscular-male-01/gifs/idle_left.gif",
+                  "sha256": "9884b13af586c7d826b60b346657072ec59fa669de67e700f3c8d1c294092d4a"
+                }
+              }
+            },
+            "walk": {
+              "runtime_file": "bases/human-muscular-male-01/walk.png",
+              "runtime_sha256": "c126987390c24baf8e593cfadaa8e8a47b5d664c77230afaf0b36832721467af",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/human-muscular-male-01/gifs/walk_front.gif",
+                  "sha256": "d9069c40f86e5482329f5dedcce67cfbdd3d6f6f28f2e44f8d078780d57f6dbd"
+                },
+                "back": {
+                  "file": "base_sources/human-muscular-male-01/gifs/walk_back.gif",
+                  "sha256": "9b3607f118c8fd6eb76f48c2d7e11fcf15a12c0f9d58c4441ab38c40e0462ba9"
+                },
+                "right": {
+                  "file": "base_sources/human-muscular-male-01/gifs/walk_right.gif",
+                  "sha256": "1decbb45e3b2b661356aa16280cb1d1d04554289e6af962a3bfe694c14ee4670"
+                },
+                "left": {
+                  "file": "base_sources/human-muscular-male-01/gifs/walk_left.gif",
+                  "sha256": "35ab12ae79c1760173ef6d2beac525249f8a319eed89ea773a5d72b363465e2f"
+                }
+              }
+            },
+            "run": {
+              "runtime_file": "bases/human-muscular-male-01/run.png",
+              "runtime_sha256": "43de53eca6acb7faf01b9da9a55f1637006a4e8718c04a18a767a96de8825c43",
+              "source_frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "frame_durations_ms": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ],
+              "gifs": {
+                "front": {
+                  "file": "base_sources/human-muscular-male-01/gifs/run_front.gif",
+                  "sha256": "e3f9e27d79930a71a5e280d3e5f71c05557118d55f776b322827d6e74c7177ea"
+                },
+                "back": {
+                  "file": "base_sources/human-muscular-male-01/gifs/run_back.gif",
+                  "sha256": "ac450476c7f015dfd0a90fc4211f4453e46bbe26cbdf477f771a121e8f2bdf80"
+                },
+                "right": {
+                  "file": "base_sources/human-muscular-male-01/gifs/run_right.gif",
+                  "sha256": "932387106eddc02754ccc6a5e749ce9ec847d73ee2258aa06ff096dcbd150952"
+                },
+                "left": {
+                  "file": "base_sources/human-muscular-male-01/gifs/run_left.gif",
+                  "sha256": "e2d5f57faa1c559b3e64c1862d13a04155cdc6709cd6b9640251798e7cc5607b"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -60,6 +60,11 @@
   "provenance": {
     "kind": "deterministic_anatomical_region_overlay",
     "generator": "tools/build_semantic_character_forge.py",
+    "outline": {
+      "widthPixels": 1,
+      "color": "#18110D",
+      "placement": "outside"
+    },
     "sourceRegions": [
       "left_shin",
       "right_shin",
@@ -69,9 +74,9 @@
       "right_foot"
     ],
     "animationSha256": {
-      "idle": "15e20f589516a0263723d9da9481c3282956d788f3d6af56f33bedce95d6de6c",
-      "walk": "9ebc394f87410725c2aa63fc7b1f9892f76fcfe2327fadb29584f2a5bdcbe9db",
-      "run": "d521cfe0fddb37dc0fdc6b798944868fabd525b2d474edb99f50fd574dbbe133"
+      "idle": "847d83d8943387a6226491ac737b292d1b58b4f046e2d61e672ace2477a73114",
+      "walk": "e2ceefda45f8fb9e36a21ac548c0c38a2c04768b4c95ff171205bcae9d5b3571",
+      "run": "7fef4c2948f0848cf2155ab62d0e05bb4f674f0ebc0ea749125736bf1a37595c"
     }
   }
 }

@@ -171,10 +171,16 @@ def _component_image(
     output[..., :3] = palette[indices]
     output[..., 3] = np.where(expanded, 255, 0).astype(np.uint8)
 
-    # A one-pixel dark sewn edge makes these read as basic garments instead of
-    # a flat hue replacement while retaining only declared ramp colors.
-    eroded = np.asarray(mask.filter(ImageFilter.MinFilter(3)), dtype=np.uint8) > 0
-    edge = expanded & ~eroded
+    # Keep the sewn edge at the one-pixel pixel-art minimum. Dilated parts use
+    # only their new outside contour; the previous expanded-through-eroded band
+    # was roughly three pixels thick and obscured otherwise-correct shading.
+    if part.dilation > 0:
+        edge = expanded & ~exact
+    else:
+        eroded = np.asarray(
+            mask.filter(ImageFilter.MinFilter(3)), dtype=np.uint8
+        ) > 0
+        edge = exact & ~eroded
     output[edge, :3] = palette[0]
     return Image.fromarray(output, "RGBA")
 
@@ -239,6 +245,24 @@ def main() -> None:
         for name, path in package_paths.items()
     }
     asset_root = args.asset_root.resolve()
+    specs_path = asset_root / "sheet_specs.json"
+    preserved_bases: dict[str, object] = {}
+    preserved_camera_heights: dict[str, object] = {}
+    previous_elf_animations: dict[str, object] = {}
+    if specs_path.is_file():
+        previous_specs = json.loads(specs_path.read_text(encoding="utf-8"))
+        if previous_specs.get("schema_version") == 2:
+            preserved_camera_heights = previous_specs.get("camera_heights", {})
+            previous_elf_animations = (
+                previous_specs.get("bases", {})
+                .get("elf-01", {})
+                .get("animations", {})
+            )
+            preserved_bases = {
+                str(base_id): value
+                for base_id, value in previous_specs.get("bases", {}).items()
+                if base_id != "elf-01"
+            }
     base_dir = asset_root / "bases" / "elf-01"
     semantic_root = asset_root / "semantic" / "elf-01"
     parts_root = asset_root / "parts"
@@ -255,6 +279,12 @@ def main() -> None:
         _copy_semantic_package(package_paths[sequence], semantic_destination, args.force)
         frame_count = len(manifest["source_frames"])
         fps = int(manifest["settings"]["fps"])
+        frame_durations_ms = [
+            int(value)
+            for value in manifest.get(
+                "frame_durations_ms", [round(1000 / fps)] * frame_count
+            )
+        ]
         sheet_size = list(manifest["sheet_dimensions"])
         animations[sequence] = {
             "name": sequence.title(),
@@ -268,6 +298,7 @@ def main() -> None:
                 direction: list(range(frame_count)) for direction in DIRECTION_ROWS
             },
             "fps": fps,
+            "frame_durations_ms": frame_durations_ms,
             "source_matte": None,
             "pivot": None,
             "sources": [{
@@ -279,9 +310,26 @@ def main() -> None:
                 "source_frames": manifest["source_frames"],
             }],
         }
+        old_variants = previous_elf_animations.get(sequence, {}).get(
+            "camera_variants", {}
+        )
+        if old_variants:
+            animations[sequence]["camera_variants"] = {
+                **old_variants,
+                "low": {
+                    "runtime_file": runtime.relative_to(asset_root).as_posix(),
+                    "runtime_sha256": _sha256(runtime),
+                },
+            }
 
-    if parts_root.exists() and args.force:
-        shutil.rmtree(parts_root)
+    if args.force:
+        # The semantic builder owns only these original starter components.
+        # Preserve independently generated fitted families under the shared
+        # parts root when the elf semantic package is rebuilt.
+        for part in PARTS:
+            starter_dir = parts_root / part.slot / part.id
+            if starter_dir.exists():
+                shutil.rmtree(starter_dir)
     for part in PARTS:
         part_dir = parts_root / part.slot / part.id
         part_dir.mkdir(parents=True, exist_ok=True)
@@ -309,6 +357,11 @@ def main() -> None:
             "provenance": {
                 "kind": "deterministic_anatomical_region_overlay",
                 "generator": "tools/build_semantic_character_forge.py",
+                "outline": {
+                    "widthPixels": 1,
+                    "color": part.palette[0],
+                    "placement": "outside" if part.dilation > 0 else "inside",
+                },
                 "sourceRegions": list(part.regions),
                 "animationSha256": animation_hashes,
             },
@@ -318,9 +371,8 @@ def main() -> None:
         )
 
     specs = {
-        "schema_version": 1,
-        "base_id": "elf-01",
-        "base_name": "Semantic Elf Base",
+        "schema_version": 2,
+        "default_base_id": "elf-01",
         "frame_size": [128, 128],
         "layers": LAYERS,
         "slots": {
@@ -329,11 +381,23 @@ def main() -> None:
         },
         "generation": {
             "enabled": False,
-            "note": "The retired 64px component-generation pipeline is archived outside runtime discovery.",
+            "note": "The retired 64px component-generation pipeline has been removed.",
         },
-        "animations": animations,
+        **(
+            {"camera_heights": preserved_camera_heights}
+            if preserved_camera_heights
+            else {}
+        ),
+        "bases": {
+            "elf-01": {
+                "name": "Elf Female Base",
+                "semantic": True,
+                "animations": animations,
+            },
+            **preserved_bases,
+        },
     }
-    (asset_root / "sheet_specs.json").write_text(
+    specs_path.write_text(
         json.dumps(specs, indent=2) + "\n", encoding="utf-8", newline="\n"
     )
     for sequence in packages:

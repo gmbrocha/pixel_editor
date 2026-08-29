@@ -133,8 +133,9 @@ def main() -> None:
         raise RuntimeError("PF_Semantic_Debug material is missing")
     if not mesh.materials or mesh.materials[0].name != "PF_Elf_Bald_Female_Material":
         raise RuntimeError("The production PBR material is no longer the active mesh material")
-    if bpy.data.actions.get("PF_Run_ForwardLean_HeadDown") is None:
-        raise RuntimeError("The approved corrected Run action is missing")
+    for action_name in ("PF_Idle_Approved", "PF_Walk_Approved", "PF_Run_Approved"):
+        if bpy.data.actions.get(action_name) is None:
+            raise RuntimeError(f"The consolidated approved action {action_name} is missing")
     print(
         f"Validated {len(mesh.polygons)} faces, {len(REGIONS)} regions, "
         f"{len(CHARACTER_SLOTS)} slots, and {len(ATTACHMENT_BONES)} attachments"

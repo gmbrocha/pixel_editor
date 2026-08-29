@@ -125,3 +125,59 @@ def test_pixelizer_rejects_incomplete_direction_rows(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="run/back has 1 renders; expected 2"):
         generate_pixel_sprite_sheets(manifest_path, tmp_path / "pixel")
+
+
+def test_pixelizer_honors_per_sequence_fps_and_native_preview_scale(tmp_path: Path) -> None:
+    manifest_path, _source_paths = _manifest(tmp_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["sequences"]["run"]["fps"] = 12
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    output_dir = tmp_path / "pixel"
+    result = generate_pixel_sprite_sheets(
+        manifest_path,
+        output_dir,
+        SpritePixelizationSettings(
+            cell_size=4,
+            palette_size=4,
+            cleanup_threshold=0,
+            min_cluster_percent=0.0,
+            min_perceptual_distance=0.0,
+            preview_scale=1,
+        ),
+    )
+    sequence = result["sequences"]["run"]
+    assert sequence["fps"] == 12
+    preview = output_dir / sequence["previews"]["front"]
+    with Image.open(preview) as opened:
+        assert opened.size == (4, 4)
+        assert opened.n_frames == 2
+        assert opened.info["duration"] == 80
+
+
+def test_pixelizer_preserves_exact_per_frame_hold_durations(tmp_path: Path) -> None:
+    manifest_path, _source_paths = _manifest(tmp_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["sequences"]["run"]["fps"] = 12
+    manifest["sequences"]["run"]["frame_durations_ms"] = [1500, 83]
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    output_dir = tmp_path / "pixel"
+    result = generate_pixel_sprite_sheets(
+        manifest_path,
+        output_dir,
+        SpritePixelizationSettings(
+            cell_size=4,
+            palette_size=4,
+            cleanup_threshold=0,
+            min_cluster_percent=0.0,
+            min_perceptual_distance=0.0,
+            preview_scale=1,
+        ),
+    )
+    sequence = result["sequences"]["run"]
+    assert sequence["frame_durations_ms"] == [1500, 83]
+    with Image.open(output_dir / sequence["previews"]["front"]) as opened:
+        durations = []
+        for index in range(opened.n_frames):
+            opened.seek(index)
+            durations.append(opened.info["duration"])
+    assert durations == [1500, 80]

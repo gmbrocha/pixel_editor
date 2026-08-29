@@ -28,6 +28,7 @@ class SpritePixelizationSettings:
     alpha_threshold: int = 112
     cleanup_threshold: int = 1
     preview_fps: int = 10
+    preview_scale: int = 4
     palette_selection: str = "most_frequent"
     min_cluster_percent: float = 0.0005
     min_perceptual_distance: float = 4.0
@@ -39,6 +40,7 @@ class SpritePixelizationSettings:
             alpha_threshold=max(1, min(255, int(self.alpha_threshold))),
             cleanup_threshold=max(0, int(self.cleanup_threshold)),
             preview_fps=max(1, min(60, int(self.preview_fps))),
+            preview_scale=max(1, min(16, int(self.preview_scale))),
             palette_selection=(self.palette_selection or "most_frequent").strip(),
             min_cluster_percent=max(0.0, float(self.min_cluster_percent)),
             min_perceptual_distance=max(0.0, float(self.min_perceptual_distance)),
@@ -100,6 +102,7 @@ def _save_preview_gif(
     path: Path,
     fps: int,
     scale: int = 4,
+    frame_durations_ms: list[int] | None = None,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     rendered = [_opaque_review(frame, scale=scale).convert("RGB") for frame in frames]
@@ -108,7 +111,11 @@ def _save_preview_gif(
         format="GIF",
         save_all=True,
         append_images=rendered[1:],
-        duration=max(1, round(1000 / fps)),
+        duration=(
+            frame_durations_ms
+            if frame_durations_ms is not None
+            else max(1, round(1000 / fps))
+        ),
         loop=0,
         optimize=False,
         disposal=2,
@@ -224,8 +231,24 @@ def generate_pixel_sprite_sheets(
     sequence_names = list(manifest["sequences"])
     for sequence_name in sequence_names:
         sequence = manifest["sequences"][sequence_name]
+        sequence_fps = max(
+            1,
+            min(60, int(sequence.get("fps", normalized.preview_fps))),
+        )
         source_frames = [int(frame) for frame in sequence["source_frames"]]
         frame_count = len(source_frames)
+        raw_durations = sequence.get("frame_durations_ms")
+        frame_durations_ms = (
+            [int(value) for value in raw_durations]
+            if isinstance(raw_durations, list)
+            else [round(1000 / sequence_fps)] * frame_count
+        )
+        if len(frame_durations_ms) != frame_count or any(
+            value < 1 for value in frame_durations_ms
+        ):
+            raise ValueError(
+                f"Sequence {sequence_name} has invalid frame_durations_ms"
+            )
         sheet = Image.new(
             "RGBA",
             (normalized.cell_size * frame_count, normalized.cell_size * len(directions)),
@@ -259,12 +282,14 @@ def generate_pixel_sprite_sheets(
             frame_outputs[direction] = relative_frames
             preview_relative = (
                 Path("review")
-                / f"{sequence_name}_{direction}_{normalized.preview_fps}fps.gif"
+                / f"{sequence_name}_{direction}_{sequence_fps}fps.gif"
             )
             _save_preview_gif(
                 direction_frames,
                 output_dir / preview_relative,
-                normalized.preview_fps,
+                sequence_fps,
+                scale=normalized.preview_scale,
+                frame_durations_ms=frame_durations_ms,
             )
             previews[direction] = preview_relative.as_posix()
 
@@ -276,6 +301,8 @@ def generate_pixel_sprite_sheets(
             "action": str(sequence.get("action", "")),
             "source_frames": source_frames,
             "frame_count": frame_count,
+            "fps": sequence_fps,
+            "frame_durations_ms": frame_durations_ms,
             "dimensions": list(sheet.size),
             "frames": frame_outputs,
             "strips": strips,

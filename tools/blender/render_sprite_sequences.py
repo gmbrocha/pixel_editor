@@ -19,7 +19,23 @@ def _args() -> argparse.Namespace:
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--render-size", type=int, default=512)
     parser.add_argument("--ortho-scale", type=float, default=1.95)
+    parser.add_argument(
+        "--framing-scale",
+        type=float,
+        default=1.0,
+        help="Multiply the orthographic framing scale; values above 1 render smaller",
+    )
     parser.add_argument("--pitch", type=float, default=28.0)
+    parser.add_argument(
+        "--timing-config",
+        type=Path,
+        help="Optional approved-motion timing JSON that overrides action metadata",
+    )
+    parser.add_argument(
+        "--auto-frame",
+        action="store_true",
+        help="Use one union framing for every selected action and direction",
+    )
     parser.add_argument("--idle-action", default="")
     parser.add_argument("--walk-action", default="PF_Walk")
     parser.add_argument("--run-action", default="PF_Run")
@@ -98,8 +114,9 @@ def _position_view(
     fill: bpy.types.Object,
     horizontal: Vector,
     pitch: float,
+    target: Vector | None = None,
 ) -> None:
-    target = Vector((0.0, 0.0, 0.82))
+    target = target or Vector((0.0, 0.0, 0.82))
     radius = 5.0
     camera_height = target.z + math.tan(math.radians(pitch)) * radius
     camera.location = target + horizontal.normalized() * radius
@@ -114,9 +131,119 @@ def _position_view(
     _look_at(fill, target)
 
 
+def _auto_frame(
+    armature: bpy.types.Object,
+    sequences: dict[str, dict[str, object]],
+    pitch: float,
+) -> tuple[Vector, float]:
+    meshes = [obj for obj in bpy.context.scene.objects if obj.type == "MESH"]
+    if not meshes:
+        raise RuntimeError("Cannot auto-frame a scene without a mesh")
+    minimum = Vector((float("inf"),) * 3)
+    maximum = Vector((float("-inf"),) * 3)
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    for sequence in sequences.values():
+        action = bpy.data.actions.get(str(sequence["action"]))
+        if action is None:
+            raise RuntimeError(f"Missing action {sequence['action']}")
+        armature.animation_data.action = action
+        for frame in sequence["frames"]:
+            bpy.context.scene.frame_set(int(frame))
+            bpy.context.view_layer.update()
+            for mesh in meshes:
+                evaluated = mesh.evaluated_get(depsgraph)
+                for corner in evaluated.bound_box:
+                    point = evaluated.matrix_world @ Vector(corner)
+                    minimum.x = min(minimum.x, point.x)
+                    minimum.y = min(minimum.y, point.y)
+                    minimum.z = min(minimum.z, point.z)
+                    maximum.x = max(maximum.x, point.x)
+                    maximum.y = max(maximum.y, point.y)
+                    maximum.z = max(maximum.z, point.z)
+    extent = maximum - minimum
+    radians = math.radians(pitch)
+    vertical = extent.z * math.cos(radians) + max(extent.x, extent.y) * math.sin(radians)
+    ortho_scale = max(extent.x, extent.y, vertical) * 1.18
+    if not math.isfinite(ortho_scale) or ortho_scale <= 0.0:
+        raise RuntimeError(f"Invalid auto-frame bounds: {minimum} .. {maximum}")
+    return (minimum + maximum) * 0.5, ortho_scale
+
+
+def _timing_spec(path: Path | None) -> dict[str, dict[str, object]]:
+    if path is None:
+        return {}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise RuntimeError(f"Timing config {path} must contain an object")
+    return {
+        str(name): value
+        for name, value in data.items()
+        if name != "schema_version" and isinstance(value, dict)
+    }
+
+
+def _frame_durations(
+    action: bpy.types.Action,
+    frame_count: int,
+    fps: int,
+    sequence_name: str,
+    timing: dict[str, dict[str, object]],
+) -> list[int]:
+    override = timing.get(sequence_name)
+    if override is not None:
+        runtime = "runtime_source_frames" in override
+        configured_count = (
+            len(override["runtime_source_frames"])
+            if runtime else int(override.get("frame_count", 0))
+        )
+        configured_fps = int(
+            override.get("runtime_fps" if runtime else "fps", 0)
+        )
+        if configured_count != frame_count or configured_fps != fps:
+            raise RuntimeError(
+                f"Timing config for {sequence_name} expects {configured_count} frames "
+                f"at {configured_fps} FPS, rendered action has {frame_count} at {fps} FPS"
+            )
+        default_duration = int(override.get(
+            "runtime_default_frame_duration_ms" if runtime
+            else "default_frame_duration_ms", 0
+        ))
+        durations = [default_duration] * frame_count
+        raw_overrides = override.get(
+            "runtime_frame_duration_overrides_ms" if runtime
+            else "frame_duration_overrides_ms", {}
+        )
+        if not isinstance(raw_overrides, dict):
+            raise RuntimeError(
+                f"Timing config for {sequence_name} has invalid duration overrides"
+            )
+        for raw_frame, raw_duration in raw_overrides.items():
+            frame_number = int(raw_frame)
+            if not 1 <= frame_number <= frame_count:
+                raise RuntimeError(
+                    f"Timing override frame {frame_number} is outside {sequence_name}"
+                )
+            durations[frame_number - 1] = int(raw_duration)
+    else:
+        raw = action.get("pf_frame_durations_ms_json")
+        durations = (
+            [int(value) for value in json.loads(raw)]
+            if raw
+            else [round(1000 / fps)] * frame_count
+        )
+    if len(durations) != frame_count or any(value < 1 for value in durations):
+        raise RuntimeError(
+            f"{action.name} has invalid frame duration metadata: {durations}"
+        )
+    return durations
+
+
 def main() -> None:
     args = _args()
+    if args.framing_scale <= 0.0:
+        raise ValueError("framing-scale must be greater than zero")
     args.output_dir.mkdir(parents=True, exist_ok=True)
+    timing = _timing_spec(args.timing_config)
     camera, key, fill = _setup(args.render_size, args.ortho_scale)
     armature = _armature()
     if armature.animation_data is None:
@@ -132,6 +259,7 @@ def main() -> None:
         sequences["idle"] = {
             "action": args.idle_action,
             "frames": json.loads(raw_samples) if raw_samples else [1, 7, 13, 19, 25, 31, 37, 43],
+            "fps": int(idle_action.get("pf_preview_fps", 10)),
         }
     if "walk" in selected:
         walk_action = bpy.data.actions.get(args.walk_action)
@@ -141,6 +269,7 @@ def main() -> None:
         sequences["walk"] = {
             "action": args.walk_action,
             "frames": json.loads(raw_samples) if raw_samples else [1, 5, 9, 13, 17, 21, 25, 29],
+            "fps": int(walk_action.get("pf_preview_fps", 10)),
         }
     if "run" in selected:
         run_action = bpy.data.actions.get(args.run_action)
@@ -150,9 +279,23 @@ def main() -> None:
         sequences["run"] = {
             "action": args.run_action,
             "frames": json.loads(raw_samples) if raw_samples else [1, 3, 6, 8, 10, 13, 15, 18],
+            "fps": int(run_action.get("pf_preview_fps", 10)),
         }
     if not sequences:
         raise RuntimeError("No animation sequences were selected")
+    for sequence_name, sequence in sequences.items():
+        override = timing.get(sequence_name)
+        if override and "runtime_source_frames" in override:
+            sequence["frames"] = [
+                int(value) for value in override["runtime_source_frames"]
+            ]
+            sequence["fps"] = int(override.get("runtime_fps", sequence["fps"]))
+    target = Vector((0.0, 0.0, 0.82))
+    if args.auto_frame:
+        target, ortho_scale = _auto_frame(armature, sequences, args.pitch)
+        camera.data.ortho_scale = ortho_scale * args.framing_scale
+    else:
+        camera.data.ortho_scale *= args.framing_scale
     directions = {
         "front": Vector((0.0, -1.0, 0.0)),
         "back": Vector((0.0, 1.0, 0.0)),
@@ -164,7 +307,9 @@ def main() -> None:
         "blender_version": bpy.app.version_string,
         "blend": bpy.data.filepath,
         "render_size": args.render_size,
-        "ortho_scale": args.ortho_scale,
+        "ortho_scale": float(camera.data.ortho_scale),
+        "framing_scale": args.framing_scale,
+        "target": [float(value) for value in target],
         "pitch_degrees": args.pitch,
         "direction_order": list(directions),
         "sequences": {},
@@ -178,10 +323,18 @@ def main() -> None:
         sequence_manifest = {
             "action": action.name,
             "source_frames": sequence["frames"],
+            "fps": sequence["fps"],
+            "frame_durations_ms": _frame_durations(
+                action,
+                len(sequence["frames"]),
+                int(sequence["fps"]),
+                sequence_name,
+                timing,
+            ),
             "directions": {},
         }
         for direction_name, horizontal in directions.items():
-            _position_view(camera, key, fill, horizontal, args.pitch)
+            _position_view(camera, key, fill, horizontal, args.pitch, target)
             outputs = []
             for frame_index, source_frame in enumerate(sequence["frames"]):
                 bpy.context.scene.frame_set(source_frame)

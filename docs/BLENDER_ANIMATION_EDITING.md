@@ -327,7 +327,7 @@ Check the frame-1/frame-9 closure. Copy the complete pose from frame 1 to frame 
 
 For an extended action, compare frame 1 with its `N+1` closure instead. For the current 13-pose Idle, that means frame 14.
 
-The artist file remains a 13-pose loop. The runtime derivative inserts one Blender-evaluated in-between after every authored pose, so it has 26 visible frames at 12 FPS and an exact closure on frame 27. Every authored pose lands unchanged on an odd-numbered runtime frame.
+The artist file remains a 13-pose loop. The approved Blender derivative inserts one evaluated in-between after each authored pose, so its protected action has 26 visible frames at 12 FPS and exact closure on frame 27. Character Forge does not duplicate those in-betweens: it samples 14 exact action poses at 6 FPS, including authored frames 1,3,5,7,9,11,13,15,17,19,21,23,24,25.
 
 ### The camera view is lost
 

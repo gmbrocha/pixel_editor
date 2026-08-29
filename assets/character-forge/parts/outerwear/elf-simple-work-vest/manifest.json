@@ -60,6 +60,11 @@
   "provenance": {
     "kind": "deterministic_anatomical_region_overlay",
     "generator": "tools/build_semantic_character_forge.py",
+    "outline": {
+      "widthPixels": 1,
+      "color": "#24170F",
+      "placement": "inside"
+    },
     "sourceRegions": [
       "chest_front",
       "upper_back",
@@ -67,9 +72,9 @@
       "lower_back"
     ],
     "animationSha256": {
-      "idle": "e67bc14f8346e2f4969126ccaf69cc786fd4b52564a84d9dafa52cd9f43b06c5",
-      "walk": "9aab6375ed8a31bb5a8717fca12a5c1ce59696ce0c96a613b875344c6081912b",
-      "run": "dff8cd2833e1710d323da45c3681d573d1729de645db3e3c0b2b118496e2dd05"
+      "idle": "b806e33b04fb7fc3b68f77efaa38421123f8e3e7cfab81b236418a3e97209fd8",
+      "walk": "500b4e9c2906330e0eaaab6f536c359ee02661de1e3616a9d72279409dea503d",
+      "run": "69b8c4ce332dbefc0e9ab8e143935af8eda061e470f4c3f260c1ef19ddb5caf8"
     }
   }
 }

@@ -27,6 +27,7 @@ def _args() -> argparse.Namespace:
     parser.add_argument("--alpha-threshold", type=int, default=112)
     parser.add_argument("--cleanup-threshold", type=int, default=1)
     parser.add_argument("--preview-fps", type=int, default=10)
+    parser.add_argument("--preview-scale", type=int, default=4)
     parser.add_argument("--check", action="store_true")
     return parser.parse_args()
 
@@ -39,6 +40,7 @@ def main() -> None:
         alpha_threshold=args.alpha_threshold,
         cleanup_threshold=args.cleanup_threshold,
         preview_fps=args.preview_fps,
+        preview_scale=args.preview_scale,
     )
     if args.check:
         mismatches = check_pixel_sprite_sheets(

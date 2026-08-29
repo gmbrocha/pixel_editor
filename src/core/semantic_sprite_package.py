@@ -33,6 +33,7 @@ class SemanticSpriteSettings:
     cleanup_threshold: int = 1
     fps: int = 10
     thin_region_source_pixels: int = 8
+    frame_duration_overrides: tuple[tuple[int, int], ...] = ()
 
     def normalized(self) -> "SemanticSpriteSettings":
         return SemanticSpriteSettings(
@@ -42,6 +43,10 @@ class SemanticSpriteSettings:
             cleanup_threshold=max(0, int(self.cleanup_threshold)),
             fps=max(1, min(60, int(self.fps))),
             thin_region_source_pixels=max(1, int(self.thin_region_source_pixels)),
+            frame_duration_overrides=tuple(
+                (int(frame), max(1, int(duration)))
+                for frame, duration in self.frame_duration_overrides
+            ),
         )
 
 
@@ -67,8 +72,16 @@ def _resolve(manifest_path: Path, value: str) -> Path:
 
 def _nearest_region_ids(rgb: np.ndarray) -> np.ndarray:
     colors = np.asarray([region.color[:3] for region in REGIONS], dtype=np.int16)
-    flat = rgb.reshape(-1, 3)
-    unique, inverse = np.unique(flat, axis=0, return_inverse=True)
+    flat = rgb.reshape(-1, 3).astype(np.uint32, copy=False)
+    packed = (flat[:, 0] << 16) | (flat[:, 1] << 8) | flat[:, 2]
+    unique_packed, inverse = np.unique(packed, return_inverse=True)
+    unique = np.column_stack(
+        (
+            (unique_packed >> 16) & 0xFF,
+            (unique_packed >> 8) & 0xFF,
+            unique_packed & 0xFF,
+        )
+    )
     delta = unique[:, None, :].astype(np.int32) - colors[None, :, :].astype(np.int32)
     nearest = np.argmin(np.sum(delta * delta, axis=2), axis=1).astype(np.uint8) + 1
     return nearest[inverse].reshape(rgb.shape[:2])
@@ -143,14 +156,34 @@ def _mask(ids: np.ndarray, region_names: tuple[str, ...]) -> Image.Image:
     return Image.fromarray(np.where(np.isin(ids, allowed), 255, 0).astype(np.uint8), "L")
 
 
-def _native_gif(frames: list[Image.Image], output: Path, fps: int) -> None:
+def _frame_durations(
+    frame_count: int,
+    fps: int,
+    overrides: tuple[tuple[int, int], ...],
+) -> list[int]:
+    durations = [round(1000 / fps)] * frame_count
+    for frame, duration in overrides:
+        if not 1 <= frame <= frame_count:
+            raise ValueError(
+                f"Frame-duration override {frame} is outside 1-{frame_count}"
+            )
+        durations[frame - 1] = duration
+    return durations
+
+
+def _native_gif(
+    frames: list[Image.Image],
+    output: Path,
+    fps: int,
+    frame_durations_ms: list[int],
+) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     prepared = [frame.convert("RGBA") for frame in frames]
     prepared[0].save(
         output,
         save_all=True,
         append_images=prepared[1:],
-        duration=max(1, round(1000 / fps)),
+        duration=frame_durations_ms,
         loop=0,
         disposal=2,
         optimize=False,
@@ -178,6 +211,9 @@ def generate_semantic_sprite_package(
     frame_count = len(source_frames)
     if frame_count < 1:
         raise ValueError(f"{sequence_name.title()} must have at least one frame")
+    frame_durations_ms = _frame_durations(
+        frame_count, normalized.fps, normalized.frame_duration_overrides
+    )
 
     with tempfile.TemporaryDirectory(prefix="pixel-forge-art-") as temporary:
         art_dir = Path(temporary)
@@ -258,6 +294,7 @@ def generate_semantic_sprite_package(
                 art_frames_by_direction[direction],
                 output_dir / "gifs" / f"{sequence_name}_{direction}.gif",
                 normalized.fps,
+                frame_durations_ms,
             )
 
         _save(region_sheet, output_dir / f"{sequence_name}_regions.png", "L")
@@ -294,6 +331,7 @@ def generate_semantic_sprite_package(
             "source": source_hashes,
             "direction_order": directions,
             "source_frames": source_frames,
+            "frame_durations_ms": frame_durations_ms,
             "sheet_dimensions": [
                 normalized.cell_size * frame_count,
                 normalized.cell_size * len(directions),

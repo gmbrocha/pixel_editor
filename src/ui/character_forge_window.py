@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.core.character_forge import (
+    CAMERA_HEIGHT_LABELS,
     CHARACTER_SLOT_LABELS,
     CHARACTER_SLOTS,
     DIRECTION_LABELS,
@@ -122,6 +123,14 @@ class CharacterForgeWindow(QMainWindow):
             self.animation_combo.addItem(animation.name, animation.id)
         animation_form.addRow("Animation", self.animation_combo)
 
+        self.camera_height_combo = QComboBox()
+        self.camera_height_combo.setObjectName("characterCameraHeightCombo")
+        for camera_height in initial_base.camera_heights:
+            self.camera_height_combo.addItem(
+                CAMERA_HEIGHT_LABELS.get(camera_height, camera_height), camera_height
+            )
+        animation_form.addRow("Camera height", self.camera_height_combo)
+
         self.direction_combo = QComboBox()
         self.direction_combo.setObjectName("characterDirectionCombo")
         animation_form.addRow("Direction", self.direction_combo)
@@ -184,7 +193,9 @@ class CharacterForgeWindow(QMainWindow):
             combo = QComboBox()
             combo.setObjectName(f"characterPart_{slot}")
             combo.addItem("None", None)
-            for part in self.catalog.parts_for_slot(slot):
+            for part in self.catalog.parts_for_slot(
+                slot, initial_base.id, self.recipe.camera_height
+            ):
                 suffix = " (Incomplete)" if part.status == "incomplete" else ""
                 combo.addItem(f"{part.name}{suffix}", part.id)
             combo.setEnabled(combo.count() > 1)
@@ -252,6 +263,9 @@ class CharacterForgeWindow(QMainWindow):
     def _connect_signals(self) -> None:
         self.base_combo.currentIndexChanged.connect(self._on_base_changed)
         self.animation_combo.currentIndexChanged.connect(self._on_animation_changed)
+        self.camera_height_combo.currentIndexChanged.connect(
+            self._on_camera_height_changed
+        )
         self.direction_combo.currentIndexChanged.connect(self._on_direction_changed)
         self.zoom_combo.currentIndexChanged.connect(self._render_frame)
         self.play_button.clicked.connect(self._toggle_playback)
@@ -280,6 +294,11 @@ class CharacterForgeWindow(QMainWindow):
         return value if isinstance(value, str) else "idle"
 
     @property
+    def current_camera_height(self) -> str:
+        value = self.camera_height_combo.currentData()
+        return value if isinstance(value, str) else "low"
+
+    @property
     def current_direction(self) -> str:
         value = self.direction_combo.currentData()
         return value if isinstance(value, str) else "front"
@@ -290,6 +309,74 @@ class CharacterForgeWindow(QMainWindow):
         base_id = self.base_combo.currentData()
         if isinstance(base_id, str):
             self.recipe.base_id = base_id
+        base = self.catalog.base(self.recipe.base_id)
+        self._updating_controls = True
+        try:
+            current_animation = self.current_animation_id
+            self.animation_combo.clear()
+            for animation in base.animations.values():
+                self.animation_combo.addItem(animation.name, animation.id)
+            animation_index = self.animation_combo.findData(current_animation)
+            self.animation_combo.setCurrentIndex(max(0, animation_index))
+            current_camera_height = self.recipe.camera_height
+            self.camera_height_combo.clear()
+            for camera_height in base.camera_heights:
+                self.camera_height_combo.addItem(
+                    CAMERA_HEIGHT_LABELS.get(camera_height, camera_height), camera_height
+                )
+            if current_camera_height not in base.camera_heights:
+                current_camera_height = "low" if "low" in base.camera_heights else base.camera_heights[0]
+                self.recipe.camera_height = current_camera_height
+            self.camera_height_combo.setCurrentIndex(
+                max(0, self.camera_height_combo.findData(current_camera_height))
+            )
+            for slot, combo in self.part_combos.items():
+                selected = self.recipe.parts.get(slot)
+                combo.clear()
+                combo.addItem("None", None)
+                for part in self.catalog.parts_for_slot(
+                    slot, base.id, self.recipe.camera_height
+                ):
+                    suffix = " (Incomplete)" if part.status == "incomplete" else ""
+                    combo.addItem(f"{part.name}{suffix}", part.id)
+                if combo.findData(selected) < 0:
+                    self.recipe.parts[slot] = None
+                    self.recipe.part_colors.pop(selected, None)
+                    selected = None
+                combo.setCurrentIndex(max(0, combo.findData(selected)))
+                combo.setEnabled(combo.count() > 1)
+                self._update_edit_button_state(slot)
+        finally:
+            self._updating_controls = False
+        self._update_part_color_controls()
+        self._on_animation_changed()
+
+    def _on_camera_height_changed(self) -> None:
+        if self._updating_controls:
+            return
+        self.recipe.camera_height = self.current_camera_height
+        self._updating_controls = True
+        try:
+            for slot, combo in self.part_combos.items():
+                selected = self.recipe.parts.get(slot)
+                combo.clear()
+                combo.addItem("None", None)
+                for part in self.catalog.parts_for_slot(
+                    slot, self.recipe.base_id, self.recipe.camera_height
+                ):
+                    suffix = " (Incomplete)" if part.status == "incomplete" else ""
+                    combo.addItem(f"{part.name}{suffix}", part.id)
+                if combo.findData(selected) < 0:
+                    self.recipe.parts[slot] = None
+                    if selected is not None:
+                        self.recipe.part_colors.pop(selected, None)
+                    selected = None
+                combo.setCurrentIndex(max(0, combo.findData(selected)))
+                combo.setEnabled(combo.count() > 1)
+                self._update_edit_button_state(slot)
+        finally:
+            self._updating_controls = False
+        self._update_part_color_controls()
         self._refresh_composite()
 
     def _on_animation_changed(self) -> None:
@@ -306,7 +393,7 @@ class CharacterForgeWindow(QMainWindow):
         self.direction_combo.setCurrentIndex(max(0, direction_index))
         self.direction_combo.blockSignals(False)
         self._reset_direction_playback(animation)
-        self._timer.setInterval(max(10, int(1000 / animation.fps)))
+        self._timer.setInterval(animation.frame_duration_ms(self._frame_index))
         for slot in CHARACTER_SLOTS:
             self._update_edit_button_state(slot)
         self._refresh_composite()
@@ -315,6 +402,7 @@ class CharacterForgeWindow(QMainWindow):
         base = self.catalog.base(self.recipe.base_id)
         animation = base.animations[self.current_animation_id]
         self._reset_direction_playback(animation)
+        self._timer.setInterval(animation.frame_duration_ms(self._frame_index))
         self._render_frame()
 
     def _reset_direction_playback(self, animation: CharacterAnimation) -> None:
@@ -399,6 +487,7 @@ class CharacterForgeWindow(QMainWindow):
         )
         self.frame_label.setText(
             f"Frame {self._frame_index + 1}/{frame_count}{cycle_note}  |  "
+            f"{animation.frame_duration_ms(self._frame_index)} ms  |  "
             f"{animation.frame_size[0]}x{animation.frame_size[1]} frame  |  "
             f"{self._sheet.width}x{self._sheet.height} sheet"
         )
@@ -409,6 +498,7 @@ class CharacterForgeWindow(QMainWindow):
         playback = animation.playback_frames(self.current_direction)
         self._playback_step = (self._playback_step + 1) % len(playback)
         self._frame_index = playback[self._playback_step]
+        self._timer.setInterval(animation.frame_duration_ms(self._frame_index))
         self._render_frame()
 
     def _toggle_playback(self) -> None:
@@ -418,7 +508,7 @@ class CharacterForgeWindow(QMainWindow):
         else:
             base = self.catalog.base(self.recipe.base_id)
             animation = base.animations[self.current_animation_id]
-            self._timer.setInterval(max(10, int(1000 / animation.fps)))
+            self._timer.setInterval(animation.frame_duration_ms(self._frame_index))
             self._timer.start()
             self.play_button.setText("Pause")
 
@@ -428,6 +518,7 @@ class CharacterForgeWindow(QMainWindow):
             self.recipe.base_id,
             self.seed_spin.value(),
             name=self.name_edit.text().strip() or "character",
+            camera_height=self.recipe.camera_height,
         )
         self._sync_recipe_to_controls()
         self._refresh_composite()
@@ -447,11 +538,44 @@ class CharacterForgeWindow(QMainWindow):
         available_ids = {part.id for part in catalog.parts}
         self._updating_controls = True
         try:
+            selected_base = self.recipe.base_id
+            if all(base.id != selected_base for base in catalog.bases):
+                selected_base = catalog.bases[0].id
+                self.recipe.base_id = selected_base
+            self.base_combo.clear()
+            for base in catalog.bases:
+                self.base_combo.addItem(base.name, base.id)
+            self.base_combo.setCurrentIndex(
+                max(0, self.base_combo.findData(selected_base))
+            )
+            self.base_combo.setEnabled(self.base_combo.count() > 1)
+            current_animation = self.current_animation_id
+            self.animation_combo.clear()
+            for animation in catalog.base(selected_base).animations.values():
+                self.animation_combo.addItem(animation.name, animation.id)
+            self.animation_combo.setCurrentIndex(
+                max(0, self.animation_combo.findData(current_animation))
+            )
+            base = catalog.base(selected_base)
+            if self.recipe.camera_height not in base.camera_heights:
+                self.recipe.camera_height = (
+                    "low" if "low" in base.camera_heights else base.camera_heights[0]
+                )
+            self.camera_height_combo.clear()
+            for camera_height in base.camera_heights:
+                self.camera_height_combo.addItem(
+                    CAMERA_HEIGHT_LABELS.get(camera_height, camera_height), camera_height
+                )
+            self.camera_height_combo.setCurrentIndex(
+                max(0, self.camera_height_combo.findData(self.recipe.camera_height))
+            )
             for slot, combo in self.part_combos.items():
                 selected = self.recipe.parts.get(slot)
                 combo.clear()
                 combo.addItem("None", None)
-                for part in catalog.parts_for_slot(slot):
+                for part in catalog.parts_for_slot(
+                    slot, self.recipe.base_id, self.recipe.camera_height
+                ):
                     suffix = " (Incomplete)" if part.status == "incomplete" else ""
                     combo.addItem(f"{part.name}{suffix}", part.id)
                 combo.setEnabled(combo.count() > 1)
@@ -472,13 +596,37 @@ class CharacterForgeWindow(QMainWindow):
             base_index = self.base_combo.findData(self.recipe.base_id)
             if base_index >= 0:
                 self.base_combo.setCurrentIndex(base_index)
+            base = self.catalog.base(self.recipe.base_id)
+            current_animation = self.current_animation_id
+            self.animation_combo.clear()
+            for animation in base.animations.values():
+                self.animation_combo.addItem(animation.name, animation.id)
+            self.animation_combo.setCurrentIndex(
+                max(0, self.animation_combo.findData(current_animation))
+            )
+            self.camera_height_combo.clear()
+            for camera_height in base.camera_heights:
+                self.camera_height_combo.addItem(
+                    CAMERA_HEIGHT_LABELS.get(camera_height, camera_height), camera_height
+                )
+            camera_index = self.camera_height_combo.findData(self.recipe.camera_height)
+            if camera_index >= 0:
+                self.camera_height_combo.setCurrentIndex(camera_index)
             self.name_edit.setText(self.recipe.name)
             if self.recipe.random_seed is not None:
                 self.seed_spin.setValue(self.recipe.random_seed)
             for slot, combo in self.part_combos.items():
                 part_id = self.recipe.parts.get(slot)
+                combo.clear()
+                combo.addItem("None", None)
+                for part in self.catalog.parts_for_slot(
+                    slot, self.recipe.base_id, self.recipe.camera_height
+                ):
+                    suffix = " (Incomplete)" if part.status == "incomplete" else ""
+                    combo.addItem(f"{part.name}{suffix}", part.id)
                 index = combo.findData(part_id)
                 combo.setCurrentIndex(max(index, 0))
+                combo.setEnabled(combo.count() > 1)
                 self._update_edit_button_state(slot)
             self._update_part_color_controls()
         finally:
@@ -492,7 +640,12 @@ class CharacterForgeWindow(QMainWindow):
             button.setToolTip("Select a character part first")
             return
         part = self.catalog.part(part_id)
-        available = self.current_animation_id in part.animations
+        available = (
+            part.animation_path(
+                self.current_animation_id, self.recipe.camera_height
+            )
+            is not None
+        )
         button.setEnabled(available)
         if available:
             button.setToolTip(
@@ -642,7 +795,9 @@ class CharacterForgeWindow(QMainWindow):
         part = self.catalog.part(part_id)
         animation_id = self.current_animation_id
         try:
-            sheet = load_part_animation(self.catalog, part_id, animation_id)
+            sheet = load_part_animation(
+                self.catalog, part_id, animation_id, self.recipe.camera_height
+            )
         except CharacterForgeError as exc:
             QMessageBox.critical(self, "Open part failed", str(exc))
             return

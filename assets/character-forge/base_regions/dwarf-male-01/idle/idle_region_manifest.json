@@ -1,0 +1,909 @@
+{
+  "schema_version": 1,
+  "kind": "weight_derived_character_region_sheet",
+  "sequence": "idle",
+  "base_sheet": "assets/character-forge/bases/dwarf-male-01/idle.png",
+  "base_sheet_sha256": "6f273d8574d48295a2d8c27970063430f26e8a4c1245e83a13e00a76f6bc6eba",
+  "paired_manifest": "animation_images_models/dwarf_bald_male/working/component_semantics/idle_source/paired_sprite_render_manifest.json",
+  "paired_manifest_sha256": "072291cf3d099f228e593e8abc52db9d54fd32ce2c6f09667df3128a88ad1237",
+  "source_blend": "animation_images_models/dwarf_bald_male/canonical/dwarf_bald_male_approved_motions.blend",
+  "source_blend_sha256": "a62ccbbf7b266228449eafef276364e9c287ec5d6919aa2c4ba5edf3a526394b",
+  "source_frames": [
+    1,
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    17,
+    19,
+    21,
+    23,
+    24,
+    25
+  ],
+  "direction_order": [
+    "front",
+    "back",
+    "right",
+    "left"
+  ],
+  "sheet_dimensions": [
+    1792,
+    512
+  ],
+  "region_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32
+  ],
+  "rescued_regions": {
+    "front/frame_00": [
+      8,
+      10,
+      12,
+      29,
+      30
+    ],
+    "front/frame_01": [
+      8,
+      10,
+      12,
+      29,
+      30
+    ],
+    "front/frame_02": [
+      8,
+      10,
+      12,
+      29,
+      30
+    ],
+    "front/frame_03": [
+      8,
+      10,
+      12,
+      29,
+      30
+    ],
+    "front/frame_04": [
+      8,
+      10,
+      12,
+      17,
+      18,
+      29,
+      30
+    ],
+    "front/frame_05": [
+      8,
+      10,
+      12,
+      29,
+      30
+    ],
+    "front/frame_06": [
+      8,
+      10,
+      12,
+      18,
+      29,
+      30
+    ],
+    "front/frame_07": [
+      8,
+      10,
+      12,
+      17,
+      29
+    ],
+    "front/frame_08": [
+      8,
+      10,
+      12
+    ],
+    "front/frame_09": [
+      8,
+      10,
+      12,
+      29
+    ],
+    "front/frame_10": [
+      8,
+      10,
+      12,
+      18,
+      29
+    ],
+    "front/frame_11": [
+      8,
+      10,
+      12,
+      29
+    ],
+    "front/frame_12": [
+      8,
+      10,
+      12,
+      17,
+      30
+    ],
+    "front/frame_13": [
+      8,
+      10,
+      12,
+      17,
+      30
+    ],
+    "front/frame_14": [
+      8,
+      10,
+      12,
+      30
+    ],
+    "front/frame_15": [
+      8,
+      10,
+      12,
+      17,
+      30
+    ],
+    "front/frame_16": [
+      8,
+      10,
+      12,
+      17,
+      30
+    ],
+    "front/frame_17": [
+      8,
+      10,
+      17,
+      29,
+      30
+    ],
+    "front/frame_18": [
+      8,
+      10,
+      12,
+      17,
+      30
+    ],
+    "front/frame_19": [
+      8,
+      10,
+      12,
+      29,
+      30
+    ],
+    "front/frame_20": [
+      8,
+      10,
+      12,
+      18,
+      30
+    ],
+    "front/frame_21": [
+      8,
+      10,
+      12,
+      18,
+      29,
+      30
+    ],
+    "front/frame_22": [
+      8,
+      10,
+      12
+    ],
+    "front/frame_23": [
+      8,
+      10,
+      12,
+      17
+    ],
+    "front/frame_24": [
+      8,
+      10,
+      12
+    ],
+    "front/frame_25": [
+      8,
+      10,
+      12,
+      29,
+      30
+    ],
+    "back/frame_00": [
+      1,
+      7,
+      9,
+      17,
+      29
+    ],
+    "back/frame_01": [
+      1,
+      7,
+      9,
+      17,
+      18,
+      29
+    ],
+    "back/frame_02": [
+      1,
+      7,
+      9,
+      18,
+      29
+    ],
+    "back/frame_03": [
+      1,
+      7,
+      9,
+      11,
+      17,
+      18,
+      25,
+      29
+    ],
+    "back/frame_04": [
+      1,
+      7,
+      9,
+      11,
+      17,
+      18,
+      25,
+      29
+    ],
+    "back/frame_05": [
+      1,
+      7,
+      9,
+      11,
+      17,
+      18,
+      25,
+      29
+    ],
+    "back/frame_06": [
+      1,
+      7,
+      9,
+      11,
+      17,
+      25,
+      29
+    ],
+    "back/frame_07": [
+      1,
+      7,
+      9,
+      11,
+      17,
+      29
+    ],
+    "back/frame_08": [
+      1,
+      7,
+      9,
+      11,
+      17,
+      18,
+      29
+    ],
+    "back/frame_09": [
+      1,
+      7,
+      9,
+      11,
+      17,
+      18,
+      29
+    ],
+    "back/frame_10": [
+      1,
+      7,
+      9,
+      11,
+      17,
+      25,
+      29
+    ],
+    "back/frame_11": [
+      1,
+      7,
+      9,
+      11,
+      18,
+      29
+    ],
+    "back/frame_12": [
+      1,
+      7,
+      9,
+      11,
+      29
+    ],
+    "back/frame_13": [
+      1,
+      7,
+      9,
+      11,
+      29,
+      30
+    ],
+    "back/frame_14": [
+      1,
+      7,
+      9,
+      11,
+      29
+    ],
+    "back/frame_15": [
+      1,
+      7,
+      9,
+      11,
+      29
+    ],
+    "back/frame_16": [
+      7,
+      9,
+      11,
+      18,
+      29
+    ],
+    "back/frame_17": [
+      1,
+      7,
+      9,
+      11,
+      29
+    ],
+    "back/frame_18": [
+      1,
+      7,
+      9,
+      11,
+      29
+    ],
+    "back/frame_19": [
+      1,
+      7,
+      9,
+      11,
+      26,
+      29
+    ],
+    "back/frame_20": [
+      1,
+      7,
+      9,
+      11,
+      17,
+      26,
+      29
+    ],
+    "back/frame_21": [
+      1,
+      7,
+      9,
+      11,
+      17,
+      18,
+      26,
+      29
+    ],
+    "back/frame_22": [
+      1,
+      7,
+      9,
+      11,
+      17,
+      26,
+      29
+    ],
+    "back/frame_23": [
+      1,
+      7,
+      9,
+      11,
+      17,
+      26,
+      29
+    ],
+    "back/frame_24": [
+      1,
+      7,
+      9,
+      11,
+      17,
+      18,
+      26,
+      29
+    ],
+    "back/frame_25": [
+      1,
+      7,
+      9,
+      11,
+      17,
+      18,
+      25,
+      29
+    ],
+    "right/frame_00": [
+      4,
+      8,
+      10,
+      17,
+      23,
+      25,
+      29
+    ],
+    "right/frame_01": [
+      4,
+      8,
+      10,
+      17,
+      21,
+      25,
+      29
+    ],
+    "right/frame_02": [
+      4,
+      8,
+      10,
+      17,
+      25,
+      29
+    ],
+    "right/frame_03": [
+      4,
+      8,
+      10,
+      17,
+      29,
+      30
+    ],
+    "right/frame_04": [
+      4,
+      8,
+      10,
+      17,
+      29
+    ],
+    "right/frame_05": [
+      4,
+      8,
+      10,
+      17,
+      29,
+      30
+    ],
+    "right/frame_06": [
+      4,
+      8,
+      10,
+      17,
+      25,
+      29
+    ],
+    "right/frame_07": [
+      4,
+      8,
+      10,
+      17,
+      25,
+      29
+    ],
+    "right/frame_08": [
+      4,
+      8,
+      10,
+      17,
+      25,
+      29
+    ],
+    "right/frame_09": [
+      4,
+      8,
+      10,
+      17,
+      25,
+      29
+    ],
+    "right/frame_10": [
+      4,
+      8,
+      10,
+      17,
+      25,
+      29
+    ],
+    "right/frame_11": [
+      4,
+      8,
+      17,
+      23,
+      25,
+      29
+    ],
+    "right/frame_12": [
+      4,
+      8,
+      10,
+      17,
+      25,
+      29
+    ],
+    "right/frame_13": [
+      4,
+      8,
+      17,
+      25,
+      29
+    ],
+    "right/frame_14": [
+      4,
+      8,
+      17,
+      25,
+      29
+    ],
+    "right/frame_15": [
+      4,
+      8,
+      17,
+      25,
+      29
+    ],
+    "right/frame_16": [
+      4,
+      8,
+      17,
+      25,
+      29
+    ],
+    "right/frame_17": [
+      4,
+      8,
+      17,
+      25,
+      29,
+      30
+    ],
+    "right/frame_18": [
+      4,
+      8,
+      17,
+      25,
+      29
+    ],
+    "right/frame_19": [
+      4,
+      8,
+      10,
+      17,
+      25,
+      29
+    ],
+    "right/frame_20": [
+      4,
+      8,
+      17,
+      25,
+      29
+    ],
+    "right/frame_21": [
+      4,
+      8,
+      10,
+      17,
+      23,
+      25,
+      29
+    ],
+    "right/frame_22": [
+      4,
+      8,
+      10,
+      17,
+      23,
+      25,
+      29
+    ],
+    "right/frame_23": [
+      4,
+      8,
+      10,
+      17,
+      23,
+      25,
+      29
+    ],
+    "right/frame_24": [
+      4,
+      8,
+      10,
+      17,
+      23,
+      25,
+      29
+    ],
+    "right/frame_25": [
+      4,
+      8,
+      10,
+      17,
+      23,
+      25,
+      29
+    ],
+    "left/frame_00": [
+      10,
+      20,
+      24,
+      30
+    ],
+    "left/frame_01": [
+      10,
+      20
+    ],
+    "left/frame_02": [
+      20
+    ],
+    "left/frame_03": [
+      20
+    ],
+    "left/frame_04": [
+      20,
+      30
+    ],
+    "left/frame_05": [
+      20,
+      30
+    ],
+    "left/frame_06": [
+      20
+    ],
+    "left/frame_07": [
+      10,
+      20,
+      30
+    ],
+    "left/frame_08": [
+      20
+    ],
+    "left/frame_09": [
+      20
+    ],
+    "left/frame_10": [
+      20,
+      24
+    ],
+    "left/frame_11": [
+      20,
+      24,
+      29,
+      30
+    ],
+    "left/frame_12": [
+      10,
+      20
+    ],
+    "left/frame_13": [
+      8,
+      10,
+      20,
+      30
+    ],
+    "left/frame_14": [
+      8,
+      10,
+      20,
+      30
+    ],
+    "left/frame_15": [
+      8,
+      10,
+      20,
+      30
+    ],
+    "left/frame_16": [
+      8,
+      10,
+      20
+    ],
+    "left/frame_17": [
+      8,
+      10,
+      20,
+      30
+    ],
+    "left/frame_18": [
+      8,
+      10,
+      20,
+      30
+    ],
+    "left/frame_19": [
+      8,
+      10,
+      20
+    ],
+    "left/frame_20": [
+      8,
+      10,
+      20,
+      30
+    ],
+    "left/frame_21": [
+      10,
+      20,
+      24
+    ],
+    "left/frame_22": [
+      10,
+      20,
+      24
+    ],
+    "left/frame_23": [
+      10,
+      20,
+      24
+    ],
+    "left/frame_24": [
+      10,
+      20,
+      24
+    ],
+    "left/frame_25": [
+      10,
+      20,
+      24
+    ]
+  },
+  "semantic_render_sha256": {
+    "front/frame_00": "a5b0d8cfc713f9e5d555a0d849d5aae1a9ea5bf985e503be53b3825fda0c36e7",
+    "front/frame_01": "41bd2a63b4b0c9c47c456dc72766a6d54c2408af56e56cb2df2c300c024e9630",
+    "front/frame_02": "093ca877b27527483ada80c14ea55d116365368c7823a73902a62e12ebe704da",
+    "front/frame_03": "4395d24729aaaf9b1b95ef6d78188915135eac57ee93dc9c4a0974e2a7584fb7",
+    "front/frame_04": "cd0e1515c76f2d95e663ab80dd723dc03eb1ddaf82fa809f1f9bb3e62ba5c6c2",
+    "front/frame_05": "b1ff54ac77f6b15b9a7b0db9767297b78d5f7de13d6ca68bd5faf8f6d4322701",
+    "front/frame_06": "b05012f64e95dcd064c29cc826dd2c0cb9b92a036b9f2658f6094011ffa09cc8",
+    "front/frame_07": "58bec5ff1b58268012f3e48b5a365deb4f53bf445533328fd9a74b6ea270a649",
+    "front/frame_08": "a0f6d6174595a13179b65cdc5c33783e335b200e105355a42e038efd1d342aea",
+    "front/frame_09": "0615f3914652922a7af802351573d5ff58eeb63e5c7dac00c10b6ced60afdd1c",
+    "front/frame_10": "431007b9e5d9b5e5bbe218b61d7e872ca52e35506a802a858b20013d4693e1b3",
+    "front/frame_11": "f7c0d6a437579eb140952fe1d172cba7e5e4a8db4814f06944b94ab2f87f3fab",
+    "front/frame_12": "62c1f562f4797d7965207e5419241e629afddf48c57402e2c58856d90936ef85",
+    "front/frame_13": "9025c07726aa6d9d83bcf6ce82f231e045d7d6cc0fda502c0688c424cfb9a3ef",
+    "front/frame_14": "612abbede1010e8e20d1b25f0ff2f2d7e592c7c057fb8d940c57bad1aafa1f8e",
+    "front/frame_15": "e35610e54757c6864a431a9b8e7f4ee35a6ba74895a5055f896592dced3eb8c1",
+    "front/frame_16": "32f5c7c327a392d5dbfa75489de80849d42f65071c38dfea104aa151b248045d",
+    "front/frame_17": "83342fd38029805f381640c6c94d78aeb9fe79598835ba157601bbbbf5f6d670",
+    "front/frame_18": "dc9c80b8b013ba21d6d6eed1e42772bdb392a9546171a626ba6c77deb6b6b30c",
+    "front/frame_19": "8f6c333158083f21ae2652d319083660d6cda4c8e7e2df4eedcef3a88af463cb",
+    "front/frame_20": "1afe068103aa3a0757395f012a21dba7aae2f639297094fbf570b9e511513b51",
+    "front/frame_21": "ac268b1f4c565f17e7fa9e956885853b69dd6db94f83455d9ced61120c99f722",
+    "front/frame_22": "09039a2389a72132d8cee30fcd00187468440fa775fd3d1ab55120341505f11f",
+    "front/frame_23": "1d3c8e211d6cf21414e4126fd3413dfcff6169129d42a9d8145ff3f5c469fa08",
+    "front/frame_24": "330d50e7d32b4a00682cfd7f0baf83ee2e5d83d5ef22b22ac2e0b65a43e30f97",
+    "front/frame_25": "f2857f09f999defafadc8399b8857acaa53a0eae51c9087d56512a15c6bfe7ba",
+    "back/frame_00": "608d345636581b7db9e455c42b70389594b6d266117dcdf270c05fbac8f76031",
+    "back/frame_01": "d409419da74d93d6cc2fde19211c479ffa8d704e8b1ce9787116d8b176dc712f",
+    "back/frame_02": "b4ad8d630ea564d60cf10329ac16f55b2553567b4dfd7ff995dbb8ccaf51b776",
+    "back/frame_03": "aa6b9c7b9076be0453c4a849483166ba849c95475c3052cd547e521062005f8f",
+    "back/frame_04": "ecb72270679b701fb50ce008fa8828b732857e30499a6922936a4c492fa5ce6d",
+    "back/frame_05": "86fdcad02aef7f30cf0563378c45063b8165c3c4cf9c2e548c91e61cd1dc7ce3",
+    "back/frame_06": "b757c227f38834df81854e8c0c0878d1391e869211240ea7f1c43f5ef2e627e5",
+    "back/frame_07": "6bd4f288c31623e921595c6b71742ca620925b947949d9ba4a173f917b1a133b",
+    "back/frame_08": "9916b61dd5ffccd93b11095d7bd1f96732b61600ef0a0f58829e1cfce7ff2c31",
+    "back/frame_09": "9f89bb08736771d71bfaa591470a1d8a2047f8aca074deccda27f4b93e04c685",
+    "back/frame_10": "4d5daeb1d2f16743447371a78a2274c2a3db6acdf245acfe01dc99ad3554c5c8",
+    "back/frame_11": "baa66ac3a3548d7522cb0e009ad1128544863a4af844e63221ba97f4133aeb50",
+    "back/frame_12": "0f64e91d198e87517b0c06c68c872f71ff707eb7a59b1f6cafcd3c297753b2fa",
+    "back/frame_13": "452fc68c9c05f47203b1ab4df1c904eb6f3e43eeb9adb4e9ee5eb6c476575b6f",
+    "back/frame_14": "b02634ac1ccf6ff4411e76541a8b90fdeef5707384b175ba07dc7bb6442c7d28",
+    "back/frame_15": "9bd677cba280f6a50301ca36542ced7a7e3b3a01f851f2fecc567ca6ef3c5f83",
+    "back/frame_16": "e754ef0729461921647a66117fb8a9691da33fe082bc94678a7f6370ebec8b10",
+    "back/frame_17": "27e6eecc85b00876e43eebc69e74428095d9084da7f9283c14742c462476ec4f",
+    "back/frame_18": "add669314e945b5ab74315b3eadbcd1fce8597bcbe6ef69c6bcde0c9ca91d14e",
+    "back/frame_19": "9623d66701e8b9b486ed1a0e601abb808c725140cbb816242d591f000892cecf",
+    "back/frame_20": "012f05a4829b56bd2e4b047b085d0800a2de4ada8342894d6c7ff0f1d0720eeb",
+    "back/frame_21": "68240fb2ef6fb322de85610702104ca262890745581fecb20cc938afa484ffe2",
+    "back/frame_22": "632b1532bbdd4095b2442e6f45af409d2692f52f2d67bf39424263e2316ebc86",
+    "back/frame_23": "ad51f815be47adaf337a3d1438b47665e821ad75ece45bab4f28578fa06520c3",
+    "back/frame_24": "01e05450b84f4c2f75bb8cc7b8392f41c06d1d5d15fd7e7619f27a5ae1d9c217",
+    "back/frame_25": "30649e943b9a51a8350b364972963cd212de3e9bf552993d84350f24a50dcd86",
+    "right/frame_00": "0a4b00750b856b039e86747c11e9eaf850a0990a1388339bcec1987f7c7171d0",
+    "right/frame_01": "a064e8ccbb7162bce5ea938e0d19b3c4ffb5d73b5825f88947e98a5e2a93b6a9",
+    "right/frame_02": "48ab87eaa2c809393ea3f15cdbb08435939bdbad936ee271bafe470d7b884595",
+    "right/frame_03": "a1c58ee961dec35374e709fd40ef34930b12c2aca829706f6ff33608a550c7ec",
+    "right/frame_04": "fc4250c7e30a43bbde4b4703f856e7612db164bc9825f89a92f8184ace17e8c1",
+    "right/frame_05": "7797c2f0e7fe8e570b5927bf3a5776a195e803ee26241006fe969739dab8ab24",
+    "right/frame_06": "aad6eb0e27981eebd756755185f45e983662010d1c542e892b65422f98b4ae70",
+    "right/frame_07": "c8b6afce1a50f9b043f4b7d0e21fcc8b8cee2a187e4a551b816fed724b8f599d",
+    "right/frame_08": "e47d3973b5d0eb7b0bbb76a25bb097cb1ffe3a3714c10b12eabf441d10f78a70",
+    "right/frame_09": "29b682b890e00eea1b44014f080cdfff30cbf339661579324167bbd20e762c5e",
+    "right/frame_10": "8e5013716291d052b0ecee9ac70800953fc6d50a6c6c7a1ac9d8c73497ea700e",
+    "right/frame_11": "99da82e6c28858b7560161b85147be72b8b22a964402069518d4e839dd7d5719",
+    "right/frame_12": "9ecffab7d449f610a2ccd336e57de1a75dbc8bd6f4de704c059995d34a20a9ff",
+    "right/frame_13": "799281c225250110c627551cc2e93676548ece7952c00ad7c684994807b411b7",
+    "right/frame_14": "13568c850ad145d9e7b9ee0babb519c7ad4b6acf79c45ebbd34b667043c121ee",
+    "right/frame_15": "c81a59cc95d5e53e66dbf1e089155bad180b758c4c107a57b5b25b5794faa373",
+    "right/frame_16": "ede72b21509f5166f11233aecb2eaad9893d593f3a1b39d5514aea5ad2bdf162",
+    "right/frame_17": "fb022ae96e76486b110296fe2e21b88b8b317839ca0043c81795603204feaf04",
+    "right/frame_18": "1ccab2acf9627c59cc6b4eead02ff821ebfa984992fe6910882ab9041309c95b",
+    "right/frame_19": "02ba7621c78bb087b5be33b4c57e4a4f7603a60511913d82cf502648e993b6d8",
+    "right/frame_20": "0b651f0809d7bb408c6463daf03f806cb829a2348b736d2b7d1936b8153f945f",
+    "right/frame_21": "3e7ef2b86e43f0be696641e72a0ab7fd2ddb53304048a7895635b7bae4adcfeb",
+    "right/frame_22": "6d2d1134bd24c2f55fe4f07801c8fc965d5b328a7c6c6384078e6a4de8798931",
+    "right/frame_23": "f220eb27577e13461bfdd648cb30569c9b52c74bb226630977048d589278db14",
+    "right/frame_24": "9144f7b8f7e4cd91f1f2190a9c1d564dda25e523ea1af633a42a3d29c11a1e60",
+    "right/frame_25": "664ebea252de3206c3db51037f83c85c5a62996d55022187c167cde31f637ea6",
+    "left/frame_00": "c60509b15c340970194a2fec0bc4ef6491b1e650f98104a3d4b9a732e582e0f7",
+    "left/frame_01": "065b7743f9e844202cd53c8850918b532e19f421f46acca5b9f48c464feb5280",
+    "left/frame_02": "309a47cfce653a15b4ac17d47b341da737edb56aadec298709351b443b364f73",
+    "left/frame_03": "b7fdfd45e7591fdbf317c88d223ac19467e16367077dd05a8042ec97785c9297",
+    "left/frame_04": "a2063992b774c07aa5badb6fdf41f5bc5132ff37a284208347f06246205f1c16",
+    "left/frame_05": "c7f6f2036f437bccc8944d0b748772f64106c8c8532b88556eeb58b4d8164c6e",
+    "left/frame_06": "47ef49b47a73a68a98c8d1b8bdee5983a546658cf89cfd440f6b36f46890aa80",
+    "left/frame_07": "0cb1cde35f640ae5509fb96e87dbf080d022df8bcbf32b65af604c1013c206d0",
+    "left/frame_08": "8ba6b06e82440edd64999d30423e151d9fad6151157cd7876fccd2ac38ebf0b6",
+    "left/frame_09": "1bc0489f8434851f02d085272e6c50211dd81028d29c8cde49c39f583a00458f",
+    "left/frame_10": "4e2a16ad6b861aab5c99fe2a2b620c9060691d2e147fd5f7d24dda7ef22017b6",
+    "left/frame_11": "0c625c7ca1a6a706b6f146c80e4da35b9b927625e70d88dc52b3f9e60573997d",
+    "left/frame_12": "4b22868c45ed8f695a6e841090c390c87f492156fc88baf178115d3f9a0b0b5e",
+    "left/frame_13": "cfe27732bc4bd87ed9e0d66eef45cbcf4292bea0cd67e67ef73a38b7285fabbd",
+    "left/frame_14": "264053852c72ce6736301ccbfcfd6f330dcbaeb9bf8007f92a329c6a86d9806b",
+    "left/frame_15": "6a10c552ce6943cd2fec09f625d70ba01df034a93147fb44c278106f2769e466",
+    "left/frame_16": "ffb85287ab16a023b97c4f5e11ffcffa2cf3528942be073f65c06521b78bc337",
+    "left/frame_17": "3b8e8ecdca8b3e9896d184ef4aa4d75e6cfd75e8acd8a3aab0f23bd994e27021",
+    "left/frame_18": "c1bf6c56026fa19a13e8e8721c943322a88c48aa34bad8f20ec80d5505c1e6cf",
+    "left/frame_19": "4a79853376ef47b7d39536c7201d2db021a4dec0c3bad64a9608cb21d1c2deae",
+    "left/frame_20": "94ced8e9cc6827fe9de1ff00b3df125730f2ec8bba4fa9f87e9721035c91323a",
+    "left/frame_21": "5b2002942b671aa0b7a9576fae6c3c09aef00c283506b68afda022677704e036",
+    "left/frame_22": "f3534d729bee2ef4e7ac1427e235de3829deca8923f63f85a90d1d23ca3f3e4b",
+    "left/frame_23": "6c150d636980f46d37660d0cb966112028bab54a63e1c6613c030dee81a1b61f",
+    "left/frame_24": "fe3cc6c48b9c159f41b18d8dc6e19f084f66c12708686dd24615319a14623c63",
+    "left/frame_25": "55b91f52b7b62fed19ff2a49c9e50f35638853c352ee3f4503743e6148f0046b"
+  },
+  "outputs": {
+    "idle_regions.png": "bbe513bdb55f2d4ab673c73be8544afc9132de0bbbdf138929ee3b077afe5558",
+    "idle_regions_preview.png": "0dfc60b15458f347fc21e29841524d034560c908fccda4c05c744e46a719ae2c"
+  }
+}

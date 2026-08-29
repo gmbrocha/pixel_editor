@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "kind": "component_authoring_base_sprite_references",
+  "camera_height": "low",
+  "direction_rows": [
+    "front",
+    "back",
+    "right",
+    "left"
+  ],
+  "frame_size": [
+    128,
+    128
+  ],
+  "bases": {
+    "elf-01": {
+      "name": "Elf Female",
+      "animations": {
+        "idle": {
+          "file": "base_sprites/elf-01/idle.png",
+          "sha256": "d686fdcdc6346abb9058756f4cae0540994c966d8ed9a04349dfe152c745c356",
+          "source": "assets/character-forge/bases/elf-01/idle.png",
+          "source_sha256": "d686fdcdc6346abb9058756f4cae0540994c966d8ed9a04349dfe152c745c356",
+          "dimensions": [
+            1792,
+            512
+          ]
+        },
+        "walk": {
+          "file": "base_sprites/elf-01/walk.png",
+          "sha256": "96b73ea3a991fd71e7893b60da4a57cd2fbdc4e0977a9176d882f0c09c2f9f79",
+          "source": "assets/character-forge/bases/elf-01/walk.png",
+          "source_sha256": "96b73ea3a991fd71e7893b60da4a57cd2fbdc4e0977a9176d882f0c09c2f9f79",
+          "dimensions": [
+            1024,
+            512
+          ]
+        },
+        "run": {
+          "file": "base_sprites/elf-01/run.png",
+          "sha256": "13a461d3d2f24d6d40cde7e2fb3d0a15d9d08b0c70b086a0369d15b431764ea6",
+          "source": "assets/character-forge/bases/elf-01/run.png",
+          "source_sha256": "13a461d3d2f24d6d40cde7e2fb3d0a15d9d08b0c70b086a0369d15b431764ea6",
+          "dimensions": [
+            1024,
+            512
+          ]
+        }
+      }
+    },
+    "tiefling-female-01": {
+      "name": "Tiefling Female",
+      "animations": {
+        "idle": {
+          "file": "base_sprites/tiefling-female-01/idle.png",
+          "sha256": "e9fecdcde8d7146f2ff521f388ce5f5c0fe34609d5f57acd12be9e63e902649a",
+          "source": "assets/character-forge/bases/tiefling-female-01/idle.png",
+          "source_sha256": "e9fecdcde8d7146f2ff521f388ce5f5c0fe34609d5f57acd12be9e63e902649a",
+          "dimensions": [
+            1792,
+            512
+          ]
+        },
+        "walk": {
+          "file": "base_sprites/tiefling-female-01/walk.png",
+          "sha256": "de8fd702c57757ee2cae6e4cc18e271242cfe1c494fcaf194b5cdabcc900503c",
+          "source": "assets/character-forge/bases/tiefling-female-01/walk.png",
+          "source_sha256": "de8fd702c57757ee2cae6e4cc18e271242cfe1c494fcaf194b5cdabcc900503c",
+          "dimensions": [
+            1024,
+            512
+          ]
+        },
+        "run": {
+          "file": "base_sprites/tiefling-female-01/run.png",
+          "sha256": "5983e6920659a00d881832d513456382b1a3cbe845a2c9bc43d836551d5a6190",
+          "source": "assets/character-forge/bases/tiefling-female-01/run.png",
+          "source_sha256": "5983e6920659a00d881832d513456382b1a3cbe845a2c9bc43d836551d5a6190",
+          "dimensions": [
+            1024,
+            512
+          ]
+        }
+      }
+    },
+    "dwarf-male-01": {
+      "name": "Dwarf Male",
+      "animations": {
+        "idle": {
+          "file": "base_sprites/dwarf-male-01/idle.png",
+          "sha256": "85fa39048058f6ad91e602b8d22d09e978f743914925b48866857f1d36a28060",
+          "source": "assets/character-forge/bases/dwarf-male-01/idle.png",
+          "source_sha256": "85fa39048058f6ad91e602b8d22d09e978f743914925b48866857f1d36a28060",
+          "dimensions": [
+            1792,
+            512
+          ]
+        },
+        "walk": {
+          "file": "base_sprites/dwarf-male-01/walk.png",
+          "sha256": "aa1400f3d7addb563a9d3d48a9650f7bbc72fca50e58022a3d9a4173b1c6cd3a",
+          "source": "assets/character-forge/bases/dwarf-male-01/walk.png",
+          "source_sha256": "aa1400f3d7addb563a9d3d48a9650f7bbc72fca50e58022a3d9a4173b1c6cd3a",
+          "dimensions": [
+            1024,
+            512
+          ]
+        },
+        "run": {
+          "file": "base_sprites/dwarf-male-01/run.png",
+          "sha256": "6b7a88cc4dfee0569e30965705c84ec92d642c9b9f6c3cad6c3897de95822e1b",
+          "source": "assets/character-forge/bases/dwarf-male-01/run.png",
+          "source_sha256": "6b7a88cc4dfee0569e30965705c84ec92d642c9b9f6c3cad6c3897de95822e1b",
+          "dimensions": [
+            1024,
+            512
+          ]
+        }
+      }
+    },
+    "human-muscular-male-01": {
+      "name": "Muscular Human Male",
+      "animations": {
+        "idle": {
+          "file": "base_sprites/human-muscular-male-01/idle.png",
+          "sha256": "1080877218c6c23ca9f9d227d9ae6a33e69d744536ce386adc2e761de39d90da",
+          "source": "assets/character-forge/bases/human-muscular-male-01/idle.png",
+          "source_sha256": "1080877218c6c23ca9f9d227d9ae6a33e69d744536ce386adc2e761de39d90da",
+          "dimensions": [
+            1792,
+            512
+          ]
+        },
+        "walk": {
+          "file": "base_sprites/human-muscular-male-01/walk.png",
+          "sha256": "c126987390c24baf8e593cfadaa8e8a47b5d664c77230afaf0b36832721467af",
+          "source": "assets/character-forge/bases/human-muscular-male-01/walk.png",
+          "source_sha256": "c126987390c24baf8e593cfadaa8e8a47b5d664c77230afaf0b36832721467af",
+          "dimensions": [
+            1024,
+            512
+          ]
+        },
+        "run": {
+          "file": "base_sprites/human-muscular-male-01/run.png",
+          "sha256": "43de53eca6acb7faf01b9da9a55f1637006a4e8718c04a18a767a96de8825c43",
+          "source": "assets/character-forge/bases/human-muscular-male-01/run.png",
+          "source_sha256": "43de53eca6acb7faf01b9da9a55f1637006a4e8718c04a18a767a96de8825c43",
+          "dimensions": [
+            1024,
+            512
+          ]
+        }
+      }
+    }
+  }
+}

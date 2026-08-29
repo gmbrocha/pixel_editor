@@ -1,0 +1,844 @@
+{
+  "schema_version": 1,
+  "kind": "component_cleanup_review_bundle",
+  "status": "editable_mirror_of_promoted_baseline",
+  "family_count": 25,
+  "variant_count": 100,
+  "sheet_count": 300,
+  "cleanup_totals": {
+    "removed_islands": 4203,
+    "removed_island_pixels": 34068,
+    "chamfered_outline_pixels": 284229,
+    "removed_spurs": 13800,
+    "removed_spur_pixels": 13842,
+    "filled_holes": 542,
+    "filled_hole_pixels": 694
+  },
+  "index": {
+    "file": "index.csv",
+    "sha256": "cec357e4bcbc78facc193fbf9058063b9d3999012d6a296163145707a10959b6"
+  },
+  "review_boards": {
+    "review/elf-01-idle.png": "91cc448252b64b7c3b4c5ef3633e1ebdcbb7993ab46c24645b4fcfce7647756f",
+    "review/elf-01-walk.png": "a0f7bd4e5a81448bd7313186cb7089b8c1ba35d3cd8e686631e39e4f345443ab",
+    "review/elf-01-run.png": "60b7fc8a13fcade420eb17dec4d614a02bb55124810f287b71ba44a799f9998a",
+    "review/tiefling-female-01-idle.png": "7216676ded9c4d2f0bfe56f79a11b07e4f0f61ad15d5ad83000625c9f0e510dd",
+    "review/tiefling-female-01-walk.png": "ddec2f0fa519d7441fafc35f3135b3a7247b336a9c896166ae30ebb7362f6bb7",
+    "review/tiefling-female-01-run.png": "053128de7324de9b7bd5b467b7b623ea26ad817469507cdadd0a9582a9dfc3f6",
+    "review/dwarf-male-01-idle.png": "295ced9ddb0c08171d370aaca35195cdbd12da8346c3b6009003d8326681b975",
+    "review/dwarf-male-01-walk.png": "4ec3d9d46076194715a7f9654e1390adae347b307633d2de17f562caeaf64196",
+    "review/dwarf-male-01-run.png": "9144c8efd48b1010f9e84b7bade4b8788504b884c22dae7b98b772ffc01a4754",
+    "review/human-muscular-male-01-idle.png": "fd790dce020056df88a2a6451b81b9ea44247951d34e00b73119f8cfd63f353c",
+    "review/human-muscular-male-01-walk.png": "16a18bfd02b06110bacba176f921519020390e3bd4ce84d358ae001894ccea93",
+    "review/human-muscular-male-01-run.png": "5a833712208eec15283a68d4c5d8d8cff1ff1faec05747d7bfb9863f65841dc3"
+  },
+  "base_sprites": {
+    "directory": "base_sprites",
+    "manifest": "base_sprites/manifest.json",
+    "manifest_sha256": "b527e2a8bd1c4a1bbdca7d559b54258add004d21b4a16a36212ff66af0b0b603",
+    "base_count": 4,
+    "sheet_count": 12
+  },
+  "variants": [
+    {
+      "component_id": "sleeveless-travel-tunic-elf-01",
+      "family_id": "sleeveless-travel-tunic",
+      "fit": "elf-01",
+      "slot": "torso",
+      "manifest": "elf-01/sleeveless-travel-tunic/cleanup_manifest.json",
+      "manifest_sha256": "a541e883ce8b9f3b2eeb3554fbf6facadb6a87287996c5d5de269c38c0559fc6"
+    },
+    {
+      "component_id": "sleeveless-travel-tunic-tiefling-female-01",
+      "family_id": "sleeveless-travel-tunic",
+      "fit": "tiefling-female-01",
+      "slot": "torso",
+      "manifest": "tiefling-female-01/sleeveless-travel-tunic/cleanup_manifest.json",
+      "manifest_sha256": "e4f068f416fad6d772651cf55af30263aab960aacc3188f5671c9e75f7806190"
+    },
+    {
+      "component_id": "sleeveless-travel-tunic-dwarf-male-01",
+      "family_id": "sleeveless-travel-tunic",
+      "fit": "dwarf-male-01",
+      "slot": "torso",
+      "manifest": "dwarf-male-01/sleeveless-travel-tunic/cleanup_manifest.json",
+      "manifest_sha256": "4f7b5c18509f537f9f31fc0e30611bf1e2678a5213cd820afc35541d163155c2"
+    },
+    {
+      "component_id": "sleeveless-travel-tunic-human-muscular-male-01",
+      "family_id": "sleeveless-travel-tunic",
+      "fit": "human-muscular-male-01",
+      "slot": "torso",
+      "manifest": "human-muscular-male-01/sleeveless-travel-tunic/cleanup_manifest.json",
+      "manifest_sha256": "d075c6f22204ff7b5d81805ecba6d9abaaa8e8063712804e3e4ec22a31d94dd6"
+    },
+    {
+      "component_id": "cap-sleeve-field-shirt-elf-01",
+      "family_id": "cap-sleeve-field-shirt",
+      "fit": "elf-01",
+      "slot": "torso",
+      "manifest": "elf-01/cap-sleeve-field-shirt/cleanup_manifest.json",
+      "manifest_sha256": "884902986728e0f5fa33ca1d6824b4f7279ddffe49e2d91bfab5b43ef7995454"
+    },
+    {
+      "component_id": "cap-sleeve-field-shirt-tiefling-female-01",
+      "family_id": "cap-sleeve-field-shirt",
+      "fit": "tiefling-female-01",
+      "slot": "torso",
+      "manifest": "tiefling-female-01/cap-sleeve-field-shirt/cleanup_manifest.json",
+      "manifest_sha256": "b4b740d3e62e4238a66ff8bf4ada8135d2adb361bf38de8f95ef2dca2c98d4cc"
+    },
+    {
+      "component_id": "cap-sleeve-field-shirt-dwarf-male-01",
+      "family_id": "cap-sleeve-field-shirt",
+      "fit": "dwarf-male-01",
+      "slot": "torso",
+      "manifest": "dwarf-male-01/cap-sleeve-field-shirt/cleanup_manifest.json",
+      "manifest_sha256": "ba8bb15653c20772b26aea4388cc69cf6f41bcc43da43ba6606953d4dcff61a6"
+    },
+    {
+      "component_id": "cap-sleeve-field-shirt-human-muscular-male-01",
+      "family_id": "cap-sleeve-field-shirt",
+      "fit": "human-muscular-male-01",
+      "slot": "torso",
+      "manifest": "human-muscular-male-01/cap-sleeve-field-shirt/cleanup_manifest.json",
+      "manifest_sha256": "a2dbee0559d7bee83323baca8f90994fe2e64dd8e6b598b87fcdb64fb1fed6ef"
+    },
+    {
+      "component_id": "long-sleeve-linen-shirt-elf-01",
+      "family_id": "long-sleeve-linen-shirt",
+      "fit": "elf-01",
+      "slot": "torso",
+      "manifest": "elf-01/long-sleeve-linen-shirt/cleanup_manifest.json",
+      "manifest_sha256": "40b9ab41f75042afb7bc04ff4ceb82edc3601ef03e37ba38d5e0bcee8018265c"
+    },
+    {
+      "component_id": "long-sleeve-linen-shirt-tiefling-female-01",
+      "family_id": "long-sleeve-linen-shirt",
+      "fit": "tiefling-female-01",
+      "slot": "torso",
+      "manifest": "tiefling-female-01/long-sleeve-linen-shirt/cleanup_manifest.json",
+      "manifest_sha256": "daf74de3e0978603aef710f17e46e5f0836d77df466b2dd1014be5ccc87c6fb0"
+    },
+    {
+      "component_id": "long-sleeve-linen-shirt-dwarf-male-01",
+      "family_id": "long-sleeve-linen-shirt",
+      "fit": "dwarf-male-01",
+      "slot": "torso",
+      "manifest": "dwarf-male-01/long-sleeve-linen-shirt/cleanup_manifest.json",
+      "manifest_sha256": "5ad4444653ce6e09e5d15a244cb7192feb88b445fc9e87f653ad0a3cb37fdf04"
+    },
+    {
+      "component_id": "long-sleeve-linen-shirt-human-muscular-male-01",
+      "family_id": "long-sleeve-linen-shirt",
+      "fit": "human-muscular-male-01",
+      "slot": "torso",
+      "manifest": "human-muscular-male-01/long-sleeve-linen-shirt/cleanup_manifest.json",
+      "manifest_sha256": "a94641edae7262f8243b31df304a7d6ef479eb8acdf30d324247ec7575385bcb"
+    },
+    {
+      "component_id": "cropped-training-top-elf-01",
+      "family_id": "cropped-training-top",
+      "fit": "elf-01",
+      "slot": "torso",
+      "manifest": "elf-01/cropped-training-top/cleanup_manifest.json",
+      "manifest_sha256": "15571387a3076f22bf7598184f5304c41e629fe5130b0df9f5fc9dc2c07a35a1"
+    },
+    {
+      "component_id": "cropped-training-top-tiefling-female-01",
+      "family_id": "cropped-training-top",
+      "fit": "tiefling-female-01",
+      "slot": "torso",
+      "manifest": "tiefling-female-01/cropped-training-top/cleanup_manifest.json",
+      "manifest_sha256": "779739029a3f3e3a7e84e84f5543f38f2c65a56158e66b530281bfb428548e67"
+    },
+    {
+      "component_id": "cropped-training-top-dwarf-male-01",
+      "family_id": "cropped-training-top",
+      "fit": "dwarf-male-01",
+      "slot": "torso",
+      "manifest": "dwarf-male-01/cropped-training-top/cleanup_manifest.json",
+      "manifest_sha256": "7b7e6e69f05db3b3ecd28f579e04af72cba9e9e196310a17083fdb7256bf5ff1"
+    },
+    {
+      "component_id": "cropped-training-top-human-muscular-male-01",
+      "family_id": "cropped-training-top",
+      "fit": "human-muscular-male-01",
+      "slot": "torso",
+      "manifest": "human-muscular-male-01/cropped-training-top/cleanup_manifest.json",
+      "manifest_sha256": "6040f29dd71ac210ae04f038413d1646b99ddd521f5f8696221b388d2dd6a1a2"
+    },
+    {
+      "component_id": "padded-gambeson-elf-01",
+      "family_id": "padded-gambeson",
+      "fit": "elf-01",
+      "slot": "outerwear",
+      "manifest": "elf-01/padded-gambeson/cleanup_manifest.json",
+      "manifest_sha256": "1f7123991a53725aea172393397a484ba5aa5a564d45806e535ce159356e9ce8"
+    },
+    {
+      "component_id": "padded-gambeson-tiefling-female-01",
+      "family_id": "padded-gambeson",
+      "fit": "tiefling-female-01",
+      "slot": "outerwear",
+      "manifest": "tiefling-female-01/padded-gambeson/cleanup_manifest.json",
+      "manifest_sha256": "3f979b0c0730d9d4f1c4968864f920cab0c0e269dc8753333a0ae3a8f9363817"
+    },
+    {
+      "component_id": "padded-gambeson-dwarf-male-01",
+      "family_id": "padded-gambeson",
+      "fit": "dwarf-male-01",
+      "slot": "outerwear",
+      "manifest": "dwarf-male-01/padded-gambeson/cleanup_manifest.json",
+      "manifest_sha256": "21d6b828662020dc843747fa2a7b63f2172b1cb4798cabdd3b06af0c7303cda9"
+    },
+    {
+      "component_id": "padded-gambeson-human-muscular-male-01",
+      "family_id": "padded-gambeson",
+      "fit": "human-muscular-male-01",
+      "slot": "outerwear",
+      "manifest": "human-muscular-male-01/padded-gambeson/cleanup_manifest.json",
+      "manifest_sha256": "ca4c8e3000d3febc53629c6a406a5f066d343eeaa2da30bd673c80645815eb96"
+    },
+    {
+      "component_id": "leather-jerkin-elf-01",
+      "family_id": "leather-jerkin",
+      "fit": "elf-01",
+      "slot": "outerwear",
+      "manifest": "elf-01/leather-jerkin/cleanup_manifest.json",
+      "manifest_sha256": "92c996cac6236752470d7423f09b9ce5c17923c8292a2d9c6c6ffb16d150c260"
+    },
+    {
+      "component_id": "leather-jerkin-tiefling-female-01",
+      "family_id": "leather-jerkin",
+      "fit": "tiefling-female-01",
+      "slot": "outerwear",
+      "manifest": "tiefling-female-01/leather-jerkin/cleanup_manifest.json",
+      "manifest_sha256": "b597b055ee4c8048c7aa6e2d215153aab6d7bc89353cad0c8bd814535c58f5bc"
+    },
+    {
+      "component_id": "leather-jerkin-dwarf-male-01",
+      "family_id": "leather-jerkin",
+      "fit": "dwarf-male-01",
+      "slot": "outerwear",
+      "manifest": "dwarf-male-01/leather-jerkin/cleanup_manifest.json",
+      "manifest_sha256": "134d63e7fa0910629c0688c908c40839e2bb03655df5bf1930b0b0f29b7afd3f"
+    },
+    {
+      "component_id": "leather-jerkin-human-muscular-male-01",
+      "family_id": "leather-jerkin",
+      "fit": "human-muscular-male-01",
+      "slot": "outerwear",
+      "manifest": "human-muscular-male-01/leather-jerkin/cleanup_manifest.json",
+      "manifest_sha256": "c536f2e235cad2eb814248872716b430b92716c765193b2a43829a9427d9c141"
+    },
+    {
+      "component_id": "open-front-work-vest-elf-01",
+      "family_id": "open-front-work-vest",
+      "fit": "elf-01",
+      "slot": "outerwear",
+      "manifest": "elf-01/open-front-work-vest/cleanup_manifest.json",
+      "manifest_sha256": "b0168a0ba8e2c68c52f952b4607ed41c17e61e64b40014893bc0e8bc6ff0d20e"
+    },
+    {
+      "component_id": "open-front-work-vest-tiefling-female-01",
+      "family_id": "open-front-work-vest",
+      "fit": "tiefling-female-01",
+      "slot": "outerwear",
+      "manifest": "tiefling-female-01/open-front-work-vest/cleanup_manifest.json",
+      "manifest_sha256": "933090683f8e981839a451c7278044a5fa959d4446e28bf1077f956c76f37432"
+    },
+    {
+      "component_id": "open-front-work-vest-dwarf-male-01",
+      "family_id": "open-front-work-vest",
+      "fit": "dwarf-male-01",
+      "slot": "outerwear",
+      "manifest": "dwarf-male-01/open-front-work-vest/cleanup_manifest.json",
+      "manifest_sha256": "0b69f49a17aca9a9b48d8b2205661c5e1a7b04bf8b436960256caaa186d10ff0"
+    },
+    {
+      "component_id": "open-front-work-vest-human-muscular-male-01",
+      "family_id": "open-front-work-vest",
+      "fit": "human-muscular-male-01",
+      "slot": "outerwear",
+      "manifest": "human-muscular-male-01/open-front-work-vest/cleanup_manifest.json",
+      "manifest_sha256": "ff73e196cf6d2ae28a25cc0d2bcb6023d1c017976be94f67985b0489062a5c51"
+    },
+    {
+      "component_id": "hooded-surcoat-elf-01",
+      "family_id": "hooded-surcoat",
+      "fit": "elf-01",
+      "slot": "outerwear",
+      "manifest": "elf-01/hooded-surcoat/cleanup_manifest.json",
+      "manifest_sha256": "c636a91c95fea0d504e0edacd8f0dae4c96dd60f6390742b38eae35fbdc92c0a"
+    },
+    {
+      "component_id": "hooded-surcoat-tiefling-female-01",
+      "family_id": "hooded-surcoat",
+      "fit": "tiefling-female-01",
+      "slot": "outerwear",
+      "manifest": "tiefling-female-01/hooded-surcoat/cleanup_manifest.json",
+      "manifest_sha256": "f052887e2cefa4f163c2ffcd33bfc43d6bbc1397d1fc6d35c0f96d2bb5f018b6"
+    },
+    {
+      "component_id": "hooded-surcoat-dwarf-male-01",
+      "family_id": "hooded-surcoat",
+      "fit": "dwarf-male-01",
+      "slot": "outerwear",
+      "manifest": "dwarf-male-01/hooded-surcoat/cleanup_manifest.json",
+      "manifest_sha256": "0b8b60b2b26a828237946f3055c48e95f321589ae48ea3039d09f2c56c62f484"
+    },
+    {
+      "component_id": "hooded-surcoat-human-muscular-male-01",
+      "family_id": "hooded-surcoat",
+      "fit": "human-muscular-male-01",
+      "slot": "outerwear",
+      "manifest": "human-muscular-male-01/hooded-surcoat/cleanup_manifest.json",
+      "manifest_sha256": "404f1521de4830544cc90e76d02fd5dcc4dd8172caad60bb178d4c43225f21d6"
+    },
+    {
+      "component_id": "travel-shorts-elf-01",
+      "family_id": "travel-shorts",
+      "fit": "elf-01",
+      "slot": "legwear",
+      "manifest": "elf-01/travel-shorts/cleanup_manifest.json",
+      "manifest_sha256": "23b556d279127ce037427d74ae92603ede89b4c138edb725cffe84ab7b5950ff"
+    },
+    {
+      "component_id": "travel-shorts-tiefling-female-01",
+      "family_id": "travel-shorts",
+      "fit": "tiefling-female-01",
+      "slot": "legwear",
+      "manifest": "tiefling-female-01/travel-shorts/cleanup_manifest.json",
+      "manifest_sha256": "ec8d3dd6fd85d118fbedcc9422708e29c37421a401bcfe27d1472e1d15cf1239"
+    },
+    {
+      "component_id": "travel-shorts-dwarf-male-01",
+      "family_id": "travel-shorts",
+      "fit": "dwarf-male-01",
+      "slot": "legwear",
+      "manifest": "dwarf-male-01/travel-shorts/cleanup_manifest.json",
+      "manifest_sha256": "36ddbcc12988839c824a67039dfc562e072b2b38ca36cd31f8b15f702443539b"
+    },
+    {
+      "component_id": "travel-shorts-human-muscular-male-01",
+      "family_id": "travel-shorts",
+      "fit": "human-muscular-male-01",
+      "slot": "legwear",
+      "manifest": "human-muscular-male-01/travel-shorts/cleanup_manifest.json",
+      "manifest_sha256": "8791b462c8e79576304279d06a0fe84c2c676b2d3b8c118716fb0fe91bd4c89e"
+    },
+    {
+      "component_id": "knee-breeches-elf-01",
+      "family_id": "knee-breeches",
+      "fit": "elf-01",
+      "slot": "legwear",
+      "manifest": "elf-01/knee-breeches/cleanup_manifest.json",
+      "manifest_sha256": "e37e4d9d664ef2a6f818b2b0bb42f1b27728d61ca9994f8850855680efeca425"
+    },
+    {
+      "component_id": "knee-breeches-tiefling-female-01",
+      "family_id": "knee-breeches",
+      "fit": "tiefling-female-01",
+      "slot": "legwear",
+      "manifest": "tiefling-female-01/knee-breeches/cleanup_manifest.json",
+      "manifest_sha256": "ee3d3e4e6cebd6ce15867fbbb27ec858906efabaa6e1a1da70ba6dfa811a8fa2"
+    },
+    {
+      "component_id": "knee-breeches-dwarf-male-01",
+      "family_id": "knee-breeches",
+      "fit": "dwarf-male-01",
+      "slot": "legwear",
+      "manifest": "dwarf-male-01/knee-breeches/cleanup_manifest.json",
+      "manifest_sha256": "79331005d8de170982d87f5372ce60e11f2cd9dfe6d8a4485e99df8bd2c275e7"
+    },
+    {
+      "component_id": "knee-breeches-human-muscular-male-01",
+      "family_id": "knee-breeches",
+      "fit": "human-muscular-male-01",
+      "slot": "legwear",
+      "manifest": "human-muscular-male-01/knee-breeches/cleanup_manifest.json",
+      "manifest_sha256": "57c47a1fa740710d35d5a70ae2473bee30346ecc07a36a82d4a3253d1dc640a4"
+    },
+    {
+      "component_id": "fitted-trousers-elf-01",
+      "family_id": "fitted-trousers",
+      "fit": "elf-01",
+      "slot": "legwear",
+      "manifest": "elf-01/fitted-trousers/cleanup_manifest.json",
+      "manifest_sha256": "aecd3cc8152c07b836557c999015b907222f9ef3942eecbf636d6071b18ab5d7"
+    },
+    {
+      "component_id": "fitted-trousers-tiefling-female-01",
+      "family_id": "fitted-trousers",
+      "fit": "tiefling-female-01",
+      "slot": "legwear",
+      "manifest": "tiefling-female-01/fitted-trousers/cleanup_manifest.json",
+      "manifest_sha256": "7dddd63a0e746340b683dd68edbb0913ffcdd87841f9a7002c20f6eac2b6f42c"
+    },
+    {
+      "component_id": "fitted-trousers-dwarf-male-01",
+      "family_id": "fitted-trousers",
+      "fit": "dwarf-male-01",
+      "slot": "legwear",
+      "manifest": "dwarf-male-01/fitted-trousers/cleanup_manifest.json",
+      "manifest_sha256": "5e7e10bcc75b6b1a2bbf168f21211aa588e063f928e6ab820948fec9ab00d8d6"
+    },
+    {
+      "component_id": "fitted-trousers-human-muscular-male-01",
+      "family_id": "fitted-trousers",
+      "fit": "human-muscular-male-01",
+      "slot": "legwear",
+      "manifest": "human-muscular-male-01/fitted-trousers/cleanup_manifest.json",
+      "manifest_sha256": "795e63a6c7403cbcc828b39f5f4686519e80049033788e6c651d8d6c024ecae6"
+    },
+    {
+      "component_id": "high-waist-pants-elf-01",
+      "family_id": "high-waist-pants",
+      "fit": "elf-01",
+      "slot": "legwear",
+      "manifest": "elf-01/high-waist-pants/cleanup_manifest.json",
+      "manifest_sha256": "16431c9b73d2f5c11df9eea95499556d4bab560c7ef5e4ad51af2bb668adb14b"
+    },
+    {
+      "component_id": "high-waist-pants-tiefling-female-01",
+      "family_id": "high-waist-pants",
+      "fit": "tiefling-female-01",
+      "slot": "legwear",
+      "manifest": "tiefling-female-01/high-waist-pants/cleanup_manifest.json",
+      "manifest_sha256": "44c4a72c955f5f9815130eff0c2372073041da6b24e5c61fa8ec28b229bd59a8"
+    },
+    {
+      "component_id": "high-waist-pants-dwarf-male-01",
+      "family_id": "high-waist-pants",
+      "fit": "dwarf-male-01",
+      "slot": "legwear",
+      "manifest": "dwarf-male-01/high-waist-pants/cleanup_manifest.json",
+      "manifest_sha256": "1931e9daa67b37192e5f8342e80b28925dcd46f5871ddb9f88dca7de8ecc5ee5"
+    },
+    {
+      "component_id": "high-waist-pants-human-muscular-male-01",
+      "family_id": "high-waist-pants",
+      "fit": "human-muscular-male-01",
+      "slot": "legwear",
+      "manifest": "human-muscular-male-01/high-waist-pants/cleanup_manifest.json",
+      "manifest_sha256": "af427c0efc85587871de1c0561152c8b9b32e5f1d33418362ee0de8bd8d61081"
+    },
+    {
+      "component_id": "low-waist-pants-elf-01",
+      "family_id": "low-waist-pants",
+      "fit": "elf-01",
+      "slot": "legwear",
+      "manifest": "elf-01/low-waist-pants/cleanup_manifest.json",
+      "manifest_sha256": "d193d13d36a0e73a7c6171cbea1bf9aa2f1955bb538cf19dde7d6049c757940a"
+    },
+    {
+      "component_id": "low-waist-pants-tiefling-female-01",
+      "family_id": "low-waist-pants",
+      "fit": "tiefling-female-01",
+      "slot": "legwear",
+      "manifest": "tiefling-female-01/low-waist-pants/cleanup_manifest.json",
+      "manifest_sha256": "92562ec8d52379980d8ebe3936775544011c42d103d2b1880e64a75fa68dc95a"
+    },
+    {
+      "component_id": "low-waist-pants-dwarf-male-01",
+      "family_id": "low-waist-pants",
+      "fit": "dwarf-male-01",
+      "slot": "legwear",
+      "manifest": "dwarf-male-01/low-waist-pants/cleanup_manifest.json",
+      "manifest_sha256": "f6d78b5482379fe1fa1e778ae9f07d97d6376c9da1a9e678e27ca3d99dd6f0c4"
+    },
+    {
+      "component_id": "low-waist-pants-human-muscular-male-01",
+      "family_id": "low-waist-pants",
+      "fit": "human-muscular-male-01",
+      "slot": "legwear",
+      "manifest": "human-muscular-male-01/low-waist-pants/cleanup_manifest.json",
+      "manifest_sha256": "4182ec25cd1cf8c98985b8438ecb43bba0659bd59992dda2532df74c2d0bf1a2"
+    },
+    {
+      "component_id": "reinforced-leggings-elf-01",
+      "family_id": "reinforced-leggings",
+      "fit": "elf-01",
+      "slot": "legwear",
+      "manifest": "elf-01/reinforced-leggings/cleanup_manifest.json",
+      "manifest_sha256": "c78f13dc8dfc0d7b2e62afaaa2704780c866ec6debf0e314743b58bf347a2066"
+    },
+    {
+      "component_id": "reinforced-leggings-tiefling-female-01",
+      "family_id": "reinforced-leggings",
+      "fit": "tiefling-female-01",
+      "slot": "legwear",
+      "manifest": "tiefling-female-01/reinforced-leggings/cleanup_manifest.json",
+      "manifest_sha256": "224ebb90e0fd77f4674a479e66b0f39d1ef77cb3dbfef8a39adc3f10c4263465"
+    },
+    {
+      "component_id": "reinforced-leggings-dwarf-male-01",
+      "family_id": "reinforced-leggings",
+      "fit": "dwarf-male-01",
+      "slot": "legwear",
+      "manifest": "dwarf-male-01/reinforced-leggings/cleanup_manifest.json",
+      "manifest_sha256": "3259e5bb78e913974c53b449a584fe01b7f43f1b9c758975017182ad6ed12888"
+    },
+    {
+      "component_id": "reinforced-leggings-human-muscular-male-01",
+      "family_id": "reinforced-leggings",
+      "fit": "human-muscular-male-01",
+      "slot": "legwear",
+      "manifest": "human-muscular-male-01/reinforced-leggings/cleanup_manifest.json",
+      "manifest_sha256": "b04f65a35d9efe49224ceb35e7e466e7c55203dac187914c39040e30127089b8"
+    },
+    {
+      "component_id": "fingerless-gloves-elf-01",
+      "family_id": "fingerless-gloves",
+      "fit": "elf-01",
+      "slot": "hands",
+      "manifest": "elf-01/fingerless-gloves/cleanup_manifest.json",
+      "manifest_sha256": "bfa9569b2c9bc204f833dc1a90de8256de2a2d3c1656a7aab07f87a3ec1ba98b"
+    },
+    {
+      "component_id": "fingerless-gloves-tiefling-female-01",
+      "family_id": "fingerless-gloves",
+      "fit": "tiefling-female-01",
+      "slot": "hands",
+      "manifest": "tiefling-female-01/fingerless-gloves/cleanup_manifest.json",
+      "manifest_sha256": "36aba515e0c3bc8867658f72101f1eb0a77763c5ba9fad42c097f722b582a477"
+    },
+    {
+      "component_id": "fingerless-gloves-dwarf-male-01",
+      "family_id": "fingerless-gloves",
+      "fit": "dwarf-male-01",
+      "slot": "hands",
+      "manifest": "dwarf-male-01/fingerless-gloves/cleanup_manifest.json",
+      "manifest_sha256": "73e3849b61ee6348019aae24470dd9a638ed3616ead76d4f5684bd47220d1e6f"
+    },
+    {
+      "component_id": "fingerless-gloves-human-muscular-male-01",
+      "family_id": "fingerless-gloves",
+      "fit": "human-muscular-male-01",
+      "slot": "hands",
+      "manifest": "human-muscular-male-01/fingerless-gloves/cleanup_manifest.json",
+      "manifest_sha256": "b4421272da73cb48fdf5f73f5ca20621c81a0b4e0c50ab5e2b58c5fd9247b69c"
+    },
+    {
+      "component_id": "leather-gauntlets-elf-01",
+      "family_id": "leather-gauntlets",
+      "fit": "elf-01",
+      "slot": "hands",
+      "manifest": "elf-01/leather-gauntlets/cleanup_manifest.json",
+      "manifest_sha256": "af7f052a484da8bcac33576e9b19314f36dd68f8d56a0d14b5430d6b4642ff91"
+    },
+    {
+      "component_id": "leather-gauntlets-tiefling-female-01",
+      "family_id": "leather-gauntlets",
+      "fit": "tiefling-female-01",
+      "slot": "hands",
+      "manifest": "tiefling-female-01/leather-gauntlets/cleanup_manifest.json",
+      "manifest_sha256": "bb661da5616bc900bc39ea85c3ebfffaf96b907f2e7e49471248654181d95e83"
+    },
+    {
+      "component_id": "leather-gauntlets-dwarf-male-01",
+      "family_id": "leather-gauntlets",
+      "fit": "dwarf-male-01",
+      "slot": "hands",
+      "manifest": "dwarf-male-01/leather-gauntlets/cleanup_manifest.json",
+      "manifest_sha256": "9c5e453fcb0fb9f06bd775ff30bbef9f0435f64839b5f991c1784632f7f68847"
+    },
+    {
+      "component_id": "leather-gauntlets-human-muscular-male-01",
+      "family_id": "leather-gauntlets",
+      "fit": "human-muscular-male-01",
+      "slot": "hands",
+      "manifest": "human-muscular-male-01/leather-gauntlets/cleanup_manifest.json",
+      "manifest_sha256": "9bc9010290cc333c6199f5b0ef59bc6954c50451e945942dfe8e0c0690daac6e"
+    },
+    {
+      "component_id": "wrist-bracers-elf-01",
+      "family_id": "wrist-bracers",
+      "fit": "elf-01",
+      "slot": "hands",
+      "manifest": "elf-01/wrist-bracers/cleanup_manifest.json",
+      "manifest_sha256": "9db21adf1e0e483b6984e91a51731a95bb791552bc38ac84bcd4523277bb0526"
+    },
+    {
+      "component_id": "wrist-bracers-tiefling-female-01",
+      "family_id": "wrist-bracers",
+      "fit": "tiefling-female-01",
+      "slot": "hands",
+      "manifest": "tiefling-female-01/wrist-bracers/cleanup_manifest.json",
+      "manifest_sha256": "907292e2a36a108ecf0ab8ac5d98b9dbd85089319172e29214d1f07cf3cf5815"
+    },
+    {
+      "component_id": "wrist-bracers-dwarf-male-01",
+      "family_id": "wrist-bracers",
+      "fit": "dwarf-male-01",
+      "slot": "hands",
+      "manifest": "dwarf-male-01/wrist-bracers/cleanup_manifest.json",
+      "manifest_sha256": "ac03bc0adc2207a4ded7c46ef2f383fad749ab77ae34e4a3fc1ba473777229b2"
+    },
+    {
+      "component_id": "wrist-bracers-human-muscular-male-01",
+      "family_id": "wrist-bracers",
+      "fit": "human-muscular-male-01",
+      "slot": "hands",
+      "manifest": "human-muscular-male-01/wrist-bracers/cleanup_manifest.json",
+      "manifest_sha256": "f38f256727ccd52441a2ccf8c4d1c496af99b64a6a8cdc5e8085fb2c0a9e9bad"
+    },
+    {
+      "component_id": "low-travel-shoes-elf-01",
+      "family_id": "low-travel-shoes",
+      "fit": "elf-01",
+      "slot": "feet",
+      "manifest": "elf-01/low-travel-shoes/cleanup_manifest.json",
+      "manifest_sha256": "35464fd92023b7cc49fad40a5f1e6a06e7defb36b567ad7b17b2abe07632b219"
+    },
+    {
+      "component_id": "low-travel-shoes-tiefling-female-01",
+      "family_id": "low-travel-shoes",
+      "fit": "tiefling-female-01",
+      "slot": "feet",
+      "manifest": "tiefling-female-01/low-travel-shoes/cleanup_manifest.json",
+      "manifest_sha256": "7aeb4d912b1f520b7fe53dbd4979af46d0c3c39507c1a09f21cacf9955a30613"
+    },
+    {
+      "component_id": "low-travel-shoes-dwarf-male-01",
+      "family_id": "low-travel-shoes",
+      "fit": "dwarf-male-01",
+      "slot": "feet",
+      "manifest": "dwarf-male-01/low-travel-shoes/cleanup_manifest.json",
+      "manifest_sha256": "b3c9b68d4df4203b4bf35119f5a75dd46245426d97802f7251e2bfa7f04ab661"
+    },
+    {
+      "component_id": "low-travel-shoes-human-muscular-male-01",
+      "family_id": "low-travel-shoes",
+      "fit": "human-muscular-male-01",
+      "slot": "feet",
+      "manifest": "human-muscular-male-01/low-travel-shoes/cleanup_manifest.json",
+      "manifest_sha256": "af3e6928899162f68d79f00863d89d10911614e7cb8800600df51f4717fd4438"
+    },
+    {
+      "component_id": "ankle-boots-elf-01",
+      "family_id": "ankle-boots",
+      "fit": "elf-01",
+      "slot": "feet",
+      "manifest": "elf-01/ankle-boots/cleanup_manifest.json",
+      "manifest_sha256": "45cc060179611da432c474c4c4d78b958ae3a20277e8c1bdb992a0035cf9a4f5"
+    },
+    {
+      "component_id": "ankle-boots-tiefling-female-01",
+      "family_id": "ankle-boots",
+      "fit": "tiefling-female-01",
+      "slot": "feet",
+      "manifest": "tiefling-female-01/ankle-boots/cleanup_manifest.json",
+      "manifest_sha256": "c9639e1da7b20514e4f14550080d898bf305f20f82c078297f11830cdddab4ca"
+    },
+    {
+      "component_id": "ankle-boots-dwarf-male-01",
+      "family_id": "ankle-boots",
+      "fit": "dwarf-male-01",
+      "slot": "feet",
+      "manifest": "dwarf-male-01/ankle-boots/cleanup_manifest.json",
+      "manifest_sha256": "8faea26d1e41093f321635af6fe16703876ce39160dbc44fead4086d7a6af816"
+    },
+    {
+      "component_id": "ankle-boots-human-muscular-male-01",
+      "family_id": "ankle-boots",
+      "fit": "human-muscular-male-01",
+      "slot": "feet",
+      "manifest": "human-muscular-male-01/ankle-boots/cleanup_manifest.json",
+      "manifest_sha256": "846a584ee5980ff5e4fd489515255a6eee8c1e4c42298cf9a124ebcaba9d2e62"
+    },
+    {
+      "component_id": "mid-calf-boots-elf-01",
+      "family_id": "mid-calf-boots",
+      "fit": "elf-01",
+      "slot": "feet",
+      "manifest": "elf-01/mid-calf-boots/cleanup_manifest.json",
+      "manifest_sha256": "3dc5f832c01b13d0a7a0ebf286b915d486177d8c5f8219505f5a3c5d609b4640"
+    },
+    {
+      "component_id": "mid-calf-boots-tiefling-female-01",
+      "family_id": "mid-calf-boots",
+      "fit": "tiefling-female-01",
+      "slot": "feet",
+      "manifest": "tiefling-female-01/mid-calf-boots/cleanup_manifest.json",
+      "manifest_sha256": "67724362c3a9c0721f7b326e4a85bb8a5214e0a8b0409ecdd03357894f0da495"
+    },
+    {
+      "component_id": "mid-calf-boots-dwarf-male-01",
+      "family_id": "mid-calf-boots",
+      "fit": "dwarf-male-01",
+      "slot": "feet",
+      "manifest": "dwarf-male-01/mid-calf-boots/cleanup_manifest.json",
+      "manifest_sha256": "c7346d09a48a3fd37c49acb605c62fd1b693f09dc4a9651b10891e41d6ce696d"
+    },
+    {
+      "component_id": "mid-calf-boots-human-muscular-male-01",
+      "family_id": "mid-calf-boots",
+      "fit": "human-muscular-male-01",
+      "slot": "feet",
+      "manifest": "human-muscular-male-01/mid-calf-boots/cleanup_manifest.json",
+      "manifest_sha256": "7f729a4e6ad6362d0a26c583126b34d4cfaa6c31cc6d68e00ca338e1d2284c23"
+    },
+    {
+      "component_id": "tall-riding-boots-elf-01",
+      "family_id": "tall-riding-boots",
+      "fit": "elf-01",
+      "slot": "feet",
+      "manifest": "elf-01/tall-riding-boots/cleanup_manifest.json",
+      "manifest_sha256": "0797e972fa5c354b4baf9cc5a8af682d474a875228cdd5cf71e556adcf7cac7b"
+    },
+    {
+      "component_id": "tall-riding-boots-tiefling-female-01",
+      "family_id": "tall-riding-boots",
+      "fit": "tiefling-female-01",
+      "slot": "feet",
+      "manifest": "tiefling-female-01/tall-riding-boots/cleanup_manifest.json",
+      "manifest_sha256": "7aab0ef950ca98ba91fa0e88fbe1711d63e2d3d29dfd2cf019d0eebac6019746"
+    },
+    {
+      "component_id": "tall-riding-boots-dwarf-male-01",
+      "family_id": "tall-riding-boots",
+      "fit": "dwarf-male-01",
+      "slot": "feet",
+      "manifest": "dwarf-male-01/tall-riding-boots/cleanup_manifest.json",
+      "manifest_sha256": "2bc422c9f1b4417f754512f3e2310f69e8863201e67fef132afe1d539a94c194"
+    },
+    {
+      "component_id": "tall-riding-boots-human-muscular-male-01",
+      "family_id": "tall-riding-boots",
+      "fit": "human-muscular-male-01",
+      "slot": "feet",
+      "manifest": "human-muscular-male-01/tall-riding-boots/cleanup_manifest.json",
+      "manifest_sha256": "d62f25b979d4fef1c41940d1b9a8963aedeaa264a84cf1529aee60698b95b893"
+    },
+    {
+      "component_id": "cloth-headband-elf-01",
+      "family_id": "cloth-headband",
+      "fit": "elf-01",
+      "slot": "headwear",
+      "manifest": "elf-01/cloth-headband/cleanup_manifest.json",
+      "manifest_sha256": "9984eff820a7c444efefa45d13e2b20cb3678d90a93032e0faebf29ee45cb618"
+    },
+    {
+      "component_id": "cloth-headband-tiefling-female-01",
+      "family_id": "cloth-headband",
+      "fit": "tiefling-female-01",
+      "slot": "headwear",
+      "manifest": "tiefling-female-01/cloth-headband/cleanup_manifest.json",
+      "manifest_sha256": "5285d6debb5de25e971b948145d3329cacc596636936e17494c15a8e80cc91c2"
+    },
+    {
+      "component_id": "cloth-headband-dwarf-male-01",
+      "family_id": "cloth-headband",
+      "fit": "dwarf-male-01",
+      "slot": "headwear",
+      "manifest": "dwarf-male-01/cloth-headband/cleanup_manifest.json",
+      "manifest_sha256": "34813e9ea85908ceaa62f84b6a46b0cfecaebc427eb61de62b2183311ba8864a"
+    },
+    {
+      "component_id": "cloth-headband-human-muscular-male-01",
+      "family_id": "cloth-headband",
+      "fit": "human-muscular-male-01",
+      "slot": "headwear",
+      "manifest": "human-muscular-male-01/cloth-headband/cleanup_manifest.json",
+      "manifest_sha256": "218471e5448161a7b336f2e49bcc4b3685f8bf3478e38a87606b3f035a3fd508"
+    },
+    {
+      "component_id": "soft-travel-cap-elf-01",
+      "family_id": "soft-travel-cap",
+      "fit": "elf-01",
+      "slot": "headwear",
+      "manifest": "elf-01/soft-travel-cap/cleanup_manifest.json",
+      "manifest_sha256": "16211d01165cacae9f97ab26dcc5fda8acaa3fd2dc202661ed1b251c26b6a9ba"
+    },
+    {
+      "component_id": "soft-travel-cap-tiefling-female-01",
+      "family_id": "soft-travel-cap",
+      "fit": "tiefling-female-01",
+      "slot": "headwear",
+      "manifest": "tiefling-female-01/soft-travel-cap/cleanup_manifest.json",
+      "manifest_sha256": "2c03b2830b5f9bc1898617a9c7ed4c2e93c5c31ca6bcc52e222cc5c52becb8c6"
+    },
+    {
+      "component_id": "soft-travel-cap-dwarf-male-01",
+      "family_id": "soft-travel-cap",
+      "fit": "dwarf-male-01",
+      "slot": "headwear",
+      "manifest": "dwarf-male-01/soft-travel-cap/cleanup_manifest.json",
+      "manifest_sha256": "6a298d896ff7a2a1a937435d934fe07a6496748d575ed7b9d904a14a51c69e1d"
+    },
+    {
+      "component_id": "soft-travel-cap-human-muscular-male-01",
+      "family_id": "soft-travel-cap",
+      "fit": "human-muscular-male-01",
+      "slot": "headwear",
+      "manifest": "human-muscular-male-01/soft-travel-cap/cleanup_manifest.json",
+      "manifest_sha256": "02fcf0670b2ecf80c054d8eba4ed639878d9c8ee7dcaacbd6418dbdf4de52531"
+    },
+    {
+      "component_id": "padded-coif-elf-01",
+      "family_id": "padded-coif",
+      "fit": "elf-01",
+      "slot": "headwear",
+      "manifest": "elf-01/padded-coif/cleanup_manifest.json",
+      "manifest_sha256": "cf02d26ca1f370120723b131c1dcd1e12e39df616aa3a3a8a7b85f1708731246"
+    },
+    {
+      "component_id": "padded-coif-tiefling-female-01",
+      "family_id": "padded-coif",
+      "fit": "tiefling-female-01",
+      "slot": "headwear",
+      "manifest": "tiefling-female-01/padded-coif/cleanup_manifest.json",
+      "manifest_sha256": "8afc3031885193c7f9a9c5126ed0a704f1aa2b3be92f467f7666c1f4a5a3adb7"
+    },
+    {
+      "component_id": "padded-coif-dwarf-male-01",
+      "family_id": "padded-coif",
+      "fit": "dwarf-male-01",
+      "slot": "headwear",
+      "manifest": "dwarf-male-01/padded-coif/cleanup_manifest.json",
+      "manifest_sha256": "06360d1e17e36000eb868ac2827d112fe06a6dfa913ad0a33fd3ca83120aef7b"
+    },
+    {
+      "component_id": "padded-coif-human-muscular-male-01",
+      "family_id": "padded-coif",
+      "fit": "human-muscular-male-01",
+      "slot": "headwear",
+      "manifest": "human-muscular-male-01/padded-coif/cleanup_manifest.json",
+      "manifest_sha256": "c45a70ddf6608195b863d70db4215a6ded89c2cd9b9e94c1c06a958c0adc2e0b"
+    },
+    {
+      "component_id": "simple-guard-helm-elf-01",
+      "family_id": "simple-guard-helm",
+      "fit": "elf-01",
+      "slot": "headwear",
+      "manifest": "elf-01/simple-guard-helm/cleanup_manifest.json",
+      "manifest_sha256": "3c0684fd68f323c8382c1dadb04aa03f6c5dbfa95a1232f5c040e99f3ebf071f"
+    },
+    {
+      "component_id": "simple-guard-helm-tiefling-female-01",
+      "family_id": "simple-guard-helm",
+      "fit": "tiefling-female-01",
+      "slot": "headwear",
+      "manifest": "tiefling-female-01/simple-guard-helm/cleanup_manifest.json",
+      "manifest_sha256": "c2d60148159f7f0bd8658fecc230d23b11128ccb0f21da484d8e2c82615c5661"
+    },
+    {
+      "component_id": "simple-guard-helm-dwarf-male-01",
+      "family_id": "simple-guard-helm",
+      "fit": "dwarf-male-01",
+      "slot": "headwear",
+      "manifest": "dwarf-male-01/simple-guard-helm/cleanup_manifest.json",
+      "manifest_sha256": "45fea9dd1a0c21c9aa8430c2bf4c8514a80b82d4fba3d19bbc5f0600780de874"
+    },
+    {
+      "component_id": "simple-guard-helm-human-muscular-male-01",
+      "family_id": "simple-guard-helm",
+      "fit": "human-muscular-male-01",
+      "slot": "headwear",
+      "manifest": "human-muscular-male-01/simple-guard-helm/cleanup_manifest.json",
+      "manifest_sha256": "dbccaee53e1110026d25c3e6c3d5dac73d2816088b45ee37a90620f79689992b"
+    }
+  ]
+}

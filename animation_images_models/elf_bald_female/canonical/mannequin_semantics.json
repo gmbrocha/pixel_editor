@@ -5,7 +5,7 @@
   "source_blend": "elf_bald_female_complete.blend",
   "source_blend_sha256": "2c4ca192471aa543d052f777b33d061ffa59b13a538a3417a4660b58035fedb8",
   "canonical_blend": "elf_bald_female_mannequin.blend",
-  "canonical_blend_sha256": "950faf164c6db0e963b310b3f241dbbb8de49704b9af3cb494fde65dd1a675fd",
+  "canonical_blend_sha256": "ff5e3dc983765337b6a8737e46f7eef1bdad2ed22b7b06e105603d8452fc6557",
   "mesh": "PF_Elf_Bald_Female",
   "armature": "PF_Elf_Bald_Female_Rig",
   "face_count": 200054,
@@ -18,10 +18,13 @@
     "actions": {
       "PF_BindPose": "b6c1515b614b7474803ab72dfd214af512cd9ebb2ea009966fb3d214d8cdec93",
       "PF_Idle": "690976757a0f2d080a2cdd57eec11eccb48c2be55bc57d64e6632ae6d84a6b2b",
+      "PF_Idle_Approved": "0410afbc226368f060a354b36cccd89166bd14fd17b3d4afbd9a6867cf06fe05",
       "PF_Run": "b5b8d353d77651f234887f18629e3248291b276e434ada580e556ddfc07f506e",
+      "PF_Run_Approved": "8efdfb0637fe5b0e904090a7aa79ede172061669f00f5a00c52fa308443e4d7d",
       "PF_Run_ForwardLean": "31320b54e87aa2dede55dbd12a6b58ea3ccf3e3f0a4a5c9193f1cf35afd219f6",
       "PF_Run_ForwardLean_HeadDown": "dc54607e4126ad5548ea8740f2c4eec315ce9fa2fc291752245f490648b88b04",
-      "PF_Walk": "f0d3c2031d0dd29c0e880d71112155938a7d0e4fa7a85607435ca772a72f6904"
+      "PF_Walk": "f0d3c2031d0dd29c0e880d71112155938a7d0e4fa7a85607435ca772a72f6904",
+      "PF_Walk_Approved": "5b96174e54721b664907a27b2d54aef33c002a909e9dfb0604701703424a2536"
     }
   },
   "regions": [

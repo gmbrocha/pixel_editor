@@ -60,6 +60,11 @@
   "provenance": {
     "kind": "deterministic_anatomical_region_overlay",
     "generator": "tools/build_semantic_character_forge.py",
+    "outline": {
+      "widthPixels": 1,
+      "color": "#171B18",
+      "placement": "outside"
+    },
     "sourceRegions": [
       "pelvis_front",
       "pelvis_back",
@@ -73,9 +78,9 @@
       "right_ankle"
     ],
     "animationSha256": {
-      "idle": "c0443075a82adaf4d42ef8a64b2015a1c9dad8c6655463d60687a5f6880e5c2e",
-      "walk": "833eae067bda384ced48573abf33ae9a95cb4b76295d965d9e918fceb17ab096",
-      "run": "7f8f2bafc7bcb2e534556315077e0b512795076e90e9d2351631173cac3da14e"
+      "idle": "13d664ac6d01a2f38bcec6d7e8ff02114eb22eeb9282cada2cc2af65743a28de",
+      "walk": "3ba4fba4667a4fad3cfc2c07d2ec7659573c66f7ffacb61cf4f30748540363fa",
+      "run": "7f7cef8ff1da27f65e233992f7ff82fc42e5bf7f98a80e10a62c74f73c682278"
     }
   }
 }

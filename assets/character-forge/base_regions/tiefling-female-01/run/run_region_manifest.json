@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "kind": "weight_derived_character_region_sheet",
+  "sequence": "run",
+  "base_sheet": "assets/character-forge/bases/tiefling-female-01/run.png",
+  "base_sheet_sha256": "5983e6920659a00d881832d513456382b1a3cbe845a2c9bc43d836551d5a6190",
+  "paired_manifest": "animation_images_models/tiefling_bald_female/working/component_semantics/run_source/paired_sprite_render_manifest.json",
+  "paired_manifest_sha256": "ae89a757595e7e93e50cb33732bf6af7ce9703b0a8aa2dd81cdec31498936fbd",
+  "source_blend": "animation_images_models/tiefling_bald_female/canonical/tiefling_bald_female_approved_motions.blend",
+  "source_blend_sha256": "c79a73f1ddd8b994ef5bd154ad75be12c391e2f6fda4d198f36e60717eccb1b6",
+  "source_frames": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "direction_order": [
+    "front",
+    "back",
+    "right",
+    "left"
+  ],
+  "sheet_dimensions": [
+    1024,
+    512
+  ],
+  "region_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32
+  ],
+  "rescued_regions": {
+    "front/frame_00": [
+      3,
+      8,
+      10,
+      12,
+      29,
+      31
+    ],
+    "front/frame_01": [
+      10,
+      12
+    ],
+    "front/frame_02": [
+      3,
+      10,
+      12,
+      32
+    ],
+    "front/frame_03": [
+      8,
+      10,
+      12
+    ],
+    "front/frame_04": [
+      8,
+      10,
+      12,
+      28,
+      32
+    ],
+    "front/frame_05": [
+      3,
+      8,
+      10,
+      12,
+      20,
+      27,
+      29
+    ],
+    "front/frame_06": [
+      3,
+      8,
+      12,
+      27,
+      29,
+      31
+    ],
+    "front/frame_07": [
+      8,
+      10,
+      12,
+      29,
+      31
+    ],
+    "back/frame_00": [
+      1,
+      9,
+      11
+    ],
+    "back/frame_01": [
+      1,
+      7,
+      9,
+      11
+    ],
+    "back/frame_02": [
+      1,
+      7,
+      9,
+      11
+    ],
+    "back/frame_03": [
+      1,
+      7,
+      9,
+      21
+    ],
+    "back/frame_04": [
+      1,
+      7,
+      9
+    ],
+    "back/frame_05": [
+      1,
+      7,
+      9,
+      11
+    ],
+    "back/frame_06": [
+      1,
+      7,
+      9,
+      11,
+      29
+    ],
+    "back/frame_07": [
+      1,
+      7,
+      9,
+      11,
+      29
+    ],
+    "right/frame_00": [
+      4
+    ],
+    "right/frame_01": [
+      4
+    ],
+    "right/frame_02": [
+      4
+    ],
+    "right/frame_03": [
+      4
+    ],
+    "right/frame_04": [
+      17
+    ],
+    "right/frame_05": [
+      13,
+      17
+    ],
+    "right/frame_06": [
+      4,
+      15,
+      17
+    ],
+    "right/frame_07": [
+      4
+    ],
+    "left/frame_00": [
+      14
+    ],
+    "left/frame_02": [
+      14
+    ],
+    "left/frame_07": [
+      18
+    ]
+  },
+  "semantic_render_sha256": {
+    "front/frame_00": "c0dd108073bf9e5ece1535a10b3865349cf6193b77ab72d1e9c5716782254df8",
+    "front/frame_01": "5f424790340456d47e5c126144ab9513fc91a6db142f08a826c292143063993b",
+    "front/frame_02": "b754ab509c6fdcb86ba2b7bb4e072386d1a8dd6df67760546167af82e6f9d099",
+    "front/frame_03": "bf651d9b8b88b04d57028c965820673dfcd2a8d647cd0d30a35ff66faf4d2566",
+    "front/frame_04": "82648a638bbc1e8aa2ecd60f524d1e7098a4b648a11885e676c9a55e3994ab44",
+    "front/frame_05": "38e83766994bc3021d72998e5eea14f504a365416d4f3aed6cc804b8eb801f1a",
+    "front/frame_06": "cd7f7af82ae6e43eb41197c87eb9cf65eaa72b068bc0e5942ef5bcbb5bce65bf",
+    "front/frame_07": "773de4cce82c3c72de1b3c7a07a689d1182e70b5ea661aa970868e4cf1e36e6b",
+    "back/frame_00": "ed761b50110f519ff4ad496f813f5437e8ba653de9776bc940b2374a7338fa69",
+    "back/frame_01": "ceda63a8f0efb65c3225e93f30eede50392f1b929610b65003ea3c2ced3af7b3",
+    "back/frame_02": "225a325d3c4da8e0319672345abd67fc0d605182b2770d69c2aa08e0e2202c5c",
+    "back/frame_03": "ec7cef3e610759788401e03f895dc1c98c403dfa7ceceefa38f04963117ea96f",
+    "back/frame_04": "6ed07a4d0bcc60e393d96cc74ee1642107fa3f28207df793d03d6baf951e587f",
+    "back/frame_05": "ebf25406efd34c5b7d51e6b293993c92591359ae8f4807c4d6ae0aee951c5fce",
+    "back/frame_06": "2c90c2ef89ce782b4fe1aac7ef8904a0d340fd603191bd57b59e8ea6a714a114",
+    "back/frame_07": "49bc698dd5d63cecd0ad078d3e908953b45e67875738417c9c8886f452eb4caf",
+    "right/frame_00": "5e963878defaf47d2875a75b7ca9f954d339f41d7472e3080725e0496f28d86d",
+    "right/frame_01": "133bfc572ca2348dde8a62dac12343e904ae64ca1da47d2202576a913e42b5a3",
+    "right/frame_02": "2ee152b76913a24368ab53377464b03762f01992aaf83bb156dff3b1bdf0197b",
+    "right/frame_03": "3c8eee70e7a0697d974c832035972cdc4aac32ef248334a2dcb0c6d28aa04faa",
+    "right/frame_04": "64bdd5c402685801e09448eaa2b45d41dd16a70f05a7776fb327dfc13dbe7a2d",
+    "right/frame_05": "9e847cfa23797d97968f269baca0a2b864b3b0cc675a6a3f40ea63e948c0beb8",
+    "right/frame_06": "10705d1ab083933cfec9086c48bdbe40b123ad1db9080c315c4b82d00b865215",
+    "right/frame_07": "80fae49f822292ae57f56a759d6de2c9493c2428b52730d4f3fde272f8596a0f",
+    "left/frame_00": "4ba58f3576fa7119fa055f9d3c378b2204ae2824f2d8298cda82f00dd9a64d4d",
+    "left/frame_01": "925ffd5ada0135a2b8361a5c647c9ecf9cdf9f67492f96f6f0f77851707db577",
+    "left/frame_02": "243754fa6e2acbc17cf65345491d9ad1a0b1843ababd39a733740cde55848e2a",
+    "left/frame_03": "2c22507b54d3b2a4d87deb5e084fc0ace325a0e91c6fdd661f51b56b79f73832",
+    "left/frame_04": "cd0f32484630e907045c904673f172657ac54ecd027b00a94b40a851adf3a5e3",
+    "left/frame_05": "824a9554656a064a7de9e96e88e3a59b181d05bb9695bf3e0e29719b3b77a6b1",
+    "left/frame_06": "f7ee86b0c7a51a8311c085c4c858ad5287c222a1b4a9a1790377a0827a75759e",
+    "left/frame_07": "5cb4f9e074fa1de7be1c4b5246025a7101aeb3bad0bd26912a01336b3ace1bfd"
+  },
+  "outputs": {
+    "run_regions.png": "23b861394ae341f28a99e71d036c170632f6b9985fdd1fd5ac183be14bc205ab",
+    "run_regions_preview.png": "70ed55fe041d0d334773a5379a429719e9d01d797e87936b05970c80d7b82efc"
+  }
+}
