@@ -14,7 +14,7 @@
   "docs": {
     "currentState": "docs/CURRENT_STATE.md",
     "additional": [
-      "pixelforge-shade-ramp.md"
+      "docs/PIXELFORGE_SHADE_RAMP.md"
     ]
   },
   "urls": [

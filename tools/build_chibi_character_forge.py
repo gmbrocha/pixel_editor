@@ -1,4 +1,4 @@
-"""Build, promote, and verify the canonical JRPG Chibi Character Forge style."""
+"""Build, promote, and verify the canonical rest-retargeted JRPG Forge style."""
 
 from __future__ import annotations
 
@@ -72,7 +72,16 @@ def _blender() -> Path:
 
 
 def _working_root(character_id: str, camera_height: str) -> Path:
-    return MODEL_ROOT / character_id / "working" / "chibi" / camera_height
+    return MODEL_ROOT / character_id / "working" / "jrpg" / "views" / camera_height
+
+
+def _model_paths(character_id: str) -> dict[str, Path]:
+    root = MODEL_ROOT / character_id / "working" / "jrpg" / "style_model"
+    return {
+        "root": root,
+        "blend": root / f"{character_id}_jrpg.blend",
+        "manifest": root / "jrpg_model_manifest.json",
+    }
 
 
 def _working_paths(character_id: str, camera_height: str) -> dict[str, Path]:
@@ -80,7 +89,6 @@ def _working_paths(character_id: str, camera_height: str) -> dict[str, Path]:
     return {
         "root": root,
         "renders": root / "source_renders",
-        "normalized": root / "normalized_renders",
         "pixels": root / "pixel_package",
         "regions": root / "regions",
     }
@@ -90,7 +98,7 @@ def _safe_clear(path: Path, character_id: str) -> None:
     if not path.exists():
         return
     resolved = path.resolve()
-    allowed = (MODEL_ROOT / character_id / "working" / "chibi").resolve()
+    allowed = (MODEL_ROOT / character_id / "working" / "jrpg").resolve()
     if allowed not in resolved.parents:
         raise RuntimeError(f"Refusing to clear path outside {allowed}: {resolved}")
     shutil.rmtree(resolved)
@@ -98,8 +106,80 @@ def _safe_clear(path: Path, character_id: str) -> None:
 
 def _style() -> dict[str, object]:
     data = json.loads(STYLE.read_text(encoding="utf-8"))
-    if data.get("schema_version") != 1 or data.get("id") != STYLE_ID:
-        raise RuntimeError(f"Unsupported chibi style profile: {STYLE}")
+    if (
+        data.get("schema_version") != 2
+        or data.get("id") != STYLE_ID
+        or data.get("method") != "rest_pose_lbs_rebind"
+    ):
+        raise RuntimeError(f"Unsupported JRPG style profile: {STYLE}")
+    return data
+
+
+def _build_style_model(
+    character_id: str,
+    config: dict[str, object],
+    blender: Path,
+    *,
+    force: bool,
+) -> None:
+    paths = _model_paths(character_id)
+    if paths["manifest"].is_file() and not force:
+        raise FileExistsError(f"{character_id} JRPG style model exists; use --force")
+    if force:
+        _safe_clear(paths["root"], character_id)
+    source = MODEL_ROOT / str(config["blend"])
+    if not source.is_file():
+        raise FileNotFoundError(source)
+    source_sha256 = _sha256(source)
+    _run(
+        [
+            str(blender),
+            "--background",
+            str(source),
+            "--python-exit-code",
+            "1",
+            "--python",
+            str(ROOT / "tools" / "blender" / "build_jrpg_style_model.py"),
+            "--",
+            "--output",
+            str(paths["blend"]),
+            "--manifest",
+            str(paths["manifest"]),
+            "--style-config",
+            str(STYLE),
+            "--character-id",
+            character_id,
+        ]
+    )
+    if _sha256(source) != source_sha256:
+        raise RuntimeError(f"JRPG model build changed canonical source {source}")
+
+
+def _verify_style_model(
+    character_id: str, config: dict[str, object]
+) -> dict[str, object]:
+    paths = _model_paths(character_id)
+    if not paths["blend"].is_file() or not paths["manifest"].is_file():
+        raise FileNotFoundError(f"Missing {character_id} JRPG style model")
+    data = json.loads(paths["manifest"].read_text(encoding="utf-8"))
+    source = MODEL_ROOT / str(config["blend"])
+    expected = {
+        "kind": "jrpg_rest_retargeted_character_model",
+        "character_id": character_id,
+        "source_blend_sha256": _sha256(source),
+        "output_blend_sha256": _sha256(paths["blend"]),
+        "style_config_sha256": _sha256(STYLE),
+        "method": "rest_pose_lbs_rebind",
+    }
+    for key, value in expected.items():
+        if data.get(key) != value:
+            raise RuntimeError(f"{character_id} JRPG model manifest differs at {key}")
+    if data["runtime_source_rotation_sha256"] != data["runtime_jrpg_rotation_sha256"]:
+        raise RuntimeError(f"{character_id} JRPG runtime rotations differ")
+    if not 2.8 <= float(data["heads_tall"]) <= 4.6:
+        raise RuntimeError(
+            f"{character_id} JRPG proportion ratio is {data['heads_tall']:.2f} heads"
+        )
     return data
 
 
@@ -116,11 +196,12 @@ def _build_view(
     final_manifest = paths["pixels"] / "pixel_sprite_manifest.json"
     if final_manifest.exists() and not force:
         raise FileExistsError(
-            f"{character_id}/{camera_height} chibi output exists; use --force"
+            f"{character_id}/{camera_height} JRPG output exists; use --force"
         )
     if force:
         _safe_clear(paths["root"], character_id)
-    blend = MODEL_ROOT / str(config["blend"])
+    model_paths = _model_paths(character_id)
+    blend = model_paths["blend"]
     if not blend.is_file():
         raise FileNotFoundError(blend)
     framing = float(style["framing_scales"][character_id])
@@ -138,6 +219,8 @@ def _build_view(
             str(paths["renders"]),
             "--style-config",
             str(STYLE),
+            "--model-manifest",
+            str(model_paths["manifest"]),
             "--character-id",
             character_id,
             "--render-size",
@@ -151,22 +234,11 @@ def _build_view(
         ]
     )
     render_manifest = paths["renders"] / "sprite_render_manifest.json"
-    _run(
-        [
-            sys.executable,
-            str(ROOT / "tools" / "normalize_chibi_renders.py"),
-            "--manifest",
-            str(render_manifest),
-            "--output-dir",
-            str(paths["normalized"]),
-        ]
-    )
-    normalized_manifest = paths["normalized"] / "sprite_render_manifest.json"
     command = [
         sys.executable,
         str(ROOT / "tools" / "blender" / "pixelize_sprite_sheets.py"),
         "--manifest",
-        str(normalized_manifest),
+        str(render_manifest),
         "--output-dir",
         str(paths["pixels"]),
         "--cell-size",
@@ -189,7 +261,7 @@ def _build_view(
                 sys.executable,
                 str(ROOT / "tools" / "build_weight_region_sheet.py"),
                 "--manifest",
-                str(normalized_manifest),
+                str(render_manifest),
                 "--base-sheet",
                 str(paths["pixels"] / "sheets" / f"{sequence}_four_direction_128px.png"),
                 "--output-dir",
@@ -202,26 +274,15 @@ def _build_view(
 
 def _verify_view(character_id: str, camera_height: str, style: dict[str, object]) -> dict[str, object]:
     paths = _working_paths(character_id, camera_height)
-    normalized_manifest = paths["normalized"] / "sprite_render_manifest.json"
+    render_manifest = paths["renders"] / "sprite_render_manifest.json"
     pixel_manifest = paths["pixels"] / "pixel_sprite_manifest.json"
-    if not normalized_manifest.is_file() or not pixel_manifest.is_file():
-        raise FileNotFoundError(f"Missing {character_id}/{camera_height} chibi outputs")
-    _run(
-        [
-            sys.executable,
-            str(ROOT / "tools" / "normalize_chibi_renders.py"),
-            "--manifest",
-            str(paths["renders"] / "sprite_render_manifest.json"),
-            "--output-dir",
-            str(paths["normalized"]),
-            "--check",
-        ]
-    )
+    if not render_manifest.is_file() or not pixel_manifest.is_file():
+        raise FileNotFoundError(f"Missing {character_id}/{camera_height} JRPG outputs")
     pixel_command = [
         sys.executable,
         str(ROOT / "tools" / "blender" / "pixelize_sprite_sheets.py"),
         "--manifest",
-        str(normalized_manifest),
+        str(render_manifest),
         "--output-dir",
         str(paths["pixels"]),
         "--cell-size",
@@ -251,7 +312,7 @@ def _verify_view(character_id: str, camera_height: str, style: dict[str, object]
                 sys.executable,
                 str(ROOT / "tools" / "build_weight_region_sheet.py"),
                 "--manifest",
-                str(normalized_manifest),
+                str(render_manifest),
                 "--base-sheet",
                 str(sheet),
                 "--output-dir",
@@ -286,7 +347,7 @@ def _verify_view(character_id: str, camera_height: str, style: dict[str, object]
             "regions_sha256": _sha256(region_dir / f"{sequence}_regions.png"),
         }
     report["pixel_manifest_sha256"] = _sha256(pixel_manifest)
-    report["normalized_manifest_sha256"] = _sha256(normalized_manifest)
+    report["render_manifest_sha256"] = _sha256(render_manifest)
     return report
 
 
@@ -348,8 +409,8 @@ def _update_specs(records: dict[str, object]) -> None:
     styles = specs.setdefault("sprite_styles", {})
     styles.setdefault("standard", {"name": "Standard Pixel"})
     styles[STYLE_ID] = {
-        "name": "JRPG Chibi",
-        "description": "Compact limbs and torso with an enlarged head and crisp interior silhouette outline.",
+        "name": "JRPG",
+        "description": "Rest-retargeted JRPG anatomy with a larger head and genuinely shorter limbs and torso.",
     }
     for character_id, cameras in records.items():
         base_id = str(BASES[character_id]["base_id"])
@@ -368,7 +429,7 @@ def _verify_promoted(manifest: dict[str, object]) -> None:
         for camera in cameras.values():
             palette = ASSET_ROOT / camera["palette"]["file"]
             if not palette.is_file() or _sha256(palette) != camera["palette"]["sha256"]:
-                raise RuntimeError(f"Promoted chibi palette differs: {palette}")
+                raise RuntimeError(f"Promoted JRPG palette differs: {palette}")
             for sequence in camera["sequences"].values():
                 for file_key, hash_key in (
                     ("sheet", "sheet_sha256"),
@@ -378,11 +439,11 @@ def _verify_promoted(manifest: dict[str, object]) -> None:
                 ):
                     path = ASSET_ROOT / sequence[file_key]
                     if not path.is_file() or _sha256(path) != sequence[hash_key]:
-                        raise RuntimeError(f"Promoted chibi asset differs: {path}")
+                        raise RuntimeError(f"Promoted JRPG asset differs: {path}")
                 for gif in sequence["gifs"].values():
                     path = ASSET_ROOT / gif["file"]
                     if not path.is_file() or _sha256(path) != gif["sha256"]:
-                        raise RuntimeError(f"Promoted chibi GIF differs: {path}")
+                        raise RuntimeError(f"Promoted JRPG GIF differs: {path}")
 
 
 def main() -> int:
@@ -400,8 +461,18 @@ def main() -> int:
     blender = _blender()
     if not args.check:
         for character_id in targets:
+            _build_style_model(
+                character_id,
+                BASES[character_id],
+                blender,
+                force=args.force,
+            )
             for camera_height in cameras:
                 _build_view(character_id, BASES[character_id], camera_height, blender, style, force=args.force)
+    model_records = {
+        character_id: _verify_style_model(character_id, BASES[character_id])
+        for character_id in targets
+    }
     reports: dict[str, object] = {}
     for character_id in targets:
         reports[character_id] = {}
@@ -413,9 +484,9 @@ def main() -> int:
                 raise FileNotFoundError(MANIFEST)
             manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
             if manifest.get("style_config_sha256") != _sha256(STYLE):
-                raise RuntimeError("Chibi manifest style hash differs")
+                raise RuntimeError("JRPG manifest style hash differs")
             _verify_promoted(manifest)
-        print(f"Verified {len(targets) * len(cameras)} chibi Character Forge views")
+        print(f"Verified {len(targets) * len(cameras)} JRPG Character Forge views")
         return 0
     promoted: dict[str, object] = {}
     for character_id in targets:
@@ -441,12 +512,13 @@ def main() -> int:
         "timing_config": TIMING.relative_to(ROOT).as_posix(),
         "timing_config_sha256": _sha256(TIMING),
         "camera_heights": CAMERAS,
+        "models": model_records,
         "characters": promoted,
     }
     MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
     _update_specs(promoted)
     _verify_promoted(manifest)
-    print(f"Built and promoted {len(targets) * len(cameras)} chibi Character Forge views")
+    print(f"Built and promoted {len(targets) * len(cameras)} JRPG Character Forge views")
     return 0
 
 

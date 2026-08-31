@@ -1161,5 +1161,20 @@
       "frame_reports": [],
       "approved_override": true
     }
+  },
+  "registered_override_sources": {
+    "run": {
+      "source_config": "animation_images_models/component_override_sources.json",
+      "sha256": "3c3806dceb807040d73b3b675b259f5052f1cfffca64fd1516031e65b50d8e5c",
+      "authoritative_directions": [
+        "front",
+        "back",
+        "right"
+      ],
+      "derived_directions": {
+        "left": "right"
+      },
+      "status": "approved_edit_source"
+    }
   }
 }

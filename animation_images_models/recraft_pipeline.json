@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "provider": "recraft",
+  "base_url": "https://external.api.recraft.ai/v1",
+  "endpoint": "/images/imageToImage",
+  "model": "recraftv4_1",
+  "pro_model": "recraftv4_1_pro",
+  "response_format": "b64_json",
+  "default_strength": 0.25,
+  "calibration_strengths": [0.15, 0.25, 0.35],
+  "calibration_seeds": [17011, 28477, 39119, 47881],
+  "calibration_max_outputs": 12,
+  "request_concurrency": 1,
+  "prompt_contract_version": 1,
+  "normalization": {
+    "cell_size": 128,
+    "palette_size": 32,
+    "alpha_threshold": 112,
+    "cleanup_threshold": 1
+  },
+  "layouts": {
+    "walk": {"name": "4x2", "columns": 4, "rows": 2, "width": 1536, "height": 768},
+    "run": {"name": "4x2", "columns": 4, "rows": 2, "width": 1536, "height": 768},
+    "idle": {"name": "4x4", "columns": 4, "rows": 4, "width": 1024, "height": 1024}
+  }
+}

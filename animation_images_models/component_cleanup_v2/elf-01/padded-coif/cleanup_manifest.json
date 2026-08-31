@@ -39,14 +39,14 @@
   },
   "source_manifest": "parts/headwear/padded-coif-elf-01/manifest.json",
   "source_sha256": {
-    "idle": "56393469083a0a61cb32f23c68ec8a80818fed2a098cdac2591b7f8a38cb174c",
-    "walk": "91c9109230c8095ff9ee96bb4394e1b3c2b278ee69603a681f71cfbd5a8ed8d3",
-    "run": "ab5316e6eef01c7e37be63bf8000606ab462697331d46b0b998184f8cf1123e3"
+    "idle": "fdbca3623c1cfedbebe05f1eb98f0e6493103749fa5fe88e7a32be93b5921ccd",
+    "walk": "b2d1966b07a350bba138fd28a0bc9ed2bcee5a1ab3aa249ef639d08478c36e74",
+    "run": "da6ab19b58585fd222971d1d00e6975053d000f376909465c048003849e0b0ff"
   },
   "output_sha256": {
-    "idle": "56393469083a0a61cb32f23c68ec8a80818fed2a098cdac2591b7f8a38cb174c",
-    "walk": "91c9109230c8095ff9ee96bb4394e1b3c2b278ee69603a681f71cfbd5a8ed8d3",
-    "run": "ab5316e6eef01c7e37be63bf8000606ab462697331d46b0b998184f8cf1123e3"
+    "idle": "fdbca3623c1cfedbebe05f1eb98f0e6493103749fa5fe88e7a32be93b5921ccd",
+    "walk": "b2d1966b07a350bba138fd28a0bc9ed2bcee5a1ab3aa249ef639d08478c36e74",
+    "run": "da6ab19b58585fd222971d1d00e6975053d000f376909465c048003849e0b0ff"
   },
   "cleanup": {
     "idle": {

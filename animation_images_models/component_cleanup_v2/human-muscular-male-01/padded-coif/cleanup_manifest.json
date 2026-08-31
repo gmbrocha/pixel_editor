@@ -39,14 +39,14 @@
   },
   "source_manifest": "parts/headwear/padded-coif-human-muscular-male-01/manifest.json",
   "source_sha256": {
-    "idle": "e31b900e3426a58f2a599b52eebc353ae25f29082902a004b7a3e2e04cf5acb9",
-    "walk": "02693450fd6268048cbae2b0a2ca4254c205f1e5eba61b3e9d5932aa17e48b0c",
-    "run": "5f5176a3b2dc90a7d7bf1851b1c46afabe78c0e0db7416d0eb21c13845e7417b"
+    "idle": "d8f4c47b33e3035ca242a4cbfe30738dc9fc35cf9c606417b9af6df792713b58",
+    "walk": "d3cf862a0176cc461aaf827e40d98e58a7b321c1b0f10fde52dc60ccd62b9008",
+    "run": "a290137d0ee2249366d6c7216b4dab6f4040861af8a9df7fb9ffa0b3c1858103"
   },
   "output_sha256": {
-    "idle": "e31b900e3426a58f2a599b52eebc353ae25f29082902a004b7a3e2e04cf5acb9",
-    "walk": "02693450fd6268048cbae2b0a2ca4254c205f1e5eba61b3e9d5932aa17e48b0c",
-    "run": "5f5176a3b2dc90a7d7bf1851b1c46afabe78c0e0db7416d0eb21c13845e7417b"
+    "idle": "d8f4c47b33e3035ca242a4cbfe30738dc9fc35cf9c606417b9af6df792713b58",
+    "walk": "d3cf862a0176cc461aaf827e40d98e58a7b321c1b0f10fde52dc60ccd62b9008",
+    "run": "a290137d0ee2249366d6c7216b4dab6f4040861af8a9df7fb9ffa0b3c1858103"
   },
   "cleanup": {
     "idle": {

@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from tileset_processor import detect_grid, process_tileset
+from src.core.tileset_processor import detect_grid, process_tileset
 
 
 class _WorkerSignals(QObject):

@@ -72,7 +72,7 @@
   "provenance": {
     "kind": "hand_authored_component_prototype",
     "source": "animation_images_models/component_cleanup_v2/new_hand_authored/teifling_long_hair_run_front_only_third_edit.png",
-    "sourceSha256": "8a86b3bd37ffcfc95af867550342eea50fda24c4e035a4c3214baaedfcc1c96a",
+    "sourceSha256": "0dadbe1d300b0a5eecc90b6d0e64b881d3b4569b955d9728bd685b7272b51cfd",
     "cameraHeight": "low",
     "authoritativeDirections": [
       "front",
@@ -91,7 +91,7 @@
     "animationSha256": {
       "idle": "76074ca80dd6695e8e5247f7fb3de6b48832ef8414eafc59ad956d1c9a81362f",
       "walk": "21df068863f49340e4a38a9e1bd69f4e6e29ae5655a3b8d855b88980fdcf4df9",
-      "run": "139af1ecb486d9c2e45f095d730c1a13dcd6d0d59f375fb26fa865c9fd04e6af"
+      "run": "44f8dcb18c25cf4d790ef4e8960aaaa9a3246a62a6a6f696fe22197ff3a4b3f6"
     },
     "renderLayerSha256": {
       "hair_back": {
@@ -102,7 +102,7 @@
       "hair_front": {
         "idle": "76074ca80dd6695e8e5247f7fb3de6b48832ef8414eafc59ad956d1c9a81362f",
         "walk": "21df068863f49340e4a38a9e1bd69f4e6e29ae5655a3b8d855b88980fdcf4df9",
-        "run": "139af1ecb486d9c2e45f095d730c1a13dcd6d0d59f375fb26fa865c9fd04e6af"
+        "run": "44f8dcb18c25cf4d790ef4e8960aaaa9a3246a62a6a6f696fe22197ff3a4b3f6"
       }
     }
   }

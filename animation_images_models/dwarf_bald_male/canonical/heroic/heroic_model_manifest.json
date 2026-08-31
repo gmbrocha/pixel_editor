@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "kind": "heroic_authored_character_model",
+  "status": "canonical_source",
+  "character_id": "dwarf_bald_male",
+  "base_id": "dwarf-male-01",
+  "mesh": "PF_Dwarf_Bald_Male",
+  "armature": "PF_Dwarf_Bald_Male_Rig",
+  "blend": "dwarf_bald_male_heroic_render.blend",
+  "output_blend_sha256": "3740e252bdb63f648392a1d465ca7a54ea3d6e0995c4c346bbf08005abe14471",
+  "submission_blend": "dwarf_bald_male_heroic.blend",
+  "submission_blend_sha256": "cd76130e20fb5b437be91d68d7bdfdfef94622c7223422115d78ce91d5a17bd2",
+  "authoring_report_sha256": "ae2d313b77547d7ccdfe26a9d4e3c04a2a8a84d9fd8d828b5f309a9138a4f2df",
+  "method": "rest_pose_lbs_rebind",
+  "heads_tall": 4.3,
+  "height": 120.4,
+  "actions": {
+    "idle": "PF_Idle_HeroicJRPG",
+    "walk": "PF_Walk_HeroicJRPG",
+    "run": "PF_Run_HeroicJRPG"
+  },
+  "protected_actions": ["PF_Idle_Approved", "PF_Walk_Approved", "PF_Run_Approved"]
+}

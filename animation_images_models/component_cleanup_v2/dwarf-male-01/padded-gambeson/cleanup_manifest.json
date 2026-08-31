@@ -39,14 +39,14 @@
   },
   "source_manifest": "parts/outerwear/padded-gambeson-dwarf-male-01/manifest.json",
   "source_sha256": {
-    "idle": "25ebd961778c479cab0464af859d34c31ae9aa8a4f3d145c2537d6b4ce427fde",
-    "walk": "ae8d2522a373d568364efe872f06bed2b5abeb4007acb4ace8d7b570237d5b44",
-    "run": "2dbaca532f94a5ad060b2bd1a924581053ab1ab13ace4c22fc55d86ab84052f8"
+    "idle": "fd690dfc16f23fb7cb865c506b37c3d31a6c9b30d043f8e610c5c592be2bf680",
+    "walk": "4d7596a34ea0c028958c27600cb3b2150f21e0b593f65dc516566b43987bc99f",
+    "run": "2a16f537c9c95994f6db57adfe3b5907c99a72eccfc33321704579da696f4172"
   },
   "output_sha256": {
-    "idle": "25ebd961778c479cab0464af859d34c31ae9aa8a4f3d145c2537d6b4ce427fde",
-    "walk": "ae8d2522a373d568364efe872f06bed2b5abeb4007acb4ace8d7b570237d5b44",
-    "run": "2dbaca532f94a5ad060b2bd1a924581053ab1ab13ace4c22fc55d86ab84052f8"
+    "idle": "fd690dfc16f23fb7cb865c506b37c3d31a6c9b30d043f8e610c5c592be2bf680",
+    "walk": "4d7596a34ea0c028958c27600cb3b2150f21e0b593f65dc516566b43987bc99f",
+    "run": "2a16f537c9c95994f6db57adfe3b5907c99a72eccfc33321704579da696f4172"
   },
   "cleanup": {
     "idle": {

@@ -137,7 +137,7 @@ FAMILIES = (
     Family("soft-travel-cap", "Soft Travel Cap", "headwear", HEAD,
            ("#17251B", "#2D4532", "#49684D", "#739074", "#A8B7A2"), "#49684D", "cap"),
     Family("padded-coif", "Padded Coif", "headwear", HEAD_COVER + ("neck",),
-           ("#25201A", "#44392D", "#655745", "#897760", "#B0A08B"), "#655745", tags=("padded",)),
+           ("#25201A", "#44392D", "#655745", "#897760", "#B0A08B"), "#655745", "coif", tags=("padded",)),
     Family("simple-guard-helm", "Simple Guard Helm", "headwear", HEAD,
            ("#202427", "#3B4449", "#5B686D", "#879297", "#B5BDC0"), "#5B686D", "helm", tags=("metal",)),
 )
@@ -236,11 +236,61 @@ def _styled_frame(ids: np.ndarray, family: Family, direction: str) -> np.ndarray
             left, right = xs.min(), xs.max() + 1
             mask[brim_y:brim_y + 1, max(0, left - 1):min(ids.shape[1], right + 2)] = True
         else:
-            cutoff = top + round(height * 0.78)
+            cutoff = top + round(height * 0.64)
             helmet = np.zeros_like(head)
             helmet[:cutoff] = True
             mask = head & helmet
+            guard_bottom = min(bottom, top + round(height * 0.92))
+            for row in range(max(top, cutoff - 1), guard_bottom):
+                row_xs = np.flatnonzero(head[row])
+                if not len(row_xs):
+                    continue
+                guard_width = max(1, round(len(row_xs) * 0.12))
+                mask[row, row_xs[:guard_width]] = True
+                mask[row, row_xs[-guard_width:]] = True
     return mask
+
+
+def _construction_detail(
+    exact: np.ndarray,
+    expanded: np.ndarray,
+    family: Family,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return stable inset seam and brow masks for generated pixel details."""
+    seam = np.zeros_like(exact)
+    brow = np.zeros_like(exact)
+    eroded = np.zeros_like(expanded)
+    eroded[1:-1, 1:-1] = (
+        expanded[:-2, :-2]
+        & expanded[:-2, 1:-1]
+        & expanded[:-2, 2:]
+        & expanded[1:-1, :-2]
+        & expanded[1:-1, 1:-1]
+        & expanded[1:-1, 2:]
+        & expanded[2:, :-2]
+        & expanded[2:, 1:-1]
+        & expanded[2:, 2:]
+    )
+    interior = exact & eroded
+    ys, xs = np.nonzero(exact)
+    if not len(ys):
+        return seam, brow
+    top, bottom = int(ys.min()), int(ys.max()) + 1
+    left, right = int(xs.min()), int(xs.max()) + 1
+    if "padded" in family.tags:
+        spacing = 5
+        for row in range(top + 3, bottom - 1, spacing):
+            seam[row] = interior[row]
+        # Sparse offset stitches keep the quilting readable without a solid bar.
+        yy, xx = np.indices(exact.shape)
+        seam &= ((xx - left) % 3) != 2
+    if family.style in {"cap", "helm"}:
+        fraction = 0.56 if family.style == "cap" else 0.58
+        row = min(bottom - 1, top + round((bottom - top) * fraction))
+        brow[max(top, row - 1):row + 1, left:right] = expanded[
+            max(top, row - 1):row + 1, left:right
+        ]
+    return seam, brow
 
 
 def _component_sheet(
@@ -284,6 +334,9 @@ def _component_sheet(
             target = output[box[1]:box[3], box[0]:box[2]]
             target[..., 3] = np.where(expanded, 255, 0).astype(np.uint8)
             target[edge, :3] = palette[0]
+            seam, brow = _construction_detail(exact, expanded, family)
+            target[seam, :3] = palette[1]
+            target[brow, :3] = palette[1]
             if family.style == "reinforced_knees":
                 knees = _region_mask(ids, KNEES) & expanded
                 target[knees, :3] = palette[1]
@@ -672,6 +725,98 @@ def _build_all(asset_root: Path, output_root: Path) -> dict[str, object]:
     }
 
 
+def _target_family_and_base(component_id: str) -> tuple[Family, str]:
+    matches = [
+        (family, base_id)
+        for family in FAMILIES
+        for base_id in BASES
+        if _component_id(family, base_id) == component_id
+    ]
+    if len(matches) != 1:
+        raise ValueError(f"Unknown generated component id: {component_id}")
+    return matches[0]
+
+
+def _write_review_boards_for_base(
+    asset_root: Path,
+    output_root: Path,
+    base_id: str,
+) -> None:
+    output_root.mkdir(parents=True, exist_ok=True)
+    for sequence in SEQUENCES:
+        _review_board(asset_root, base_id, sequence).save(
+            output_root / f"{base_id}-{sequence}.png",
+            format="PNG",
+            optimize=False,
+            compress_level=9,
+        )
+    for camera_height in CHIBI_CAMERAS:
+        for sequence in SEQUENCES:
+            base = _art_path(
+                asset_root,
+                base_id,
+                sequence,
+                sprite_style=CHIBI_STYLE_ID,
+                camera_height=camera_height,
+            )
+            if not base.is_file():
+                continue
+            _review_board(
+                asset_root,
+                base_id,
+                sequence,
+                sprite_style=CHIBI_STYLE_ID,
+                camera_height=camera_height,
+            ).save(
+                output_root
+                / f"{base_id}-{CHIBI_STYLE_ID}-{camera_height}-{sequence}.png",
+                format="PNG",
+                optimize=False,
+                compress_level=9,
+            )
+
+
+def build_variant_incremental(asset_root: Path, component_id: str) -> dict[str, object]:
+    """Rebuild one generated component variant and patch global bookkeeping."""
+    asset_root = asset_root.resolve()
+    manifest_path = asset_root / "component_families_manifest.json"
+    if not manifest_path.is_file():
+        raise FileNotFoundError(manifest_path)
+    family, base_id = _target_family_and_base(component_id)
+    overrides = _load_approved_overrides()
+    with tempfile.TemporaryDirectory(prefix="pf-component-target-") as temporary:
+        candidate_parts = Path(temporary) / "parts"
+        variant = _build_variant(
+            asset_root, candidate_parts, family, base_id, overrides
+        )
+        candidate_dir = candidate_parts / family.slot / component_id
+        live_dir = asset_root / "parts" / family.slot / component_id
+        live_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(candidate_dir, live_dir, dirs_exist_ok=True)
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    replaced = False
+    for family_record in manifest["families"]:
+        if family_record["id"] != family.id:
+            continue
+        for index, existing in enumerate(family_record["variants"]):
+            if existing["id"] == component_id:
+                family_record["variants"][index] = variant
+                replaced = True
+                break
+    if not replaced:
+        raise RuntimeError(f"Missing {component_id} in {manifest_path}")
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
+    _write_review_boards_for_base(
+        asset_root,
+        asset_root / "review" / "component-families",
+        base_id,
+    )
+    return variant
+
+
 def _write_review_boards(asset_root: Path, output_root: Path) -> None:
     output_root.mkdir(parents=True, exist_ok=True)
     for base_id in BASES:
@@ -713,12 +858,23 @@ def main() -> int:
     parser.add_argument("--asset-root", type=Path, default=ASSET_ROOT)
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--check", action="store_true")
+    parser.add_argument(
+        "--target",
+        metavar="COMPONENT_ID",
+        help="incrementally rebuild one generated component variant",
+    )
     args = parser.parse_args()
     if args.force and args.check:
         parser.error("--force and --check are mutually exclusive")
+    if args.target and (args.force or args.check):
+        parser.error("--target cannot be combined with --force or --check")
     asset_root = args.asset_root.resolve()
     parts_root = asset_root / "parts"
     manifest_path = asset_root / "component_families_manifest.json"
+    if args.target:
+        build_variant_incremental(asset_root, args.target)
+        print(f"Built targeted component variant {args.target}")
+        return 0
     if args.check:
         with tempfile.TemporaryDirectory(prefix="pf-component-families-") as temporary:
             candidate_root = Path(temporary)

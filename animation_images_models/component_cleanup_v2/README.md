@@ -3,7 +3,14 @@
 This folder contains 300 editable, component-only PNG
 sprite sheets: 25 families fitted to four bases across Idle, Walk, and Run.
 These files are exact editable mirrors of the preprocessed sheets currently
-promoted in Character Forge. Later manual edits here still require promotion.
+promoted in Character Forge, except registered approved-edit sources: those
+preserve the user-authored direction rows while the live sheet may also contain
+a generated mirrored direction. Later manual edits here still require promotion.
+
+For a registered single-component edit, use
+`python tools/promote_component_edit.py --component <component-id> --sequence run`.
+It updates only the affected Forge variant and this bundle's related metadata;
+the exhaustive family and cleanup builders remain checkpoint operations.
 
 ## Layout
 
@@ -36,12 +43,12 @@ promoted in Character Forge. Later manual edits here still require promotion.
 The live Character Forge family builder applies this pass once. This mirror
 copies those canonical results byte-for-byte and never preprocesses them again.
 
-The pass removed 4190 detached islands
-(33948 pixels), chamfered
-282106 outline pixels, and filled
-536 tiny holes (687 pixels).
-It also removed 13702 terminal spurs
-(13744 pixels).
+The pass removed 4175 detached islands
+(33779 pixels), chamfered
+279718 outline pixels, and filled
+582 tiny holes (753 pixels).
+It also removed 13705 terminal spurs
+(13747 pixels).
 
 Use `index.csv` to navigate the 100 variants. Every component folder contains a
 `cleanup_manifest.json` with source/output hashes and per-frame changes.

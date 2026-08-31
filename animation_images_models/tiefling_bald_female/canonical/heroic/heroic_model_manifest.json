@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "kind": "heroic_authored_character_model",
+  "status": "canonical_source",
+  "character_id": "tiefling_bald_female",
+  "base_id": "tiefling-female-01",
+  "mesh": "PF_Tiefling_Bald_Female",
+  "armature": "PF_Tiefling_Bald_Female_Rig",
+  "blend": "tiefling_bald_female_heroic_render.blend",
+  "output_blend_sha256": "444f71ced6bc3dcf2d0ce6e1ae07b8973c34ff53bfaab72919ae31ca2a2a5b96",
+  "submission_blend": "tiefling_bald_female_heroic.blend",
+  "submission_blend_sha256": "575fcff9d0a135935e50b627a3b4337fe8c1d815a958d1e1e3983a789571beea",
+  "authoring_report_sha256": "ae2d313b77547d7ccdfe26a9d4e3c04a2a8a84d9fd8d828b5f309a9138a4f2df",
+  "method": "rest_pose_lbs_rebind",
+  "heads_tall": 6.1,
+  "height": 158.6,
+  "horn_inclusive_heads_tall": 5.01,
+  "actions": {
+    "idle": "PF_Idle_HeroicJRPG",
+    "walk": "PF_Walk_HeroicJRPG",
+    "run": "PF_Run_HeroicJRPG"
+  },
+  "protected_actions": ["PF_Idle_Approved", "PF_Walk_Approved", "PF_Run_Approved"]
+}

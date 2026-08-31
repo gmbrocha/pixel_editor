@@ -1,5 +1,10 @@
 # Blender Character Capture Pipeline
 
+Heroic component generation is documented in
+[`RECRAFT_SPRITE_PIPELINE.md`](RECRAFT_SPRITE_PIPELINE.md). Recraft may render
+component candidates, but the Blender-derived Heroic sheets and semantic maps
+remain authoritative for pose, anatomy, camera, direction, framing, and timing.
+
 Last updated: 2026-08-29
 
 ## Purpose
@@ -201,19 +206,28 @@ The older elf Low semantic capture is normalized with orthographic scale
 `2.442563056945801`, matching its apparent height to the newer auto-framed
 variants while retaining paired beauty/region rendering and aligned components.
 
-## Canonical JRPG Chibi Style
+## Canonical JRPG Style
 
 `tools/build_chibi_character_forge.py` is the single orchestration command for
-the second canonical sprite style. It applies
-`animation_images_models/chibi_style.json` non-destructively in pose space at
-render time: limb and torso bones are scaled along their local length, the head
-is enlarged uniformly, and Hips is shifted to preserve the source pose's foot
-ground level. Approved actions and canonical blends are never saved or modified.
+the second canonical sprite style. The internal `jrpg_chibi` identifier and
+legacy filenames remain stable for saved-recipe compatibility, while Character
+Forge displays the style as `JRPG`.
 
-Each base/camera produces paired 512px beauty and weight-derived semantic
-renders. One fixed translation per direction centers every animation without
-frame jitter. Reduction uses a shared 20-color character palette, binary alpha,
-conservative cluster cleanup, and a one-pixel interior silhouette outline.
+`tools/blender/build_jrpg_style_model.py` rebuilds the armature rest geometry and
+the skinned mesh together with linear-blend rebind math. It shortens limb chains,
+widens selected forms, enlarges and shapes the head, regrounds the character,
+and creates separate `PF_Idle_JRPG`, `PF_Walk_JRPG`, and `PF_Run_JRPG` actions.
+Topology, UVs, vertex weights, materials, approved rotation keys, protected
+actions, and canonical source blends remain unchanged. Only proportional Hips
+travel is scaled for the shorter rest geometry. Per-model manifests record the
+source/style/output hashes, mesh contracts, action rotation hashes, and measured
+heads-tall ratio.
+
+Each rest-retargeted base/camera produces paired 1024px beauty and weight-derived
+semantic renders. One fixed camera framing per character covers every animation
+without size jitter. Reduction uses a shared 16-color character/camera palette,
+binary alpha, and conservative cluster cleanup without an artificial silhouette
+outline.
 Promotion requires exact 14/8/8 frame counts and timing, all 32 semantic IDs,
 exact region/base alpha coverage, deterministic postprocessing, and at least
 eight pixels of final canvas margin.
@@ -226,9 +240,44 @@ python tools/build_chibi_character_forge.py --target all --camera-height all --c
 Tracked outputs include all four bases, all three cameras, Idle/Walk/Run sheets,
 four-direction GIFs, palettes, review sheets, style-specific fitting regions,
 and `assets/character-forge/chibi_manifest.json`. Ignored high-resolution renders
-live under each model's `working/chibi/`. Character Forge exposes `Standard Pixel`
-and `JRPG Chibi` independently of camera height and direction. Recipe schema 4
+and derived `.blend` files live under each model's `working/jrpg/`. Character
+Forge exposes `Standard Pixel` and `JRPG` independently of camera height and
+direction. Recipe schema 4
 stores `sprite_style`; older recipes migrate to `standard`.
+
+## Canonical Heroic Base Style
+
+`tools/build_heroic_character_forge.py` promotes the separately authored
+`Heroic` base-sprite style without modifying or replacing Standard or JRPG.
+The four canonical Heroic submission blends preserve Claude's delivered
+rest-proportioned meshes, rigs, protected approved actions, and derivative
+`PF_Idle_HeroicJRPG`, `PF_Walk_HeroicJRPG`, and `PF_Run_HeroicJRPG` actions.
+Separate `*_heroic_render.blend` copies add the existing 28 Pixel Forge
+semantic face attributes by topology-identical face-index transfer; the
+submission blends remain byte-exact and hash-recorded.
+
+Heroic uses the same three canonical camera heights, four directions, 14/8/8
+runtime frame contract, 1024px paired beauty/semantic capture, 128px binary
+alpha reduction, and shared 16-color per-character/camera palette as the
+deterministic sprite pipeline. Per-character framing preserves Claude's
+authored relative stature instead of auto-expanding the Dwarf to full height.
+
+```powershell
+python tools/build_heroic_character_forge.py --target all --camera-height all --force
+python tools/build_heroic_character_forge.py --target all --camera-height all --check
+```
+
+For independent render workers, `--build-only` writes and verifies ignored
+working outputs without touching the catalog. After all workers succeed,
+`--promote-only` performs one serial verification and promotion pass. Tracked
+outputs include 36 four-direction sheets, 144 GIFs, palettes, review sheets,
+32-region maps, the source/model/style hashes, and
+`assets/character-forge/heroic_manifest.json`.
+
+Heroic is intentionally base-only in this phase. Existing Standard and JRPG
+components are hidden when Heroic is selected because their anatomy and
+occlusion masks are not aligned to the new models. Later Heroic/Recraft
+components must target the promoted Heroic sheets and semantic maps directly.
 
 ## Fitted Component Families
 
@@ -248,17 +297,36 @@ and supports byte verification with `--check`.
 `tools/build_character_component_families.py` then generates 25 shared design
 families with separately fitted variants for `elf-01`, Tiefling, Dwarf, and
 muscular Human. The resulting 100 manifests retain 300 Standard Low sheets and
-add 900 JRPG Chibi sheets across three camera heights. They cover six slots, all
+add 900 JRPG sheets across three camera heights. They cover six slots, all
 three approved motions, all four directions, five-color recoloring, and one-pixel
-outlines. Standard and chibi 5-by-5 review boards are generated under
+outlines. Standard and JRPG 5-by-5 review boards are generated under
 `assets/character-forge/review/component-families/`.
+
+Generated padded pieces use component-anchored inset quilting, while travel caps
+and guard helms use explicit brim/brow/cheek-guard construction masks. These
+details remain inside each declared five-color ramp, survive recoloring, and run
+before the canonical island/hole/corner/spur cleanup.
 
 ```powershell
 python tools/build_character_component_families.py --force
 python tools/build_character_component_families.py --check
 ```
 
-Generated chibi overlays are canonical at all three camera heights. Existing
+During manual component authoring, do not run the exhaustive family builder for
+each approved sheet. After registering the edit in
+`animation_images_models/component_override_sources.json`, promote only the
+affected fitted variant with:
+
+```powershell
+python tools/promote_component_edit.py --component fingerless-gloves-tiefling-female-01 --sequence run
+```
+
+This targeted path promotes the normalized override, rebuilds only the selected
+family/base variant, patches the global family record, refreshes cleanup-v2
+metadata and review boards, and validates the live Forge sheet. Use the full
+`--force`/`--check` commands only for batch checkpoints or generator changes.
+
+Generated JRPG overlays are canonical at all three camera heights. Existing
 hand-authored hair, face accessories, and approved Standard garment overrides
 remain available only for their declared Standard cameras until separately
 authored chibi fits exist; the Forge hides incompatible parts rather than

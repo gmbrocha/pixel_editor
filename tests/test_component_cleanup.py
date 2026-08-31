@@ -8,6 +8,10 @@ import numpy as np
 from PIL import Image
 
 from src.core.component_cleanup import cleanup_component_frame
+from tools.build_component_cleanup_bundle import (
+    _copy_registered_override_sources,
+    _registered_override_sources,
+)
 
 
 PALETTE = ((10, 20, 30), (40, 50, 60), (70, 80, 90))
@@ -21,6 +25,20 @@ def _image(pixels: np.ndarray) -> Image.Image:
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_cleanup_bundle_preserves_registered_override_sources(tmp_path: Path) -> None:
+    registered = _registered_override_sources()
+    assert Path("tiefling-female-01/fingerless-gloves/run.png") in registered
+    assert Path("tiefling-female-01/low-waist-pants/run.png") in registered
+    assert Path("tiefling-female-01/tall-riding-boots/run.png") in registered
+
+    destination = tmp_path / "copy"
+    _copy_registered_override_sources(BUNDLE_ROOT, destination)
+    for relative in registered:
+        assert (destination / relative).read_bytes() == (
+            BUNDLE_ROOT / relative
+        ).read_bytes()
 
 
 def test_cleanup_removes_only_small_detached_islands() -> None:
@@ -231,7 +249,22 @@ def test_cleanup_review_bundle_contains_300_editable_sheets() -> None:
             assert _sha256(output_path) == manifest["output_sha256"][sequence]
             source_path = source_manifest.parent / source["animations"][sequence]
             assert _sha256(source_path) == manifest["source_sha256"][sequence]
-            assert output_path.read_bytes() == source_path.read_bytes()
+            registered = manifest.get("registered_override_sources", {}).get(
+                sequence
+            )
+            if registered is None:
+                assert output_path.read_bytes() == source_path.read_bytes()
+            else:
+                assert registered["status"] == "approved_edit_source"
+                assert registered["sha256"] == _sha256(output_path)
+                with Image.open(output_path) as opened:
+                    editable = opened.convert("RGBA")
+                with Image.open(source_path) as opened:
+                    promoted = opened.convert("RGBA")
+                for direction in registered["authoritative_directions"]:
+                    row = ("front", "back", "right", "left").index(direction)
+                    box = (0, row * 128, expected_size[0], (row + 1) * 128)
+                    assert editable.crop(box).tobytes() == promoted.crop(box).tobytes()
             with Image.open(output_path) as opened:
                 assert opened.size == expected_size
                 pixels = np.asarray(opened.convert("RGBA"), dtype=np.uint8)

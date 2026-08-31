@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "kind": "heroic_authored_character_model",
+  "status": "canonical_source",
+  "character_id": "human_bald_male",
+  "base_id": "human-muscular-male-01",
+  "mesh": "PF_Human_Bald_Male",
+  "armature": "PF_Human_Bald_Male_Rig",
+  "blend": "human_bald_male_heroic_render.blend",
+  "output_blend_sha256": "cb0da2944adde3de3601080e5c4a8424ef695e12ac90d4230e2e50e0e63bc453",
+  "submission_blend": "human_bald_male_heroic.blend",
+  "submission_blend_sha256": "974963cfc3e3f13270ba359a4c1403ab5f875e933fd2f93efc90eda9e54a8d5a",
+  "authoring_report_sha256": "ae2d313b77547d7ccdfe26a9d4e3c04a2a8a84d9fd8d828b5f309a9138a4f2df",
+  "method": "rest_pose_lbs_rebind",
+  "heads_tall": 6.0,
+  "height": 156.0,
+  "actions": {
+    "idle": "PF_Idle_HeroicJRPG",
+    "walk": "PF_Walk_HeroicJRPG",
+    "run": "PF_Run_HeroicJRPG"
+  },
+  "protected_actions": ["PF_Idle_Approved", "PF_Walk_Approved", "PF_Run_Approved"]
+}

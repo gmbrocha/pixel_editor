@@ -1,52 +1,57 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "id": "jrpg_chibi",
-  "display_name": "JRPG Chibi",
-  "description": "Render-time JRPG-inspired proportions with a larger head, compact torso, and shortened limbs.",
-  "render_size": 512,
-  "palette_size": 20,
-  "alpha_threshold": 96,
+  "display_name": "JRPG",
+  "description": "JRPG proportions produced by rebuilding the armature rest pose and skinned mesh together.",
+  "method": "rest_pose_lbs_rebind",
+  "render_size": 1024,
+  "palette_size": 16,
+  "alpha_threshold": 112,
   "cleanup_threshold": 1,
-  "silhouette_outline": true,
+  "silhouette_outline": false,
   "framing_scales": {
-    "elf_bald_female": 2.50,
-    "tiefling_bald_female": 2.50,
-    "dwarf_bald_male": 2.85,
-    "human_bald_male": 2.55
+    "elf_bald_female": 1.0,
+    "tiefling_bald_female": 1.0,
+    "dwarf_bald_male": 1.12,
+    "human_bald_male": 1.0
   },
-  "bone_scales": {
-    "Spine02": [1.0, 0.82, 1.0],
-    "Spine01": [1.0, 0.82, 1.0],
-    "Spine": [1.0, 0.90, 1.0],
-    "LeftShoulder": [1.0, 0.92, 1.0],
-    "RightShoulder": [1.0, 0.92, 1.0],
-    "LeftArm": [1.0, 0.68, 1.0],
-    "RightArm": [1.0, 0.68, 1.0],
-    "LeftForeArm": [1.0, 0.72, 1.0],
-    "RightForeArm": [1.0, 0.72, 1.0],
-    "LeftHand": [1.06, 0.90, 1.06],
-    "RightHand": [1.06, 0.90, 1.06],
-    "LeftUpLeg": [1.0, 0.56, 1.0],
-    "RightUpLeg": [1.0, 0.56, 1.0],
-    "LeftLeg": [1.0, 0.62, 1.0],
-    "RightLeg": [1.0, 0.62, 1.0],
-    "LeftFoot": [1.0, 0.92, 1.0],
-    "RightFoot": [1.0, 0.92, 1.0],
-    "LeftToeBase": [1.0, 0.92, 1.0],
-    "RightToeBase": [1.0, 0.92, 1.0],
-    "neck": [1.0, 0.76, 1.0],
-    "Head": [1.55, 1.55, 1.55]
-  },
-  "character_overrides": {
-    "dwarf_bald_male": {
-      "bone_scales": {
-        "Head": [1.68, 1.68, 1.68]
-      }
+  "rest_retarget": {
+    "bones": {
+      "Hips": [0.92, 1.06],
+      "Spine02": [0.86, 1.06],
+      "Spine01": [0.86, 1.04],
+      "Spine": [0.95, 1.04],
+      "neck": [0.45, 1.02],
+      "Head": [1.60, 1.60],
+      "head_end": [1.60, 1.60],
+      "headfront": [1.60, 1.60],
+      "LeftShoulder": [0.90, 1.06],
+      "RightShoulder": [0.90, 1.06],
+      "LeftArm": [0.74, 1.10],
+      "RightArm": [0.74, 1.10],
+      "LeftForeArm": [0.72, 1.08],
+      "RightForeArm": [0.72, 1.08],
+      "LeftHand": [0.85, 1.22],
+      "RightHand": [0.85, 1.22],
+      "LeftUpLeg": [0.66, 1.06],
+      "RightUpLeg": [0.66, 1.06],
+      "LeftLeg": [0.64, 1.05],
+      "RightLeg": [0.64, 1.05],
+      "LeftFoot": [0.92, 1.15],
+      "RightFoot": [0.92, 1.15],
+      "LeftToeBase": [0.92, 1.15],
+      "RightToeBase": [0.92, 1.15]
     },
-    "human_bald_male": {
-      "bone_scales": {
-        "Head": [1.78, 1.78, 1.78]
-      }
-    }
-  }
+    "head_lift": 3.0,
+    "jaw_squash": 0.90,
+    "cranium_bulge": 1.06,
+    "head_depth": 0.97,
+    "eye_scale": 1.18,
+    "eye_radius_in": 0.9,
+    "eye_radius_out": 2.2,
+    "eye_depth": 1.06,
+    "base_color_image": "PF_BaseColor",
+    "motion_scale": 0.68
+  },
+  "character_overrides": {}
 }

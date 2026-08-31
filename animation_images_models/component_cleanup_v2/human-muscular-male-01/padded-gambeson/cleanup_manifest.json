@@ -39,14 +39,14 @@
   },
   "source_manifest": "parts/outerwear/padded-gambeson-human-muscular-male-01/manifest.json",
   "source_sha256": {
-    "idle": "bc86c038f390057e95827d01e83074f3e725d5c974665a9473485234b5ec4d55",
-    "walk": "a6aa7452bce9d104897f973196dabd34799f592cbcbad6bc6ffbc4cdeacf0d8f",
-    "run": "71472c07cb5de5cd9e7c8df92679d59b2b04462d885f325ba19d7257cbf75a5d"
+    "idle": "761e9358bc3e3a0705d2399ab031a38c2082dc9b87787c08acd8b0364a6e93f9",
+    "walk": "7d43fef896a58f46299ad0a8f2157f154349f1888ef1c9edcd534753bbcbe760",
+    "run": "8f83fd0711c52a5bdaebdaa35be5a991dfa7639f8dbeb977025f76fa4cf5f80a"
   },
   "output_sha256": {
-    "idle": "bc86c038f390057e95827d01e83074f3e725d5c974665a9473485234b5ec4d55",
-    "walk": "a6aa7452bce9d104897f973196dabd34799f592cbcbad6bc6ffbc4cdeacf0d8f",
-    "run": "71472c07cb5de5cd9e7c8df92679d59b2b04462d885f325ba19d7257cbf75a5d"
+    "idle": "761e9358bc3e3a0705d2399ab031a38c2082dc9b87787c08acd8b0364a6e93f9",
+    "walk": "7d43fef896a58f46299ad0a8f2157f154349f1888ef1c9edcd534753bbcbe760",
+    "run": "8f83fd0711c52a5bdaebdaa35be5a991dfa7639f8dbeb977025f76fa4cf5f80a"
   },
   "cleanup": {
     "idle": {

@@ -39,14 +39,14 @@
   },
   "source_manifest": "parts/headwear/soft-travel-cap-elf-01/manifest.json",
   "source_sha256": {
-    "idle": "937309653e285f7ea8f34f4d6204968086be68fa09374920dc19d88c7c206f04",
-    "walk": "b7829aa88d24f23a5e30aa1ff3d3b56ae7d75a76e49cb34c8c25c616bc347fdf",
-    "run": "af1b3c31abbedda1d0c91e1a8db16e6b9966a8dbe19549ec29835e29f5e7252b"
+    "idle": "f2996af2e6024fbab89dc4e45663aeb80bd13970f89c98fafb106760efc0a11a",
+    "walk": "99cf8e43aaefff133c1c9193425a51e07c6de3195d557bc590b06ed253acf8b1",
+    "run": "b3248d5f8ae810a8fc8629df8f0f2c615797ca61571a2b0ff3884efe2b268471"
   },
   "output_sha256": {
-    "idle": "937309653e285f7ea8f34f4d6204968086be68fa09374920dc19d88c7c206f04",
-    "walk": "b7829aa88d24f23a5e30aa1ff3d3b56ae7d75a76e49cb34c8c25c616bc347fdf",
-    "run": "af1b3c31abbedda1d0c91e1a8db16e6b9966a8dbe19549ec29835e29f5e7252b"
+    "idle": "f2996af2e6024fbab89dc4e45663aeb80bd13970f89c98fafb106760efc0a11a",
+    "walk": "99cf8e43aaefff133c1c9193425a51e07c6de3195d557bc590b06ed253acf8b1",
+    "run": "b3248d5f8ae810a8fc8629df8f0f2c615797ca61571a2b0ff3884efe2b268471"
   },
   "cleanup": {
     "idle": {
@@ -59,9 +59,9 @@
       "frames_changed": 56,
       "removed_islands": 0,
       "removed_island_pixels": 0,
-      "chamfered_outline_pixels": 838,
-      "removed_spurs": 66,
-      "removed_spur_pixels": 66,
+      "chamfered_outline_pixels": 770,
+      "removed_spurs": 42,
+      "removed_spur_pixels": 42,
       "filled_holes": 0,
       "filled_hole_pixels": 0,
       "frame_reports": [
@@ -70,6 +70,18 @@
           "column": 0,
           "removed_islands": 0,
           "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 10,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 11
+        },
+        {
+          "row": 0,
+          "column": 1,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
           "chamfered_outline_pixels": 11,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
@@ -79,87 +91,75 @@
         },
         {
           "row": 0,
-          "column": 1,
+          "column": 2,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 12,
+          "chamfered_outline_pixels": 11,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 12
+        },
+        {
+          "row": 0,
+          "column": 3,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 10,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 11
+        },
+        {
+          "row": 0,
+          "column": 4,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 11,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 12
+        },
+        {
+          "row": 0,
+          "column": 5,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 10,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 11
+        },
+        {
+          "row": 0,
+          "column": 6,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 11,
+          "removed_spurs": 2,
+          "removed_spur_pixels": 2,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
           "changed_pixels": 13
         },
         {
           "row": 0,
-          "column": 2,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 12
-        },
-        {
-          "row": 0,
-          "column": 3,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 12
-        },
-        {
-          "row": 0,
-          "column": 4,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 12
-        },
-        {
-          "row": 0,
-          "column": 5,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 12
-        },
-        {
-          "row": 0,
-          "column": 6,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 12,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 14
-        },
-        {
-          "row": 0,
           "column": 7,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 10,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
+          "chamfered_outline_pixels": 9,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 11
+          "changed_pixels": 9
         },
         {
           "row": 0,
@@ -190,216 +190,216 @@
           "column": 10,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
+          "chamfered_outline_pixels": 10,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 12
+          "changed_pixels": 11
         },
         {
           "row": 0,
           "column": 11,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
+          "chamfered_outline_pixels": 9,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 12
+          "changed_pixels": 10
         },
         {
           "row": 0,
           "column": 12,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
+          "chamfered_outline_pixels": 9,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 12
+          "changed_pixels": 10
         },
         {
           "row": 0,
           "column": 13,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
+          "chamfered_outline_pixels": 10,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 12
+          "changed_pixels": 11
         },
         {
           "row": 1,
           "column": 0,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 21,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
+          "chamfered_outline_pixels": 17,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 23
+          "changed_pixels": 18
         },
         {
           "row": 1,
           "column": 1,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 20,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
+          "chamfered_outline_pixels": 19,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 22
+          "changed_pixels": 20
         },
         {
           "row": 1,
           "column": 2,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 19,
-          "removed_spurs": 3,
-          "removed_spur_pixels": 3,
+          "chamfered_outline_pixels": 17,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 22
+          "changed_pixels": 18
         },
         {
           "row": 1,
           "column": 3,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 23,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
+          "chamfered_outline_pixels": 21,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 25
+          "changed_pixels": 22
         },
         {
           "row": 1,
           "column": 4,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 19,
+          "chamfered_outline_pixels": 18,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 20
+          "changed_pixels": 19
         },
         {
           "row": 1,
           "column": 5,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 20,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
+          "chamfered_outline_pixels": 16,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 22
+          "changed_pixels": 16
         },
         {
           "row": 1,
           "column": 6,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 19,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
+          "chamfered_outline_pixels": 18,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 20
+          "changed_pixels": 18
         },
         {
           "row": 1,
           "column": 7,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 19,
-          "removed_spurs": 3,
-          "removed_spur_pixels": 3,
+          "chamfered_outline_pixels": 17,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 22
+          "changed_pixels": 18
         },
         {
           "row": 1,
           "column": 8,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 20,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
+          "chamfered_outline_pixels": 17,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 21
+          "changed_pixels": 17
         },
         {
           "row": 1,
           "column": 9,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 20,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
+          "chamfered_outline_pixels": 16,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 22
+          "changed_pixels": 16
         },
         {
           "row": 1,
           "column": 10,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 19,
-          "removed_spurs": 3,
-          "removed_spur_pixels": 3,
+          "chamfered_outline_pixels": 15,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 22
+          "changed_pixels": 16
         },
         {
           "row": 1,
           "column": 11,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 20,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
+          "chamfered_outline_pixels": 16,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 22
+          "changed_pixels": 16
         },
         {
           "row": 1,
           "column": 12,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 20,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
+          "chamfered_outline_pixels": 16,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 22
+          "changed_pixels": 16
         },
         {
           "row": 1,
           "column": 13,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 20,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
+          "chamfered_outline_pixels": 16,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 22
+          "changed_pixels": 16
         },
         {
           "row": 2,
@@ -418,24 +418,24 @@
           "column": 1,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 19,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
+          "chamfered_outline_pixels": 17,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 20
+          "changed_pixels": 17
         },
         {
           "row": 2,
           "column": 2,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 18,
+          "chamfered_outline_pixels": 16,
           "removed_spurs": 0,
           "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 18
+          "changed_pixels": 16
         },
         {
           "row": 2,
@@ -466,12 +466,12 @@
           "column": 5,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 18,
+          "chamfered_outline_pixels": 16,
           "removed_spurs": 0,
           "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 18
+          "changed_pixels": 16
         },
         {
           "row": 2,
@@ -490,12 +490,12 @@
           "column": 7,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 17,
+          "chamfered_outline_pixels": 15,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 18
+          "changed_pixels": 16
         },
         {
           "row": 2,
@@ -538,12 +538,12 @@
           "column": 11,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 20,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
+          "chamfered_outline_pixels": 18,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 21
+          "changed_pixels": 18
         },
         {
           "row": 2,
@@ -562,12 +562,12 @@
           "column": 13,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 19,
+          "chamfered_outline_pixels": 17,
           "removed_spurs": 0,
           "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 19
+          "changed_pixels": 17
         },
         {
           "row": 3,
@@ -610,12 +610,12 @@
           "column": 3,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
+          "chamfered_outline_pixels": 10,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 12
+          "changed_pixels": 11
         },
         {
           "row": 3,
@@ -694,36 +694,36 @@
           "column": 10,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
+          "chamfered_outline_pixels": 10,
           "removed_spurs": 2,
           "removed_spur_pixels": 2,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 13
+          "changed_pixels": 12
         },
         {
           "row": 3,
           "column": 11,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
+          "chamfered_outline_pixels": 10,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 12
+          "changed_pixels": 11
         },
         {
           "row": 3,
           "column": 12,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
+          "chamfered_outline_pixels": 10,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 12
+          "changed_pixels": 11
         },
         {
           "row": 3,
@@ -738,7 +738,7 @@
           "changed_pixels": 12
         }
       ],
-      "changed_pixels": 904
+      "changed_pixels": 812
     },
     "walk": {
       "frame_size": [
@@ -750,9 +750,9 @@
       "frames_changed": 32,
       "removed_islands": 0,
       "removed_island_pixels": 0,
-      "chamfered_outline_pixels": 485,
-      "removed_spurs": 37,
-      "removed_spur_pixels": 37,
+      "chamfered_outline_pixels": 439,
+      "removed_spurs": 27,
+      "removed_spur_pixels": 27,
       "filled_holes": 0,
       "filled_hole_pixels": 0,
       "frame_reports": [
@@ -761,6 +761,18 @@
           "column": 0,
           "removed_islands": 0,
           "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 9,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 10
+        },
+        {
+          "row": 0,
+          "column": 1,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
           "chamfered_outline_pixels": 10,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
@@ -770,27 +782,15 @@
         },
         {
           "row": 0,
-          "column": 1,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 12,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 13
-        },
-        {
-          "row": 0,
           "column": 2,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
+          "chamfered_outline_pixels": 10,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 12
+          "changed_pixels": 11
         },
         {
           "row": 0,
@@ -809,18 +809,42 @@
           "column": 4,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 12,
+          "chamfered_outline_pixels": 10,
           "removed_spurs": 2,
           "removed_spur_pixels": 2,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 14
+          "changed_pixels": 12
         },
         {
           "row": 0,
           "column": 5,
           "removed_islands": 0,
           "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 10,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 11
+        },
+        {
+          "row": 0,
+          "column": 6,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 10,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 11
+        },
+        {
+          "row": 0,
+          "column": 7,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
           "chamfered_outline_pixels": 11,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
@@ -829,80 +853,68 @@
           "changed_pixels": 12
         },
         {
-          "row": 0,
-          "column": 6,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 13
-        },
-        {
-          "row": 0,
-          "column": 7,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 12,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 13
-        },
-        {
           "row": 1,
           "column": 0,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 21,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 22
-        },
-        {
-          "row": 1,
-          "column": 1,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 21,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 22
-        },
-        {
-          "row": 1,
-          "column": 2,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 18,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 20
-        },
-        {
-          "row": 1,
-          "column": 3,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 18,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
+          "chamfered_outline_pixels": 19,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
           "changed_pixels": 19
         },
         {
           "row": 1,
+          "column": 1,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 19,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 20
+        },
+        {
+          "row": 1,
+          "column": 2,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 16,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 17
+        },
+        {
+          "row": 1,
+          "column": 3,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 16,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 16
+        },
+        {
+          "row": 1,
           "column": 4,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 18,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 18
+        },
+        {
+          "row": 1,
+          "column": 5,
           "removed_islands": 0,
           "removed_island_pixels": 0,
           "chamfered_outline_pixels": 20,
@@ -914,19 +926,31 @@
         },
         {
           "row": 1,
-          "column": 5,
+          "column": 6,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 22,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
+          "chamfered_outline_pixels": 17,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 24
+          "changed_pixels": 17
         },
         {
           "row": 1,
-          "column": 6,
+          "column": 7,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 20,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 21
+        },
+        {
+          "row": 2,
+          "column": 0,
           "removed_islands": 0,
           "removed_island_pixels": 0,
           "chamfered_outline_pixels": 18,
@@ -937,32 +961,20 @@
           "changed_pixels": 19
         },
         {
-          "row": 1,
-          "column": 7,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 22,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 24
-        },
-        {
-          "row": 2,
-          "column": 0,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 20,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 22
-        },
-        {
           "row": 2,
           "column": 1,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 17,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 17
+        },
+        {
+          "row": 2,
+          "column": 2,
           "removed_islands": 0,
           "removed_island_pixels": 0,
           "chamfered_outline_pixels": 19,
@@ -974,63 +986,51 @@
         },
         {
           "row": 2,
-          "column": 2,
+          "column": 3,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 22,
-          "removed_spurs": 0,
-          "removed_spur_pixels": 0,
+          "chamfered_outline_pixels": 20,
+          "removed_spurs": 2,
+          "removed_spur_pixels": 2,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
           "changed_pixels": 22
         },
         {
           "row": 2,
-          "column": 3,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 22,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 24
-        },
-        {
-          "row": 2,
           "column": 4,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
+          "chamfered_outline_pixels": 10,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 12
+          "changed_pixels": 11
         },
         {
           "row": 2,
           "column": 5,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 18,
+          "chamfered_outline_pixels": 15,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 19
+          "changed_pixels": 16
         },
         {
           "row": 2,
           "column": 6,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 18,
+          "chamfered_outline_pixels": 15,
           "removed_spurs": 0,
           "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 18
+          "changed_pixels": 15
         },
         {
           "row": 2,
@@ -1049,24 +1049,24 @@
           "column": 0,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
+          "chamfered_outline_pixels": 10,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 13
+          "changed_pixels": 11
         },
         {
           "row": 3,
           "column": 1,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 13,
+          "chamfered_outline_pixels": 12,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 14
+          "changed_pixels": 13
         },
         {
           "row": 3,
@@ -1085,48 +1085,48 @@
           "column": 3,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 10,
+          "chamfered_outline_pixels": 9,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 11
+          "changed_pixels": 10
         },
         {
           "row": 3,
           "column": 4,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
+          "chamfered_outline_pixels": 10,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 12
+          "changed_pixels": 11
         },
         {
           "row": 3,
           "column": 5,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 10,
+          "chamfered_outline_pixels": 9,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 11
+          "changed_pixels": 10
         },
         {
           "row": 3,
           "column": 6,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 10,
+          "chamfered_outline_pixels": 9,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 11
+          "changed_pixels": 10
         },
         {
           "row": 3,
@@ -1141,7 +1141,7 @@
           "changed_pixels": 12
         }
       ],
-      "changed_pixels": 522
+      "changed_pixels": 466
     },
     "run": {
       "frame_size": [
@@ -1153,9 +1153,9 @@
       "frames_changed": 32,
       "removed_islands": 0,
       "removed_island_pixels": 0,
-      "chamfered_outline_pixels": 483,
-      "removed_spurs": 35,
-      "removed_spur_pixels": 35,
+      "chamfered_outline_pixels": 448,
+      "removed_spurs": 34,
+      "removed_spur_pixels": 34,
       "filled_holes": 0,
       "filled_hole_pixels": 0,
       "frame_reports": [
@@ -1176,24 +1176,24 @@
           "column": 1,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
+          "chamfered_outline_pixels": 10,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 12
+          "changed_pixels": 11
         },
         {
           "row": 0,
           "column": 2,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
+          "chamfered_outline_pixels": 9,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 12
+          "changed_pixels": 10
         },
         {
           "row": 0,
@@ -1212,40 +1212,16 @@
           "column": 4,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 12,
+          "chamfered_outline_pixels": 10,
           "removed_spurs": 2,
           "removed_spur_pixels": 2,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 14
-        },
-        {
-          "row": 0,
-          "column": 5,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 12,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 13
-        },
-        {
-          "row": 0,
-          "column": 6,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
-          "removed_spurs": 1,
-          "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
           "changed_pixels": 12
         },
         {
           "row": 0,
-          "column": 7,
+          "column": 5,
           "removed_islands": 0,
           "removed_island_pixels": 0,
           "chamfered_outline_pixels": 10,
@@ -1254,6 +1230,30 @@
           "filled_holes": 0,
           "filled_hole_pixels": 0,
           "changed_pixels": 11
+        },
+        {
+          "row": 0,
+          "column": 6,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 10,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 11
+        },
+        {
+          "row": 0,
+          "column": 7,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 8,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 9
         },
         {
           "row": 1,
@@ -1284,12 +1284,12 @@
           "column": 2,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 19,
+          "chamfered_outline_pixels": 17,
           "removed_spurs": 0,
           "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 19
+          "changed_pixels": 17
         },
         {
           "row": 1,
@@ -1320,12 +1320,12 @@
           "column": 5,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 21,
-          "removed_spurs": 2,
-          "removed_spur_pixels": 2,
+          "chamfered_outline_pixels": 19,
+          "removed_spurs": 1,
+          "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 23
+          "changed_pixels": 20
         },
         {
           "row": 1,
@@ -1356,12 +1356,12 @@
           "column": 0,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 22,
+          "chamfered_outline_pixels": 20,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 23
+          "changed_pixels": 21
         },
         {
           "row": 2,
@@ -1380,28 +1380,40 @@
           "column": 2,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 22,
+          "chamfered_outline_pixels": 19,
           "removed_spurs": 0,
           "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 22
+          "changed_pixels": 19
         },
         {
           "row": 2,
           "column": 3,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 24,
+          "chamfered_outline_pixels": 20,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 25
+          "changed_pixels": 21
         },
         {
           "row": 2,
           "column": 4,
+          "removed_islands": 0,
+          "removed_island_pixels": 0,
+          "chamfered_outline_pixels": 16,
+          "removed_spurs": 0,
+          "removed_spur_pixels": 0,
+          "filled_holes": 0,
+          "filled_hole_pixels": 0,
+          "changed_pixels": 16
+        },
+        {
+          "row": 2,
+          "column": 5,
           "removed_islands": 0,
           "removed_island_pixels": 0,
           "chamfered_outline_pixels": 18,
@@ -1413,39 +1425,27 @@
         },
         {
           "row": 2,
-          "column": 5,
-          "removed_islands": 0,
-          "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 19,
-          "removed_spurs": 0,
-          "removed_spur_pixels": 0,
-          "filled_holes": 0,
-          "filled_hole_pixels": 0,
-          "changed_pixels": 19
-        },
-        {
-          "row": 2,
           "column": 6,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 17,
+          "chamfered_outline_pixels": 15,
           "removed_spurs": 0,
           "removed_spur_pixels": 0,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 17
+          "changed_pixels": 15
         },
         {
           "row": 2,
           "column": 7,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 21,
+          "chamfered_outline_pixels": 17,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 22
+          "changed_pixels": 18
         },
         {
           "row": 3,
@@ -1464,12 +1464,12 @@
           "column": 1,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 12,
+          "chamfered_outline_pixels": 11,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 13
+          "changed_pixels": 12
         },
         {
           "row": 3,
@@ -1512,12 +1512,12 @@
           "column": 5,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
+          "chamfered_outline_pixels": 10,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 12
+          "changed_pixels": 11
         },
         {
           "row": 3,
@@ -1536,15 +1536,15 @@
           "column": 7,
           "removed_islands": 0,
           "removed_island_pixels": 0,
-          "chamfered_outline_pixels": 11,
+          "chamfered_outline_pixels": 10,
           "removed_spurs": 1,
           "removed_spur_pixels": 1,
           "filled_holes": 0,
           "filled_hole_pixels": 0,
-          "changed_pixels": 12
+          "changed_pixels": 11
         }
       ],
-      "changed_pixels": 518
+      "changed_pixels": 482
     }
   }
 }

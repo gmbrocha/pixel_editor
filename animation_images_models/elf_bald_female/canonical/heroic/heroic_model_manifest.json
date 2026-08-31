@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "kind": "heroic_authored_character_model",
+  "status": "canonical_source",
+  "character_id": "elf_bald_female",
+  "base_id": "elf-01",
+  "mesh": "PF_Elf_Bald_Female",
+  "armature": "PF_Elf_Bald_Female_Rig",
+  "blend": "elf_bald_female_heroic_render.blend",
+  "output_blend_sha256": "0a6d580ecfeb269f5cf90d9e3b2c0054a4835c817c65d4ffc7bd03ce1cf773e2",
+  "submission_blend": "elf_bald_female_heroic.blend",
+  "submission_blend_sha256": "1a3f7557cb8fc2232aed774d3bb931a2aa730d12a4d758a3a76a6c02dbd033a1",
+  "authoring_report_sha256": "ae2d313b77547d7ccdfe26a9d4e3c04a2a8a84d9fd8d828b5f309a9138a4f2df",
+  "method": "rest_pose_lbs_rebind",
+  "heads_tall": 6.4,
+  "height": 166.4,
+  "actions": {
+    "idle": "PF_Idle_HeroicJRPG",
+    "walk": "PF_Walk_HeroicJRPG",
+    "run": "PF_Run_HeroicJRPG"
+  },
+  "protected_actions": ["PF_Idle_Approved", "PF_Walk_Approved", "PF_Run_Approved"]
+}

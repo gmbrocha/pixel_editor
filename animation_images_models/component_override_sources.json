@@ -30,6 +30,36 @@
       "source": "component_cleanup_v2/tiefling-female-01/cropped-training-top/run.png",
       "authoritative_directions": ["front", "back", "right"],
       "derived_directions": {"left": "right"}
+    },
+    {
+      "component_id": "tall-riding-boots-tiefling-female-01",
+      "family_id": "tall-riding-boots",
+      "base_id": "tiefling-female-01",
+      "slot": "feet",
+      "sequence": "run",
+      "source": "component_cleanup_v2/tiefling-female-01/tall-riding-boots/run.png",
+      "authoritative_directions": ["front", "back", "right"],
+      "derived_directions": {"left": "right"}
+    },
+    {
+      "component_id": "low-waist-pants-tiefling-female-01",
+      "family_id": "low-waist-pants",
+      "base_id": "tiefling-female-01",
+      "slot": "legwear",
+      "sequence": "run",
+      "source": "component_cleanup_v2/tiefling-female-01/low-waist-pants/run.png",
+      "authoritative_directions": ["front", "back", "right"],
+      "derived_directions": {"left": "right"}
+    },
+    {
+      "component_id": "fingerless-gloves-tiefling-female-01",
+      "family_id": "fingerless-gloves",
+      "base_id": "tiefling-female-01",
+      "slot": "hands",
+      "sequence": "run",
+      "source": "component_cleanup_v2/tiefling-female-01/fingerless-gloves/run.png",
+      "authoritative_directions": ["front", "back", "right"],
+      "derived_directions": {"left": "right"}
     }
   ]
 }

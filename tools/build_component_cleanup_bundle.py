@@ -23,6 +23,9 @@ from src.core.component_cleanup import cleanup_component_sheet
 
 ASSET_ROOT = ROOT / "assets" / "character-forge"
 DEFAULT_OUTPUT = ROOT / "animation_images_models" / "component_cleanup_v2"
+OVERRIDE_SOURCE_CONFIG = (
+    ROOT / "animation_images_models" / "component_override_sources.json"
+)
 SEQUENCES = ("idle", "walk", "run")
 EXPECTED_SIZES = {"idle": (1792, 512), "walk": (1024, 512), "run": (1024, 512)}
 USER_AUTHORED_DIRS = {"new_hand_authored"}
@@ -30,6 +33,90 @@ USER_AUTHORED_DIRS = {"new_hand_authored"}
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _registered_override_records() -> tuple[tuple[Path, dict[str, object]], ...]:
+    """Return cleanup-bundle paths that are also approved edit sources.
+
+    These files are deliberately user-owned even though they live inside the
+    generated review bundle. Rebuilding the bundle must never replace them
+    with the currently promoted output, since doing so changes provenance and
+    can overwrite an unpromoted edit.
+    """
+    if not OVERRIDE_SOURCE_CONFIG.is_file():
+        return ()
+    config = json.loads(OVERRIDE_SOURCE_CONFIG.read_text(encoding="utf-8"))
+    if config.get("schema_version") != 1:
+        raise ValueError("Unsupported component override source configuration")
+    prefix = DEFAULT_OUTPUT.relative_to(ROOT / "animation_images_models")
+    records: dict[Path, dict[str, object]] = {}
+    for record in config.get("overrides", []):
+        source = Path(str(record["source"]))
+        try:
+            relative = source.relative_to(prefix)
+        except ValueError:
+            continue
+        records[relative] = record
+    return tuple(
+        sorted(records.items(), key=lambda item: item[0].as_posix())
+    )
+
+
+def _registered_override_sources() -> tuple[Path, ...]:
+    return tuple(relative for relative, _record in _registered_override_records())
+
+
+def _copy_registered_override_sources(source_root: Path, target_root: Path) -> None:
+    for relative in _registered_override_sources():
+        source = source_root / relative
+        if not source.is_file():
+            raise FileNotFoundError(
+                f"Registered component override source is missing: {source}"
+            )
+        destination = target_root / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination)
+
+
+def _refresh_registered_override_metadata(output_root: Path) -> None:
+    """Describe preserved edit sources without calling them live mirrors."""
+    bundle_path = output_root / "bundle_manifest.json"
+    bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
+    variants = {
+        (str(row["fit"]), str(row["family_id"])): row
+        for row in bundle["variants"]
+    }
+    for relative, record in _registered_override_records():
+        source = output_root / relative
+        sequence = str(record["sequence"])
+        manifest_path = (
+            output_root
+            / str(record["base_id"])
+            / str(record["family_id"])
+            / "cleanup_manifest.json"
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        source_hash = _sha256(source)
+        manifest["output_sha256"][sequence] = source_hash
+        manifest.setdefault("registered_override_sources", {})[sequence] = {
+            "source_config": OVERRIDE_SOURCE_CONFIG.relative_to(ROOT).as_posix(),
+            "sha256": source_hash,
+            "authoritative_directions": record["authoritative_directions"],
+            "derived_directions": record["derived_directions"],
+            "status": "approved_edit_source",
+        }
+        manifest_path.write_text(
+            json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n"
+        )
+        variants[(str(record["base_id"]), str(record["family_id"]))][
+            "manifest_sha256"
+        ] = _sha256(manifest_path)
+    bundle["registered_override_source_count"] = len(
+        _registered_override_records()
+    )
+    bundle_path.write_text(
+        json.dumps(bundle, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
 
 
 def _rgb(value: str) -> tuple[int, int, int]:
@@ -276,7 +363,14 @@ def _build(output_root: Path) -> dict[str, object]:
 This folder contains {manifest['sheet_count']} editable, component-only PNG
 sprite sheets: 25 families fitted to four bases across Idle, Walk, and Run.
 These files are exact editable mirrors of the preprocessed sheets currently
-promoted in Character Forge. Later manual edits here still require promotion.
+promoted in Character Forge, except registered approved-edit sources: those
+preserve the user-authored direction rows while the live sheet may also contain
+a generated mirrored direction. Later manual edits here still require promotion.
+
+For a registered single-component edit, use
+`python tools/promote_component_edit.py --component <component-id> --sequence run`.
+It updates only the affected Forge variant and this bundle's related metadata;
+the exhaustive family and cleanup builders remain checkpoint operations.
 
 ## Layout
 
@@ -349,21 +443,114 @@ def _compare_trees(expected_root: Path, actual_root: Path) -> list[str]:
     return mismatches
 
 
+def refresh_component_override_source(
+    output_root: Path,
+    component_id: str,
+    sequence: str,
+) -> None:
+    """Refresh one preserved edit source and its cleanup-bundle bookkeeping."""
+    matches = [
+        (relative, record)
+        for relative, record in _registered_override_records()
+        if str(record["component_id"]) == component_id
+        and str(record["sequence"]) == sequence
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            f"No unique registered override source for {component_id}/{sequence}"
+        )
+    relative, record = matches[0]
+    editable_source = output_root / relative
+    if not editable_source.is_file():
+        raise FileNotFoundError(editable_source)
+
+    bundle_path = output_root / "bundle_manifest.json"
+    bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
+    variant = next(
+        (
+            row
+            for row in bundle["variants"]
+            if row["component_id"] == component_id
+        ),
+        None,
+    )
+    if variant is None:
+        raise RuntimeError(f"Missing {component_id} in {bundle_path}")
+    cleanup_manifest_path = output_root / str(variant["manifest"])
+    cleanup_manifest = json.loads(
+        cleanup_manifest_path.read_text(encoding="utf-8")
+    )
+    live_manifest_path = (
+        ASSET_ROOT
+        / "parts"
+        / str(record["slot"])
+        / component_id
+        / "manifest.json"
+    )
+    live_manifest = json.loads(live_manifest_path.read_text(encoding="utf-8"))
+    live_sheet = live_manifest_path.parent / str(live_manifest["animations"][sequence])
+    live_report = live_manifest["provenance"]["cleanup"]["reports"][sequence]
+    old_report = cleanup_manifest["cleanup"][sequence]
+    for key in bundle["cleanup_totals"]:
+        bundle["cleanup_totals"][key] += int(live_report[key]) - int(
+            old_report[key]
+        )
+    cleanup_manifest["source_sha256"][sequence] = _sha256(live_sheet)
+    cleanup_manifest["output_sha256"][sequence] = _sha256(editable_source)
+    cleanup_manifest["cleanup"][sequence] = live_report
+    cleanup_manifest_path.write_text(
+        json.dumps(cleanup_manifest, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    variant["manifest_sha256"] = _sha256(cleanup_manifest_path)
+
+    family_manifest = json.loads(
+        (ASSET_ROOT / "component_families_manifest.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    bundle["review_boards"] = _review_boards(output_root, family_manifest)
+    bundle_path.write_text(
+        json.dumps(bundle, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
+    _refresh_registered_override_metadata(output_root)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--check", action="store_true")
+    parser.add_argument(
+        "--target",
+        metavar="COMPONENT_ID",
+        help="incrementally refresh one registered override source",
+    )
+    parser.add_argument("--sequence", choices=SEQUENCES, default="run")
     args = parser.parse_args()
     if args.force and args.check:
         parser.error("--force and --check are mutually exclusive")
+    if args.target and (args.force or args.check):
+        parser.error("--target cannot be combined with --force or --check")
     output_root = args.output_root.resolve()
+    if args.target:
+        refresh_component_override_source(
+            output_root, args.target, args.sequence
+        )
+        print(
+            f"Refreshed cleanup source {args.target}/{args.sequence} in "
+            f"{output_root}"
+        )
+        return 0
     if args.check:
         if not output_root.is_dir():
             raise FileNotFoundError(output_root)
         with tempfile.TemporaryDirectory(prefix="pf-component-cleanup-") as temporary:
             candidate = Path(temporary)
             _build(candidate)
+            _copy_registered_override_sources(output_root, candidate)
+            _refresh_registered_override_metadata(candidate)
             mismatches = _compare_trees(candidate, output_root)
         if mismatches:
             raise SystemExit(
@@ -393,12 +580,16 @@ def main() -> int:
                 if source.is_dir():
                     shutil.copytree(source, backup_root / name)
                     preserved.append(name)
+            _copy_registered_override_sources(output_root, backup_root)
             shutil.rmtree(output_root)
             manifest = _build(output_root)
             for name in preserved:
                 shutil.copytree(backup_root / name, output_root / name)
+            _copy_registered_override_sources(backup_root, output_root)
+            _refresh_registered_override_metadata(output_root)
     else:
         manifest = _build(output_root)
+        _refresh_registered_override_metadata(output_root)
     print(
         f"Built {manifest['variant_count']} variants and "
         f"{manifest['sheet_count']} editable sheets in {output_root}"

@@ -39,14 +39,14 @@
   },
   "source_manifest": "parts/headwear/padded-coif-tiefling-female-01/manifest.json",
   "source_sha256": {
-    "idle": "de68248afd01173379330cb6f3151d6fd472f5485a679bccb569ad9bbeebcdb0",
-    "walk": "1079659d15f8e643d156b438cf3af782a03443d8913dfa2d34e64e2a2e840b69",
-    "run": "e0ed4d86dae421a928d4a146c8ab60fb24ab99002e11cb537f10a60d61f6cf92"
+    "idle": "9dc154ee22f2c15561f4322ecfa85215dee0950ca67d805590319052ddba0bd7",
+    "walk": "b8537acda5bd2cf30075cdc4dcb90a9024707696776f75a769259b4b288bc06f",
+    "run": "88615fcd899a13f58a0afbd5ec6aa0cbb0ecbc1417b46b8d708358a5a0485a60"
   },
   "output_sha256": {
-    "idle": "de68248afd01173379330cb6f3151d6fd472f5485a679bccb569ad9bbeebcdb0",
-    "walk": "1079659d15f8e643d156b438cf3af782a03443d8913dfa2d34e64e2a2e840b69",
-    "run": "e0ed4d86dae421a928d4a146c8ab60fb24ab99002e11cb537f10a60d61f6cf92"
+    "idle": "9dc154ee22f2c15561f4322ecfa85215dee0950ca67d805590319052ddba0bd7",
+    "walk": "b8537acda5bd2cf30075cdc4dcb90a9024707696776f75a769259b4b288bc06f",
+    "run": "88615fcd899a13f58a0afbd5ec6aa0cbb0ecbc1417b46b8d708358a5a0485a60"
   },
   "cleanup": {
     "idle": {

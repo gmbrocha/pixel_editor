@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "recraft_heroic_component_v1",
+  "status": "provisional_until_calibration",
+  "source": "docs/PIXEL_ART_STYLE_PROFILE_V1.json",
+  "hard_metrics": {
+    "silhouette_iou": {"direction": "higher", "threshold": 0.82},
+    "core_recall": {"direction": "higher", "threshold": 0.92},
+    "minimum_region_recall": {"direction": "higher", "threshold": 0.80},
+    "centroid_drift_px": {"direction": "lower", "threshold": 2.0},
+    "bbox_size_delta_ratio": {"direction": "lower", "threshold": 0.10}
+  },
+  "warning_metrics": {
+    "pose_match_margin": {"direction": "higher", "threshold": 0.01},
+    "component_area_ratio_to_median": {"direction": "higher", "threshold": 0.50}
+  },
+  "always_hard_reject": [
+    "wrong_layout",
+    "empty_frame",
+    "unsafe_canvas_margin",
+    "unexpected_pose_match",
+    "accidental_duplicate_pose"
+  ],
+  "calibration": {
+    "required_complete_loop": "tiefling-female-01/heroic/low/run/front",
+    "required_outputs": 12,
+    "mandatory_negative": "wrong-leg third-frame regression",
+    "policy": "A metric becomes hard only when it separates all manually approved and rejected calibration candidates without a false acceptance."
+  }
+}

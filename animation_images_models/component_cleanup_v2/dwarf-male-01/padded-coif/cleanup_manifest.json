@@ -39,14 +39,14 @@
   },
   "source_manifest": "parts/headwear/padded-coif-dwarf-male-01/manifest.json",
   "source_sha256": {
-    "idle": "5d6d552d7e56b95cf3690279be45d4d23066cbe586f023ef9604691b59efda02",
-    "walk": "b0a42a3055f71455ec530117ced950390654c2935fd3587ecac1e424da48defc",
-    "run": "01916629cc74b03e9251d18dc0941b60fb70f6d9c22b6bde0e85fbd62fef5ad8"
+    "idle": "093054a3e4efba2678807e8d15cb4906cb9e083a09db7f9fdba2f395af3a3dc3",
+    "walk": "e723064e7d5edcd9d76b23175b36e9fe95554544cb5437831484cdb63abc32c2",
+    "run": "ef01b61a81a4ca391fa03fe2d5db2055c19c2e6a8f77155c57d40de7fcbf3dda"
   },
   "output_sha256": {
-    "idle": "5d6d552d7e56b95cf3690279be45d4d23066cbe586f023ef9604691b59efda02",
-    "walk": "b0a42a3055f71455ec530117ced950390654c2935fd3587ecac1e424da48defc",
-    "run": "01916629cc74b03e9251d18dc0941b60fb70f6d9c22b6bde0e85fbd62fef5ad8"
+    "idle": "093054a3e4efba2678807e8d15cb4906cb9e083a09db7f9fdba2f395af3a3dc3",
+    "walk": "e723064e7d5edcd9d76b23175b36e9fe95554544cb5437831484cdb63abc32c2",
+    "run": "ef01b61a81a4ca391fa03fe2d5db2055c19c2e6a8f77155c57d40de7fcbf3dda"
   },
   "cleanup": {
     "idle": {

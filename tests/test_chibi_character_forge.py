@@ -40,10 +40,20 @@ def test_chibi_manifest_covers_the_complete_forge_matrix() -> None:
     assert manifest["kind"] == "canonical_character_forge_sprite_style"
     assert manifest["status"] == "canonical"
     assert manifest["style_id"] == "jrpg_chibi"
-    assert manifest["display_name"] == "JRPG Chibi"
+    assert manifest["display_name"] == "JRPG"
     assert _sha256(STYLE) == manifest["style_config_sha256"]
     assert tuple(manifest["camera_heights"]) == CAMERA_HEIGHT_ORDER
     assert set(manifest["characters"]) == set(CHARACTERS)
+    assert set(manifest["models"]) == set(CHARACTERS)
+
+    for character_id, model in manifest["models"].items():
+        assert model["kind"] == "jrpg_rest_retargeted_character_model"
+        assert model["character_id"] == character_id
+        assert model["method"] == "rest_pose_lbs_rebind"
+        assert model["runtime_source_rotation_sha256"] == model[
+            "runtime_jrpg_rotation_sha256"
+        ]
+        assert 2.8 <= model["heads_tall"] <= 4.6
 
     for character_id, cameras in manifest["characters"].items():
         base_id = CHARACTERS[character_id]
@@ -52,7 +62,7 @@ def test_chibi_manifest_covers_the_complete_forge_matrix() -> None:
             palette_path = ASSET_ROOT / camera["palette"]["file"]
             assert _sha256(palette_path) == camera["palette"]["sha256"]
             with Image.open(palette_path) as palette:
-                assert palette.size == (20 * 16, 16)
+                assert palette.size == (16 * 16, 16)
             assert set(camera["sequences"]) == set(SEQUENCES)
             for sequence_name, frame_count in SEQUENCES.items():
                 sequence = camera["sequences"][sequence_name]
@@ -81,15 +91,19 @@ def test_chibi_manifest_covers_the_complete_forge_matrix() -> None:
                         assert opened.info["loop"] == 0
 
 
-def test_chibi_profile_is_an_aggressive_non_destructive_proportion_contract() -> None:
+def test_jrpg_profile_is_a_rest_retargeted_proportion_contract() -> None:
     style = json.loads(STYLE.read_text(encoding="utf-8"))
-    scales = style["bone_scales"]
-    assert scales["Head"][0] >= 1.5
-    assert scales["LeftUpLeg"][1] <= 0.56
-    assert scales["LeftLeg"][1] <= 0.62
-    assert scales["LeftArm"][1] <= 0.68
-    assert style["silhouette_outline"] is True
-    assert style["palette_size"] == 20
+    assert style["schema_version"] == 2
+    assert style["display_name"] == "JRPG"
+    assert style["method"] == "rest_pose_lbs_rebind"
+    scales = style["rest_retarget"]["bones"]
+    assert scales["Head"] == [1.6, 1.6]
+    assert scales["LeftUpLeg"][0] == 0.66
+    assert scales["LeftLeg"][0] == 0.64
+    assert scales["LeftArm"][0] == 0.74
+    assert style["rest_retarget"]["motion_scale"] == 0.68
+    assert style["silhouette_outline"] is False
+    assert style["palette_size"] == 16
     assert style["framing_scales"]["dwarf_bald_male"] > style["framing_scales"]["elf_bald_female"]
 
 

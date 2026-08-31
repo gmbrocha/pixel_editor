@@ -30,6 +30,7 @@ DESTINATION = (
 )
 SIZES = {"idle": (1792, 512), "walk": (1024, 512), "run": (1024, 512)}
 DIRECTIONS = ("front", "back", "right", "left")
+AUTHORITATIVE_DIRECTIONS = DIRECTIONS[:3]
 
 
 def _sha256(path: Path) -> str:
@@ -40,6 +41,19 @@ def _hex(color: tuple[int, int, int]) -> str:
     return "#" + "".join(f"{channel:02X}" for channel in color)
 
 
+def _with_mirrored_left(source: Image.Image) -> Image.Image:
+    result = source.copy()
+    for frame_index in range(8):
+        right = source.crop(
+            (frame_index * 128, 2 * 128, (frame_index + 1) * 128, 3 * 128)
+        )
+        result.paste(
+            right.transpose(Image.Transpose.FLIP_LEFT_RIGHT),
+            (frame_index * 128, 3 * 128),
+        )
+    return result
+
+
 def _build(destination: Path) -> None:
     with Image.open(SOURCE) as opened:
         source = opened.convert("RGBA")
@@ -47,15 +61,18 @@ def _build(destination: Path) -> None:
         raise ValueError(f"Expected {SIZES['run']} source, got {source.size}")
     if set(source.getchannel("A").get_flattened_data()) - {0, 255}:
         raise ValueError("Blindfold source must use binary transparency")
-    for row, direction in enumerate(DIRECTIONS):
+    for row, direction in enumerate(AUTHORITATIVE_DIRECTIONS):
         alpha = source.crop((0, row * 128, 1024, (row + 1) * 128)).getchannel("A")
         if alpha.getbbox() is None:
             raise ValueError(f"Blindfold source is missing its {direction} row")
+    if source.crop((0, 3 * 128, 1024, 4 * 128)).getchannel("A").getbbox():
+        raise ValueError("Blindfold source Left row must remain empty and mirror Right")
+    run = _with_mirrored_left(source)
 
     destination.mkdir(parents=True, exist_ok=True)
     for sequence, size in SIZES.items():
         output = destination / f"{sequence}.png"
-        image = source if sequence == "run" else Image.new(
+        image = run if sequence == "run" else Image.new(
             "RGBA", size, (0, 0, 0, 0)
         )
         image.save(output, format="PNG", optimize=False, compress_level=9)
@@ -88,6 +105,7 @@ def _build(destination: Path) -> None:
         "version": 1,
         "status": "incomplete",
         "animations": animations,
+        "directionMirrors": {"run": {"left": "right"}},
         "coverage": {
             "idle": [],
             "walk": [],
@@ -100,7 +118,13 @@ def _build(destination: Path) -> None:
             "source": SOURCE.relative_to(ROOT).as_posix(),
             "sourceSha256": _sha256(SOURCE),
             "cameraHeight": "low",
-            "authoritativeDirections": list(DIRECTIONS),
+            "authoritativeDirections": list(AUTHORITATIVE_DIRECTIONS),
+            "derivedDirections": {
+                "left": {
+                    "source": "right",
+                    "transform": "flip_complete_composite_horizontal",
+                }
+            },
             "approvedAnimations": ["run"],
             "renderOrderContract": "face_accessory_under_hair",
             "animationSha256": {

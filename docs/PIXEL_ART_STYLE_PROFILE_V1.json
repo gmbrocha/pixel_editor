@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "id": "pixel_forge_heroic_jrpg_v1",
+  "display_name": "Pixel Forge Heroic JRPG",
+  "status": "proposed",
+  "intent": "Heroic, class-readable JRPG pixel art with strong silhouettes, deliberate clusters, material clarity, and stable full-loop animation.",
+  "reference_policy": {
+    "role": "inspiration_only",
+    "copy_character_designs": false,
+    "redistribute_reference_images": false,
+    "provider_neutral": true
+  },
+  "canvas": {
+    "width": 128,
+    "height": 128,
+    "alpha": "binary",
+    "resampling": "nearest_neighbor",
+    "anti_aliasing": false,
+    "blur": false,
+    "minimum_safe_margin_px": 4,
+    "background": "transparent"
+  },
+  "palette": {
+    "final_target_colors": 24,
+    "final_max_colors": 32,
+    "component_ramp_min_colors": 3,
+    "component_ramp_max_colors": 5,
+    "saturated_accent_ramps_max": 2,
+    "palette_scope": "per_character_shared_across_actions_and_directions",
+    "palette_swap_mode": "whole_ramp_role_preserving",
+    "dithering_default": false
+  },
+  "construction": {
+    "cluster_first": true,
+    "isolated_pixels_default": "reject",
+    "internal_single_pixel_holes_default": "reject",
+    "contour_normal_width_px": 1,
+    "contour_colors": [
+      "deep_navy",
+      "deep_plum",
+      "deep_umber",
+      "hue_related_dark"
+    ],
+    "uniform_black_outline": false,
+    "lighting": "upper_left_front",
+    "shading": "connected_planes",
+    "gradients": false
+  },
+  "proportions": {
+    "mode": "archetype_specific_heroic_compression",
+    "universal_chibi_template": false,
+    "readability_exaggeration": [
+      "head",
+      "hands",
+      "feet",
+      "hair",
+      "signature_weapons",
+      "loose_clothing"
+    ],
+    "preserve": [
+      "character_identity",
+      "body_archetype",
+      "facing",
+      "action",
+      "equipment_identity"
+    ]
+  },
+  "silhouette": {
+    "blender_alpha_role": "authoritative_core",
+    "hard_clip_available_as_fallback": true,
+    "envelope_validation": "semantic_and_temporal",
+    "initial_final_pixel_budgets": {
+      "torso_limb_anatomy": 1,
+      "hands_feet": 2,
+      "fitted_clothing_armor": 1,
+      "hair_beard_fur": 3,
+      "skirt_coat_robe_cloak": 4,
+      "rigid_weapon_prop": 2,
+      "declared_magic_effect": 6
+    },
+    "budget_status": "provisional_until_golden_set",
+    "excursion_requirements": [
+      "connected_to_legal_semantic_region_or_declared_effect",
+      "high_overlap_with_authoritative_core",
+      "does_not_invade_protected_foreground_region",
+      "temporally_coherent",
+      "preserves_identity_action_and_equipment"
+    ]
+  },
+  "occlusion": {
+    "mode": "semantic_depth_and_ownership",
+    "conceptual_back_to_front_order": [
+      "back_effects_and_equipment",
+      "back_hair_and_loose_garments",
+      "background_anatomy",
+      "torso_and_leg_garments",
+      "foreground_anatomy",
+      "owned_gloves_boots_and_foreground_equipment",
+      "face_accessories_and_front_headwear",
+      "front_hair_and_foreground_effects"
+    ],
+    "protected_rules": [
+      "torso_garment_cannot_cover_foreground_hand_or_forearm",
+      "leg_garment_cannot_cover_foreground_hand_or_weapon",
+      "gloves_replace_owned_hand_but_respect_held_weapon",
+      "boots_replace_owned_lower_region_and_respect_overlying_garments",
+      "front_hair_may_cover_face_accessory_by_declared_mask",
+      "back_hair_may_be_occluded_by_declared_hood_cowl_armor_or_cloak_mask"
+    ],
+    "file_order_is_depth_authority": false
+  },
+  "directions": {
+    "authored_truths": [
+      "front",
+      "back",
+      "right"
+    ],
+    "left_policy": "mirror_complete_right_composite_only_when_recipe_is_mirror_safe",
+    "asymmetry_requires_metadata_or_explicit_left": true
+  },
+  "animation": {
+    "approval_unit": "complete_native_speed_loop",
+    "actions": {
+      "run": {
+        "runtime_frames": 8,
+        "four_frame_derivation_allowed": false
+      },
+      "walk": {
+        "runtime_frames": 8,
+        "four_frame_derivation_allowed": false
+      },
+      "idle": {
+        "runtime_frames": 14,
+        "pause_representation": "playback_duration_not_duplicate_editing_frames"
+      }
+    },
+    "temporal_rejects": [
+      "unmotivated_contour_crawl",
+      "palette_or_material_flicker",
+      "single_frame_detached_artifacts",
+      "accessory_popping",
+      "unexplained_side_switching",
+      "grip_changes",
+      "accidental_duplicate_poses",
+      "apparent_limb_reversal",
+      "floating_hair_or_loose_clothing",
+      "broken_loop_closure"
+    ]
+  },
+  "authority": {
+    "blender_owns": [
+      "camera",
+      "action",
+      "pose",
+      "facing",
+      "body_identity",
+      "equipment_identity",
+      "semantic_source_maps"
+    ],
+    "deterministic_render_owns": [
+      "composition_core",
+      "fallback_output"
+    ],
+    "finisher_may": [
+      "simplify",
+      "form_deliberate_clusters",
+      "recolor_within_declared_ramps",
+      "improve_contours",
+      "exaggerate_within_semantic_envelopes",
+      "resolve_declared_semantic_overlaps"
+    ],
+    "finisher_may_not": [
+      "invent_or_remove_anatomy",
+      "change_action",
+      "change_facing",
+      "replace_equipment",
+      "alter_costume_semantics",
+      "move_character_outside_approved_framing"
+    ]
+  },
+  "validation": {
+    "review_scales": [
+      "native_1x",
+      "nearest_neighbor_8x"
+    ],
+    "hard_reject": [
+      "wrong_dimensions_frames_direction_timing_or_alpha",
+      "anti_aliased_character_edges",
+      "palette_over_maximum_without_exception",
+      "missing_doubled_detached_or_invented_anatomy",
+      "changed_identity_action_facing_or_equipment",
+      "protected_foreground_anatomy_occluded_by_underlying_component",
+      "detached_non_effect_pixels",
+      "unexplained_internal_transparent_holes",
+      "major_silhouette_change_outside_envelope",
+      "safe_margin_clipping",
+      "temporal_reversal_popping_flicker_or_broken_loop",
+      "incorrect_mirroring_of_asymmetry"
+    ],
+    "human_review": [
+      "contour_break_placement",
+      "readability_value_of_exaggeration",
+      "face_and_material_cluster_scale",
+      "accent_balance",
+      "legal_hair_or_loose_cloth_excursion",
+      "pose_strengthening_asymmetry"
+    ]
+  },
+  "canonicalization": {
+    "requires_approved_golden_set": true,
+    "golden_set": [
+      "tiefling_run_front_8_frames_layered_recipe",
+      "tiefling_run_back_right_and_mirror_safe_left",
+      "dwarf_compact_prop_frame",
+      "muscular_human_material_and_hand_frame",
+      "caster_loose_garment_hair_effect_frame"
+    ]
+  }
+}

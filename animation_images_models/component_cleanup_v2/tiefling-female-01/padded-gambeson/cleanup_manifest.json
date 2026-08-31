@@ -39,14 +39,14 @@
   },
   "source_manifest": "parts/outerwear/padded-gambeson-tiefling-female-01/manifest.json",
   "source_sha256": {
-    "idle": "7de047c8c5ebb998dfa24dcf97d18db9226f885603f3fa74dff0807849cac59b",
-    "walk": "79d202b00c0a42290f6ac4e36eb0334ec1398fb8180bb89af69edfe7166433fa",
-    "run": "5914167d4549e2b66e4f4c9083a932f42cd08632de4567566f328d576b29cd02"
+    "idle": "a9f2a678edfa3f9fcefe60dcf0ce7ec3caa36996bbf5f8986d9885a2d7208539",
+    "walk": "8f1443acce706db8db0ab9c06d74ca7455cab54e0aa64453c99f3ec9a48b66a0",
+    "run": "94cf688ff4257e21f0a401aaf595ad2eb4bd446517b5aa22e8d41252bf33a078"
   },
   "output_sha256": {
-    "idle": "7de047c8c5ebb998dfa24dcf97d18db9226f885603f3fa74dff0807849cac59b",
-    "walk": "79d202b00c0a42290f6ac4e36eb0334ec1398fb8180bb89af69edfe7166433fa",
-    "run": "5914167d4549e2b66e4f4c9083a932f42cd08632de4567566f328d576b29cd02"
+    "idle": "a9f2a678edfa3f9fcefe60dcf0ce7ec3caa36996bbf5f8986d9885a2d7208539",
+    "walk": "8f1443acce706db8db0ab9c06d74ca7455cab54e0aa64453c99f3ec9a48b66a0",
+    "run": "94cf688ff4257e21f0a401aaf595ad2eb4bd446517b5aa22e8d41252bf33a078"
   },
   "cleanup": {
     "idle": {

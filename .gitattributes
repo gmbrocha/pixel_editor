@@ -1,5 +1,7 @@
 # Character Forge generators compare canonical JSON bytes across platforms.
 assets/character-forge/**/*.json text eol=lf
 animation_images_models/**/canonical/*.blend filter=lfs diff=lfs merge=lfs -text
+animation_images_models/**/canonical/**/*.blend filter=lfs diff=lfs merge=lfs -text
 animation_images_models/**/editable/*.blend filter=lfs diff=lfs merge=lfs -text
+animation_images_models/**/new_model_format/**/*.blend filter=lfs diff=lfs merge=lfs -text
 animation_images_models/**/*.json text eol=lf

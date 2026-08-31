@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "id": "heroic",
+  "display_name": "Heroic",
+  "description": "Artist-authored Heroic JRPG proportions rendered from dedicated rest-retargeted Blender models.",
+  "method": "rest_pose_lbs_rebind",
+  "source_kind": "heroic_authored_character_model",
+  "render_size": 1024,
+  "palette_size": 16,
+  "alpha_threshold": 112,
+  "cleanup_threshold": 1,
+  "silhouette_outline": false,
+  "actions": {
+    "idle": "PF_Idle_HeroicJRPG",
+    "walk": "PF_Walk_HeroicJRPG",
+    "run": "PF_Run_HeroicJRPG"
+  },
+  "framing_scales": {
+    "elf_bald_female": 1.0,
+    "tiefling_bald_female": 1.049,
+    "dwarf_bald_male": 1.382,
+    "human_bald_male": 1.067
+  },
+  "framing_reference": {
+    "character_id": "elf_bald_female",
+    "height": 166.4,
+    "note": "Scales preserve the authored relative stature after per-model animation auto-framing."
+  }
+}

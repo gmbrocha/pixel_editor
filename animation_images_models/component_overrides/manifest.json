@@ -3,8 +3,8 @@
   "kind": "approved_component_overrides",
   "status": "canonical",
   "source_config": "animation_images_models/component_override_sources.json",
-  "source_config_sha256": "a673d99e7f60db3ee89a2693a20f05a688c1e219837b959cd09f583f3b542850",
-  "override_count": 3,
+  "source_config_sha256": "3a6a5e325c2812de51c00d3894810d1b62c649c1e7b374871ad6ee28db731a3c",
+  "override_count": 6,
   "overrides": [
     {
       "component_id": "ankle-boots-tiefling-female-01",
@@ -88,6 +88,114 @@
       "source": "animation_images_models/component_cleanup_v2/tiefling-female-01/cropped-training-top/run.png",
       "source_sha256": "3c3806dceb807040d73b3b675b259f5052f1cfffca64fd1516031e65b50d8e5c",
       "output_sha256": "3c3806dceb807040d73b3b675b259f5052f1cfffca64fd1516031e65b50d8e5c",
+      "dimensions": [
+        1024,
+        512
+      ],
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_rows": [
+        "front",
+        "back",
+        "right",
+        "left"
+      ],
+      "authoritative_directions": [
+        "front",
+        "back",
+        "right"
+      ],
+      "derived_directions": {
+        "left": "right"
+      },
+      "transform": "flip_complete_composite_horizontal",
+      "status": "approved"
+    },
+    {
+      "component_id": "tall-riding-boots-tiefling-female-01",
+      "family_id": "tall-riding-boots",
+      "base_id": "tiefling-female-01",
+      "slot": "feet",
+      "sequence": "run",
+      "file": "tiefling-female-01/tall-riding-boots/run.png",
+      "source": "animation_images_models/component_cleanup_v2/tiefling-female-01/tall-riding-boots/run.png",
+      "source_sha256": "f7c2f5b52c9a1dd445107748571272b04644e08f3877c350ef2c14bc30be38ec",
+      "output_sha256": "f7c2f5b52c9a1dd445107748571272b04644e08f3877c350ef2c14bc30be38ec",
+      "dimensions": [
+        1024,
+        512
+      ],
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_rows": [
+        "front",
+        "back",
+        "right",
+        "left"
+      ],
+      "authoritative_directions": [
+        "front",
+        "back",
+        "right"
+      ],
+      "derived_directions": {
+        "left": "right"
+      },
+      "transform": "flip_complete_composite_horizontal",
+      "status": "approved"
+    },
+    {
+      "component_id": "low-waist-pants-tiefling-female-01",
+      "family_id": "low-waist-pants",
+      "base_id": "tiefling-female-01",
+      "slot": "legwear",
+      "sequence": "run",
+      "file": "tiefling-female-01/low-waist-pants/run.png",
+      "source": "animation_images_models/component_cleanup_v2/tiefling-female-01/low-waist-pants/run.png",
+      "source_sha256": "3c632490115c0520043fc7067b55e896692ef1c9bdfd3a8b422b8d72ac1c1fe5",
+      "output_sha256": "dab86285e3f422ff8f014b1ea97448e0ed89573c17a93bedc86e92f4b65ad4bc",
+      "dimensions": [
+        1024,
+        512
+      ],
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_rows": [
+        "front",
+        "back",
+        "right",
+        "left"
+      ],
+      "authoritative_directions": [
+        "front",
+        "back",
+        "right"
+      ],
+      "derived_directions": {
+        "left": "right"
+      },
+      "transform": "flip_complete_composite_horizontal",
+      "status": "approved"
+    },
+    {
+      "component_id": "fingerless-gloves-tiefling-female-01",
+      "family_id": "fingerless-gloves",
+      "base_id": "tiefling-female-01",
+      "slot": "hands",
+      "sequence": "run",
+      "file": "tiefling-female-01/fingerless-gloves/run.png",
+      "source": "animation_images_models/component_cleanup_v2/tiefling-female-01/fingerless-gloves/run.png",
+      "source_sha256": "035de0a9d08e3e0bc3bb26260e7e49adcb3eb4db45d512be484ec63ce1c75106",
+      "output_sha256": "331a1cb5ce19b7e2d4b059610d0ea23c0ba3bd6b1b51558641cf82c649ed46d3",
       "dimensions": [
         1024,
         512

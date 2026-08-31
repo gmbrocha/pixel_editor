@@ -131,10 +131,83 @@ def _build(output_root: Path) -> dict[str, object]:
     return manifest
 
 
+def _validate_output_root() -> None:
+    if not OUTPUT_ROOT.exists():
+        return
+    manifest_path = OUTPUT_ROOT / "manifest.json"
+    if not manifest_path.is_file():
+        raise RuntimeError(f"Refusing to replace unrecognized directory {OUTPUT_ROOT}")
+
+
+def promote_all() -> dict[str, object]:
+    _validate_output_root()
+    with tempfile.TemporaryDirectory(prefix="pf-component-overrides-") as temporary:
+        candidate = Path(temporary)
+        manifest = _build(candidate)
+        if OUTPUT_ROOT.exists():
+            shutil.rmtree(OUTPUT_ROOT)
+        shutil.copytree(candidate, OUTPUT_ROOT)
+    return manifest
+
+
+def promote_target(component_id: str, sequence: str) -> dict[str, object]:
+    """Promote one override while leaving every other canonical record intact."""
+    _validate_output_root()
+    with tempfile.TemporaryDirectory(prefix="pf-component-override-target-") as temporary:
+        candidate_root = Path(temporary)
+        candidate_manifest = _build(candidate_root)
+        candidate_records = {
+            (str(record["component_id"]), str(record["sequence"])): record
+            for record in candidate_manifest["overrides"]
+        }
+        target_key = (component_id, sequence)
+        if target_key not in candidate_records:
+            raise ValueError(f"No configured component override {component_id}/{sequence}")
+        existing_records: dict[tuple[str, str], dict[str, object]] = {}
+        if OUTPUT_ROOT.is_dir():
+            existing = json.loads(
+                (OUTPUT_ROOT / "manifest.json").read_text(encoding="utf-8")
+            )
+            existing_records = {
+                (str(record["component_id"]), str(record["sequence"])): record
+                for record in existing["overrides"]
+            }
+        merged = []
+        for key, candidate_record in candidate_records.items():
+            if key == target_key:
+                merged.append(candidate_record)
+            elif key in existing_records:
+                merged.append(existing_records[key])
+            else:
+                raise RuntimeError(
+                    f"Configured override {key[0]}/{key[1]} has not been promoted"
+                )
+        target_record = candidate_records[target_key]
+        candidate_file = candidate_root / str(target_record["file"])
+        live_file = OUTPUT_ROOT / str(target_record["file"])
+        live_file.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(candidate_file, live_file)
+        manifest = {
+            **candidate_manifest,
+            "override_count": len(merged),
+            "overrides": merged,
+        }
+        (OUTPUT_ROOT / "manifest.json").write_text(
+            json.dumps(manifest, indent=2) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
+    return manifest
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
+    parser.add_argument("--target", metavar="COMPONENT_ID")
+    parser.add_argument("--sequence", default="run")
     args = parser.parse_args()
+    if args.check and args.target:
+        parser.error("--check and --target are mutually exclusive")
     if args.check:
         with tempfile.TemporaryDirectory(prefix="pf-component-overrides-") as temporary:
             candidate = Path(temporary)
@@ -143,13 +216,12 @@ def main() -> int:
                 raise SystemExit("Approved component overrides are stale")
         print("Verified approved component overrides")
         return 0
-    if OUTPUT_ROOT.exists():
-        manifest_path = OUTPUT_ROOT / "manifest.json"
-        if not manifest_path.is_file():
-            raise RuntimeError(f"Refusing to replace unrecognized directory {OUTPUT_ROOT}")
-        shutil.rmtree(OUTPUT_ROOT)
-    manifest = _build(OUTPUT_ROOT)
-    print(f"Promoted {manifest['override_count']} approved component overrides")
+    if args.target:
+        manifest = promote_target(args.target, args.sequence)
+        print(f"Promoted targeted override {args.target}/{args.sequence}")
+    else:
+        manifest = promote_all()
+        print(f"Promoted {manifest['override_count']} approved component overrides")
     return 0
 
 

@@ -60,7 +60,8 @@ def test_catalog_contains_all_approved_motion_bases() -> None:
     validate_catalog(catalog)
     assert dict(catalog.sprite_styles) == {
         "standard": "Standard Pixel",
-        "jrpg_chibi": "JRPG Chibi",
+        "jrpg_chibi": "JRPG",
+        "heroic": "Heroic",
     }
     assert {base.id for base in catalog.bases} == {
         "elf-01",
@@ -100,6 +101,7 @@ def test_catalog_contains_all_approved_motion_bases() -> None:
             assert set(animation.camera_variants) == {
                 *CAMERA_HEIGHT_ORDER,
                 *(f"jrpg_chibi_{value}" for value in CAMERA_HEIGHT_ORDER),
+                *(f"heroic_{value}" for value in CAMERA_HEIGHT_ORDER),
             }
             for camera_height in CAMERA_HEIGHT_ORDER:
                 assert character_base.animation_path(
@@ -337,7 +339,19 @@ def test_tiefling_blindfold_is_exact_and_renders_beneath_hair() -> None:
     with Image.open(source_path) as opened:
         source = opened.convert("RGBA")
     installed = load_part_animation(catalog, blindfold_id, "run")
-    assert installed.tobytes() == source.tobytes()
+    assert installed.crop((0, 0, 1024, 3 * 128)).tobytes() == source.crop(
+        (0, 0, 1024, 3 * 128)
+    ).tobytes()
+    for frame_index in range(8):
+        right = source.crop(
+            (frame_index * 128, 2 * 128, (frame_index + 1) * 128, 3 * 128)
+        )
+        left = installed.crop(
+            (frame_index * 128, 3 * 128, (frame_index + 1) * 128, 4 * 128)
+        )
+        assert left.tobytes() == right.transpose(
+            Image.Transpose.FLIP_LEFT_RIGHT
+        ).tobytes()
     assert {pixel[:3] for pixel in _pixels(installed) if pixel[3]} == set(
         part.color_ramp
     )
@@ -380,13 +394,26 @@ def test_approved_tiefling_run_component_overrides_are_live_and_mirrored() -> No
     catalog = create_default_catalog()
     override_root = ROOT / "animation_images_models" / "component_overrides"
     data = json.loads((override_root / "manifest.json").read_text(encoding="utf-8"))
+    family_data = json.loads(
+        (
+            ROOT / "assets" / "character-forge" / "component_families_manifest.json"
+        ).read_text(encoding="utf-8")
+    )
+    family_variants = {
+        variant["id"]: variant
+        for family in family_data["families"]
+        for variant in family["variants"]
+    }
     assert data["kind"] == "approved_component_overrides"
     assert data["status"] == "canonical"
-    assert data["override_count"] == 3
+    assert data["override_count"] == 6
     assert {record["component_id"] for record in data["overrides"]} == {
         "ankle-boots-tiefling-female-01",
         "cap-sleeve-field-shirt-tiefling-female-01",
         "cropped-training-top-tiefling-female-01",
+        "fingerless-gloves-tiefling-female-01",
+        "low-waist-pants-tiefling-female-01",
+        "tall-riding-boots-tiefling-female-01",
     }
 
     for record in data["overrides"]:
@@ -396,6 +423,12 @@ def test_approved_tiefling_run_component_overrides_are_live_and_mirrored() -> No
         assert part.direction_mirrors == {"run": {"left": "right"}}
         source_path = ROOT / record["source"]
         override_path = override_root / record["file"]
+        family_variant = family_variants[record["component_id"]]
+        part_manifest = ROOT / "assets" / "character-forge" / family_variant["manifest"]
+        assert hashlib.sha256(part_manifest.read_bytes()).hexdigest() == family_variant[
+            "manifest_sha256"
+        ]
+        assert family_variant["animation_sha256"]["run"] == record["output_sha256"]
         live = load_part_animation(catalog, part.id, "run")
         assert hashlib.sha256(source_path.read_bytes()).hexdigest() == record[
             "source_sha256"
@@ -542,7 +575,7 @@ def test_character_forge_window_displays_128px_elf_and_new_parts() -> None:
     assert [
         window.sprite_style_combo.itemData(index)
         for index in range(window.sprite_style_combo.count())
-    ] == ["standard", "jrpg_chibi"]
+    ] == ["standard", "jrpg_chibi", "heroic"]
     assert [
         window.animation_combo.itemData(index)
         for index in range(window.animation_combo.count())
@@ -583,6 +616,13 @@ def test_character_forge_window_displays_128px_elf_and_new_parts() -> None:
     assert window.part_combos["torso"].count() == 5
     assert window.part_combos["outerwear"].count() == 5
     assert window.part_combos["hair"].count() == 1
+    assert window.preview_label.pixmap().size().toTuple() == (1024, 1024)
+    window.sprite_style_combo.setCurrentIndex(
+        window.sprite_style_combo.findData("heroic")
+    )
+    application.processEvents()
+    assert window.recipe.sprite_style == "heroic"
+    assert all(combo.count() == 1 for combo in window.part_combos.values())
     assert window.preview_label.pixmap().size().toTuple() == (1024, 1024)
     window.sprite_style_combo.setCurrentIndex(
         window.sprite_style_combo.findData("standard")

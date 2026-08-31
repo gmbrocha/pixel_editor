@@ -79,7 +79,8 @@ CAMERA_HEIGHT_LABELS = {
 DEFAULT_SPRITE_STYLE = "standard"
 SPRITE_STYLE_LABELS = {
     "standard": "Standard Pixel",
-    "jrpg_chibi": "JRPG Chibi",
+    "jrpg_chibi": "JRPG",
+    "heroic": "Heroic",
 }
 
 

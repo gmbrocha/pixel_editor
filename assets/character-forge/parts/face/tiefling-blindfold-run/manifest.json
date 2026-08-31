@@ -23,6 +23,11 @@
     "walk": "walk.png",
     "run": "run.png"
   },
+  "directionMirrors": {
+    "run": {
+      "left": "right"
+    }
+  },
   "coverage": {
     "idle": [],
     "walk": [],
@@ -51,14 +56,19 @@
   "provenance": {
     "kind": "hand_authored_component",
     "source": "animation_images_models/component_cleanup_v2/new_hand_authored/teifling_blindfold_run.png",
-    "sourceSha256": "3a7971b481e216e67c6b113aa0666b25eacae15bba25c8cabc6c899d3905b693",
+    "sourceSha256": "e0d58c8906f5376bf0e3d2463c8f2694fd603135b88a4a14e059858ed5914f68",
     "cameraHeight": "low",
     "authoritativeDirections": [
       "front",
       "back",
-      "right",
-      "left"
+      "right"
     ],
+    "derivedDirections": {
+      "left": {
+        "source": "right",
+        "transform": "flip_complete_composite_horizontal"
+      }
+    },
     "approvedAnimations": [
       "run"
     ],
@@ -66,7 +76,7 @@
     "animationSha256": {
       "idle": "76074ca80dd6695e8e5247f7fb3de6b48832ef8414eafc59ad956d1c9a81362f",
       "walk": "21df068863f49340e4a38a9e1bd69f4e6e29ae5655a3b8d855b88980fdcf4df9",
-      "run": "ece01bbf0f2f8e890eb5f8667579bbd2852e6162ff187890fa2055b776f0d033"
+      "run": "c9ebf6e898f467546cc4f686c79fc36f8869a89234e815e6c685d107f54abbc9"
     }
   }
 }

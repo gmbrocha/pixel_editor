@@ -1,0 +1,1790 @@
+{
+  "schema_version": 1,
+  "kind": "canonical_character_forge_sprite_style",
+  "status": "canonical",
+  "style_id": "heroic",
+  "display_name": "Heroic",
+  "style_config": "animation_images_models/heroic_style.json",
+  "style_config_sha256": "81ef357b32267a8f67586011b7f556dfc86a57111ba0d746a15863ecb3e1e7b1",
+  "timing_config": "animation_images_models/approved_motion_timing.json",
+  "timing_config_sha256": "6bc9ce7ea1004a2c9b06cef7ac62c40d33cea96a3637a097c1298d4a59e84eb0",
+  "camera_heights": {
+    "top_down": {
+      "name": "Near Top-Down",
+      "pitch_degrees": 70.0
+    },
+    "three_quarter": {
+      "name": "Three-Quarter",
+      "pitch_degrees": 45.0
+    },
+    "low": {
+      "name": "Low",
+      "pitch_degrees": 28.0
+    }
+  },
+  "models": {
+    "elf_bald_female": {
+      "schema_version": 1,
+      "kind": "heroic_authored_character_model",
+      "status": "canonical_source",
+      "character_id": "elf_bald_female",
+      "base_id": "elf-01",
+      "mesh": "PF_Elf_Bald_Female",
+      "armature": "PF_Elf_Bald_Female_Rig",
+      "blend": "elf_bald_female_heroic_render.blend",
+      "output_blend_sha256": "0a6d580ecfeb269f5cf90d9e3b2c0054a4835c817c65d4ffc7bd03ce1cf773e2",
+      "submission_blend": "elf_bald_female_heroic.blend",
+      "submission_blend_sha256": "1a3f7557cb8fc2232aed774d3bb931a2aa730d12a4d758a3a76a6c02dbd033a1",
+      "authoring_report_sha256": "ae2d313b77547d7ccdfe26a9d4e3c04a2a8a84d9fd8d828b5f309a9138a4f2df",
+      "method": "rest_pose_lbs_rebind",
+      "heads_tall": 6.4,
+      "height": 166.4,
+      "actions": {
+        "idle": "PF_Idle_HeroicJRPG",
+        "walk": "PF_Walk_HeroicJRPG",
+        "run": "PF_Run_HeroicJRPG"
+      },
+      "protected_actions": [
+        "PF_Idle_Approved",
+        "PF_Walk_Approved",
+        "PF_Run_Approved"
+      ]
+    },
+    "tiefling_bald_female": {
+      "schema_version": 1,
+      "kind": "heroic_authored_character_model",
+      "status": "canonical_source",
+      "character_id": "tiefling_bald_female",
+      "base_id": "tiefling-female-01",
+      "mesh": "PF_Tiefling_Bald_Female",
+      "armature": "PF_Tiefling_Bald_Female_Rig",
+      "blend": "tiefling_bald_female_heroic_render.blend",
+      "output_blend_sha256": "444f71ced6bc3dcf2d0ce6e1ae07b8973c34ff53bfaab72919ae31ca2a2a5b96",
+      "submission_blend": "tiefling_bald_female_heroic.blend",
+      "submission_blend_sha256": "575fcff9d0a135935e50b627a3b4337fe8c1d815a958d1e1e3983a789571beea",
+      "authoring_report_sha256": "ae2d313b77547d7ccdfe26a9d4e3c04a2a8a84d9fd8d828b5f309a9138a4f2df",
+      "method": "rest_pose_lbs_rebind",
+      "heads_tall": 6.1,
+      "height": 158.6,
+      "horn_inclusive_heads_tall": 5.01,
+      "actions": {
+        "idle": "PF_Idle_HeroicJRPG",
+        "walk": "PF_Walk_HeroicJRPG",
+        "run": "PF_Run_HeroicJRPG"
+      },
+      "protected_actions": [
+        "PF_Idle_Approved",
+        "PF_Walk_Approved",
+        "PF_Run_Approved"
+      ]
+    },
+    "dwarf_bald_male": {
+      "schema_version": 1,
+      "kind": "heroic_authored_character_model",
+      "status": "canonical_source",
+      "character_id": "dwarf_bald_male",
+      "base_id": "dwarf-male-01",
+      "mesh": "PF_Dwarf_Bald_Male",
+      "armature": "PF_Dwarf_Bald_Male_Rig",
+      "blend": "dwarf_bald_male_heroic_render.blend",
+      "output_blend_sha256": "3740e252bdb63f648392a1d465ca7a54ea3d6e0995c4c346bbf08005abe14471",
+      "submission_blend": "dwarf_bald_male_heroic.blend",
+      "submission_blend_sha256": "cd76130e20fb5b437be91d68d7bdfdfef94622c7223422115d78ce91d5a17bd2",
+      "authoring_report_sha256": "ae2d313b77547d7ccdfe26a9d4e3c04a2a8a84d9fd8d828b5f309a9138a4f2df",
+      "method": "rest_pose_lbs_rebind",
+      "heads_tall": 4.3,
+      "height": 120.4,
+      "actions": {
+        "idle": "PF_Idle_HeroicJRPG",
+        "walk": "PF_Walk_HeroicJRPG",
+        "run": "PF_Run_HeroicJRPG"
+      },
+      "protected_actions": [
+        "PF_Idle_Approved",
+        "PF_Walk_Approved",
+        "PF_Run_Approved"
+      ]
+    },
+    "human_bald_male": {
+      "schema_version": 1,
+      "kind": "heroic_authored_character_model",
+      "status": "canonical_source",
+      "character_id": "human_bald_male",
+      "base_id": "human-muscular-male-01",
+      "mesh": "PF_Human_Bald_Male",
+      "armature": "PF_Human_Bald_Male_Rig",
+      "blend": "human_bald_male_heroic_render.blend",
+      "output_blend_sha256": "cb0da2944adde3de3601080e5c4a8424ef695e12ac90d4230e2e50e0e63bc453",
+      "submission_blend": "human_bald_male_heroic.blend",
+      "submission_blend_sha256": "974963cfc3e3f13270ba359a4c1403ab5f875e933fd2f93efc90eda9e54a8d5a",
+      "authoring_report_sha256": "ae2d313b77547d7ccdfe26a9d4e3c04a2a8a84d9fd8d828b5f309a9138a4f2df",
+      "method": "rest_pose_lbs_rebind",
+      "heads_tall": 6.0,
+      "height": 156.0,
+      "actions": {
+        "idle": "PF_Idle_HeroicJRPG",
+        "walk": "PF_Walk_HeroicJRPG",
+        "run": "PF_Run_HeroicJRPG"
+      },
+      "protected_actions": [
+        "PF_Idle_Approved",
+        "PF_Walk_Approved",
+        "PF_Run_Approved"
+      ]
+    }
+  },
+  "characters": {
+    "elf_bald_female": {
+      "top_down": {
+        "sequences": {
+          "idle": {
+            "frame_count": 14,
+            "fps": 6,
+            "frame_durations_ms": [
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              1500,
+              167
+            ],
+            "minimum_alpha_margin": 28,
+            "sheet_sha256": "b716b7e3dad383bdd1d91132cd7125e2799b3b42ff59b6abe4c348a05b8282c1",
+            "regions_sha256": "56450a7d2fcffe9155b891e3d3a7d610cf098c30a3ede3eb35d55493e3f2fc73",
+            "sheet": "bases/elf-01/styles/heroic/top_down/idle.png",
+            "regions": "style_regions/heroic/elf-01/top_down/idle_regions.png",
+            "region_preview": "style_regions/heroic/elf-01/top_down/idle_regions_preview.png",
+            "region_preview_sha256": "8dde5c6a059552383a9a9af5aae79b14cbe34d6284c0f33c5fdec1444c094103",
+            "review": "base_sources/elf-01/styles/heroic/top_down/idle_review_4x.png",
+            "review_sha256": "44f53a5270e04ffaeccea524be30f1f831f37a81041d830cd9b3ba01e6efc361",
+            "gifs": {
+              "front": {
+                "file": "base_sources/elf-01/styles/heroic/top_down/idle_front.gif",
+                "sha256": "4653f03f30296e2d09d68fa3c7e91e858fffab472def42ec38465ca3ca74e92d"
+              },
+              "back": {
+                "file": "base_sources/elf-01/styles/heroic/top_down/idle_back.gif",
+                "sha256": "2598fee89b9a10d54c00b54a0868e4fcac470f7ab59a63081eb13a9281fa25a9"
+              },
+              "right": {
+                "file": "base_sources/elf-01/styles/heroic/top_down/idle_right.gif",
+                "sha256": "642fa40cf8d087dd914af5d8d09fa616495420bd6ce2ce8a0272cd96abe3ee57"
+              },
+              "left": {
+                "file": "base_sources/elf-01/styles/heroic/top_down/idle_left.gif",
+                "sha256": "19be0b3e4c4adfe5bd717f2286cb2808977a09b3183282af855e81766dea8b8d"
+              }
+            }
+          },
+          "walk": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 13,
+            "sheet_sha256": "e0c0bd73c76add69e377134fd4e9a575a5669dcb02bb2d542a6ce9edb2eef634",
+            "regions_sha256": "f39fbb0c91e68f91f3cf133ae64cd1e08b7b77e1483a314d4c0b89dc804d7ddd",
+            "sheet": "bases/elf-01/styles/heroic/top_down/walk.png",
+            "regions": "style_regions/heroic/elf-01/top_down/walk_regions.png",
+            "region_preview": "style_regions/heroic/elf-01/top_down/walk_regions_preview.png",
+            "region_preview_sha256": "53fcb2f802768dc1dff1636f85e35515874d3cf2f5114f95790d4f5492e1cc2d",
+            "review": "base_sources/elf-01/styles/heroic/top_down/walk_review_4x.png",
+            "review_sha256": "5666a753210036bdf9273f0ec92544bbf6091b1174ee062bb840424a6d62f880",
+            "gifs": {
+              "front": {
+                "file": "base_sources/elf-01/styles/heroic/top_down/walk_front.gif",
+                "sha256": "efa59326adb8f9d3b0c0560a71ee8d8f46a2ecd45f6db207d8bdaaa7231f6cca"
+              },
+              "back": {
+                "file": "base_sources/elf-01/styles/heroic/top_down/walk_back.gif",
+                "sha256": "9db9920957ee90b3390c505f49035c5830b778bfa39935326e29cddc71390c53"
+              },
+              "right": {
+                "file": "base_sources/elf-01/styles/heroic/top_down/walk_right.gif",
+                "sha256": "1b5bfb496cf40ab5f2e431d9d52242f6211e8e6aeca08e8ae3a4ce33426f1753"
+              },
+              "left": {
+                "file": "base_sources/elf-01/styles/heroic/top_down/walk_left.gif",
+                "sha256": "aedcddb8438f650bae558d218c0ae137fa2233f4b7633e2cc7a875621cdd55d0"
+              }
+            }
+          },
+          "run": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 13,
+            "sheet_sha256": "0b819472ca45423981a4bb5fcc4af59ec21b8f06f503ba8fec6117d307883ac6",
+            "regions_sha256": "4a09a22fabffceee2390fc617442795824c90fbd5dcd77d614e734df1a5466cf",
+            "sheet": "bases/elf-01/styles/heroic/top_down/run.png",
+            "regions": "style_regions/heroic/elf-01/top_down/run_regions.png",
+            "region_preview": "style_regions/heroic/elf-01/top_down/run_regions_preview.png",
+            "region_preview_sha256": "30ea577ad19a80934b43dcdc7a34f55529989c5ea82c3b72f43d133d0763ec6a",
+            "review": "base_sources/elf-01/styles/heroic/top_down/run_review_4x.png",
+            "review_sha256": "fc57718930528522d5a0cce5a9a2f753bfa52c7dd8406cc98796486b107a8e08",
+            "gifs": {
+              "front": {
+                "file": "base_sources/elf-01/styles/heroic/top_down/run_front.gif",
+                "sha256": "d5b40bc35a1d18675fc77d78ab691ebbf44a46cb7cd0ffef7d5afd1df75d69cd"
+              },
+              "back": {
+                "file": "base_sources/elf-01/styles/heroic/top_down/run_back.gif",
+                "sha256": "bc407f430a4dcbd070c522bd42a075e760aa970d07b10aa21c565d76f836fc2e"
+              },
+              "right": {
+                "file": "base_sources/elf-01/styles/heroic/top_down/run_right.gif",
+                "sha256": "e613a5baecb3806d09247e2a025e93b3be2d80168457955ac94a03d4e98c2a4a"
+              },
+              "left": {
+                "file": "base_sources/elf-01/styles/heroic/top_down/run_left.gif",
+                "sha256": "60fda09716c9dcba4a07eef938fb151fe72b2d467a45f32d6de45ee208b802b2"
+              }
+            }
+          }
+        },
+        "palette": {
+          "file": "base_sources/elf-01/styles/heroic/top_down/palette.png",
+          "sha256": "a967cfd82b08f028e5524b580a02319adf1ab72eba751e3d12be5cf02e288f90"
+        }
+      },
+      "three_quarter": {
+        "sequences": {
+          "idle": {
+            "frame_count": 14,
+            "fps": 6,
+            "frame_durations_ms": [
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              1500,
+              167
+            ],
+            "minimum_alpha_margin": 23,
+            "sheet_sha256": "cfa333773d26baa8972c3ba2837cf4f8e1f3f0f28f4e60920de88e7dcdf787e0",
+            "regions_sha256": "893357088330d58ba41461f2f6457c2a42e6ef841ea751ce2b1893d83cd1c935",
+            "sheet": "bases/elf-01/styles/heroic/three_quarter/idle.png",
+            "regions": "style_regions/heroic/elf-01/three_quarter/idle_regions.png",
+            "region_preview": "style_regions/heroic/elf-01/three_quarter/idle_regions_preview.png",
+            "region_preview_sha256": "140d4a72b86d3536e7470b165ca86e16748ade92985cfe62cde484c7623ece53",
+            "review": "base_sources/elf-01/styles/heroic/three_quarter/idle_review_4x.png",
+            "review_sha256": "600b5e48688f538e5a51d7375f362ab058db89596e7f11ece0b3ad08e433a4c1",
+            "gifs": {
+              "front": {
+                "file": "base_sources/elf-01/styles/heroic/three_quarter/idle_front.gif",
+                "sha256": "0b273376721445451a6c8cbfa3636e7b31e27723d7109662d024dc486e9a3ffe"
+              },
+              "back": {
+                "file": "base_sources/elf-01/styles/heroic/three_quarter/idle_back.gif",
+                "sha256": "23ad847a8c2f71dfbd96c7420b2ba8204b59ce5a19ac8ee61dbc9ec3a230c379"
+              },
+              "right": {
+                "file": "base_sources/elf-01/styles/heroic/three_quarter/idle_right.gif",
+                "sha256": "1341d402e3693ac93f3a48a89dd42105757a354ec2cae3f99811b697f04cc837"
+              },
+              "left": {
+                "file": "base_sources/elf-01/styles/heroic/three_quarter/idle_left.gif",
+                "sha256": "8e78f3344a795dd79abc75d7a8f8d097161051d93ac5733b22adeb8ef3c60a30"
+              }
+            }
+          },
+          "walk": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 13,
+            "sheet_sha256": "8954e632130c65e1391ad78732e995e8a15686365469188b78e82a08c7945e4b",
+            "regions_sha256": "f17f03b5a6f76b923147ec74f9f79d651a152f85143e06e126eceab1d22366f9",
+            "sheet": "bases/elf-01/styles/heroic/three_quarter/walk.png",
+            "regions": "style_regions/heroic/elf-01/three_quarter/walk_regions.png",
+            "region_preview": "style_regions/heroic/elf-01/three_quarter/walk_regions_preview.png",
+            "region_preview_sha256": "bed1f25bdbdfc0f45fa28d8c170c01e46d623aab5d9dac6076f7b7f653ab6112",
+            "review": "base_sources/elf-01/styles/heroic/three_quarter/walk_review_4x.png",
+            "review_sha256": "953000ef1cef6620de56f76fea245a548d19de308a8fb2470936ee85a52cb4af",
+            "gifs": {
+              "front": {
+                "file": "base_sources/elf-01/styles/heroic/three_quarter/walk_front.gif",
+                "sha256": "c9af2517a71bd8caae308f647f2b6b91c51af06caff1a0d634e1dd6e26e44378"
+              },
+              "back": {
+                "file": "base_sources/elf-01/styles/heroic/three_quarter/walk_back.gif",
+                "sha256": "3e9214efd0f4afbf144e90d834fdffa5f840c8c9587a7166f2a9edec13df652d"
+              },
+              "right": {
+                "file": "base_sources/elf-01/styles/heroic/three_quarter/walk_right.gif",
+                "sha256": "7aae5d922980fe055ce348e69dfdfbc11e2277d61549c29ab7f1c3ca7896cf95"
+              },
+              "left": {
+                "file": "base_sources/elf-01/styles/heroic/three_quarter/walk_left.gif",
+                "sha256": "cb7ad451bd4be6da375b2229549c5a3b4863ef5457a9a9652406f4bfeda0ab9d"
+              }
+            }
+          },
+          "run": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 14,
+            "sheet_sha256": "e04cec8bf9600758a79297f3c773cc11caefe867c1780b4c2dc840b11e4cf927",
+            "regions_sha256": "87faf2d70d5ad5ccc2bc1a80dea604cb5f579fc2d56330a72340882e55e3e249",
+            "sheet": "bases/elf-01/styles/heroic/three_quarter/run.png",
+            "regions": "style_regions/heroic/elf-01/three_quarter/run_regions.png",
+            "region_preview": "style_regions/heroic/elf-01/three_quarter/run_regions_preview.png",
+            "region_preview_sha256": "8ab6b3efbaf26df3561b3559719d2b6bfd0ec1cef4d36b49f3ac43fbba562d2d",
+            "review": "base_sources/elf-01/styles/heroic/three_quarter/run_review_4x.png",
+            "review_sha256": "f3b3524346aeff2736b9a3088a00b5d16b9d78ef1c8493591df8ff101c968421",
+            "gifs": {
+              "front": {
+                "file": "base_sources/elf-01/styles/heroic/three_quarter/run_front.gif",
+                "sha256": "f7efa70962e9fff16f71ccdd1259dfb886c360bbbe9a3c357425791847aa2125"
+              },
+              "back": {
+                "file": "base_sources/elf-01/styles/heroic/three_quarter/run_back.gif",
+                "sha256": "de86fa41aaee9d40fc30bda2b88a17267ec7956c59aec5eef678738a93609395"
+              },
+              "right": {
+                "file": "base_sources/elf-01/styles/heroic/three_quarter/run_right.gif",
+                "sha256": "54ea25dd234c2bf24f5269fa8970a0b78c3fe74e16578299688eddda550e9c54"
+              },
+              "left": {
+                "file": "base_sources/elf-01/styles/heroic/three_quarter/run_left.gif",
+                "sha256": "9b7a3c95abbaebea96a079e14cb8b4d1a38206d4d64b455854e49b22295b0b7f"
+              }
+            }
+          }
+        },
+        "palette": {
+          "file": "base_sources/elf-01/styles/heroic/three_quarter/palette.png",
+          "sha256": "e303d6f9421ed7b341f0f4475f57f7e27be39bfbc36c2d5a4c9454cf96219f6f"
+        }
+      },
+      "low": {
+        "sequences": {
+          "idle": {
+            "frame_count": 14,
+            "fps": 6,
+            "frame_durations_ms": [
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              1500,
+              167
+            ],
+            "minimum_alpha_margin": 19,
+            "sheet_sha256": "71f2c0a0ea710b58ed8653e45439c355ddce61806800c0f98f9f0f82731d581f",
+            "regions_sha256": "19507607509f0031e5a715000b430553ffbb0d8848b0fc66c145acb6ee455feb",
+            "sheet": "bases/elf-01/styles/heroic/low/idle.png",
+            "regions": "style_regions/heroic/elf-01/low/idle_regions.png",
+            "region_preview": "style_regions/heroic/elf-01/low/idle_regions_preview.png",
+            "region_preview_sha256": "a08959a5dbb69da6b5a439cb6b09b219654fc25d45f26e6431992ab2ac1f9564",
+            "review": "base_sources/elf-01/styles/heroic/low/idle_review_4x.png",
+            "review_sha256": "40da8559e2e067e4542f63265645373780038febf792b188df8414258b26d00f",
+            "gifs": {
+              "front": {
+                "file": "base_sources/elf-01/styles/heroic/low/idle_front.gif",
+                "sha256": "0a1a463e98538699a5a70c57fc69657704e5fa2ddc618ad7bb5a3fc17f1e28bd"
+              },
+              "back": {
+                "file": "base_sources/elf-01/styles/heroic/low/idle_back.gif",
+                "sha256": "37b9640ea33e60e9ade095f171d1c2398d2115231724a37affa005c754d34821"
+              },
+              "right": {
+                "file": "base_sources/elf-01/styles/heroic/low/idle_right.gif",
+                "sha256": "38228352b70869a89d92c613fd3b2225a96a64f6a021aaceb87c70c11592e55e"
+              },
+              "left": {
+                "file": "base_sources/elf-01/styles/heroic/low/idle_left.gif",
+                "sha256": "9cd64e090ff0c93ffb457fc69d62f988200ecef87394a144241d34efadcc62e0"
+              }
+            }
+          },
+          "walk": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 12,
+            "sheet_sha256": "9891ca9a761c4e464d1311f38c3d2990909af7cca1922f3a7f8b3b8015486042",
+            "regions_sha256": "7670d83d7de02868cf5443a5c80192c8c98ef4346f54d6fabc0c7be7d806e228",
+            "sheet": "bases/elf-01/styles/heroic/low/walk.png",
+            "regions": "style_regions/heroic/elf-01/low/walk_regions.png",
+            "region_preview": "style_regions/heroic/elf-01/low/walk_regions_preview.png",
+            "region_preview_sha256": "ea26400ba62289c944471e36519a0f5aa095b6c540e6b85a9b70de45b148b781",
+            "review": "base_sources/elf-01/styles/heroic/low/walk_review_4x.png",
+            "review_sha256": "e7960c1078018d0a7743200c163387614a8a54ff156f3e4bca27d8676e9cf83c",
+            "gifs": {
+              "front": {
+                "file": "base_sources/elf-01/styles/heroic/low/walk_front.gif",
+                "sha256": "07920d2ccc0ce4cb0b99e17b382828982d7b7e19290dc6b9ec8a82549b7f0602"
+              },
+              "back": {
+                "file": "base_sources/elf-01/styles/heroic/low/walk_back.gif",
+                "sha256": "3b05169823ee12a8c4f2002b4b5041a74687abf577660be0d98780400eb1ded9"
+              },
+              "right": {
+                "file": "base_sources/elf-01/styles/heroic/low/walk_right.gif",
+                "sha256": "64a47b8d09cf9946679123b83c34faca9db518eab8ffe75c5b4d4877f6b3a70e"
+              },
+              "left": {
+                "file": "base_sources/elf-01/styles/heroic/low/walk_left.gif",
+                "sha256": "aaa8ce1975706357a5cf4f7b3541579e32f5a1c1712f1590926506999fac08b8"
+              }
+            }
+          },
+          "run": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 15,
+            "sheet_sha256": "88160f4e226734a57aa2ada953222fa86f4bacff0f8abf5e278ec96d9acb2690",
+            "regions_sha256": "7c41590eb9b6a89e25c6d164aba4145703ad2b3c7f53134de300d8ad69a88afb",
+            "sheet": "bases/elf-01/styles/heroic/low/run.png",
+            "regions": "style_regions/heroic/elf-01/low/run_regions.png",
+            "region_preview": "style_regions/heroic/elf-01/low/run_regions_preview.png",
+            "region_preview_sha256": "c717863b3f89676254cf70e13f06242369f3560e7a1640900aa41c9dcddebea6",
+            "review": "base_sources/elf-01/styles/heroic/low/run_review_4x.png",
+            "review_sha256": "1c2d38885f41612ea0c37774092ef57df85d3a3389af0583c773f47d89df5b2e",
+            "gifs": {
+              "front": {
+                "file": "base_sources/elf-01/styles/heroic/low/run_front.gif",
+                "sha256": "56cea8c28e0a47c292a72c387758a1db63433ecaaad8495635bc0e8255eab47e"
+              },
+              "back": {
+                "file": "base_sources/elf-01/styles/heroic/low/run_back.gif",
+                "sha256": "6ebfc053c0df46c38450fca0527954d1bc81a9d8cb667961e993c38551b24868"
+              },
+              "right": {
+                "file": "base_sources/elf-01/styles/heroic/low/run_right.gif",
+                "sha256": "2c2732757c4cd2a7ef70a31841c928472210af4d957410edaa92c6360c5295c5"
+              },
+              "left": {
+                "file": "base_sources/elf-01/styles/heroic/low/run_left.gif",
+                "sha256": "2e291f54c37985210c45ec96ce9ff4da41245dad459125c13586194d1371a638"
+              }
+            }
+          }
+        },
+        "palette": {
+          "file": "base_sources/elf-01/styles/heroic/low/palette.png",
+          "sha256": "50bb4d793e55947a3e741d33f9bb4f55509594ec588536ade75cb4941ec1b563"
+        }
+      }
+    },
+    "tiefling_bald_female": {
+      "top_down": {
+        "sequences": {
+          "idle": {
+            "frame_count": 14,
+            "fps": 6,
+            "frame_durations_ms": [
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              1500,
+              167
+            ],
+            "minimum_alpha_margin": 30,
+            "sheet_sha256": "a96e25b0f36b31231d0c50de52be54da2ebfc051c3d1accff5f49a4f4c586e01",
+            "regions_sha256": "367635496983577e8bc136f6fa167b820d8d4a67e44099bbb943611b6d457349",
+            "sheet": "bases/tiefling-female-01/styles/heroic/top_down/idle.png",
+            "regions": "style_regions/heroic/tiefling-female-01/top_down/idle_regions.png",
+            "region_preview": "style_regions/heroic/tiefling-female-01/top_down/idle_regions_preview.png",
+            "region_preview_sha256": "ef62bef2a9b51a7434d698c3622fe319aed8f2b68060cf868e3f9a3abf8a5282",
+            "review": "base_sources/tiefling-female-01/styles/heroic/top_down/idle_review_4x.png",
+            "review_sha256": "a278329097ba5d57f7fe775504de8c32a1d5c0af135306a3501cc325cb1d6e63",
+            "gifs": {
+              "front": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/top_down/idle_front.gif",
+                "sha256": "267424f6386a3f3c44d9f6c23cd5cf0f5f602a2f17240a137e31bb44b55e84f1"
+              },
+              "back": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/top_down/idle_back.gif",
+                "sha256": "e6bb6cb7c644160bf0e32d400166acb66925d9e7675bd933989dbc1f8832b3b1"
+              },
+              "right": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/top_down/idle_right.gif",
+                "sha256": "fcae53f51e99c9579b233fb736027237d52b39f9446b42a9b9e7fbe2bf0f3322"
+              },
+              "left": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/top_down/idle_left.gif",
+                "sha256": "a73220d8e2ec6efb986950f25d029e01d10ee0259f628fd13c9d7a55a2318f9b"
+              }
+            }
+          },
+          "walk": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 15,
+            "sheet_sha256": "0467353d3421e0b1abb8271ec094133f2d3dc94a190cfbe247d24f71906b925d",
+            "regions_sha256": "12ecfb651b3da852613dffd0a94407b4398d6f3d31ac2c9aedd243e017868a5d",
+            "sheet": "bases/tiefling-female-01/styles/heroic/top_down/walk.png",
+            "regions": "style_regions/heroic/tiefling-female-01/top_down/walk_regions.png",
+            "region_preview": "style_regions/heroic/tiefling-female-01/top_down/walk_regions_preview.png",
+            "region_preview_sha256": "f24ae20990ea6afd258f06a9409500635cd94c86499749f80f7970cf6c6af394",
+            "review": "base_sources/tiefling-female-01/styles/heroic/top_down/walk_review_4x.png",
+            "review_sha256": "ce1a6b7c5b2970120f3ec3e90e4305648c2259d6bd1303cf8ceccfc0d6370dfc",
+            "gifs": {
+              "front": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/top_down/walk_front.gif",
+                "sha256": "ec2da698750927843ef02491feaa2ca61664a524e1fce338626134223e7bded7"
+              },
+              "back": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/top_down/walk_back.gif",
+                "sha256": "6d653cc08529ba2179bde499f928c813f3876bab601609905f96ce232fba1903"
+              },
+              "right": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/top_down/walk_right.gif",
+                "sha256": "f4338dbb6a1829b0344ce9052b8a359539390aaa264ba17372380c19cc6234e4"
+              },
+              "left": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/top_down/walk_left.gif",
+                "sha256": "724cb2d3484a0f2d1f16ae5757e9bea71c17ddf39e40c632b54d3082ae1e2ba0"
+              }
+            }
+          },
+          "run": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 15,
+            "sheet_sha256": "86cdb979b1a9193052468406d119789b6887cc7628bbee7f3f579168628116b9",
+            "regions_sha256": "ff4e842f0d344b9b8fdab60895e17d014630f0547884ff533f4d4e0d79413019",
+            "sheet": "bases/tiefling-female-01/styles/heroic/top_down/run.png",
+            "regions": "style_regions/heroic/tiefling-female-01/top_down/run_regions.png",
+            "region_preview": "style_regions/heroic/tiefling-female-01/top_down/run_regions_preview.png",
+            "region_preview_sha256": "72b1602cf695e95eaaec71c0502561c792989bf2f84fedcdc65d0cdca7ab99cc",
+            "review": "base_sources/tiefling-female-01/styles/heroic/top_down/run_review_4x.png",
+            "review_sha256": "079de13b02566760542a65ae39554970a7b4890032acb8d0bd371a91ab6c0650",
+            "gifs": {
+              "front": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/top_down/run_front.gif",
+                "sha256": "a91615b2018439c10893e4e21c24303304b156af26c2a04a3b1dfc324dd36440"
+              },
+              "back": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/top_down/run_back.gif",
+                "sha256": "f3ce5c050423a87f112dd674ba7e8fd8b8ef2c5299eb873047a8c0e38b743e07"
+              },
+              "right": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/top_down/run_right.gif",
+                "sha256": "7be957b2a9fa76b5d9182edd124660efd61fa6a6d31778b50b5dbd4b10011669"
+              },
+              "left": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/top_down/run_left.gif",
+                "sha256": "62b4a96cf58d83f476b4fee28fd3103a6696683cbabc5bda80536ca2046207a0"
+              }
+            }
+          }
+        },
+        "palette": {
+          "file": "base_sources/tiefling-female-01/styles/heroic/top_down/palette.png",
+          "sha256": "c351fd564b9281504bf1bf0fd33ee1a7999c2eb610dd78b82c322f639c590c6a"
+        }
+      },
+      "three_quarter": {
+        "sequences": {
+          "idle": {
+            "frame_count": 14,
+            "fps": 6,
+            "frame_durations_ms": [
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              1500,
+              167
+            ],
+            "minimum_alpha_margin": 24,
+            "sheet_sha256": "8d8e093071b741bdacc88d30d4fc50945783892add70331849cfbd34f64f9758",
+            "regions_sha256": "758541c8074093bade6059a58cce800a0d4032f6d576d75b1c82eb0d2b67af0a",
+            "sheet": "bases/tiefling-female-01/styles/heroic/three_quarter/idle.png",
+            "regions": "style_regions/heroic/tiefling-female-01/three_quarter/idle_regions.png",
+            "region_preview": "style_regions/heroic/tiefling-female-01/three_quarter/idle_regions_preview.png",
+            "region_preview_sha256": "6d75f9a6953ac66ab0bed849b19fd716cd5fd0a7cc2279cbe02bfd75ef7c9654",
+            "review": "base_sources/tiefling-female-01/styles/heroic/three_quarter/idle_review_4x.png",
+            "review_sha256": "45934517dc4ece04cde0596b883942de31d2a13eb8701896d257b4eda02ff1d7",
+            "gifs": {
+              "front": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/three_quarter/idle_front.gif",
+                "sha256": "e0420af0d1ddf919ee7409fe151b29d552ffe300feb4e9ff1493abf5db8b2e63"
+              },
+              "back": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/three_quarter/idle_back.gif",
+                "sha256": "272434fa49de7d261eee7915534f02597c789646f7faedeef8c6886983713967"
+              },
+              "right": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/three_quarter/idle_right.gif",
+                "sha256": "850f7efcc380449bafb80c3b2a6ee28ae0b21ece62bac8f8450aeab2093ca088"
+              },
+              "left": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/three_quarter/idle_left.gif",
+                "sha256": "25b15beb221bc419742f4dea8cab26e9b484661be460513b1546fe22031c82b7"
+              }
+            }
+          },
+          "walk": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 15,
+            "sheet_sha256": "cc99cad3bb64109790434a9dac03536a116e8fc41ca84677b7426ff5e937dad6",
+            "regions_sha256": "62b6aa12ebbdd232e0ee385bb5edaef3e8e9cd46877999a3b9f1c00e8b552dbe",
+            "sheet": "bases/tiefling-female-01/styles/heroic/three_quarter/walk.png",
+            "regions": "style_regions/heroic/tiefling-female-01/three_quarter/walk_regions.png",
+            "region_preview": "style_regions/heroic/tiefling-female-01/three_quarter/walk_regions_preview.png",
+            "region_preview_sha256": "d18384ee8bc4f1c893206d907c47969b3073051fb651494bf8340d326a053766",
+            "review": "base_sources/tiefling-female-01/styles/heroic/three_quarter/walk_review_4x.png",
+            "review_sha256": "e03548649511d80820197699f8522be15e577b13b71b381becc64a797133b5ac",
+            "gifs": {
+              "front": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/three_quarter/walk_front.gif",
+                "sha256": "76aea8bce158d9c15b22cad67eb588ba1483f9ba70a7e8263096be29e116079b"
+              },
+              "back": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/three_quarter/walk_back.gif",
+                "sha256": "0e5795011164079f1b168bded96100382ec302fa49f929907cade9567d836d36"
+              },
+              "right": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/three_quarter/walk_right.gif",
+                "sha256": "948339f350bf01bb51a94d03bf35fc0b91adfffed35e4f50c87675f8cd2d8d10"
+              },
+              "left": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/three_quarter/walk_left.gif",
+                "sha256": "e9f8d9e49258d5706361e44d16632ff82374d8cf262476e4c0da232c12ae7c77"
+              }
+            }
+          },
+          "run": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 17,
+            "sheet_sha256": "c8f439146e2f8305ccfa2d9ebabe36d7c288ffa550c7b9ea4c39ea6c7b4818f8",
+            "regions_sha256": "88447a4574fca5d6e413f1f5664dbe0443c1e2404501ebc8e9ff773e66bcd0d1",
+            "sheet": "bases/tiefling-female-01/styles/heroic/three_quarter/run.png",
+            "regions": "style_regions/heroic/tiefling-female-01/three_quarter/run_regions.png",
+            "region_preview": "style_regions/heroic/tiefling-female-01/three_quarter/run_regions_preview.png",
+            "region_preview_sha256": "28dfd0e911bc200f2fb2f7df00fc2cda192c4aed156a4910dbdf8f21164af08a",
+            "review": "base_sources/tiefling-female-01/styles/heroic/three_quarter/run_review_4x.png",
+            "review_sha256": "9b0c892c045b3dae2aa9f5ca479d314fe3fe69cfdf202fc7aab3ef253504863f",
+            "gifs": {
+              "front": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/three_quarter/run_front.gif",
+                "sha256": "ee5e8f28371f3a0c186b3d0bd5b1667dafde685690f75c27369a066be268a133"
+              },
+              "back": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/three_quarter/run_back.gif",
+                "sha256": "36934394a43215d116f616266970b9e048c9499afdede0d9b88230442267de44"
+              },
+              "right": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/three_quarter/run_right.gif",
+                "sha256": "4676d44ff9bd82572e34c04303d389797c32cf9b6fcd2e105e045ec772263959"
+              },
+              "left": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/three_quarter/run_left.gif",
+                "sha256": "487317d36ee1c3dec3f2dcbb222d8aeb4cb38be5f304c1ddadd2ca0d38ea9dc7"
+              }
+            }
+          }
+        },
+        "palette": {
+          "file": "base_sources/tiefling-female-01/styles/heroic/three_quarter/palette.png",
+          "sha256": "5084f76e3ca37967dd901a89aa1ef6f88eb6e7bfe675357cecfdfc0b07ca401b"
+        }
+      },
+      "low": {
+        "sequences": {
+          "idle": {
+            "frame_count": 14,
+            "fps": 6,
+            "frame_durations_ms": [
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              1500,
+              167
+            ],
+            "minimum_alpha_margin": 21,
+            "sheet_sha256": "0cd33a889232e62fb5395c95a342935c1ecdc92a547b659e4b131de64c9d7338",
+            "regions_sha256": "c3624223c692f8da6770c3db63f87ca4ce6817c9416f0f17a9dd606e59822617",
+            "sheet": "bases/tiefling-female-01/styles/heroic/low/idle.png",
+            "regions": "style_regions/heroic/tiefling-female-01/low/idle_regions.png",
+            "region_preview": "style_regions/heroic/tiefling-female-01/low/idle_regions_preview.png",
+            "region_preview_sha256": "b4602aae74f00fd94b81528f63b005f83a16b3b21fd8e7b38dfbbf98a05ae5cf",
+            "review": "base_sources/tiefling-female-01/styles/heroic/low/idle_review_4x.png",
+            "review_sha256": "af967454a267d456742c8f76c67ac6bb536f70ffd33fb47d208c0b6b2a582010",
+            "gifs": {
+              "front": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/low/idle_front.gif",
+                "sha256": "f4bd9391f2649de10d9017773fceb5d0a414f45a9b39f2f7436a03d2e10f0212"
+              },
+              "back": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/low/idle_back.gif",
+                "sha256": "801a46690f3afa4ec6c207c70e69939ce07c226a9000a4c30d98af21a02a820f"
+              },
+              "right": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/low/idle_right.gif",
+                "sha256": "3fe1be91dedecbe2a3e40bc6ff7978147dc86a64738e11c987ea091259a5aa7c"
+              },
+              "left": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/low/idle_left.gif",
+                "sha256": "2fc5c56b7f85150bc4e11eccf3043d8d2ba6a7f41736080dc9efd2b3d3148b18"
+              }
+            }
+          },
+          "walk": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 15,
+            "sheet_sha256": "5ca5debafa7c4b61480c9682261ada36edc9c7562d706e5fe6abddcd49416889",
+            "regions_sha256": "c0d23688d432222f24c9c1a8d785a3ef5113facd30269e5b35ad52352c967874",
+            "sheet": "bases/tiefling-female-01/styles/heroic/low/walk.png",
+            "regions": "style_regions/heroic/tiefling-female-01/low/walk_regions.png",
+            "region_preview": "style_regions/heroic/tiefling-female-01/low/walk_regions_preview.png",
+            "region_preview_sha256": "002ddfcf4b767db4da1a20889683fab385fa1a9345ad05e097f1727883f75e26",
+            "review": "base_sources/tiefling-female-01/styles/heroic/low/walk_review_4x.png",
+            "review_sha256": "977d1cdcdb40212ad8a96546edb7783fd25b45bb52c5a463abf441df80261af8",
+            "gifs": {
+              "front": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/low/walk_front.gif",
+                "sha256": "252e29323019ce270767225d4dd8372f4e8b979beededf90cf8c3928073d4abd"
+              },
+              "back": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/low/walk_back.gif",
+                "sha256": "ced0655caf8c3af5b643ecdd0245581b4c3f5615476316701b6db774c6be2a13"
+              },
+              "right": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/low/walk_right.gif",
+                "sha256": "a5339ab05689daca79c223b901732fe6599ddac2885eb48cecfd146a05d21a1e"
+              },
+              "left": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/low/walk_left.gif",
+                "sha256": "691b6f7b31c383de0d5cf465b6f78f17bb64226191420d5b00b6237a4f2e4210"
+              }
+            }
+          },
+          "run": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 17,
+            "sheet_sha256": "3c64467cc1e58230886be61049e7f40bea140f2f7eebbcac04947348b7be43ea",
+            "regions_sha256": "2c777fb390631bf3f70c0f270592de9ae99d6e5a2232a5756c830583d39fa6b2",
+            "sheet": "bases/tiefling-female-01/styles/heroic/low/run.png",
+            "regions": "style_regions/heroic/tiefling-female-01/low/run_regions.png",
+            "region_preview": "style_regions/heroic/tiefling-female-01/low/run_regions_preview.png",
+            "region_preview_sha256": "cbd5b3fc2ad787a4059bc7630e727cc914d4e5d8f97e2800e65acff4f8fcac80",
+            "review": "base_sources/tiefling-female-01/styles/heroic/low/run_review_4x.png",
+            "review_sha256": "c2c318e8ad41180516b6c08fce18f2ac3219ba164d139fb12762c89c52b9569d",
+            "gifs": {
+              "front": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/low/run_front.gif",
+                "sha256": "cc1364f8925c2ea3a0798b5bd7b1d529342427520da3c0d4af8fe0e4c9a1a7b2"
+              },
+              "back": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/low/run_back.gif",
+                "sha256": "6017de76f35ff2574cc386f31ec8d63368254b3cdb73b19b3d494a5ccaba1ca8"
+              },
+              "right": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/low/run_right.gif",
+                "sha256": "34bb8f7d89afd9de8b5d8eb40656bbb9dce6fd6353d82ec88612094575489618"
+              },
+              "left": {
+                "file": "base_sources/tiefling-female-01/styles/heroic/low/run_left.gif",
+                "sha256": "8822bc83e3ab4fc140aad576a9520258974e84611fc86d33153caa51608906b7"
+              }
+            }
+          }
+        },
+        "palette": {
+          "file": "base_sources/tiefling-female-01/styles/heroic/low/palette.png",
+          "sha256": "362a910503b0ba4eb1cc451483c176abb104e88ea0d51cd1936bb4462e962105"
+        }
+      }
+    },
+    "dwarf_bald_male": {
+      "top_down": {
+        "sequences": {
+          "idle": {
+            "frame_count": 14,
+            "fps": 6,
+            "frame_durations_ms": [
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              1500,
+              167
+            ],
+            "minimum_alpha_margin": 36,
+            "sheet_sha256": "782cdbb470661ac90ceb6d86bba4171d4adb8757f1e3d5c80b61118d1ab766c7",
+            "regions_sha256": "a9c13155e05a9ba271f4a4009f3e5525061e3ef27b0d667502e0e86147709377",
+            "sheet": "bases/dwarf-male-01/styles/heroic/top_down/idle.png",
+            "regions": "style_regions/heroic/dwarf-male-01/top_down/idle_regions.png",
+            "region_preview": "style_regions/heroic/dwarf-male-01/top_down/idle_regions_preview.png",
+            "region_preview_sha256": "d4cf215fa54e865a3bad5f30b17c77fe8e96b5a14f69f2f915ad5693ca8ed9c4",
+            "review": "base_sources/dwarf-male-01/styles/heroic/top_down/idle_review_4x.png",
+            "review_sha256": "f69939ab95a33001e83b7b37db5599cfa9a49c5873eacf259713db649c882487",
+            "gifs": {
+              "front": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/top_down/idle_front.gif",
+                "sha256": "d365c72d16ea114654347b09826a1f4039cfa429e7bc6db198b181bd59a74eb5"
+              },
+              "back": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/top_down/idle_back.gif",
+                "sha256": "595ab29fbe5ab370138aa1f55d903366990ea42f3a25cca0b557fbe95c7d20c4"
+              },
+              "right": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/top_down/idle_right.gif",
+                "sha256": "40edba4da8218101873e62acb5b291253fcfb58e24538bbe088c29ef4f9c65b2"
+              },
+              "left": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/top_down/idle_left.gif",
+                "sha256": "9fef1d2d4fd816cbee9029704465c73fd25c410923dd166d8b5b497eabd6e598"
+              }
+            }
+          },
+          "walk": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 31,
+            "sheet_sha256": "14b9a49008fb65ebc445b528fdabdbaff383cf32af2e3312aa6d6d6d84648bb4",
+            "regions_sha256": "b48b6bc7e036d4b17c5707b4d51a96d1dec10d34fd6432f2c1a2af9656266e2e",
+            "sheet": "bases/dwarf-male-01/styles/heroic/top_down/walk.png",
+            "regions": "style_regions/heroic/dwarf-male-01/top_down/walk_regions.png",
+            "region_preview": "style_regions/heroic/dwarf-male-01/top_down/walk_regions_preview.png",
+            "region_preview_sha256": "56c9e251d78d87276df5f2e542a4c2c1f0f0770201176428fe461acb77786df8",
+            "review": "base_sources/dwarf-male-01/styles/heroic/top_down/walk_review_4x.png",
+            "review_sha256": "3260fd9c7e27aab0ae0a531b38448c437d2d29f49a8ee8ad5c400c4cc1199db3",
+            "gifs": {
+              "front": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/top_down/walk_front.gif",
+                "sha256": "e2f9e640185f438ea1402b7f2cd283942bc5477f379a50e4585bcc6b227e5ee1"
+              },
+              "back": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/top_down/walk_back.gif",
+                "sha256": "fa76b8cd47daf4057f20b477e42ebbf522fef149a58aadeac8481b7de79ac89c"
+              },
+              "right": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/top_down/walk_right.gif",
+                "sha256": "81f36fd5f8c4a0e5407a378439269ac10af6657faeabb54f32777f949d669a6d"
+              },
+              "left": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/top_down/walk_left.gif",
+                "sha256": "abef90b6441452c2f237d7b9f87de5978612b008d94b476580daa3bbbf88efb1"
+              }
+            }
+          },
+          "run": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 28,
+            "sheet_sha256": "9c079b7b0389110303c5efee9b602eb6cbcafd1c7e3fd1816555d55cc4e0524f",
+            "regions_sha256": "693a2d729518ef3d0753883fda3284b69ffb0ce245b71fe0224a2de9e4e4b56c",
+            "sheet": "bases/dwarf-male-01/styles/heroic/top_down/run.png",
+            "regions": "style_regions/heroic/dwarf-male-01/top_down/run_regions.png",
+            "region_preview": "style_regions/heroic/dwarf-male-01/top_down/run_regions_preview.png",
+            "region_preview_sha256": "7cc7ee571923da68608b819dbbe62385cbc597246a0bb9a0bd484c96b222a950",
+            "review": "base_sources/dwarf-male-01/styles/heroic/top_down/run_review_4x.png",
+            "review_sha256": "b860850557d43fdbd33fc7b8e430b81c19cd563fc77dea970203c0762c57dd92",
+            "gifs": {
+              "front": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/top_down/run_front.gif",
+                "sha256": "cec58395c2275ca46e9138c139bcd11b097ce8867bdeb72171d1046a2d15f543"
+              },
+              "back": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/top_down/run_back.gif",
+                "sha256": "5d81bc5bb8e5d0dd27231efdb25a475f7eb064294e16a0aefec791ca6b49a491"
+              },
+              "right": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/top_down/run_right.gif",
+                "sha256": "342d162210b1e521a8bc28776bfe63ba1ce1ddc9b3164c90c3beaab8dd498b83"
+              },
+              "left": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/top_down/run_left.gif",
+                "sha256": "8ab250c0cee2dee6183d15cb8a5394e589761223a1834c77f8023cb73161992c"
+              }
+            }
+          }
+        },
+        "palette": {
+          "file": "base_sources/dwarf-male-01/styles/heroic/top_down/palette.png",
+          "sha256": "d1e813701aefcf5549020f42f76821e9f1fca26f78ae8b9521e344b453dfd9e3"
+        }
+      },
+      "three_quarter": {
+        "sequences": {
+          "idle": {
+            "frame_count": 14,
+            "fps": 6,
+            "frame_durations_ms": [
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              1500,
+              167
+            ],
+            "minimum_alpha_margin": 34,
+            "sheet_sha256": "f3f6e1f2e6273194b1e64f72d4a286851ac0c25bad01378b3cf105aacde80cb5",
+            "regions_sha256": "09760f6ea7235cdad4b04c62d305138bbf87cb5d2a0e2158773baf96e00a8dfd",
+            "sheet": "bases/dwarf-male-01/styles/heroic/three_quarter/idle.png",
+            "regions": "style_regions/heroic/dwarf-male-01/three_quarter/idle_regions.png",
+            "region_preview": "style_regions/heroic/dwarf-male-01/three_quarter/idle_regions_preview.png",
+            "region_preview_sha256": "8ee2447497d031a1a997c1fb34d0a8ee0bf742436231ca6299ad4e6f1ee1f24f",
+            "review": "base_sources/dwarf-male-01/styles/heroic/three_quarter/idle_review_4x.png",
+            "review_sha256": "4587be73ce6fa8390e56c0de9bd05242cbd0a7bd200b7882ff4cb46df1fa6604",
+            "gifs": {
+              "front": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/three_quarter/idle_front.gif",
+                "sha256": "5f0c76414d07206d125c090003d11c9241756fe3d79bead365e76dafb8d48214"
+              },
+              "back": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/three_quarter/idle_back.gif",
+                "sha256": "eef37d947d344207d8c5ad05bb986dca53bee1fdd1d22ed901b292abff449b19"
+              },
+              "right": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/three_quarter/idle_right.gif",
+                "sha256": "601ecd5df5cb7e95a7b4a2206e7a3fc494501f093d697e9658cb5a351319cbba"
+              },
+              "left": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/three_quarter/idle_left.gif",
+                "sha256": "190fbc58863e27064d8c84d5bbc4abbb2682c3fe76c0c740a49eb1f9f2d32e52"
+              }
+            }
+          },
+          "walk": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 33,
+            "sheet_sha256": "06229e02e27a415f6646c10d37643fe0f5a6fd03c576c8010faad77e5a987e09",
+            "regions_sha256": "8a579fa8657f1448f920d673ec366906d08661cc449355ae00d25262d0fce57c",
+            "sheet": "bases/dwarf-male-01/styles/heroic/three_quarter/walk.png",
+            "regions": "style_regions/heroic/dwarf-male-01/three_quarter/walk_regions.png",
+            "region_preview": "style_regions/heroic/dwarf-male-01/three_quarter/walk_regions_preview.png",
+            "region_preview_sha256": "d81782296200287c958c838ec1f5353d5ed25250b205cfa5aa3d1713828293d3",
+            "review": "base_sources/dwarf-male-01/styles/heroic/three_quarter/walk_review_4x.png",
+            "review_sha256": "f235cc4b2aff92c9b282c02c148aaef92c53752f68b01e2763f5655113118f67",
+            "gifs": {
+              "front": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/three_quarter/walk_front.gif",
+                "sha256": "94ab7d359def15367bc36ec719ed25abe9c963933a708d94c02db12f6e4fe82f"
+              },
+              "back": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/three_quarter/walk_back.gif",
+                "sha256": "0e2162f38911a4a8a02f6e2153cb149f19f559a1cc57045d5efaf20bc54f16cc"
+              },
+              "right": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/three_quarter/walk_right.gif",
+                "sha256": "131f6fbd459d0d0a396d88da918c8ffdd5046f191d9de4388f3bbc77abe94556"
+              },
+              "left": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/three_quarter/walk_left.gif",
+                "sha256": "f58e0d42efe0bd29cc4bb33a8f79bac7ed60af8c60403ab970ac2332f9e0e3bf"
+              }
+            }
+          },
+          "run": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 29,
+            "sheet_sha256": "1e98b73fbb7ef29e8bd66f9c4cda2b7e5fb1308d5572e11d4fee81cc88bd03e1",
+            "regions_sha256": "247804b59252a15b31757597583581e705a0eb0fe90a5ba94294dfdb6440a1d6",
+            "sheet": "bases/dwarf-male-01/styles/heroic/three_quarter/run.png",
+            "regions": "style_regions/heroic/dwarf-male-01/three_quarter/run_regions.png",
+            "region_preview": "style_regions/heroic/dwarf-male-01/three_quarter/run_regions_preview.png",
+            "region_preview_sha256": "63b5ef4a2df5a2bee081cf153354aad3dd9d1609f78a3f7607cbcd4045e8a5b9",
+            "review": "base_sources/dwarf-male-01/styles/heroic/three_quarter/run_review_4x.png",
+            "review_sha256": "e03d377cebe0c4fe635413c278ec0fe808208d0dafa52a061c502c906aeeb026",
+            "gifs": {
+              "front": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/three_quarter/run_front.gif",
+                "sha256": "0c6352515f4197dda65e0a67b0e2d3b683e69eb968ea63cc16c7719f7dc62172"
+              },
+              "back": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/three_quarter/run_back.gif",
+                "sha256": "5588ed87b30607b073a03ca2335f87bacc6e6b778b6b0330fbd8735cb6c23b5b"
+              },
+              "right": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/three_quarter/run_right.gif",
+                "sha256": "c7da2aa54111b4a901f25e4b05e0b8776910547b7b5382d4c8d2373727ac260b"
+              },
+              "left": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/three_quarter/run_left.gif",
+                "sha256": "cbb174bfb74b0e2b0d50b3eca6ff406e15ad18a013c18f1af38ce94fbb0fd9da"
+              }
+            }
+          }
+        },
+        "palette": {
+          "file": "base_sources/dwarf-male-01/styles/heroic/three_quarter/palette.png",
+          "sha256": "a93b8bc2d0a37efbeb62830dbc02e474187cfa2a32be4ebfc62cebae92b16236"
+        }
+      },
+      "low": {
+        "sequences": {
+          "idle": {
+            "frame_count": 14,
+            "fps": 6,
+            "frame_durations_ms": [
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              1500,
+              167
+            ],
+            "minimum_alpha_margin": 31,
+            "sheet_sha256": "313f521c0e486b2e3b1507c6cfd7a174c469826f2f34b11cb773e7cfebec94d8",
+            "regions_sha256": "35f12ca4175bd93186a82340fef1625a63bc44cdb791e924d195637d78302f2c",
+            "sheet": "bases/dwarf-male-01/styles/heroic/low/idle.png",
+            "regions": "style_regions/heroic/dwarf-male-01/low/idle_regions.png",
+            "region_preview": "style_regions/heroic/dwarf-male-01/low/idle_regions_preview.png",
+            "region_preview_sha256": "f17c92197ed8e44e5f6b7c5825a8fad2bbdef2c390ab50c1abdf6e13677f7a83",
+            "review": "base_sources/dwarf-male-01/styles/heroic/low/idle_review_4x.png",
+            "review_sha256": "234e3683ec75da6da94eb9c4036d395d6495334fee8510ed931b0e8399825934",
+            "gifs": {
+              "front": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/low/idle_front.gif",
+                "sha256": "99c130ec24bbd2920274e262f58d02d59bd7eb938a0dd2061a148e4bf674582e"
+              },
+              "back": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/low/idle_back.gif",
+                "sha256": "df2fc184e4554ea49326967c0bd40aff0e2654dea41ff38d9be73bcd3e920ddd"
+              },
+              "right": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/low/idle_right.gif",
+                "sha256": "deddec9f24f8c992b2c432df005d0bd036de5595437a8662c687e4b25dcbb3ee"
+              },
+              "left": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/low/idle_left.gif",
+                "sha256": "eb2ace72c5a4ecc960ed164744036ed2e9ccc20e636fdb483182d0b656800ec4"
+              }
+            }
+          },
+          "walk": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 31,
+            "sheet_sha256": "9b400850833441a25c2c414a069bff559a7cab0836e58cca73bf2760b69cb3f7",
+            "regions_sha256": "7e38149b119fd487d02d076ebe2098ea043e5dd404fd33ec5f21a969f3e25863",
+            "sheet": "bases/dwarf-male-01/styles/heroic/low/walk.png",
+            "regions": "style_regions/heroic/dwarf-male-01/low/walk_regions.png",
+            "region_preview": "style_regions/heroic/dwarf-male-01/low/walk_regions_preview.png",
+            "region_preview_sha256": "62f63b1f54f1b8f542854a3e3201616fe57e725696a0c7976ea71ce5819b7e68",
+            "review": "base_sources/dwarf-male-01/styles/heroic/low/walk_review_4x.png",
+            "review_sha256": "c30de4747b9bac26105854ffbd6287011d4933691fd0c6e9f9c482e823e5bbed",
+            "gifs": {
+              "front": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/low/walk_front.gif",
+                "sha256": "f5ce2937a00b5122cc7a73379d1b2be66a40531d8c8e7a6577f09aa2c01abccf"
+              },
+              "back": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/low/walk_back.gif",
+                "sha256": "1d4b081e26f73e956773d69fb250f71f0f0e1c17023f9ae4a7c519a784858959"
+              },
+              "right": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/low/walk_right.gif",
+                "sha256": "97257cf826ebf99463c08f918d4a5a4493025e5199d479be3788f73e0ea12bc8"
+              },
+              "left": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/low/walk_left.gif",
+                "sha256": "28ee6432c15b7c78eb211b0300f1b9126621a8595e1895a6a404dfbd503d6027"
+              }
+            }
+          },
+          "run": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 29,
+            "sheet_sha256": "6aadc801b8af646227c4b56a1b22b620a17af349b0d15f4236cff143d8b025d9",
+            "regions_sha256": "dcb2f40bf4e2d3a77a6edb30bb3f88c885de944cec29179decfb92c6b83defb3",
+            "sheet": "bases/dwarf-male-01/styles/heroic/low/run.png",
+            "regions": "style_regions/heroic/dwarf-male-01/low/run_regions.png",
+            "region_preview": "style_regions/heroic/dwarf-male-01/low/run_regions_preview.png",
+            "region_preview_sha256": "d82eef6f8d00334c33211d8a3f0c1eb15e038be62e483d2d6d1e86d4218f4f34",
+            "review": "base_sources/dwarf-male-01/styles/heroic/low/run_review_4x.png",
+            "review_sha256": "586247ee28cc288aa457691111cbbc6c672751e05c52cbae92bb9b984781abfc",
+            "gifs": {
+              "front": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/low/run_front.gif",
+                "sha256": "9540cbe114b96e925d16af3fde80c307c74445dec63f5e980ff6b7110ebb9d2d"
+              },
+              "back": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/low/run_back.gif",
+                "sha256": "44d45858d85117e3dd3e6b1e51d590bd782353843aa81dc195a374bb8d9b9b59"
+              },
+              "right": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/low/run_right.gif",
+                "sha256": "3ee8760df7c8df28c78d8e22fe273b337024bb6ee304b5676879b53516198c0e"
+              },
+              "left": {
+                "file": "base_sources/dwarf-male-01/styles/heroic/low/run_left.gif",
+                "sha256": "35c7cafbf5d636bd1e53b9e0881c08b54dc1e43330be1ae7a71d7c00f5911322"
+              }
+            }
+          }
+        },
+        "palette": {
+          "file": "base_sources/dwarf-male-01/styles/heroic/low/palette.png",
+          "sha256": "16a47f76e43645ae8e1b26f4ff566cfa3d333965d074ae9334bd1c8e6f61d810"
+        }
+      }
+    },
+    "human_bald_male": {
+      "top_down": {
+        "sequences": {
+          "idle": {
+            "frame_count": 14,
+            "fps": 6,
+            "frame_durations_ms": [
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              1500,
+              167
+            ],
+            "minimum_alpha_margin": 30,
+            "sheet_sha256": "fdf167544db5a48ea388e7b6ad6de15c6954d2f47fea2320e4e2d10fbd770c00",
+            "regions_sha256": "c00dd25e744b0657dec0c144c1e3480d66504ed5ac0b40721331a8002cde1f62",
+            "sheet": "bases/human-muscular-male-01/styles/heroic/top_down/idle.png",
+            "regions": "style_regions/heroic/human-muscular-male-01/top_down/idle_regions.png",
+            "region_preview": "style_regions/heroic/human-muscular-male-01/top_down/idle_regions_preview.png",
+            "region_preview_sha256": "2f88f68bdeb3b5e92f814ec63a0e5b62a2e7628c54464e4b9a738dc3f1256b48",
+            "review": "base_sources/human-muscular-male-01/styles/heroic/top_down/idle_review_4x.png",
+            "review_sha256": "aef28f80d0f5521f415fd5729c00fdf73e5c3f636916ee79217411e8c5cf46b0",
+            "gifs": {
+              "front": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/top_down/idle_front.gif",
+                "sha256": "04873ba895be7c304a42cd6f4a0b34015a719918ef0b84898c38c0758f335fd8"
+              },
+              "back": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/top_down/idle_back.gif",
+                "sha256": "8b687c4800fa0f577a643057703fa3004188a2e105fd34b0c5cb2d83ae863d1d"
+              },
+              "right": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/top_down/idle_right.gif",
+                "sha256": "5bf84e60274ec8aab06985386d570136526d2b14cd2e6be00f2ed5d8feb1ad9a"
+              },
+              "left": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/top_down/idle_left.gif",
+                "sha256": "3b31d6ef18f0eccb9511033184cc4fb23afa907dc13e318269612b4fdef13303"
+              }
+            }
+          },
+          "walk": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 16,
+            "sheet_sha256": "7e4cc98c8ebb41a3cc447596a9fd33fdd52ce8fb2300b9f42eded3f5e75f714a",
+            "regions_sha256": "05e2cbd111c1c5b364cb16feea5804a32be723832470bd9438fc2a89d12fe1e0",
+            "sheet": "bases/human-muscular-male-01/styles/heroic/top_down/walk.png",
+            "regions": "style_regions/heroic/human-muscular-male-01/top_down/walk_regions.png",
+            "region_preview": "style_regions/heroic/human-muscular-male-01/top_down/walk_regions_preview.png",
+            "region_preview_sha256": "caf3469eb19ce2adfb8a996540d9bfea203dfcd5674c6713eb3d78a60ac82f62",
+            "review": "base_sources/human-muscular-male-01/styles/heroic/top_down/walk_review_4x.png",
+            "review_sha256": "6312a3e5b343e8b9ea294c3cf527ab3fe0695ad95e7bf538ca9c0c643de6d48b",
+            "gifs": {
+              "front": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/top_down/walk_front.gif",
+                "sha256": "0c06f06484a3d92a3588685f3aee558d1df05cfe04298ee83ffc6380d10b3834"
+              },
+              "back": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/top_down/walk_back.gif",
+                "sha256": "4b6506ef05a7ededd48bbaa57f1eddce462f566cf756f620765346731dfd8529"
+              },
+              "right": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/top_down/walk_right.gif",
+                "sha256": "fbae3735154245d3313b70019f61e4849648a7a28f455657e75f4a0c36d0de47"
+              },
+              "left": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/top_down/walk_left.gif",
+                "sha256": "55ab2ca55a922164cadfadf0a01ab446b88aab5759922a3a49f43e3fda109501"
+              }
+            }
+          },
+          "run": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 16,
+            "sheet_sha256": "24deaa2192453cd8105860e91b66a6c567d19ca0b7137f5bcdea8baecae2efbf",
+            "regions_sha256": "6f4a01f60e986f168aa0abf3e203f945c76c182a49540cf79e56bd2cfad846cd",
+            "sheet": "bases/human-muscular-male-01/styles/heroic/top_down/run.png",
+            "regions": "style_regions/heroic/human-muscular-male-01/top_down/run_regions.png",
+            "region_preview": "style_regions/heroic/human-muscular-male-01/top_down/run_regions_preview.png",
+            "region_preview_sha256": "6cad47c5ced7af57b4f000d6dd70ad05a2a5c49a97b8217874b9c46daee9acad",
+            "review": "base_sources/human-muscular-male-01/styles/heroic/top_down/run_review_4x.png",
+            "review_sha256": "089fcd5775d41c15916dbdf16142a1f1fc0808e7d9b51e3f05d40f3d0c66e1c6",
+            "gifs": {
+              "front": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/top_down/run_front.gif",
+                "sha256": "e7708f69e2e327827e0ec838c65311ad6fbc8c95f34367e6fc659c2a55d18fab"
+              },
+              "back": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/top_down/run_back.gif",
+                "sha256": "dff415e54dc00eaa7ea064dd5f465f93e837b6f0e22496aa6bf10f7d093142ac"
+              },
+              "right": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/top_down/run_right.gif",
+                "sha256": "6d16338021bf84459eddbf3184fb3b8b133d0f4881b0a7c8b4cd6094fe5d9cfc"
+              },
+              "left": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/top_down/run_left.gif",
+                "sha256": "7cffccdbe863d1f1025f08014951f355bb2cbfa0fe9cb62b68c2aab20243a627"
+              }
+            }
+          }
+        },
+        "palette": {
+          "file": "base_sources/human-muscular-male-01/styles/heroic/top_down/palette.png",
+          "sha256": "c4db54ec50c8a05155c42786e7a985ba1155b703f96f047f1b6ad5d5018d16d4"
+        }
+      },
+      "three_quarter": {
+        "sequences": {
+          "idle": {
+            "frame_count": 14,
+            "fps": 6,
+            "frame_durations_ms": [
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              1500,
+              167
+            ],
+            "minimum_alpha_margin": 25,
+            "sheet_sha256": "ae67e63f66a4189cfd222120130330c5df019ec0d9df3886b0923715512cbd3d",
+            "regions_sha256": "be5f055e52b3dc0459ea4045b50f3bec7528de6ac8359e3bb192fb7791121671",
+            "sheet": "bases/human-muscular-male-01/styles/heroic/three_quarter/idle.png",
+            "regions": "style_regions/heroic/human-muscular-male-01/three_quarter/idle_regions.png",
+            "region_preview": "style_regions/heroic/human-muscular-male-01/three_quarter/idle_regions_preview.png",
+            "region_preview_sha256": "d363c0c7ec19580ba4cda7d6f129533f3a3bc471d653ce4519772b4dff96700d",
+            "review": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/idle_review_4x.png",
+            "review_sha256": "bad19c04f03cb52dbcf48e3b117ac729b9aaa0f121944f33dde152a32afbad7c",
+            "gifs": {
+              "front": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/idle_front.gif",
+                "sha256": "7f333e50bd89b9cb08537c67d5798e1a8ff48e9e5c146d5c71940abdd22bd50f"
+              },
+              "back": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/idle_back.gif",
+                "sha256": "eafe96e10410560b19a277236ac682498b07f21989e4ad13bb838e7b9281ff9d"
+              },
+              "right": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/idle_right.gif",
+                "sha256": "00ed22aed5da469018f8680617caa1381adb05f57431d6a58bd9b80519e9d008"
+              },
+              "left": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/idle_left.gif",
+                "sha256": "d82ce5d1445d3cc124820c6df864194434526ed80a1286f0fb884ab422e26bf0"
+              }
+            }
+          },
+          "walk": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 16,
+            "sheet_sha256": "85248e40f211ca8fae44ac9748f28d5421f8b96c79ec4ebc3ea40f9082095a80",
+            "regions_sha256": "7c2f33c43b6a0fa9c9d526252827c6a52fbc7a52f0ddadd0d8cc1ed3c417958f",
+            "sheet": "bases/human-muscular-male-01/styles/heroic/three_quarter/walk.png",
+            "regions": "style_regions/heroic/human-muscular-male-01/three_quarter/walk_regions.png",
+            "region_preview": "style_regions/heroic/human-muscular-male-01/three_quarter/walk_regions_preview.png",
+            "region_preview_sha256": "fdd29ab6f63e68c798c49da37f5b143027bceb6ce8f25a000f9b4de22f88ee16",
+            "review": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/walk_review_4x.png",
+            "review_sha256": "1aa2ea969b3c9373791b5fd86b217f206b61e6781cc7805498fcca4fc4c6805c",
+            "gifs": {
+              "front": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/walk_front.gif",
+                "sha256": "6c09d4866a6a4a26e2e8a1d8b6a1ace47039aeb3e379b657cd2a70df6ff107c0"
+              },
+              "back": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/walk_back.gif",
+                "sha256": "badc4e83c04137d08a188661fee61579651a71a4e640068a40f582da8f02978b"
+              },
+              "right": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/walk_right.gif",
+                "sha256": "34573260390318e072487bf1feb87310a80a2fd1942f08c42fe351cef7d1b296"
+              },
+              "left": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/walk_left.gif",
+                "sha256": "2946d828100bd3d54040fc0a200933f8218c3fc1c296c7e2cf73c5dd54c83e93"
+              }
+            }
+          },
+          "run": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 17,
+            "sheet_sha256": "1b35506410d386e919e2ef61fbef0810f87725f90210b7caae656010146979d0",
+            "regions_sha256": "6149a547cc5faeae13be140a5e92f91ffaf7bbdacf37e7b2e6cb63263c6b6fc4",
+            "sheet": "bases/human-muscular-male-01/styles/heroic/three_quarter/run.png",
+            "regions": "style_regions/heroic/human-muscular-male-01/three_quarter/run_regions.png",
+            "region_preview": "style_regions/heroic/human-muscular-male-01/three_quarter/run_regions_preview.png",
+            "region_preview_sha256": "927d081b0bc51e7e9a413dfdcb95bceb0cd172953f88cc0d25971132b31ba0fe",
+            "review": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/run_review_4x.png",
+            "review_sha256": "084eb677f5e8f2677a6467e61f8bcb97b87696cd4468a3c5bb0e01ac0c2b7449",
+            "gifs": {
+              "front": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/run_front.gif",
+                "sha256": "e85723fab987ca4d85f2bec4b4bb04d950397912fb198ef7dc100072fb6bf7d8"
+              },
+              "back": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/run_back.gif",
+                "sha256": "f8b7d3a00247e5d1ae4626c45d992f37b49c1415d58cc0df2e46db692c44e543"
+              },
+              "right": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/run_right.gif",
+                "sha256": "35df9ec8a6d026f8614be80f363842b6862d0aad2a986ec1da7360c0dfb6e5e1"
+              },
+              "left": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/run_left.gif",
+                "sha256": "0d0b5ad6981da0fc093aac02aa66bb01140c115bb6687478e8857e8cfaa858db"
+              }
+            }
+          }
+        },
+        "palette": {
+          "file": "base_sources/human-muscular-male-01/styles/heroic/three_quarter/palette.png",
+          "sha256": "5d3e551f446e07c7e41b4a8de2cec81d7632910882460a8371c99ffa0f26d327"
+        }
+      },
+      "low": {
+        "sequences": {
+          "idle": {
+            "frame_count": 14,
+            "fps": 6,
+            "frame_durations_ms": [
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              167,
+              1500,
+              167
+            ],
+            "minimum_alpha_margin": 22,
+            "sheet_sha256": "82ed36fe67db7e11beb347e7d2d752633c3dd3af400a38c06bc0f3effc5509f8",
+            "regions_sha256": "a450b1c6ed8d33fd2f0c514c1480cd9ccbcea6f013f8cdab537eefcc609bf5a1",
+            "sheet": "bases/human-muscular-male-01/styles/heroic/low/idle.png",
+            "regions": "style_regions/heroic/human-muscular-male-01/low/idle_regions.png",
+            "region_preview": "style_regions/heroic/human-muscular-male-01/low/idle_regions_preview.png",
+            "region_preview_sha256": "bc70ff5c2b90c8ba4a8a0fd6fb981b1b6089737373d7075e4ffb87b31da3e392",
+            "review": "base_sources/human-muscular-male-01/styles/heroic/low/idle_review_4x.png",
+            "review_sha256": "d7cca505362de8ecaa679e4e5b3aa160c1ba74c4c4393862ff819687dff8a919",
+            "gifs": {
+              "front": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/low/idle_front.gif",
+                "sha256": "f50e3c8c0921413c58264f1ac59ff76461cc6a5ac88ef1173c3e04f6658ddac6"
+              },
+              "back": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/low/idle_back.gif",
+                "sha256": "9b0bd49265dc079f71bb3b8d9a6655a85f2afdf0ff498600601801b9e4da49b0"
+              },
+              "right": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/low/idle_right.gif",
+                "sha256": "3d7b18c5f10540950eced50048350de4e10ba6d6c35c78345c1c2514eb122456"
+              },
+              "left": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/low/idle_left.gif",
+                "sha256": "3946e6c6f25fad642b002f8bf833c620366d48bc5360f234eee916dddbd226b3"
+              }
+            }
+          },
+          "walk": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 16,
+            "sheet_sha256": "ab3d309661b118eabbc9ee8fc89357943833b6abad9800e5b93d94b858c4de14",
+            "regions_sha256": "23df0afd1e80c87c588da2699a14426054d1b97cfe6d990c19d8a00854f52874",
+            "sheet": "bases/human-muscular-male-01/styles/heroic/low/walk.png",
+            "regions": "style_regions/heroic/human-muscular-male-01/low/walk_regions.png",
+            "region_preview": "style_regions/heroic/human-muscular-male-01/low/walk_regions_preview.png",
+            "region_preview_sha256": "08d69faa61c27fbb393791c157765405b1fe6291146d0b65bc9ec1fdbcb8c4df",
+            "review": "base_sources/human-muscular-male-01/styles/heroic/low/walk_review_4x.png",
+            "review_sha256": "659bb9a0d2e149079fbd4aecb634773254fd20d19f9204579091a81a1c1d3208",
+            "gifs": {
+              "front": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/low/walk_front.gif",
+                "sha256": "3d27826a5fdb80219ee635c2703cb159108d991071ab87ac1fb3bbe9d9929950"
+              },
+              "back": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/low/walk_back.gif",
+                "sha256": "652b56d77419f003db709e4869b26bbd48e7b2e87913c153d120243fab823ce0"
+              },
+              "right": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/low/walk_right.gif",
+                "sha256": "d5243cd47c9ebde406b2ad3344ada217b196a8ae7f3c027af128d62e9cea268b"
+              },
+              "left": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/low/walk_left.gif",
+                "sha256": "2820d953963f7e4173b362ba7e4e983ddf74f27c47ff246bf093a3f550fe64f6"
+              }
+            }
+          },
+          "run": {
+            "frame_count": 8,
+            "fps": 10,
+            "frame_durations_ms": [
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100,
+              100
+            ],
+            "minimum_alpha_margin": 18,
+            "sheet_sha256": "d528fb66d1fc6a00ef8171dff7a1a9e4f7841d7ac0bdaa44a7933c519f4c0d01",
+            "regions_sha256": "a6cbf6c2c8e59f5cb9bd3b7c04e03dd7832b58f801ce753eabab44b83d4ae3b7",
+            "sheet": "bases/human-muscular-male-01/styles/heroic/low/run.png",
+            "regions": "style_regions/heroic/human-muscular-male-01/low/run_regions.png",
+            "region_preview": "style_regions/heroic/human-muscular-male-01/low/run_regions_preview.png",
+            "region_preview_sha256": "a6e367f0a609d5603e56e917766b387a4cad6c9a359383891881539b7d95dbf0",
+            "review": "base_sources/human-muscular-male-01/styles/heroic/low/run_review_4x.png",
+            "review_sha256": "5a88982e19e8b0fe059e80d3ef079c103262eb56bbb502f2006a78cf4e88e2a8",
+            "gifs": {
+              "front": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/low/run_front.gif",
+                "sha256": "a760015eec53f7ff15161d2dcf34bf9d88a7788bdcfe56a2efc34952cd8b9c48"
+              },
+              "back": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/low/run_back.gif",
+                "sha256": "68cac5340d6ea778234d471a1cbedd75680b00e770f0b1ef877dbafd72a5f80f"
+              },
+              "right": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/low/run_right.gif",
+                "sha256": "499d3985cdde10a0d37cb0f200a576723ce03413247eefa82171ae5e337ff2b9"
+              },
+              "left": {
+                "file": "base_sources/human-muscular-male-01/styles/heroic/low/run_left.gif",
+                "sha256": "298a50102a716731e3e18c23ba3fd0ab4b6524a89a13e2da924183fe8535bb0d"
+              }
+            }
+          }
+        },
+        "palette": {
+          "file": "base_sources/human-muscular-male-01/styles/heroic/low/palette.png",
+          "sha256": "a9eb24e165f4cc48a74d8b5710a322c9ea84c923efa5ccd09477c1b87a93ec8e"
+        }
+      }
+    }
+  }
+}

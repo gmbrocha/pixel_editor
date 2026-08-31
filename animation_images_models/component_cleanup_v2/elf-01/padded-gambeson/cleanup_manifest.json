@@ -39,14 +39,14 @@
   },
   "source_manifest": "parts/outerwear/padded-gambeson-elf-01/manifest.json",
   "source_sha256": {
-    "idle": "229d749b9718fc20b9c67faa5df714fbb82e67c14268969249c7014da481687b",
-    "walk": "8a932b0110b953e077aa7fd1d333488f54f119c25236d4c8d28fe78d545bde07",
-    "run": "9f113aac6c2d0821e47a01ceb9d773c701e7f747f0ae5a8249bd9355ba36d2a7"
+    "idle": "3e5b19f87bcb1cd9abdd5f1f0ae7abd43d09e640647b2b49db3c6e59bc66d55f",
+    "walk": "e4ac91ba178cc017b420f7bb2a2862e98df921908dd449bae90940654d01a4c2",
+    "run": "f363023cab02676f4c3c3aa3680ae2ced497eaa50e56c60bafb01cb6dc66b3b4"
   },
   "output_sha256": {
-    "idle": "229d749b9718fc20b9c67faa5df714fbb82e67c14268969249c7014da481687b",
-    "walk": "8a932b0110b953e077aa7fd1d333488f54f119c25236d4c8d28fe78d545bde07",
-    "run": "9f113aac6c2d0821e47a01ceb9d773c701e7f747f0ae5a8249bd9355ba36d2a7"
+    "idle": "3e5b19f87bcb1cd9abdd5f1f0ae7abd43d09e640647b2b49db3c6e59bc66d55f",
+    "walk": "e4ac91ba178cc017b420f7bb2a2862e98df921908dd449bae90940654d01a4c2",
+    "run": "f363023cab02676f4c3c3aa3680ae2ced497eaa50e56c60bafb01cb6dc66b3b4"
   },
   "cleanup": {
     "idle": {
