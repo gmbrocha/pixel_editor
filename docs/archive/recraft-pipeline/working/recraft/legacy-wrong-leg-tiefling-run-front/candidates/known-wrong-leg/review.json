@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "job_id": "legacy-wrong-leg-tiefling-run-front",
+  "candidate_id": "known-wrong-leg",
+  "status": "rejected",
+  "notes": "Known legacy negative: supplied third pose has incorrect/mirrored legs and must never pass silently.",
+  "reviewed_at": "2026-08-30T23:14:32+00:00",
+  "validation_status": "reject",
+  "validation_sha256": "2f81aad2e095ba7a1aa7fc2bc104481da957858f689a121e5ff728c16eb60ec9"
+}

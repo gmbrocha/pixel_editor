@@ -1,0 +1,84 @@
+{
+  "endpoint": "/images/imageToImage",
+  "model": "recraftv4_1",
+  "strength": 0.25,
+  "response_format": "b64_json",
+  "prompt": "LOCKED ANIMATION CONTACT-SHEET CONTRACT. This image contains the same Tiefling Female Base in one continuous run animation facing front. This is one locked animation contact sheet, not a collage to rearrange. Read cells row-major in this exact source-frame order: 1, 2, 3, 4, 5, 6, 7, 8. Add only this component: Horn-Friendly Guard Helm \u2014 Add only a compact steel guard helmet fitted around the existing Tiefling horns, with a readable brow and restrained cheek guards.. Material: steel. Apply the identical design consistently in every cell. Preserve exactly: grid and cell order, transparent background, character position and scale, body proportions, pose, facing, anatomy, which arm and leg is forward, limb bends, hands, feet, horns, tail, hair, existing clothing not named by the task, camera, and silhouette of the body. The declared component alone may extend slightly around the body regions it belongs to. Return one transparent raster contact sheet with the same aspect, layout, cell count, and order. Do not add labels or a background. Do not redesign or re-pose the character.",
+  "negative_prompt": "text, labels, captions, background, extra character, extra limb, missing limb, mirrored limb, swapped legs, swapped arms, changed pose, duplicate pose, rearranged frames, changed grid, cropping, recentering, altered body proportions, unrelated clothing, anatomy changes",
+  "controls": {
+    "colors": [
+      {
+        "rgb": [
+          37,
+          42,
+          49
+        ]
+      },
+      {
+        "rgb": [
+          102,
+          113,
+          125
+        ]
+      },
+      {
+        "rgb": [
+          174,
+          184,
+          194
+        ]
+      },
+      {
+        "rgb": [
+          177,
+          168,
+          185
+        ]
+      },
+      {
+        "rgb": [
+          148,
+          135,
+          158
+        ]
+      },
+      {
+        "rgb": [
+          167,
+          157,
+          177
+        ]
+      },
+      {
+        "rgb": [
+          157,
+          145,
+          168
+        ]
+      },
+      {
+        "rgb": [
+          68,
+          58,
+          78
+        ]
+      },
+      {
+        "rgb": [
+          89,
+          90,
+          91
+        ]
+      },
+      {
+        "rgb": [
+          128,
+          113,
+          140
+        ]
+      }
+    ]
+  },
+  "source_board": "working/recraft/calibration-tiefling-heroic-low-run-front-v1/source/request_board.png",
+  "source_board_sha256": "7ccc546fa78141f291c978c276241e68c46fd18e16e7df3f738f451d7ebf806f"
+}

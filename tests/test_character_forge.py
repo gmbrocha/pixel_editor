@@ -26,6 +26,7 @@ from src.core.character_forge import (
     load_part_animation,
     load_part_render_layer,
     load_recipe,
+    part_default_main_color,
     randomize_recipe,
     recolor_part_ramp,
     save_recipe,
@@ -656,6 +657,33 @@ def test_character_forge_window_displays_128px_elf_and_new_parts() -> None:
     application.processEvents()
     assert window.zoom_combo.currentData() == 8
     assert window.preview_label.pixmap().size().toTuple() == (1024, 1024)
+    window.close()
+    application.processEvents()
+
+
+def test_character_forge_color_selector_tracks_last_selected_component() -> None:
+    application = QApplication.instance() or QApplication([])
+    window = CharacterForgeWindow()
+
+    torso_combo = window.part_combos["torso"]
+    torso_combo.setCurrentIndex(1)
+    application.processEvents()
+    torso = window.catalog.part(torso_combo.currentData())
+    assert window.part_color_label.text() == f"{torso.name} main color"
+    assert window.part_color_button.text() == part_default_main_color(torso)
+
+    feet_combo = window.part_combos["feet"]
+    feet_combo.setCurrentIndex(1)
+    application.processEvents()
+    feet = window.catalog.part(feet_combo.currentData())
+    assert window.part_color_label.text() == f"{feet.name} main color"
+    assert window.part_color_button.text() == part_default_main_color(feet)
+
+    feet_combo.setCurrentIndex(0)
+    application.processEvents()
+    assert window.part_color_label.text() == f"{torso.name} main color"
+    assert window.part_color_button.text() == part_default_main_color(torso)
+
     window.close()
     application.processEvents()
 

@@ -95,6 +95,7 @@ class CharacterForgeWindow(QMainWindow):
         self._frame_index = 0
         self._playback_step = 0
         self._updating_controls = False
+        self._part_selection_history: list[str] = []
         self._pixel_windows: list[PixelEditorWindow] = []
 
         self._timer = QTimer(self)
@@ -465,6 +466,7 @@ class CharacterForgeWindow(QMainWindow):
         previous_id = self.recipe.parts.get(slot)
         value = self.part_combos[slot].currentData()
         self.recipe.parts[slot] = value if isinstance(value, str) else None
+        self._remember_part_selection(slot)
         if previous_id is not None and previous_id != value:
             self.recipe.part_colors.pop(previous_id, None)
         if isinstance(value, str):
@@ -578,6 +580,7 @@ class CharacterForgeWindow(QMainWindow):
             camera_height=self.recipe.camera_height,
             sprite_style=self.recipe.sprite_style,
         )
+        self._part_selection_history.clear()
         self._sync_recipe_to_controls()
         self._refresh_composite()
         self.statusBar().showMessage(
@@ -742,18 +745,32 @@ class CharacterForgeWindow(QMainWindow):
                 f"{part.name} does not have a {self.current_animation_id} sheet yet"
             )
 
-    def _active_color_part(self):
+    def _remember_part_selection(self, slot: str) -> None:
+        if slot in self._part_selection_history:
+            self._part_selection_history.remove(slot)
+        if self.recipe.parts.get(slot) is not None:
+            self._part_selection_history.append(slot)
+
+    def _active_part(self):
+        self._part_selection_history = [
+            slot
+            for slot in self._part_selection_history
+            if self.recipe.parts.get(slot) is not None
+        ]
         for slot in CHARACTER_SLOTS:
-            part_id = self.recipe.parts.get(slot)
-            if part_id is None:
-                continue
-            part = self.catalog.part(part_id)
-            if part.color_ramp and part.ramp_main_color is not None:
-                return slot, part
-        return None
+            if (
+                self.recipe.parts.get(slot) is not None
+                and slot not in self._part_selection_history
+            ):
+                self._part_selection_history.append(slot)
+        if not self._part_selection_history:
+            return None
+        slot = self._part_selection_history[-1]
+        part_id = self.recipe.parts[slot]
+        return slot, self.catalog.part(part_id)
 
     def _update_part_color_controls(self) -> None:
-        active = self._active_color_part()
+        active = self._active_part()
         if active is None:
             self.part_color_label.setText("Part main color")
             self.part_color_button.setText("Unavailable")
@@ -762,12 +779,21 @@ class CharacterForgeWindow(QMainWindow):
             self.reset_part_color_button.setEnabled(False)
             return
 
-        slot, part = active
+        _slot, part = active
+        self.part_color_label.setText(f"{part.name} main color")
+        if not part.color_ramp or part.ramp_main_color is None:
+            self.part_color_button.setText("Unavailable")
+            self.part_color_button.setStyleSheet("")
+            self.part_color_button.setToolTip(
+                f"{part.name} does not define a recolorable shade ramp"
+            )
+            self.part_color_button.setEnabled(False)
+            self.reset_part_color_button.setEnabled(False)
+            return
         default_color = part_default_main_color(part)
         color = self.recipe.part_colors.get(part.id, default_color or "#000000")
         qt_color = QColor(color)
         foreground = "#111111" if qt_color.lightness() > 150 else "#FFFFFF"
-        self.part_color_label.setText(f"{SLOT_LABELS[slot]} main color")
         self.part_color_button.setText(color)
         self.part_color_button.setStyleSheet(
             f"background-color: {color}; color: {foreground};"
@@ -779,10 +805,12 @@ class CharacterForgeWindow(QMainWindow):
         self.reset_part_color_button.setEnabled(part.id in self.recipe.part_colors)
 
     def _choose_part_color(self) -> None:
-        active = self._active_color_part()
+        active = self._active_part()
         if active is None:
             return
         _slot, part = active
+        if not part.color_ramp or part.ramp_main_color is None:
+            return
         default_color = part_default_main_color(part) or "#000000"
         current_color = self.recipe.part_colors.get(part.id, default_color)
         selected = QColorDialog.getColor(
@@ -802,10 +830,12 @@ class CharacterForgeWindow(QMainWindow):
         self._refresh_composite()
 
     def _reset_part_color(self) -> None:
-        active = self._active_color_part()
+        active = self._active_part()
         if active is None:
             return
         _slot, part = active
+        if not part.color_ramp or part.ramp_main_color is None:
+            return
         self.recipe.part_colors.pop(part.id, None)
         self.recipe.random_seed = None
         self._update_part_color_controls()
@@ -849,6 +879,7 @@ class CharacterForgeWindow(QMainWindow):
             QMessageBox.critical(self, "Load Character failed", str(exc))
             return
         self.recipe = recipe
+        self._part_selection_history.clear()
         self._sync_recipe_to_controls()
         self._refresh_composite()
         self.statusBar().showMessage(f"Loaded character recipe from {Path(path).name}")

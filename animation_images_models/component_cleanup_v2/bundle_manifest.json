@@ -438,7 +438,7 @@
       "fit": "tiefling-female-01",
       "slot": "legwear",
       "manifest": "tiefling-female-01/low-waist-pants/cleanup_manifest.json",
-      "manifest_sha256": "db8367231a2d7a2dbe137374aa76a38b1a59f084f4897e419bc26e26a86d8109"
+      "manifest_sha256": "1ad786e73cda3b03077501b34acd0001b9eb80a01b1650405e0791e034137963"
     },
     {
       "component_id": "low-waist-pants-dwarf-male-01",

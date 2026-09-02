@@ -1538,11 +1538,11 @@
           "fit": "tiefling-female-01",
           "slot": "legwear",
           "manifest": "parts/legwear/low-waist-pants-tiefling-female-01/manifest.json",
-          "manifest_sha256": "87f1fd141c314a4b67d08598f6bca09592bd37158473dfbcd553e3b7c82898d7",
+          "manifest_sha256": "30482f7c5c876cb2b9ca017c82f7da40547ce7e0ef794b2088f4be74ae243858",
           "animation_sha256": {
             "idle": "b05441f4e5258234717eb2d4c584862907d4bb82a6151db3abbc6c1767bce76e",
             "walk": "2f39e78425e3e35f90f03883538faf50948b9811c895fa9cc5993cf9ad65722d",
-            "run": "dab86285e3f422ff8f014b1ea97448e0ed89573c17a93bedc86e92f4b65ad4bc"
+            "run": "31902dee1eba1692ac66f30924e24dfd1a805b8dbe439446ff9497bb5f13ca6e"
           },
           "style_animation_sha256": {
             "jrpg_chibi_top_down": {

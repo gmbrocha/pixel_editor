@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "kind": "pixel_forge_recraft_candidate",
+  "id": "known-wrong-leg",
+  "state": "validated",
+  "received_at": "2026-08-30T23:14:20+00:00",
+  "ingest_layout": "2x2",
+  "strict_layout": false,
+  "raw_source": "F:/Downloads/images/preserve-the-four-supplied-animation-frames-exactl (1).png",
+  "raw_sha256": "248c3ee839164e6c688cbd4b3204ec5d7e9445e3367e5ed5ed35283c1ac02e2e",
+  "provider": {
+    "kind": "manual_import"
+  },
+  "processed_at": "2026-08-30T23:14:20+00:00",
+  "validation_status": "reject",
+  "outputs_sha256": {
+    "normalized/contact_sheet.png": "7736e4d6170138552d559f885294696ba92523a51d10c685dabc43876d4d835d",
+    "normalized/frame_00.png": "9f78b71d10de09ccf14b58ca1214e255f66fc1cc92c8f097a9ec0cc9477575e0",
+    "normalized/frame_01.png": "13585de9ad1717b0c66e0eefd676bc13d5ebe426c5af1df759615cfb0be83f1a",
+    "normalized/frame_02.png": "0176b11a5982b3d766c44b06e4a3259722c6e173ae328a7157c6e3a12b67d8ea",
+    "normalized/frame_03.png": "b371c1028b064a6d5f86d97739a9e08ad443efc689ef04f144829382ad2c22f1",
+    "raw/output.png": "248c3ee839164e6c688cbd4b3204ec5d7e9445e3367e5ed5ed35283c1ac02e2e",
+    "review/diff_00.png": "f5e7633a9ca083cf26888b53d0ba7d3451f9a441ebe544aa7f75bccd16e69b7e",
+    "review/diff_01.png": "f3d659bceff5c25432da122d182494cd7d08285e0889a45ac7f20419595588c4",
+    "review/diff_02.png": "ef9b09a1d92073982f1e225095faa46b21c38fe8498ab3e878730218d8de5d6c",
+    "review/diff_03.png": "273ca72b3e418d83954d818aaea3396e81facde99d6faf151cec14e4e36e870f",
+    "review/index.html": "2493f6ff1045c4bb60040e77cd74c1f673150398895c32a6f94d1e38dd4005c7",
+    "review/normalized.gif": "cddb73b8c1307af0d78044c526d7d23e2054b6f9e44488e9bd07b2bcf0d5b67e",
+    "review/normalized_8x.gif": "6722f246e84501ff47aa581221088cbf55b653b0825d42b0110949534c5020df",
+    "validation.json": "2f81aad2e095ba7a1aa7fc2bc104481da957858f689a121e5ff728c16eb60ec9"
+  }
+}

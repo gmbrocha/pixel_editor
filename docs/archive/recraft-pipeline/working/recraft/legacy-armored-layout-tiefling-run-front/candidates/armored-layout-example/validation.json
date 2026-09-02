@@ -1,0 +1,403 @@
+{
+  "schema_version": 1,
+  "kind": "pixel_forge_recraft_candidate_validation",
+  "job_id": "legacy-armored-layout-tiefling-run-front",
+  "candidate_id": "armored-layout-example",
+  "status": "reject",
+  "profile": "animation_images_models/recraft_validation_profile_v1.json",
+  "profile_sha256": "18547f868c0a51ac246012c51a3c19938a2225f0deffc04704127a6245c5c8bc",
+  "frames": [
+    {
+      "board_cell": 0,
+      "source_frame": 0,
+      "registration_dx": 1,
+      "registration_dy": -2,
+      "silhouette_iou": 0.4011476264997392,
+      "core_recall": 0.952912019826518,
+      "minimum_region_recall": 0.6571428571428571,
+      "centroid_drift_px": 4.295941973181149,
+      "bbox_size_delta_ratio": 0.5652173913043478,
+      "expected_pose_score": 0.4302415200105863,
+      "best_pose_score": 0.43622383548667665,
+      "best_pose_frame": 7,
+      "pose_match_margin": 0.00598231547609035,
+      "safe_margin_px": 17,
+      "raw_partial_alpha_pixels": 25767,
+      "errors": [
+        "bbox_size_delta_ratio",
+        "centroid_drift_px",
+        "minimum_region_recall",
+        "silhouette_iou"
+      ],
+      "warnings": [
+        "ambiguous_pose_match"
+      ]
+    },
+    {
+      "board_cell": 1,
+      "source_frame": 2,
+      "registration_dx": 0,
+      "registration_dy": -2,
+      "silhouette_iou": 0.42896324739440483,
+      "core_recall": 0.9536585365853658,
+      "minimum_region_recall": 0.3333333333333333,
+      "centroid_drift_px": 6.477324883670637,
+      "bbox_size_delta_ratio": 0.4166666666666667,
+      "expected_pose_score": 0.45979026387867694,
+      "best_pose_score": 0.45979026387867694,
+      "best_pose_frame": 2,
+      "pose_match_margin": 0.00047744034237534594,
+      "safe_margin_px": 8,
+      "raw_partial_alpha_pixels": 24354,
+      "errors": [
+        "bbox_size_delta_ratio",
+        "centroid_drift_px",
+        "minimum_region_recall",
+        "silhouette_iou"
+      ],
+      "warnings": []
+    },
+    {
+      "board_cell": 2,
+      "source_frame": 4,
+      "registration_dx": -1,
+      "registration_dy": 2,
+      "silhouette_iou": 0.40170484816196056,
+      "core_recall": 0.9425,
+      "minimum_region_recall": 0.4,
+      "centroid_drift_px": 5.997829959381317,
+      "bbox_size_delta_ratio": 0.8548387096774194,
+      "expected_pose_score": 0.4570750052262919,
+      "best_pose_score": 0.479536846761438,
+      "best_pose_frame": 3,
+      "pose_match_margin": 0.022461841535146077,
+      "safe_margin_px": 2,
+      "raw_partial_alpha_pixels": 24515,
+      "errors": [
+        "bbox_size_delta_ratio",
+        "centroid_drift_px",
+        "minimum_region_recall",
+        "silhouette_iou",
+        "unexpected_pose_match",
+        "unsafe_canvas_margin"
+      ],
+      "warnings": []
+    },
+    {
+      "board_cell": 3,
+      "source_frame": 6,
+      "registration_dx": 1,
+      "registration_dy": 2,
+      "silhouette_iou": 0.3601823708206687,
+      "core_recall": 0.8766954377311961,
+      "minimum_region_recall": 0.0,
+      "centroid_drift_px": 6.304450616084424,
+      "bbox_size_delta_ratio": 0.5217391304347826,
+      "expected_pose_score": 0.39904338555816443,
+      "best_pose_score": 0.42714397007745114,
+      "best_pose_frame": 3,
+      "pose_match_margin": 0.010953802618832664,
+      "safe_margin_px": 7,
+      "raw_partial_alpha_pixels": 25026,
+      "errors": [
+        "bbox_size_delta_ratio",
+        "centroid_drift_px",
+        "core_recall",
+        "minimum_region_recall",
+        "silhouette_iou",
+        "unexpected_pose_match"
+      ],
+      "warnings": []
+    }
+  ],
+  "errors": [
+    "bbox_size_delta_ratio",
+    "centroid_drift_px",
+    "core_recall",
+    "minimum_region_recall",
+    "silhouette_iou",
+    "unexpected_pose_match",
+    "unsafe_canvas_margin"
+  ],
+  "warnings": [
+    "ambiguous_pose_match",
+    "illegal_candidate_excursions_discarded"
+  ],
+  "duplicate_pairs": [],
+  "sentinel_checks": [],
+  "illegal_excursion_pixels": [
+    1016,
+    890,
+    996,
+    1070
+  ],
+  "shared_palette": [
+    [
+      139,
+      124,
+      147,
+      255
+    ],
+    [
+      97,
+      85,
+      106,
+      255
+    ],
+    [
+      118,
+      105,
+      127,
+      255
+    ],
+    [
+      58,
+      49,
+      69,
+      255
+    ],
+    [
+      52,
+      50,
+      58,
+      255
+    ],
+    [
+      68,
+      58,
+      78,
+      255
+    ],
+    [
+      30,
+      25,
+      40,
+      255
+    ],
+    [
+      81,
+      80,
+      82,
+      255
+    ],
+    [
+      158,
+      144,
+      166,
+      255
+    ],
+    [
+      48,
+      41,
+      58,
+      255
+    ],
+    [
+      71,
+      70,
+      74,
+      255
+    ],
+    [
+      89,
+      76,
+      101,
+      255
+    ],
+    [
+      21,
+      17,
+      29,
+      255
+    ],
+    [
+      38,
+      33,
+      45,
+      255
+    ],
+    [
+      169,
+      156,
+      177,
+      255
+    ],
+    [
+      78,
+      65,
+      90,
+      255
+    ],
+    [
+      177,
+      166,
+      183,
+      255
+    ],
+    [
+      75,
+      67,
+      84,
+      255
+    ],
+    [
+      41,
+      32,
+      51,
+      255
+    ],
+    [
+      100,
+      98,
+      101,
+      255
+    ],
+    [
+      28,
+      27,
+      36,
+      255
+    ],
+    [
+      85,
+      76,
+      94,
+      255
+    ],
+    [
+      107,
+      93,
+      119,
+      255
+    ],
+    [
+      89,
+      90,
+      89,
+      255
+    ],
+    [
+      51,
+      40,
+      63,
+      255
+    ],
+    [
+      146,
+      136,
+      152,
+      255
+    ],
+    [
+      127,
+      112,
+      139,
+      255
+    ],
+    [
+      136,
+      125,
+      141,
+      255
+    ],
+    [
+      104,
+      95,
+      113,
+      255
+    ],
+    [
+      115,
+      106,
+      120,
+      255
+    ],
+    [
+      95,
+      87,
+      102,
+      255
+    ],
+    [
+      110,
+      108,
+      112,
+      255
+    ]
+  ],
+  "component_ramp": [
+    [
+      52,
+      50,
+      58,
+      255
+    ],
+    [
+      139,
+      124,
+      147,
+      255
+    ],
+    [
+      81,
+      80,
+      82,
+      255
+    ],
+    [
+      89,
+      90,
+      89,
+      255
+    ],
+    [
+      71,
+      70,
+      74,
+      255
+    ]
+  ],
+  "cleanup_reports": [
+    {
+      "removed_islands": 0,
+      "removed_island_pixels": 0,
+      "chamfered_outline_pixels": 2,
+      "removed_spurs": 3,
+      "removed_spur_pixels": 3,
+      "filled_holes": 5,
+      "filled_hole_pixels": 6,
+      "changed_pixels": 11
+    },
+    {
+      "removed_islands": 1,
+      "removed_island_pixels": 1,
+      "chamfered_outline_pixels": 4,
+      "removed_spurs": 1,
+      "removed_spur_pixels": 1,
+      "filled_holes": 6,
+      "filled_hole_pixels": 7,
+      "changed_pixels": 13
+    },
+    {
+      "removed_islands": 0,
+      "removed_island_pixels": 0,
+      "chamfered_outline_pixels": 5,
+      "removed_spurs": 4,
+      "removed_spur_pixels": 4,
+      "filled_holes": 1,
+      "filled_hole_pixels": 1,
+      "changed_pixels": 10
+    },
+    {
+      "removed_islands": 1,
+      "removed_island_pixels": 1,
+      "chamfered_outline_pixels": 2,
+      "removed_spurs": 6,
+      "removed_spur_pixels": 6,
+      "filled_holes": 4,
+      "filled_hole_pixels": 4,
+      "changed_pixels": 13
+    }
+  ],
+  "manual_review_required": true
+}

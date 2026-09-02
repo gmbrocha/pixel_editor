@@ -6,4 +6,3 @@ scikit-image>=0.24
 pytest>=8.0
 openai>=2.32
 PyYAML>=6.0
-httpx>=0.28

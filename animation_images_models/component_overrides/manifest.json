@@ -158,8 +158,8 @@
       "sequence": "run",
       "file": "tiefling-female-01/low-waist-pants/run.png",
       "source": "animation_images_models/component_cleanup_v2/tiefling-female-01/low-waist-pants/run.png",
-      "source_sha256": "3c632490115c0520043fc7067b55e896692ef1c9bdfd3a8b422b8d72ac1c1fe5",
-      "output_sha256": "dab86285e3f422ff8f014b1ea97448e0ed89573c17a93bedc86e92f4b65ad4bc",
+      "source_sha256": "9a65a0489388ac54a44532932038f9d2151ebd2c0120c6a28963f3eb5d3d4849",
+      "output_sha256": "31902dee1eba1692ac66f30924e24dfd1a805b8dbe439446ff9497bb5f13ca6e",
       "dimensions": [
         1024,
         512

@@ -1,9 +1,9 @@
 # Blender Character Capture Pipeline
 
-Heroic component generation is documented in
-[`RECRAFT_SPRITE_PIPELINE.md`](RECRAFT_SPRITE_PIPELINE.md). Recraft may render
-component candidates, but the Blender-derived Heroic sheets and semantic maps
-remain authoritative for pose, anatomy, camera, direction, framing, and timing.
+The retired Recraft component experiment is preserved in
+[`docs/archive/recraft-pipeline/`](archive/recraft-pipeline/README.md). The
+Blender-derived Heroic models, actions, sheets, and semantic maps remain active
+and authoritative for pose, anatomy, camera, direction, framing, and timing.
 
 Last updated: 2026-08-29
 
@@ -276,8 +276,8 @@ outputs include 36 four-direction sheets, 144 GIFs, palettes, review sheets,
 
 Heroic is intentionally base-only in this phase. Existing Standard and JRPG
 components are hidden when Heroic is selected because their anatomy and
-occlusion masks are not aligned to the new models. Later Heroic/Recraft
-components must target the promoted Heroic sheets and semantic maps directly.
+occlusion masks are not aligned to the new models. Any future Heroic components
+must be hand-authored against the promoted Heroic sheets and semantic maps.
 
 ## Fitted Component Families
 

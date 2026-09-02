@@ -5,7 +5,7 @@
   "style_id": "heroic",
   "display_name": "Heroic",
   "style_config": "animation_images_models/heroic_style.json",
-  "style_config_sha256": "81ef357b32267a8f67586011b7f556dfc86a57111ba0d746a15863ecb3e1e7b1",
+  "style_config_sha256": "7a161493d40a39e6346b74cb994680ee6a89b8dc6b58c1120541d4d223c4ac3a",
   "timing_config": "animation_images_models/approved_motion_timing.json",
   "timing_config_sha256": "6bc9ce7ea1004a2c9b06cef7ac62c40d33cea96a3637a097c1298d4a59e84eb0",
   "camera_heights": {

@@ -1,0 +1,84 @@
+{
+  "endpoint": "/images/imageToImage",
+  "model": "recraftv4_1",
+  "strength": 0.25,
+  "response_format": "b64_json",
+  "prompt": "LOCKED ANIMATION CONTACT-SHEET CONTRACT. This image contains the same Tiefling Female Base in one continuous run animation facing front. This is one locked animation contact sheet, not a collage to rearrange. Read cells row-major in this exact source-frame order: 1, 3, 5, 7. Add only this component: Legacy Helmet and Shoulder Pads \u2014 Add only the approved horn-friendly helmet and paired shoulder pads.. Material: steel. Apply the identical design consistently in every cell. Preserve exactly: grid and cell order, transparent background, character position and scale, body proportions, pose, facing, anatomy, which arm and leg is forward, limb bends, hands, feet, horns, tail, hair, existing clothing not named by the task, camera, and silhouette of the body. The declared component alone may extend slightly around the body regions it belongs to. Return one transparent raster contact sheet with the same aspect, layout, cell count, and order. Do not add labels or a background. Do not redesign or re-pose the character.",
+  "negative_prompt": "text, labels, captions, background, extra character, extra limb, missing limb, mirrored limb, swapped legs, swapped arms, changed pose, duplicate pose, rearranged frames, changed grid, cropping, recentering, altered body proportions, unrelated clothing, anatomy changes",
+  "controls": {
+    "colors": [
+      {
+        "rgb": [
+          41,
+          39,
+          59
+        ]
+      },
+      {
+        "rgb": [
+          107,
+          100,
+          126
+        ]
+      },
+      {
+        "rgb": [
+          184,
+          175,
+          200
+        ]
+      },
+      {
+        "rgb": [
+          177,
+          168,
+          185
+        ]
+      },
+      {
+        "rgb": [
+          167,
+          157,
+          177
+        ]
+      },
+      {
+        "rgb": [
+          148,
+          135,
+          158
+        ]
+      },
+      {
+        "rgb": [
+          157,
+          145,
+          168
+        ]
+      },
+      {
+        "rgb": [
+          89,
+          90,
+          91
+        ]
+      },
+      {
+        "rgb": [
+          68,
+          58,
+          78
+        ]
+      },
+      {
+        "rgb": [
+          128,
+          113,
+          140
+        ]
+      }
+    ]
+  },
+  "source_board": "working/recraft/legacy-armored-layout-tiefling-run-front/source/request_board.png",
+  "source_board_sha256": "fe5347cbbaf8742ae3ecad8f1a08a89486abd53e192f4c833f68fbc13c835957"
+}

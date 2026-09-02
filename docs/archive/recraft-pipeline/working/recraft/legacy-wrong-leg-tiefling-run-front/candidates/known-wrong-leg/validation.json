@@ -1,0 +1,322 @@
+{
+  "schema_version": 1,
+  "kind": "pixel_forge_recraft_candidate_validation",
+  "job_id": "legacy-wrong-leg-tiefling-run-front",
+  "candidate_id": "known-wrong-leg",
+  "status": "reject",
+  "profile": "animation_images_models/recraft_validation_profile_v1.json",
+  "profile_sha256": "18547f868c0a51ac246012c51a3c19938a2225f0deffc04704127a6245c5c8bc",
+  "frames": [
+    {
+      "board_cell": 0,
+      "source_frame": 0,
+      "registration_dx": 0,
+      "registration_dy": 2,
+      "silhouette_iou": 0.495075508864084,
+      "core_recall": 0.9343246592317225,
+      "minimum_region_recall": 0.0,
+      "centroid_drift_px": 1.317762361646927,
+      "bbox_size_delta_ratio": 0.391304347826087,
+      "expected_pose_score": 0.4637518199833618,
+      "best_pose_score": 0.4637518199833618,
+      "best_pose_frame": 0,
+      "pose_match_margin": 0.01745843549890891,
+      "safe_margin_px": 19,
+      "raw_partial_alpha_pixels": 22790,
+      "errors": [
+        "bbox_size_delta_ratio",
+        "minimum_region_recall",
+        "silhouette_iou"
+      ],
+      "warnings": []
+    },
+    {
+      "board_cell": 1,
+      "source_frame": 2,
+      "registration_dx": -2,
+      "registration_dy": -2,
+      "silhouette_iou": 0.5345303867403315,
+      "core_recall": 0.9439024390243902,
+      "minimum_region_recall": 0.15384615384615385,
+      "centroid_drift_px": 2.2793460599490554,
+      "bbox_size_delta_ratio": 0.28,
+      "expected_pose_score": 0.45070904435744924,
+      "best_pose_score": 0.45070904435744924,
+      "best_pose_frame": 2,
+      "pose_match_margin": 0.00485586334041016,
+      "safe_margin_px": 10,
+      "raw_partial_alpha_pixels": 21606,
+      "errors": [
+        "bbox_size_delta_ratio",
+        "centroid_drift_px",
+        "minimum_region_recall",
+        "silhouette_iou"
+      ],
+      "warnings": []
+    },
+    {
+      "board_cell": 2,
+      "source_frame": 4,
+      "registration_dx": -1,
+      "registration_dy": 2,
+      "silhouette_iou": 0.4446529080675422,
+      "core_recall": 0.88875,
+      "minimum_region_recall": 0.0,
+      "centroid_drift_px": 4.211263122954037,
+      "bbox_size_delta_ratio": 0.6290322580645161,
+      "expected_pose_score": 0.4591670426964238,
+      "best_pose_score": 0.4907104002639392,
+      "best_pose_frame": 7,
+      "pose_match_margin": 0.003346480194507284,
+      "safe_margin_px": 10,
+      "raw_partial_alpha_pixels": 23581,
+      "errors": [
+        "bbox_size_delta_ratio",
+        "centroid_drift_px",
+        "core_recall",
+        "minimum_region_recall",
+        "silhouette_iou"
+      ],
+      "warnings": [
+        "ambiguous_pose_match"
+      ]
+    },
+    {
+      "board_cell": 3,
+      "source_frame": 6,
+      "registration_dx": 2,
+      "registration_dy": 2,
+      "silhouette_iou": 0.3915558126084442,
+      "core_recall": 0.8347718865598027,
+      "minimum_region_recall": 0.0,
+      "centroid_drift_px": 4.447799686035983,
+      "bbox_size_delta_ratio": 0.391304347826087,
+      "expected_pose_score": 0.3928654554132063,
+      "best_pose_score": 0.4882709812701486,
+      "best_pose_frame": 3,
+      "pose_match_margin": 0.04254114894787814,
+      "safe_margin_px": 12,
+      "raw_partial_alpha_pixels": 24895,
+      "errors": [
+        "bbox_size_delta_ratio",
+        "centroid_drift_px",
+        "core_recall",
+        "minimum_region_recall",
+        "silhouette_iou",
+        "unexpected_pose_match"
+      ],
+      "warnings": []
+    }
+  ],
+  "errors": [
+    "bbox_size_delta_ratio",
+    "centroid_drift_px",
+    "core_recall",
+    "minimum_region_recall",
+    "silhouette_iou",
+    "unexpected_pose_match"
+  ],
+  "warnings": [
+    "ambiguous_pose_match"
+  ],
+  "duplicate_pairs": [],
+  "sentinel_checks": [],
+  "illegal_excursion_pixels": [],
+  "shared_palette": [
+    [
+      159,
+      144,
+      166,
+      255
+    ],
+    [
+      180,
+      168,
+      183,
+      255
+    ],
+    [
+      72,
+      72,
+      74,
+      255
+    ],
+    [
+      77,
+      66,
+      87,
+      255
+    ],
+    [
+      111,
+      111,
+      110,
+      255
+    ],
+    [
+      139,
+      124,
+      148,
+      255
+    ],
+    [
+      119,
+      104,
+      127,
+      255
+    ],
+    [
+      129,
+      114,
+      137,
+      255
+    ],
+    [
+      88,
+      75,
+      97,
+      255
+    ],
+    [
+      108,
+      94,
+      118,
+      255
+    ],
+    [
+      62,
+      61,
+      66,
+      255
+    ],
+    [
+      60,
+      49,
+      69,
+      255
+    ],
+    [
+      90,
+      89,
+      92,
+      255
+    ],
+    [
+      50,
+      40,
+      59,
+      255
+    ],
+    [
+      171,
+      157,
+      175,
+      255
+    ],
+    [
+      57,
+      51,
+      63,
+      255
+    ],
+    [
+      99,
+      85,
+      110,
+      255
+    ],
+    [
+      132,
+      128,
+      133,
+      255
+    ],
+    [
+      100,
+      99,
+      102,
+      255
+    ],
+    [
+      135,
+      127,
+      139,
+      255
+    ],
+    [
+      74,
+      68,
+      80,
+      255
+    ],
+    [
+      94,
+      87,
+      100,
+      255
+    ],
+    [
+      48,
+      42,
+      54,
+      255
+    ],
+    [
+      65,
+      57,
+      74,
+      255
+    ],
+    [
+      147,
+      136,
+      152,
+      255
+    ],
+    [
+      115,
+      107,
+      120,
+      255
+    ],
+    [
+      46,
+      45,
+      50,
+      255
+    ],
+    [
+      81,
+      81,
+      81,
+      255
+    ],
+    [
+      152,
+      149,
+      153,
+      255
+    ],
+    [
+      147,
+      139,
+      147,
+      255
+    ],
+    [
+      73,
+      58,
+      84,
+      255
+    ],
+    [
+      124,
+      117,
+      125,
+      255
+    ]
+  ],
+  "component_ramp": [],
+  "cleanup_reports": [],
+  "manual_review_required": true
+}

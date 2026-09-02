@@ -1,0 +1,33 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Pixel Forge Recraft Review</title>
+<style>
+body{font:14px system-ui;background:#1b1d22;color:#eee;margin:24px} h1{font-size:22px}
+img{width:128px;height:128px;image-rendering:pixelated;background:#24272d}
+.board{width:auto;height:256px;max-width:100%;object-fit:contain}
+table{border-collapse:collapse;width:100%} td,th{border:1px solid #454953;padding:6px;vertical-align:top}
+.bad{color:#ff8888} .warn{color:#ffd27b} button{font-size:16px;padding:10px 18px;margin:8px}
+textarea{width:600px;max-width:90%;height:80px} .status{font-weight:700}
+</style></head><body>
+<h1>Tiefling Female Base · low · run · front</h1>
+<p class="status">Automatic result: REJECT</p>
+<p>Automatic validation never constitutes artistic approval. Review the complete native-speed loop.</p>
+<h2>Request and raw response boards</h2>
+<p><img class="board" src="../../../source/request_board.png" alt="authoritative request board">
+<img class="board" src="../raw/output.png" alt="raw provider response"></p>
+<h2>Complete-loop playback</h2>
+<p><img src="../review/normalized.gif"> </p>
+<details><summary>Nearest-neighbor 8x playback</summary>
+<p><img class="board" src="../review/normalized_8x.gif"> </p>
+</details>
+<table><thead><tr><th>Frame</th><th>Authority</th><th>Candidate</th><th>Extracted</th><th>Uncertain</th><th>Difference</th><th>Metrics</th><th>Errors</th><th>Warnings</th></tr></thead>
+<tbody><tr><td>1</td><td><img src="../../../source/frames/frame_00.png"></td><td><img src="../normalized/frame_00.png"></td><td>—</td><td>—</td><td><img src="../review/diff_00.png"></td><td>IoU 0.495<br>Core 0.934<br>Pose → 1</td><td class=bad>bbox_size_delta_ratio, minimum_region_recall, silhouette_iou</td><td class=warn>—</td></tr><tr><td>3</td><td><img src="../../../source/frames/frame_02.png"></td><td><img src="../normalized/frame_01.png"></td><td>—</td><td>—</td><td><img src="../review/diff_01.png"></td><td>IoU 0.535<br>Core 0.944<br>Pose → 3</td><td class=bad>bbox_size_delta_ratio, centroid_drift_px, minimum_region_recall, silhouette_iou</td><td class=warn>—</td></tr><tr><td>5</td><td><img src="../../../source/frames/frame_04.png"></td><td><img src="../normalized/frame_02.png"></td><td>—</td><td>—</td><td><img src="../review/diff_02.png"></td><td>IoU 0.445<br>Core 0.889<br>Pose → 8</td><td class=bad>bbox_size_delta_ratio, centroid_drift_px, core_recall, minimum_region_recall, silhouette_iou</td><td class=warn>ambiguous_pose_match</td></tr><tr><td>7</td><td><img src="../../../source/frames/frame_06.png"></td><td><img src="../normalized/frame_03.png"></td><td>—</td><td>—</td><td><img src="../review/diff_03.png"></td><td>IoU 0.392<br>Core 0.835<br>Pose → 4</td><td class=bad>bbox_size_delta_ratio, centroid_drift_px, core_recall, minimum_region_recall, silhouette_iou, unexpected_pose_match</td><td class=warn>—</td></tr></tbody></table>
+<h2>Manual decision</h2><textarea id="notes" placeholder="Review notes"></textarea><br>
+<button onclick="decide('approved')">Approve complete loop</button>
+<button onclick="decide('rejected')">Reject</button><span id="saved"></span>
+<script>
+async function decide(status){
+ const response=await fetch('/api/review',{method:'POST',headers:{'Content-Type':'application/json'},
+ body:JSON.stringify({status,notes:document.getElementById('notes').value})});
+ document.getElementById('saved').textContent=response.ok?' Saved.':' Save failed.';
+}
+</script></body></html>

@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "kind": "pixel_forge_recraft_sprite_job",
+  "job_id": "legacy-wrong-leg-tiefling-run-front",
+  "created_at": "2026-08-30T23:14:14+00:00",
+  "updated_at": "2026-08-30T23:14:32+00:00",
+  "state": "reviewed",
+  "mode": "full_style_experiment",
+  "character_id": "tiefling_bald_female",
+  "base_id": "tiefling-female-01",
+  "character_name": "Tiefling Female Base",
+  "camera": "low",
+  "animation": "run",
+  "direction": "front",
+  "frame_count": 8,
+  "selected_frame_indices": [
+    0,
+    2,
+    4,
+    6
+  ],
+  "board_frame_indices": [
+    0,
+    2,
+    4,
+    6
+  ],
+  "fps": 10,
+  "frame_durations_ms": [
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100
+  ],
+  "layout": {
+    "name": "4x1",
+    "columns": 4,
+    "rows": 1,
+    "width": 1536,
+    "height": 384
+  },
+  "source": {
+    "sheet": "assets/character-forge/bases/tiefling-female-01/styles/heroic/low/run.png",
+    "sheet_sha256": "3c64467cc1e58230886be61049e7f40bea140f2f7eebbcac04947348b7be43ea",
+    "regions": "assets/character-forge/style_regions/heroic/tiefling-female-01/low/run_regions.png",
+    "regions_sha256": "2c777fb390631bf3f70c0f270592de9ae99d6e5a2232a5756c830583d39fa6b2",
+    "board": "working/recraft/legacy-wrong-leg-tiefling-run-front/source/request_board.png",
+    "board_sha256": "fe5347cbbaf8742ae3ecad8f1a08a89486abd53e192f4c833f68fbc13c835957",
+    "heroic_manifest_sha256": "4e6d217f637ec7c2ee2bfade7ee8da2bf4db435f4a09eb3bb8b9d13b5be0c826",
+    "style_profile_sha256": "4d6ad66abe1498f9a09f2d36168e454c91c9b0fb15c780b61d1b9bf491af9e09",
+    "frame_sha256": {
+      "0": "8ee95f729c9d10446f276c157336c5b5bd801b56b6e0724b498f72312af78bde",
+      "2": "98d3841ffb0f7609493dc2284443e576d7450d5230c37a2074f5a92c57c44b4c",
+      "4": "413c8d04f7b3413e115863390cfe772bf0643d519acc034d38ecb076928288d8",
+      "6": "b564b65c0eb4960fe7fc978a21ca7af72ae5e6cde0060d717d0f02ea1502bc93"
+    },
+    "region_frame_sha256": {
+      "0": "a95ff536701a992e76d83408b2f0792d6713531eb617ba52a3244607d5cbe59f",
+      "2": "99d6a50a816f83ad9e988ce9236741f6645d9621a38f60ac32789cc612445181",
+      "4": "d448bed751e7bcc2351ba9016484abaa1a7aae1afa100b9b815c3c837a381ff4",
+      "6": "e946a6ebd5563d771354f3e0ece546af15c7da9120becfedbb4878f0e71fca40"
+    }
+  },
+  "pipeline": {
+    "config": "animation_images_models/recraft_pipeline.json",
+    "config_sha256": "708e62132a5395f1e0c69ea5011de9987c59dc0e73f774edb70c175201eae6b9",
+    "implementation": "src/core/recraft_sprite_pipeline.py",
+    "implementation_sha256": "5bb4e116b1f657ce451d63665f5e03cd2740570500845856bc8e53bb534d10b5"
+  },
+  "component": null,
+  "provider": {
+    "name": "recraft",
+    "endpoint": "/images/imageToImage",
+    "model": "recraftv4_1",
+    "strength": 0.25,
+    "response_format": "b64_json",
+    "palette_colors": [
+      [
+        177,
+        168,
+        185
+      ],
+      [
+        167,
+        157,
+        177
+      ],
+      [
+        148,
+        135,
+        158
+      ],
+      [
+        157,
+        145,
+        168
+      ],
+      [
+        89,
+        90,
+        91
+      ],
+      [
+        68,
+        58,
+        78
+      ],
+      [
+        128,
+        113,
+        140
+      ],
+      [
+        109,
+        109,
+        111
+      ],
+      [
+        118,
+        119,
+        120
+      ],
+      [
+        165,
+        159,
+        157
+      ]
+    ],
+    "prompt_contract_version": 1,
+    "prompt": "LOCKED ANIMATION CONTACT-SHEET CONTRACT. This image contains the same Tiefling Female Base in one continuous run animation facing front. This is one locked animation contact sheet, not a collage to rearrange. Read cells row-major in this exact source-frame order: 1, 3, 5, 7. Restyle only the rendering treatment while preserving every structural fact. Apply the identical design consistently in every cell. Preserve exactly: grid and cell order, transparent background, character position and scale, body proportions, pose, facing, anatomy, which arm and leg is forward, limb bends, hands, feet, horns, tail, hair, existing clothing not named by the task, camera, and silhouette of the body. The declared component alone may extend slightly around the body regions it belongs to. Return one transparent raster contact sheet with the same aspect, layout, cell count, and order. Do not add labels or a background. Do not redesign or re-pose the character.",
+    "negative_prompt": "text, labels, captions, background, extra character, extra limb, missing limb, mirrored limb, swapped legs, swapped arms, changed pose, duplicate pose, rearranged frames, changed grid, cropping, recentering, altered body proportions, unrelated clothing, anatomy changes"
+  },
+  "candidates": [
+    {
+      "id": "known-wrong-leg",
+      "state": "rejected",
+      "validation_status": "reject",
+      "review": "working/recraft/legacy-wrong-leg-tiefling-run-front/candidates/known-wrong-leg/review.json"
+    }
+  ],
+  "request_hash": "e6f9c7fa7a216ec68c3c2867fb07c3085c8dcc3a97c4975b37c512986efcd6fc"
+}

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "job_id": "legacy-armored-layout-tiefling-run-front",
+  "candidate_id": "armored-layout-example",
+  "status": "rejected",
+  "notes": "Legacy extraction/layout fixture only. It is not complete-loop animation evidence and is not promotion eligible.",
+  "reviewed_at": "2026-08-30T23:14:55+00:00",
+  "validation_status": "reject",
+  "validation_sha256": "55d1ea3df51eeef1ebe66007ad51932bdb43e32f19f70a4174d1d20c25d21677"
+}
